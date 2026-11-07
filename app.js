@@ -680,18 +680,9 @@ function afterTask(msg, undo) {
   if (before > 0 && pendingCount() === 0) confetti();
 }
 
-// Старый адрес на GitHub Pages: данные там свои, поэтому зовём на новый.
-const NEW_HOME = 'https://zhungli.zmoki.xyz/';
-const isOldHome = location.hostname.endsWith('github.io');
-const movedBanner = () => `<div class="task" style="border:2px solid var(--amber)"><b>🏡 Жунгли переехали</b>
-  <p class="small" style="margin:6px 0 10px">Новый адрес: <b>zhungli.zmoki.xyz</b>. Здесь отметки больше не нужны.</p>
-  <p class="small muted" style="margin-bottom:10px">1. Сохрани копию (если ещё нет).<br>2. Открой новый адрес в Safari и добавь на экран «Домой».<br>3. Там: ⚙️ → «Восстановить» → выбери файл.<br>4. Удали эту старую иконку.</p>
-  <div class="btns"><button class="btn" data-act="export">Сохранить копию</button>
-  <a class="btn primary" href="${NEW_HOME}" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Открыть новый</a></div></div>`;
-
 function render() {
   const view = $('#view');
-  view.innerHTML = (isOldHome ? movedBanner() : '') + (tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom());
+  view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }
 
