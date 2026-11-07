@@ -1,6 +1,8 @@
 'use strict';
 
 const KEY = 'zhungli.v1';
+// Версия берётся из ?v= в index.html и сверяется с version.txt на сервере.
+const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -826,7 +828,25 @@ document.addEventListener('change', (e) => {
   }
 });
 
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !sheet.open) render(); });
+// iPhone не перезагружает приложение с экрана «Домой», а возвращает старую страницу.
+// Поэтому при каждом открытии проверяем, не вышла ли новая версия.
+async function checkUpdate() {
+  if (location.protocol === 'file:') return;
+  try {
+    const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
+    const v = r.ok ? (await r.text()).trim() : '';
+    if (!v || v === APP_VERSION || sheet.open) return;
+    if (sessionStorage.getItem('zhungli.reloadedFor') === v) return; // не зацикливаемся
+    sessionStorage.setItem('zhungli.reloadedFor', v);
+    location.reload();
+  } catch (e) { /* офлайн — работаем на том, что есть */ }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  checkUpdate();
+  if (!sheet.open) render();
+});
 
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -834,3 +854,4 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.ser
 save();
 render();
 loadPhotos();
+checkUpdate();
