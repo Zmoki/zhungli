@@ -94,7 +94,9 @@ function plant(id) {
   const d = def(id), r = S.plants[id];
   if (!d || !r) return null;
   // luxRange — норма из каталога, lux — замер люксметром.
-  return { ...d, ...r, id, title: r.name || d.species, luxRange: d.lux, lux: r.lux };
+  // species — своё название, если задано, иначе из каталога.
+  const species = r.species || d.species;
+  return { ...d, ...r, id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
 }
 const allPlants = () => Object.keys(S.plants).map(plant).filter(Boolean);
 
@@ -361,13 +363,15 @@ function openPlant(id) {
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><button class="ava" data-act="photo" data-id="${esc(id)}" aria-label="Сменить фото">${pic}</button>
-      <div><h2 style="margin:0">${esc(p.title)}</h2><div class="muted small">${esc(p.species)}</div><div class="small">${m} ${esc(mt)}</div></div>
+      <div><h2 style="margin:0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small">${m} ${esc(mt)}</div></div>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
     <p class="quip" style="margin-top:0">${esc(quipOf(p))}</p>
     <div class="info"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
     <button class="btn water wide" data-act="water-now" data-id="${esc(id)}" style="margin:4px 0 18px">💧 Полила сейчас</button>
 
     <div class="field"><label>Имя</label><input class="input" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумай имя, например Коля" maxlength="40"></div>
+    <div class="field"><label>Название (вид, сорт)</label><input class="input" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
+      ${S.plants[id].species ? `<p class="small muted" style="margin-top:6px">В каталоге: ${esc(def(id).species)}. Сотри поле, чтобы вернуть.</p>` : ''}</div>
 
     <div class="field"><label>Где стоит</label><div class="chips">
       ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
@@ -640,8 +644,9 @@ $('#import-input').addEventListener('change', (e) => {
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
 function openSheet() { if (!sheet.open) sheet.showModal(); sheet.scrollTop = 0; }
-function closeSheet() { if (sheet.open) sheet.close(); }
-sheet.addEventListener('close', () => render());
+// Перерисовываем сами: событие close срабатывает не во всех браузерах.
+function closeSheet() { if (sheet.open) sheet.close(); render(); }
+sheet.addEventListener('close', () => render()); // закрытие свайпом/Esc
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
 let toastTimer;
@@ -790,6 +795,16 @@ document.addEventListener('change', (e) => {
   const r = S.plants[id];
   if (!r) return;
   if (f === 'name') r.name = el.value.trim();
+  if (f === 'species') {
+    const v = el.value.trim();
+    if (!v || v === def(id).species) delete r.species; else r.species = v;
+    if (!v) el.value = def(id).species;
+  }
+  if (f === 'name' || f === 'species') {
+    const p = plant(id);
+    $('#sh-title').textContent = p.title;
+    $('#sh-species').textContent = p.species;
+  }
   if (f === 'repotted') r.repotted = el.checked;
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
