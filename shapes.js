@@ -26,6 +26,42 @@ const SHAPES = {
   herbs: `<path class="st" d="M24 42c0-8-2-14-6-19M32 42V18M40 42c0-8 2-14 6-19"/>
     <ellipse class="lf" cx="18" cy="22" rx="5" ry="6.5" transform="rotate(-25 18 22)"/><ellipse class="lf2" cx="32" cy="14" rx="5" ry="7"/><ellipse class="lf" cx="46" cy="22" rx="5" ry="6.5" transform="rotate(25 46 22)"/>
     <ellipse class="lf3" cx="25" cy="31" rx="4.5" ry="5.5" transform="rotate(-35 25 31)"/><ellipse class="lf3" cx="39" cy="31" rx="4.5" ry="5.5" transform="rotate(35 39 31)"/>${POT_SVG}`,
+  // Alocasia: arrow-shaped leaves on long stems
+  arrow: `<path class="st" d="M32 44C30 34 24 26 18 21M32 44V16M32 44c2-10 8-18 14-23"/>
+    <path class="lf2" transform="translate(17 17) rotate(-32) scale(1.15)" d="M0-12c7 6 8 16 6 21L0 5l-6 4c-2-5-1-15 6-21z"/>
+    <path class="lf" transform="translate(32 11) scale(1.25)" d="M0-12c7 6 8 16 6 21L0 5l-6 4c-2-5-1-15 6-21z"/>
+    <path class="lf2" transform="translate(47 17) rotate(32) scale(1.15)" d="M0-12c7 6 8 16 6 21L0 5l-6 4c-2-5-1-15 6-21z"/>
+    <path class="vein" d="M32 1v16M17 7l2 13M47 7l-2 13"/>${POT_SVG}`,
+  // Monstera: big split leaves
+  split: `<path class="st" d="M30 44c-1-8-3-12-6-15M34 44c2-6 5-9 9-11"/>
+    <path class="lf" d="M24 4c11 0 18 8 17 17-1 8-8 12-15 12-9 0-16-6-16-15C10 10 16 4 24 4z"/>
+    <path class="lf2" d="M45 22c7 0 11 5 10 11-1 5-5 8-10 8-6 0-10-4-10-10 0-5 4-9 10-9z"/>
+    <path class="cut" d="M12 14l7 3M11 22l8 0M15 29l6-4M37 10l-6 5M40 19l-7 1M43 26l4 2M54 29l-5 1M51 37l-4-3"/>${POT_SVG}`,
+  // Philodendron: heart-shaped leaves hanging from the stems
+  heart: `<path class="st" d="M32 44C29 34 24 26 20 21M32 44V14M32 44c3-10 8-17 12-22"/>
+    <path class="lf2" transform="translate(19 24) rotate(18) scale(1.25)" d="M0 10C-9 4-11-6-5-9c3-1 5 1 5 3 0-2 2-4 5-3 6 3 4 13-5 19z"/>
+    <path class="lf" transform="translate(32 18) scale(1.35)" d="M0 10C-9 4-11-6-5-9c3-1 5 1 5 3 0-2 2-4 5-3 6 3 4 13-5 19z"/>
+    <path class="lf2" transform="translate(45 25) rotate(-18) scale(1.25)" d="M0 10C-9 4-11-6-5-9c3-1 5 1 5 3 0-2 2-4 5-3 6 3 4 13-5 19z"/>
+    <path class="vein" d="M32 11v17"/>${POT_SVG}`,
+  // Aglaonema, dieffenbachia, peace lily: upright variegated leaves
+  upright: `<g><ellipse class="lf2" cx="32" cy="22" rx="5" ry="13" transform="rotate(-42 32 44)"/><ellipse class="lf" cx="32" cy="20" rx="5.5" ry="14" transform="rotate(-20 32 44)"/>
+    <ellipse class="lf2" cx="32" cy="22" rx="5" ry="13" transform="rotate(42 32 44)"/><ellipse class="lf" cx="32" cy="20" rx="5.5" ry="14" transform="rotate(20 32 44)"/>
+    <ellipse class="lf" cx="32" cy="17" rx="6" ry="15"/>
+    <ellipse class="lf3" cx="32" cy="18" rx="2.2" ry="10"/><ellipse class="lf3" cx="32" cy="22" rx="2" ry="8" transform="rotate(-20 32 44)"/><ellipse class="lf3" cx="32" cy="22" rx="2" ry="8" transform="rotate(20 32 44)"/></g>${POT_SVG}`,
+  // Ficus, radermachera: a small tree
+  tree: `<path class="trunk" d="M30 44V28h4v16z"/><path class="st" d="M32 30l-6-5M32 27l6-5"/>
+    <circle class="lf2" cx="22" cy="20" r="9"/><circle class="lf2" cx="43" cy="19" r="9"/><circle class="lf" cx="32" cy="12" r="10"/>
+    <circle class="lf" cx="26" cy="25" r="7"/><circle class="lf" cx="39" cy="25" r="7"/><circle class="lf3" cx="29" cy="9" r="3"/><circle class="lf3" cx="41" cy="16" r="2.5"/>${POT_SVG}`,
+  // Calathea, stromanthe, ctenanthe: oval patterned leaves
+  prayer: `<ellipse class="lf2" cx="32" cy="22" rx="7" ry="13" transform="rotate(-38 32 44)"/><ellipse class="lf2" cx="32" cy="22" rx="7" ry="13" transform="rotate(38 32 44)"/>
+    <ellipse class="lf" cx="32" cy="18" rx="8" ry="15"/>
+    <path class="vein" d="M32 4v28M32 10l-5 3M32 10l5 3M32 17l-6 3M32 17l6 3M32 24l-5 3M32 24l5 3"/>
+    <path class="vein" transform="rotate(-38 32 44)" d="M32 11v22"/><path class="vein" transform="rotate(38 32 44)" d="M32 11v22"/>${POT_SVG}`,
+  // Coleus: colorful leaves
+  coleus: `<path class="st" d="M32 44V20M32 34l-9-6M32 30l9-7"/>
+    <ellipse class="co" cx="20" cy="26" rx="8" ry="6" transform="rotate(-25 20 26)"/><ellipse class="co" cx="44" cy="23" rx="8" ry="6" transform="rotate(25 44 23)"/>
+    <ellipse class="co" cx="24" cy="13" rx="6.5" ry="8.5" transform="rotate(-20 24 13)"/><ellipse class="co" cx="40" cy="11" rx="6.5" ry="8.5" transform="rotate(20 40 11)"/>
+    <ellipse class="co" cx="32" cy="7" rx="5" ry="6.5"/>${POT_SVG}`,
   cutting: `<path class="gl" d="M20 26h24v30a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4z"/><path class="jar" d="M20 24v32a4 4 0 0 0 4 4h16a4 4 0 0 0 4-4V24"/>
     <path class="rt" d="M32 50c-2 3-4 5-7 6M32 50c1 3 3 5 6 6M32 50v7"/><path class="st" d="M32 50V14"/>
     <ellipse class="lf" cx="25" cy="16" rx="7" ry="4" transform="rotate(25 25 16)"/><ellipse class="lf2" cx="39" cy="10" rx="7" ry="4" transform="rotate(-25 39 10)"/>`,
@@ -33,9 +69,12 @@ const SHAPES = {
 
 // Catalog plants by id; others are guessed from the name and what they grow in.
 const SHAPE_BY_ID = {
-  'g-easy': 'trailing', 'g-humid': 'leafy', 'g-succ': 'succulent', 'g-cactus': 'cactus', 'g-flower': 'flowering', 'g-orchid': 'orchid', 'g-herbs': 'herbs',
-  'mon-adan': 'trailing', zz: 'palm', chamae: 'palm', rhapis: 'palm', strel1: 'palm', kolya: 'palm', banana: 'palm',
-  phal: 'orchid', cuttings: 'cutting',
+  'g-easy': 'trailing', 'g-humid': 'prayer', 'g-succ': 'succulent', 'g-cactus': 'cactus', 'g-flower': 'flowering', 'g-orchid': 'orchid', 'g-herbs': 'herbs',
+  'alo-regal': 'arrow', 'alo-black': 'arrow', 'alo-cuc': 'arrow', 'alo-polly': 'arrow', 'alo-silver': 'arrow',
+  'mon-del': 'split', 'mon-adan': 'trailing', 'phi-eru': 'heart', 'phi-birkin': 'heart', 'phi-congo': 'heart',
+  'agl-siam': 'upright', 'agl-silver': 'upright', 'agl-pink': 'upright', 'dif-camille': 'upright', 'dif-gm': 'upright', spath: 'upright', zz: 'upright',
+  'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', raderm: 'tree', anth: 'flowering', coleus1: 'coleus', coleus2: 'coleus',
+  chamae: 'palm', rhapis: 'palm', strel1: 'palm', kolya: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
 };
 function shapeOf(d) {
   if (!d) return 'leafy';
@@ -46,6 +85,13 @@ function shapeOf(d) {
   if (/кактус|опунц|маммил|эхинок/.test(s)) return 'cactus';
   if (d.type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев/.test(s)) return 'succulent';
   if (/пальм|стрелиц|драцен|юкк|банан|хамедор|рапис/.test(s)) return 'palm';
+  if (/алоказ|колоказ|ксантосом/.test(s)) return 'arrow';
+  if (/монстер|ракафор/.test(s)) return 'split';
+  if (/филодендр/.test(s)) return 'heart';
+  if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр/.test(s)) return 'upright';
+  if (/фикус|радермах|дерев|лимон|оливк|кофе|мирт|лавр/.test(s)) return 'tree';
+  if (/калате|строман|ктенант|марант/.test(s)) return 'prayer';
+  if (/колеус/.test(s)) return 'coleus';
   if (/потос|сциндапс|хойя|плющ|традеск|пеперон|филодендрон скан/.test(s)) return 'trailing';
   if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
