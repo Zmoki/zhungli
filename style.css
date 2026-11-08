@@ -184,7 +184,7 @@ button { cursor: pointer; }
 .celebrate .big { font-size: 56px; line-height: 1; margin-bottom: 8px; }
 
 /* Plants grid */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 7rem), 1fr)); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 10px; }
 .pcard {
   background: var(--card); border: 0; border-radius: var(--radius); box-shadow: var(--shadow);
   padding: 10px; text-align: left; display: flex; flex-direction: column; gap: 6px;
@@ -201,6 +201,12 @@ button { cursor: pointer; }
   font-size: 0.765rem; font-weight: 600; line-height: 1.2; padding: 4px 8px; border-radius: 99px; border: 1.5px solid currentColor;
 }
 .pcard .mood .ic { width: 14px; height: 14px; }
+/* Narrow cards (three columns in Telegram Desktop, large text): drop the face, keep the word on one line */
+.pcard .pic { container-type: inline-size; }
+@container (max-width: 7.5rem) {
+  .pcard .mood { left: 4px; bottom: 4px; max-width: calc(100% - 8px); padding: 4px 6px; }
+  .pcard .mood .ic { display: none; }
+}
 .pcard b { font-size: 0.941rem; line-height: 1.2; }
 .pcard small { color: var(--muted); font-size: 0.824rem; line-height: 1.5; }
 .group-title { min-height: 24px; font-size: 0.882rem; color: var(--muted); font-weight: 600; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .04em; }
