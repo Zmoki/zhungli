@@ -36,6 +36,7 @@
   --red-soft: #ffd1da;
   /* Glass */
   --glass-bg: rgba(255, 255, 255, .62);
+  --glass-strong: rgba(255, 255, 255, .84); /* over photos: keeps 7:1 even on black */
   --glass-rim: rgba(255, 255, 255, .8);
   --glass-hi: rgba(255, 255, 255, .95);
   --glass-blur: blur(22px) saturate(1.8);
@@ -72,6 +73,7 @@
     --red: #ffccd6;
     --red-soft: #4b2a35;
     --glass-bg: rgba(34, 28, 46, .62);
+    --glass-strong: rgba(34, 28, 46, .84);
     --glass-rim: rgba(255, 255, 255, .16);
     --glass-hi: rgba(255, 255, 255, .18);
     --sheet-bg: rgba(30, 25, 40, .9); --sheet-solid: #1e1928;
@@ -103,6 +105,7 @@
   --red: #ffccd6;
   --red-soft: #4b2a35;
   --glass-bg: rgba(34, 28, 46, .62);
+  --glass-strong: rgba(34, 28, 46, .84);
   --glass-rim: rgba(255, 255, 255, .16);
   --glass-hi: rgba(255, 255, 255, .18);
   --sheet-bg: rgba(30, 25, 40, .9); --sheet-solid: #1e1928;
@@ -113,11 +116,11 @@
 
 /* Solid layers for people who turn off transparency */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-bg: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
-  :root[data-theme="dark"] { --glass-bg: #2a2338; --card: #2a2338; --bubble: #3b3150; }
+  :root { --glass-bg: #ffffff; --glass-strong: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
+  :root[data-theme="dark"] { --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; }
 }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --glass-bg: #2a2338; --card: #2a2338; --bubble: #3b3150; }
+  :root:not([data-theme="light"]) { --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; }
 }
 
 /* Nunito (SIL OFL 1.1, fonts/OFL.txt), self-hosted: the CSP allows fonts from this site only */
@@ -312,6 +315,25 @@ dialog { --card: var(--bubble); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .sheet-head .ava { width: 104px; height: 104px; font-size: 40px; border-radius: 30px; }
 .sheet-head h2 { font-size: 1.529rem; line-height: 1.15; }
+/* Plant card: big picture on top, buttons float on it */
+.hero { position: relative; margin: -4px -4px 14px; }
+.hero-pic {
+  aspect-ratio: 4 / 3; max-height: 44dvh; width: 100%; border-radius: 28px; overflow: hidden; position: relative;
+  display: grid; place-items: center; background: var(--green-soft);
+}
+.hero-pic svg.pl { height: 88%; width: auto; aspect-ratio: 1; }
+.hero-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.hero-pic img.fill { object-fit: cover; filter: blur(16px) saturate(1.1); transform: scale(1.15); }
+.hero-close { position: absolute; top: 10px; right: 10px; }
+.hero-photo {
+  position: absolute; top: 10px; left: 10px; min-height: 48px; padding: 0 16px 0 12px; border-radius: 99px;
+  display: inline-flex; align-items: center; gap: .4em; font-weight: 900; color: var(--ink);
+  border: 1.5px solid var(--edge); background: var(--glass-strong); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
+}
+.hero .icon-btn { background: var(--glass-strong); }
+.hero-text { margin-bottom: 4px; }
+.hero-text h2 { font-size: 1.765rem; line-height: 1.1; }
 .close { margin-left: auto; align-self: flex-start; }
 .info { background: var(--card); border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; }
 .info b { display: flex; align-items: center; gap: .35em; font-size: 0.882rem; color: var(--muted); font-weight: 800; margin-bottom: 2px; }
@@ -474,12 +496,12 @@ svg.pl.v2 { --pot: #ff9ec4; --pot-2: #ef7aa8; }
 svg.pl.v3 { --pot: #a99bff; --pot-2: #8b7bf0; }
 svg.pl.v4 { --pot: #ffc93c; --pot-2: #ecb11e; }
 svg.pl.v5 { --pot: #4cc77a; --pot-2: #34ad62; }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v0) { background: var(--t0); }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v1) { background: var(--t1); }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v2) { background: var(--t2); }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v3) { background: var(--t3); }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v4) { background: var(--t4); }
-:is(.ava, .pic, .pe, .nm-pl):has(> svg.v5) { background: var(--t5); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v0) { background: var(--t0); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v1) { background: var(--t1); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v2) { background: var(--t2); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v3) { background: var(--t3); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v4) { background: var(--t4); }
+:is(.ava, .pic, .pe, .nm-pl, .hero-pic):has(> svg.v5) { background: var(--t5); }
 .jar { fill: none; stroke: var(--edge); stroke-width: 1.6; }
 .st { fill: none; stroke: var(--leaf-2); stroke-width: 2; stroke-linecap: round; }
 .rt { fill: none; stroke: var(--pot-2); stroke-width: 1.4; stroke-linecap: round; }

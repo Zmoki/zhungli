@@ -541,13 +541,15 @@ function openPlant(id) {
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
-  const pic = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mc);
+  const ph = photoOf(p.id);
+  const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><button class="ava" data-act="photo" data-id="${esc(id)}" aria-label="Сменить фото">${pic}</button>
-      <div><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small mood-line ${mc}">${I(mi)}${esc(mt)}</div></div>
-      <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <p class="mt-0 quip">${esc(quipOf(p))}</p>
+    <div class="hero"><div class="hero-pic">${pic}</div>
+      <button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button>
+      <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button></div>
+    <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small mood-line ${mc}">${I(mi)}${esc(mt)}</div></div>
+    <p class="quip">${esc(quipOf(p))}</p>
     <div class="info water"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
     <button class="water-now btn water wide" data-act="water-now" data-id="${esc(id)}">${I('droplet')}Записать полив</button>
 
