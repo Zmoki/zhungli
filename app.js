@@ -317,6 +317,9 @@ function greeting() {
   return 'Добрый вечер';
 }
 
+// Little greenhouse badge next to the status
+const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В тепличке">${I('warehouse')}<span class="sr-only">в тепличке</span></span>` : '');
+
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
@@ -465,7 +468,7 @@ function viewPlants() {
       const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
-      html += `<button class="pcard" data-open="${esc(p.id)}"><div class="pic">${pic}<span class="mood ${mc}">${I(mi)}${esc(mt)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
     html += `</div>`;
@@ -548,7 +551,7 @@ function openPlant(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
       <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
-      <span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span></div>
+      <span class="hero-badges"><span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
