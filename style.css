@@ -304,8 +304,10 @@ dialog {
   border-top: 1px solid var(--glass-rim); box-shadow: inset 0 1px 0 var(--glass-hi);
 }
 dialog::backdrop { background: rgba(26, 21, 36, .35); }
-/* Blocks inside the white sheet are cream, like the plant's speech bubble */
+/* Blocks inside the white sheet are cream, like the plant's speech bubble; watering is blue, warnings pink */
 dialog { --card: var(--bubble); }
+.info.water { background: var(--blue-soft); }
+.info.warn { background: var(--red-soft); }
 #sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 24px); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .sheet-head .ava { width: 104px; height: 104px; font-size: 40px; border-radius: 30px; }
