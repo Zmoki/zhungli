@@ -269,3 +269,15 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .news ul { margin: 0; padding-left: 20px; }
 .news li { margin-bottom: 4px; }
 .news.current h3::after { content: 'у тебя'; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 99px; padding: 2px 8px; vertical-align: 2px; }
+
+/* AI import entry in the add sheet */
+.import-cta {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: inherit;
+  background: var(--green-soft); border: 1.5px solid var(--green); border-radius: var(--radius); padding: 16px 14px; margin-bottom: 4px;
+}
+.import-cta .pe { font-size: 34px; flex: none; }
+.import-cta .pt { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.import-cta b { font-size: 17px; color: var(--green); }
+.import-cta small { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.import-cta .pc { font-size: 28px; color: var(--green); flex: none; }
+.or { text-align: center; color: var(--muted); font-size: 13px; margin: 14px 0 10px; }

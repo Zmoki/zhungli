@@ -522,13 +522,16 @@ function openAdd() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava">🪴</div><h2 style="margin:0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
+    <button class="import-cta" data-act="add-import"><span class="pe">🤖</span>
+      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спроси ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенеси ответ сюда — вместе с советами по уходу.</small></span>
+      <span class="pc">›</span></button>
+    <div class="or">или выбери из каталога</div>
     <input class="input" id="pick-q" type="search" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
     <p class="small muted" style="margin:8px 0 0">Отметь все свои растения. Если твоего нет — выбери похожий общий тип.</p>
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выбери общий тип или создай своё.</p>
-    <button class="btn ghost wide" data-act="add-import" style="margin-top:12px">🤖 Импорт из ChatGPT — сразу много</button>
-    <button class="btn ghost wide" data-act="add-custom" style="margin-top:4px">✏️ Своё растение с нуля</button>
+    <button class="btn ghost wide" data-act="add-custom" style="margin-top:12px">✏️ Своё растение с нуля</button>
     <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметь растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
@@ -667,9 +670,9 @@ function openImport() {
   importItems = [];
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">🤖</div><h2 style="margin:0">Импорт из ChatGPT</h2>
+    <div class="sheet-head"><div class="ava">🤖</div><h2 style="margin:0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
-    <div class="info"><b>Шаг 1</b>Скопируй запрос и отправь в ChatGPT или другой чат с ИИ — туда, где уже обсуждала растения, или пришли вместе с ним фото.
+    <div class="info"><b>Шаг 1</b>Скопируй запрос и отправь в ChatGPT, Claude, Gemini или другой ИИ — в чат, где уже обсуждала растения, или вместе с их фото.
       <button class="btn ok wide" data-act="import-copy" style="margin-top:10px">📋 Скопировать запрос</button>
       <textarea class="input" id="imp-prompt" rows="6" readonly hidden></textarea></div>
     <div class="info"><b>Шаг 2</b>Вставь сюда ответ целиком.
