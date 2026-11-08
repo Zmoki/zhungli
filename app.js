@@ -296,12 +296,29 @@ function ava(p, cls = 'ava') {
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
 }
 
-// One-time notice about anonymous stats (opt-out), shown until «Понятно» or «Выключить».
-function statsNotice() {
-  if (S.statsNotice || S.settings.stats === false) return '';
-  return `<div class="task bonus"><b>${I('lightbulb')}Анонимная статистика</b>
-    <p class="small muted" style="margin-top:6px">Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a></p>
-    <div class="btns" style="margin-top:10px"><button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button></div></div>`;
+// Hint cards on «Сегодня»: same layout, at most one at a time.
+// Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
+const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
+  <p class="small muted" style="margin-top:6px">${text}</p>
+  <div class="btns hint-btns">${buttons}</div></div>`;
+function currentHint() {
+  if (IN_TELEGRAM && !S.hideTelegram) {
+    return hintCard('triangle-alert', 'Вы открыли Жунгли внутри Телеграма',
+      'Растения, добавленные здесь, могут потеряться. Нажмите ⋯ или ⋮ вверху → «Открыть в браузере», чтобы перейти в Safari или Chrome.',
+      '<button class="btn" data-act="hide-telegram">Понятно</button>');
+  }
+  if (!S.statsNotice && S.settings.stats !== false) {
+    return hintCard('lightbulb', 'Анонимная статистика',
+      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
+      '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
+  }
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (isIOS && !navigator.standalone && !S.hideInstall) {
+    return hintCard('smartphone', 'Добавьте меня на экран «Домой»',
+      'Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт ваши отметки, если пару недель не заходить.',
+      '<button class="btn" data-act="hide-install">Уже на экране</button>');
+  }
+  return '';
 }
 
 function viewToday() {
@@ -322,27 +339,16 @@ function viewToday() {
   let html = `<header class="hello head-row"><div><h1>${greeting()}!</h1><div class="date">${esc(date)}</div></div>
     ${headButtons()}</header>`;
 
-  if (IN_TELEGRAM && !S.hideTelegram) {
-    html += `<div class="task bonus"><b>${I('triangle-alert')}Вы открыли Жунгли внутри Телеграма</b>
-      <p class="small muted" style="margin-top:6px">Растения, добавленные здесь, могут потеряться. Нажмите ⋯ или ⋮ вверху → «Открыть в браузере», чтобы перейти в Safari или Chrome.</p>
-      <button class="btn ghost" data-act="hide-telegram">Понятно</button></div>`;
-  }
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  if (isIOS && !IN_TELEGRAM && !navigator.standalone && !S.hideInstall) {
-    html += `<div class="task bonus"><b>${I('smartphone')}Добавьте меня на экран «Домой»</b>
-      <p class="small muted" style="margin-top:6px">Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт ваши отметки, если пару недель не заходить.</p>
-      <button class="btn ghost" data-act="hide-install">Уже на экране</button></div>`;
-  }
+  html += currentHint();
 
   if (!allPlants().length) {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2 style="margin:0 0 6px">Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
-      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить свои растения</button>
-      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>${statsNotice()}`;
+      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить растения</button>
+      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
   }
 
   if (total > 0) {
-    html += statsNotice();
     html += `<div class="progress"><div class="head-row"><b>${pending ? `Осталось ${pending} ${plural(pending, 'дело', 'дела', 'дел')}` : 'Всё на сегодня!'}</b>
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
   }
@@ -416,7 +422,7 @@ function viewPlants() {
   const ps = allPlants();
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
     ${headButtons()}</header>
-    <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растение</button>`;
+    <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="muted" style="text-align:center;margin-top:24px">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
@@ -517,7 +523,7 @@ function openPlant(id) {
 
     <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips">
       ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
-      <button class="chip" data-act="spot-new" data-id="${esc(id)}">${I('plus')}своё место</button></div></div>
+      <button class="chip" data-act="spot-new" data-id="${esc(id)}">${I('plus')}место</button></div></div>
 
     <div class="field"><label for="f-lux">Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
       <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Замер люксметром, люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
@@ -839,10 +845,10 @@ function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
   const measured = ps.filter((p) => p.lux).length;
   if (!ps.length) {
-    return `<header class="hello"><h1>Свет</h1></header>
+    return `<header class="hello head-row"><div><h1>Свет</h1></div>${headButtons()}</header>
       ${emptyCard('Свет для каждого растения', 'Добавьте растения — покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.')}`;
   }
-  return `<header class="hello"><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></header>
+  return `<header class="hello head-row"><div><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></div>${headButtons()}</header>
     <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру — подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
     <div id="ideas">${lightIdeas()}</div>
     <h2>От самых светолюбивых</h2>
@@ -873,7 +879,7 @@ function viewRoom() {
       : `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>`;
   }
   const ago = r ? (r.d === today() ? 'сегодня' : rel(r.d)) : '';
-  return `<header class="hello"><h1>Комната</h1><div class="date">${r ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></header>
+  return `<header class="hello head-row"><div><h1>Комната</h1><div class="date">${r ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></div>${headButtons()}</header>
     ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения — подскажу, какая температура и влажность удобны именно им.')}
     <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
     <div class="room-cards">
@@ -947,7 +953,7 @@ function openSettings() {
       <p class="small muted">Номер устройства: <b>${esc(getAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p></div>
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попросите голосового помощника напоминать каждый день в 10 утра.</p>
-    <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
+    <button class="btn danger wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
     <p class="small muted credit" data-from="settings">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
   openSheet();
 }
