@@ -1399,7 +1399,9 @@ document.addEventListener('click', (e) => {
     case 'reset':
       if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
         localStorage.removeItem(KEY);
-        idbReq((st) => st.clear(), 'readwrite').finally(() => location.reload());
+        (window.cloudClear ? window.cloudClear() : Promise.resolve())
+          .then(() => idbReq((st) => st.clear(), 'readwrite'))
+          .finally(() => location.reload());
       }
       break;
     case 'room-save': {

@@ -81,48 +81,87 @@
     return out;
   }
 
+  const plantsIn = (st) => Object.keys((st && st.plants) || {}).length;
+  let dirty = false; // this device changed something the cloud doesn't have yet
+  let cloudHasPlants = false;
+  // Whether this device ever had plants: only then may an empty state be uploaded
+  // (the user deleted them), so a fresh empty device can't wipe the cloud copy.
+  let hadPlants = false;
+
   function push() {
-    if (!cs) return;
-    const chunks = split(JSON.stringify(S));
+    if (!cs || !dirty) return;
+    // A device that never had plants has nothing worth uploading, and must not
+    // overwrite plants another device saved meanwhile (Telegram Desktop opened empty first).
+    if (!plantsIn(S) && !hadPlants) { dirty = false; return; }
+    // syncV marks copies written by this sync version (older versions could upload empty garbage).
+    const chunks = split(JSON.stringify({ ...S, syncV: 2 }));
     chunks.forEach((c, i) => { if (cloudChunks[i] !== c) cs.setItem('s' + i, c); });
     const extra = cloudChunks.slice(chunks.length).map((_, i) => 's' + (chunks.length + i));
     if (extra.length) cs.removeItems(extra);
     if (chunks.length !== cloudChunks.length) cs.setItem('sn', String(chunks.length));
     cloudChunks = chunks;
+    cloudHasPlants = plantsIn(S) > 0;
+    dirty = false;
   }
 
-  function cloudInit(storage) {
-    cs = storage;
+  // Reads Telegram's copy and keeps the newer one: at start and every time the app comes back
+  // (Telegram Desktop keeps the mini app open, so start alone isn't enough).
+  function pull() {
     cs.getItem('sn', (err, n) => {
       const count = err ? 0 : Number(n) || 0;
-      if (!count) { window.cloudSave = later; push(); return; }
+      if (!count) { cloudHasPlants = false; if (plantsIn(S)) { dirty = true; push(); } return; }
       const keys = Array.from({ length: count }, (_, i) => 's' + i);
       cs.getItems(keys, (err2, vals) => {
-        window.cloudSave = later;
         if (err2 || !vals) return;
-        cloudChunks = keys.map((k) => vals[k] || '');
+        const chunks = keys.map((k) => vals[k] || '');
         let cloud = null;
-        try { cloud = JSON.parse(cloudChunks.join('')); } catch (e) { /* damaged copy: the phone's data wins */ }
-        // Telegram's copy wins if this phone has no plants yet or older data.
-        // An empty phone never overwrites a copy that has plants.
-        const plantsIn = (st) => Object.keys((st && st.plants) || {}).length;
-        if (plantsIn(cloud) && (!plantsIn(S) || (cloud.savedAt || 0) > (S.savedAt || 0))) {
+        try { cloud = JSON.parse(chunks.join('')); } catch (e) { return; /* damaged copy: keep this device's data */ }
+        cloudChunks = chunks;
+        cloudHasPlants = plantsIn(cloud) > 0;
+        const cloudAt = cloud.savedAt || 0;
+        const localAt = S.savedAt || 0;
+        if (cloudHasPlants && (!plantsIn(S) || cloudAt > localAt)) {
+          if (cloudAt === localAt && plantsIn(S)) return; // already the same
+          delete cloud.syncV;
           S = prepare(cloud);
           try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full */ }
-          render();
-          if (Object.keys(S.plants).length) toast('Растения загружены из Телеграма 🌿');
-          track('cloud_restored', { plants: Object.keys(S.plants).length });
-        } else {
+          dirty = false;
+          hadPlants = true;
+          if (!sheet.open) render();
+          toast('Растения загружены из Телеграма 🌿');
+          track('cloud_restored', { plants: plantsIn(S) });
+        } else if (plantsIn(S) && ((!cloudHasPlants && !cloud.syncV) || localAt > cloudAt)) {
+          // An empty copy left by an older version never beats real plants;
+          // an empty copy from this version means the plants were deleted on purpose.
+          dirty = true;
           push();
         }
       });
     });
   }
 
+  function cloudInit(storage) {
+    cs = storage;
+    hadPlants = plantsIn(S) > 0;
+    window.cloudSave = later;
+    // «Начать с чистого листа» clears Telegram's copy too, or the plants would come back.
+    window.cloudClear = () => new Promise((done) => {
+      const keys = ['sn', ...cloudChunks.map((_, i) => 's' + i)];
+      cs.removeItems(keys, () => done());
+      setTimeout(done, 1500); // don't block the reset if Telegram doesn't answer
+    });
+    pull();
+  }
+
   // Saves are batched: one cloud write a few seconds after the last change.
   function later() {
+    dirty = true;
+    if (plantsIn(S)) hadPlants = true;
     clearTimeout(timer);
     timer = setTimeout(push, 3000);
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden && window.cloudSave) { clearTimeout(timer); push(); } });
+  document.addEventListener('visibilitychange', () => {
+    if (!cs) return;
+    if (document.hidden) { clearTimeout(timer); push(); } else pull();
+  });
 })();
