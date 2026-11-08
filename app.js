@@ -61,12 +61,22 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 /* ---------- State ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотрите на меня внимательно 👀', 'Я тут, я расту!'];
 const TYPE_LABELS = {
-  soil: ['Сухо, полито', 'Ещё влажно'],
-  sphagnum: ['Сухо, полито', 'Ещё влажно'],
-  dry: ['Сухо, полито', 'Ещё влажно'],
-  bark: ['Да, полито', 'Ещё рано'],
+  soil: ['Полито', 'Ещё влажно'],
+  sphagnum: ['Полито', 'Ещё влажно'],
+  dry: ['Полито', 'Ещё влажно'],
+  bark: ['Полито', 'Ещё рано'],
   water: ['Вода сменена', 'Вода ещё чистая'],
 };
+// The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
+// A check written as an instruction (imported from an AI chat) is shown as is.
+function waterTask(p) {
+  if (p.type === 'water') return 'Смените воду в банке';
+  const q = String(p.check || CHECK_TEXT[p.type] || CHECK_TEXT.soil).trim();
+  if (!q.includes('?')) return q;
+  const cond = q.replace(/\s*\?\s*/g, ' ').trim();
+  // A word joiner after the dash keeps ranges like «2–3 см» on one line.
+  return `Полейте, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}`.replace(/(\d)–(\d)/g, '$1–\u2060$2');
+}
 const TYPE_NAMES = { soil: 'Грунт', sphagnum: 'Сфагнум', bark: 'Кора (орхидеи)', dry: 'Сушить почти полностью', water: 'Черенки в воде' };
 
 let booting = true;
@@ -407,13 +417,12 @@ function viewToday() {
 
   shown.forEach((p) => {
     const [yes, no] = TYPE_LABELS[p.type] || TYPE_LABELS.soil;
-    const q = p.check || CHECK_TEXT[p.type] || CHECK_TEXT.soil;
     const last = p.lastWater ? `полив ${rel(p.lastWater)}` : '';
     const sub = [p.name ? p.species : '', p.spot, last].filter(Boolean).join(' · ');
     html += `<div class="task"><div class="task-top">${ava(p)}<div><div class="task-name">${esc(p.title)}</div>
       <div class="task-sub">${esc(sub)}</div></div></div>
       <p class="quip">${esc(quipOf(p))}</p>
-      <div class="question">${esc(q)}</div>
+      <div class="question">${esc(waterTask(p))}</div>
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
       <button class="btn" data-act="wet" data-id="${esc(p.id)}">${I('check')}${no}</button></div>
       <div class="hint">${esc(p.water || '')}</div>
