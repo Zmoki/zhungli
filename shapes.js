@@ -97,10 +97,13 @@ function shapeOf(d) {
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';
 }
-// Each plant gets one of six pot/tile color pairs (style.css .v0–.v5), stable by id.
+// Each plant gets one of six pot/tile color pairs (style.css .v0–.v5). Keyed by the catalog entry
+// (def), so a plant keeps the colors it had in the catalog; imported plants store theirs as tone.
 function toneOf(d) {
+  if (!d) return 0;
+  if (Number.isInteger(d.tone)) return d.tone;
   let h = 0;
-  for (const c of String((d && (d.id || d.species)) || '')) h = (h * 31 + c.charCodeAt(0)) | 0;
+  for (const c of String(d.def || d.id || d.species || '')) h = (h * 31 + c.charCodeAt(0)) | 0;
   return Math.abs(h) % 6;
 }
 // Faces on the pot, one per mood (app.js mood()): eyes, extra strokes, mouth.

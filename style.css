@@ -41,6 +41,7 @@
   --red-soft: #ffd1da;
   /* Glass */
   --glass-bg: rgba(255, 255, 255, .62);
+  --glass-flat: rgba(255, 255, 255, .82); /* long lists: no blur, denser fill */
   --glass-strong: rgba(255, 255, 255, .84); /* over photos: keeps 7:1 even on black */
   --glass-rim: rgba(255, 255, 255, .8);
   --glass-hi: rgba(255, 255, 255, .95);
@@ -79,6 +80,7 @@
     --red: #ffccd6;
     --red-soft: #4b2a35;
     --glass-bg: rgba(34, 28, 46, .62);
+    --glass-flat: rgba(34, 28, 46, .84);
     --glass-strong: rgba(34, 28, 46, .84);
     --glass-rim: rgba(255, 255, 255, .16);
     --glass-hi: rgba(255, 255, 255, .18);
@@ -112,6 +114,7 @@
   --red: #ffccd6;
   --red-soft: #4b2a35;
   --glass-bg: rgba(34, 28, 46, .62);
+  --glass-flat: rgba(34, 28, 46, .84);
   --glass-strong: rgba(34, 28, 46, .84);
   --glass-rim: rgba(255, 255, 255, .16);
   --glass-hi: rgba(255, 255, 255, .18);
@@ -123,11 +126,11 @@
 
 /* Solid layers for people who turn off transparency */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-bg: #ffffff; --glass-strong: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
-  :root[data-theme="dark"] { --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; }
+  :root { --glass-bg: #ffffff; --glass-strong: #ffffff; --glass-flat: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
+  :root[data-theme="dark"] { --glass-bg: #2a2338; --glass-strong: #2a2338; --glass-flat: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
 }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; }
+  :root:not([data-theme="light"]) { --glass-bg: #2a2338; --glass-strong: #2a2338; --glass-flat: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
 }
 
 /* Nunito (SIL OFL 1.1, fonts/OFL.txt), self-hosted: the CSP allows fonts from this site only */
@@ -181,11 +184,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
 /* Glass: floating layers and cards over the blobs */
-.tabs, .icon-btn, .progress, .task, .celebrate, .pcard, .metric, .lux-row, .scenario, .idea, .more {
+.tabs, .icon-btn, .progress, .task, .celebrate, .metric, .scenario, .idea, .more {
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
 }
+/* Long lists (dozens of cards): a denser fill without blur, so scrolling stays smooth on cheaper phones */
+.pcard, .lux-row { background: var(--glass-flat); box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow); }
 
 /* Tabs: a floating glass pill */
 .tabs {
@@ -364,7 +369,7 @@ dialog { --card: var(--bubble); }
   position: relative; z-index: 1; margin: -28px -16px 0; padding: 22px 16px 0;
   background: var(--sheet-solid); border-radius: 28px 28px 0 0; box-shadow: 0 -8px 24px rgba(42, 33, 24, .12);
 }
-.hero-text { margin-bottom: 4px; padding-right: 0; }
+.hero-text { margin-bottom: 4px; }
 .hero-text h2 { font-size: 1.765rem; line-height: 1.1; }
 .close { margin-left: auto; align-self: flex-start; }
 .info { background: var(--card); border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; }
@@ -511,13 +516,12 @@ abbr[title] { text-decoration: none; }
 .h-ic .ic { color: var(--green); }
 .task.bonus > b { display: flex; align-items: center; gap: .4em; }
 /* Mood: face + word on a bright fill, one color per state */
-:is(.mood, .mood-line) { color: var(--on-color); }
-:is(.mood, .mood-line).watered { background: var(--sky); }
-:is(.mood, .mood-line).need { background: var(--tangerine); }
-:is(.mood, .mood-line).dim { background: var(--plum); }
-:is(.mood, .mood-line).hot { background: var(--sun); }
-:is(.mood, .mood-line).fine { background: var(--leafy); }
-.mood-line { display: inline-flex; align-items: center; gap: .3em; padding: 3px 12px 3px 7px; border-radius: 99px; margin-top: 6px; font-weight: 900; }
+.mood { color: var(--on-color); }
+.mood.watered { background: var(--sky); }
+.mood.need { background: var(--tangerine); }
+.mood.dim { background: var(--plum); }
+.mood.hot { background: var(--sun); }
+.mood.fine { background: var(--leafy); }
 /* Plant silhouettes (shapes.js) when there is no photo */
 svg.pl { display: block; }
 .ava svg.pl { width: 92%; height: 92%; }

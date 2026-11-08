@@ -69,14 +69,21 @@ const TYPE_LABELS = {
   water: ['Вода сменена', 'Вода ещё чистая'],
 };
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
+// Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
 // A check written as an instruction (imported from an AI chat) is shown as is.
 function waterTask(p) {
-  if (p.type === 'water') return 'Смените воду в банке';
-  const q = String(p.check || CHECK_TEXT[p.type] || CHECK_TEXT.soil).trim();
-  if (!q.includes('?')) return q;
-  const cond = q.replace(/\s*\?\s*/g, ' ').trim();
+  const water = p.type === 'water';
+  const own = p.check && !(water && p.check === CHECK_TEXT.water) ? p.check : '';
+  if (water && !own) return 'Смените воду в банке';
+  const q = String(own || CHECK_TEXT[p.type] || CHECK_TEXT.soil).trim();
+  const i = q.indexOf('?');
+  if (i < 0) return q;
+  const cond = q.slice(0, i).trim();
+  const rest = q.slice(i + 1).trim();
+  const tail = !rest ? '' : rest.startsWith('(') ? ` ${rest}` : `. ${rest}`;
+  const task = `${water ? 'Смените воду' : 'Полейте'}, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}${tail}`;
   // A word joiner after the dash keeps ranges like «2–3 см» on one line.
-  return `Полейте, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}`.replace(/(\d)–(\d)/g, '$1–\u2060$2');
+  return task.replace(/(\d)–(\d)/g, '$1–\u2060$2');
 }
 const TYPE_NAMES = { soil: 'Грунт', sphagnum: 'Сфагнум', bark: 'Кора (орхидеи)', dry: 'Сушить почти полностью', water: 'Черенки в воде' };
 
@@ -427,7 +434,7 @@ function viewToday() {
       <div class="question">${esc(waterTask(p))}</div>
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
       <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button></div>
-      <div class="hint">${esc(p.water || '')}</div>
+      ${p.water ? `<div class="hint">${esc(p.water)}</div>` : ''}
       <button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button></div>`;
   });
 
@@ -855,7 +862,7 @@ function addImported() {
   list.forEach((it, i) => {
     const id = newId('c', i);
     const { name, ...d } = it;
-    S.custom[id] = { ...d, id, cat: 'Мои' };
+    S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
     S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name };
   });
   initBonus(S);
@@ -1486,6 +1493,8 @@ document.addEventListener('change', (e) => {
     const p = plant(id);
     const [mi, mt, mc] = mood(p);
     badges.innerHTML = `<span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}`;
+    const pic = $('.hero-pic');
+    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mc);
   }
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
