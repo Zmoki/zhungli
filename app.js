@@ -345,7 +345,7 @@ function viewPlants() {
     html += `<div class="group-title">${esc(spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const [m, mt] = mood(p);
-      const pic = PHOTOS[p.id] ? `<img src="${PHOTOS[p.id]}" alt="">` : esc(p.emoji || '🪴');
+      const pic = PHOTOS[p.id] ? `<img class="fill" src="${PHOTOS[p.id]}" alt=""><img src="${PHOTOS[p.id]}" alt="">` : esc(p.emoji || '🪴');
       html += `<button class="pcard" data-open="${esc(p.id)}"><div class="pic">${pic}<span class="mood" title="${esc(mt)}">${m}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
