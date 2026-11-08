@@ -318,7 +318,7 @@ function greeting() {
 }
 
 // Little greenhouse badge next to the status
-const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В тепличке">${I('warehouse')}<span class="sr-only">в тепличке</span></span>` : '');
+const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В тепличке">${I('house-heart')}<span class="sr-only">в тепличке</span></span>` : '');
 
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
