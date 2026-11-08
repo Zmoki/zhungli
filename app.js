@@ -61,9 +61,9 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 /* ---------- State ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотрите на меня внимательно 👀', 'Я тут, я расту!'];
 const TYPE_LABELS = {
-  soil: ['Было сухо, полито', 'Ещё влажно'],
-  sphagnum: ['Было сухо, полито', 'Ещё влажно'],
-  dry: ['Было сухо, полито', 'Ещё влажно'],
+  soil: ['Сухо, полито', 'Ещё влажно'],
+  sphagnum: ['Сухо, полито', 'Ещё влажно'],
+  dry: ['Сухо, полито', 'Ещё влажно'],
   bark: ['Да, полито', 'Ещё рано'],
   water: ['Вода сменена', 'Вода ещё чистая'],
 };
@@ -186,12 +186,16 @@ function hist(p, a) {
   p.hist.length = Math.min(p.hist.length, 20);
 }
 
-function quipOf(p) {
-  const q = p.quips && p.quips.length ? p.quips : GENERIC_QUIPS;
+// The same pick all day for a plant, a new one tomorrow.
+function pickDaily(id, list) {
   let h = 0;
-  for (const c of p.id + today()) h = (h * 31 + c.charCodeAt(0)) | 0;
-  return q[Math.abs(h) % q.length];
+  for (const c of id + today()) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return list[Math.abs(h) % list.length];
 }
+function quipOf(p) {
+  return pickDaily(p.id, p.quips && p.quips.length ? p.quips : GENERIC_QUIPS);
+}
+const VENT_QUIPS = ['Душновато под крышкой — приоткройте, дайте подышать.', 'Немного свежего воздуха — и мне сразу легче.', 'Приоткройте тепличку, хочу подышать.'];
 
 function lightStatus(p) {
   if (!p.lux) return null;
@@ -389,12 +393,16 @@ function viewToday() {
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
 
+  // Same layout as a watering card: picture, names, the plant's words, then the task.
   vents.forEach((v) => {
-    html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">Проветрите тепличку: ${esc(v.title)}</div>
-      <div class="task-sub">минут на 15–30</div></div></div>
-      <p class="quip">${esc(`${v.name ? `Это ${v.name}. ` : ''}Приоткройте, дайте подышать. С каждым днём можно чуть дольше.`)}</p>
-      <div class="mt-12 btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
-      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div></div>`;
+    const sub = [v.name ? v.species : '', v.spot].filter(Boolean).join(' · ');
+    html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">${esc(v.title)}</div>
+      ${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
+      <p class="quip">${esc(pickDaily(v.id, VENT_QUIPS))}</p>
+      <div class="question">Проветрите тепличку минут на&nbsp;15–&#8288;30</div>
+      <div class="btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
+      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div>
+      <div class="hint">С каждым днём можно держать открытой чуть дольше.</div></div>`;
   });
 
   shown.forEach((p) => {
