@@ -61,9 +61,9 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 /* ---------- State ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотрите на меня внимательно 👀', 'Я тут, я расту!'];
 const TYPE_LABELS = {
-  soil: ['Сухо, полито', 'Ещё влажно'],
-  sphagnum: ['Сухо, полито', 'Ещё влажно'],
-  dry: ['Сухо, полито', 'Ещё влажно'],
+  soil: ['Было сухо, полито', 'Ещё влажно'],
+  sphagnum: ['Было сухо, полито', 'Ещё влажно'],
+  dry: ['Было сухо, полито', 'Ещё влажно'],
   bark: ['Да, полито', 'Ещё рано'],
   water: ['Вода сменена', 'Вода ещё чистая'],
 };
@@ -407,7 +407,7 @@ function viewToday() {
       <p class="quip">${esc(quipOf(p))}</p>
       <div class="question">${esc(q)}</div>
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
-      <button class="btn ok" data-act="wet" data-id="${esc(p.id)}">${I('check')}${no}</button></div>
+      <button class="btn" data-act="wet" data-id="${esc(p.id)}">${I('check')}${no}</button></div>
       <div class="hint">${esc(p.water || '')}</div>
       <button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button></div>`;
   });
