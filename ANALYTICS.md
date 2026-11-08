@@ -44,6 +44,7 @@ On every event:
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` |
 | `bonus_skipped` | bonus task snoozed | `kind` |
+| `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |

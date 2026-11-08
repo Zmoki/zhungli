@@ -85,6 +85,9 @@ button { cursor: pointer; }
 .hello { margin-bottom: 18px; }
 .hello .date { color: var(--muted); font-size: 15px; text-transform: lowercase; }
 .head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.head-btns { display: flex; gap: 8px; flex: none; }
+.icon-btn.has-new { position: relative; }
+.icon-btn.has-new::after { content: ''; position: absolute; top: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); border: 2px solid var(--bg); }
 .icon-btn {
   border: 1px solid var(--line); background: var(--card); border-radius: 50%;
   width: 40px; height: 40px; font-size: 18px; flex: none;
@@ -259,3 +262,10 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .linkish { border: 0; background: none; padding: 0; color: var(--green); font: inherit; text-decoration: underline; }
 .credit { text-align: center; margin-top: 20px; }
 .credit a { color: var(--green); }
+
+/* What's new */
+.news { margin: 18px 0 0; }
+.news h3 { margin: 0 0 6px; font-size: 17px; }
+.news ul { margin: 0; padding-left: 20px; }
+.news li { margin-bottom: 4px; }
+.news.current h3::after { content: 'у тебя'; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 99px; padding: 2px 8px; vertical-align: 2px; }

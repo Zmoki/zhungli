@@ -66,6 +66,7 @@ function load() {
 function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
+  if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
   s.v = 2;
   initBonus(s);
   return s;
@@ -295,7 +296,7 @@ function viewToday() {
   const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
   let html = `<header class="hello head-row"><div><h1>${greeting()}! 🌿</h1><div class="date">${esc(date)}</div></div>
-    <button class="icon-btn" data-act="settings" aria-label="Настройки">⚙️</button></header>`;
+    ${headButtons()}</header>`;
 
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   if (isIOS && !navigator.standalone && !S.hideInstall) {
@@ -384,7 +385,7 @@ function viewToday() {
 function viewPlants() {
   const ps = allPlants();
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
-    <button class="icon-btn" data-act="settings" aria-label="Настройки">⚙️</button></header>
+    ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">➕ Добавить растение</button>`;
   if (!ps.length) html += `<p class="muted" style="text-align:center;margin-top:24px">Пока пусто. Добавь первое растение — и джунгли начнутся 🌱</p>`;
   const groups = {};
@@ -686,6 +687,28 @@ function viewRoom() {
 }
 
 /* ---------- Settings and backup ---------- */
+// Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
+const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
+const headButtons = () => `<div class="head-btns">
+  <button class="icon-btn ${hasNews() ? 'has-new' : ''}" data-act="news" aria-label="Что нового">✨</button>
+  <button class="icon-btn" data-act="settings" aria-label="Настройки">⚙️</button></div>`;
+
+function openNews() {
+  const fresh = Number(APP_VERSION) >= CHANGELOG[0].v;
+  const date = (d) => parse(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-head"><div class="ava">✨</div><h2 style="margin:0">Что нового</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
+    <div class="info"><b>Твоя версия</b>${esc(APP_VERSION)}${fresh ? ' — самая свежая' : ''}</div>
+    ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
+      <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
+      <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}`;
+  track('news_opened', { had_new: hasNews() });
+  S.seen = APP_VERSION;
+  save();
+  openSheet();
+}
+
 function openSettings() {
   const lim = S.settings.limit;
   $('#sheet-body').innerHTML = `
@@ -707,7 +730,8 @@ function openSettings() {
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
-    <p class="small muted credit">Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
+    <p class="small muted credit">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>
+      Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
       Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a></p>`;
   openSheet();
 }
@@ -950,6 +974,7 @@ document.addEventListener('click', (e) => {
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
     case 'settings': openSettings(); break;
+    case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(); break;
     case 'pick': {
