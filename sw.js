@@ -1,7 +1,7 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Network first so updates arrive right away; cache when offline.
-const CACHE = 'zhungli-v18';
-const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'plants.js', 'changelog.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'zhungli-v19';
+const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'plants.js', 'shapes.js', 'changelog.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
