@@ -1,6 +1,6 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Network first so updates arrive right away; cache when offline.
-const CACHE = 'zhungli-v51';
+const CACHE = 'zhungli-v52';
 const ASSETS = ['./', 'style.css', 'app.js', 'plants.js', 'shapes.js', 'changelog.js', 'telegram.js', 'privacy', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'fonts/nunito-cyrillic.woff2', 'fonts/nunito-latin.woff2'];
 
 self.addEventListener('install', (e) => {
