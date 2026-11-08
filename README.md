@@ -10,7 +10,7 @@ A small PWA in Russian that shows a few plants to check each day and learns how 
 
 Data stays on the phone (localStorage + IndexedDB). Backup is in settings.
 
-Anonymous stats (which buttons are tapped, no plant names, nicknames or photos) go to PostHog via `functions/ingest/batch.js`. They can be turned off in settings. Events: [ANALYTICS.md](ANALYTICS.md).
+Anonymous stats (which buttons are tapped, no plant names, nicknames or photos) go to PostHog via `functions/ingest/batch.js`, without IP addresses. They can be turned off in settings. What users are told: `privacy.html`. Events: [ANALYTICS.md](ANALYTICS.md).
 
 Catalog: `plants.js`.
 

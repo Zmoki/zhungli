@@ -296,6 +296,14 @@ function ava(p, cls = 'ava') {
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
 }
 
+// One-time notice about anonymous stats (opt-out), shown until «Понятно» or «Выключить».
+function statsNotice() {
+  if (S.statsNotice || S.settings.stats === false) return '';
+  return `<div class="task bonus"><b>${I('lightbulb')}Анонимная статистика</b>
+    <p class="small muted" style="margin-top:6px">Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy.html">Подробнее</a></p>
+    <div class="btns" style="margin-top:10px"><button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button></div></div>`;
+}
+
 function viewToday() {
   const t = today();
   const log = S.log[t] || [];
@@ -330,10 +338,11 @@ function viewToday() {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2 style="margin:0 0 6px">Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
       <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить свои растения</button>
-      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
+      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>${statsNotice()}`;
   }
 
   if (total > 0) {
+    html += statsNotice();
     html += `<div class="progress"><div class="head-row"><b>${pending ? `Осталось ${pending} ${plural(pending, 'дело', 'дела', 'дел')}` : 'Всё на сегодня!'}</b>
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
   }
@@ -891,7 +900,7 @@ function viewRoom() {
 
 /* ---------- Settings and backup ---------- */
 // Author line at the bottom of settings and «Что нового».
-const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
+const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy.html">Конфиденциальность</a><br>
       Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
@@ -934,7 +943,8 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="small muted" style="margin-top:6px">Только какие кнопки нажимают и сколько растений — без названий, имён, фото и мест. Помогает понять, что улучшить.</p></div>
+      <p class="small muted" style="margin-top:6px">Какие кнопки нажимают, версия приложения, тип телефона, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy.html">Подробнее</a></p>
+      <p class="small muted">Номер устройства: <b>${esc(getAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p></div>
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попросите голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
@@ -1198,6 +1208,9 @@ document.addEventListener('click', (e) => {
       S.snooze[el.dataset.key] = addDays(today(), 3); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
+    case 'stats-ok': S.statsNotice = true; save(); render(); break;
+    case 'stats-off':
+      statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); break;
     case 'hide-telegram': S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); break;
     case 'settings': openSettings(); break;
     case 'news': openNews(); break;
