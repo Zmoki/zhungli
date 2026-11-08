@@ -15,7 +15,8 @@ const MINI_APP = (() => {
 // Report script errors to stats (message and place only), at most 5 per page load.
 let errorsSent = 0;
 function reportError(message, source, line) {
-  if (errorsSent >= 5) return;
+  // «Script error.» comes from scripts of other sites (e.g. extensions) and has no details.
+  if (errorsSent >= 5 || /^Script error\.?$/.test(String(message))) return;
   errorsSent++;
   try { track('js_error', { message: String(message || '').slice(0, 150), source: String(source || '').split('/').pop().split('?')[0], line: line || 0 }); } catch (e) { /* stats not ready yet */ }
 }
@@ -1124,6 +1125,7 @@ function deviceProps() {
     standalone: !!(navigator.standalone || matchMedia('(display-mode: standalone)').matches),
     in_telegram: IN_TELEGRAM,
     mini_app: MINI_APP,
+    ...(window.tgInfo || {}),
   };
 }
 function track(event, props = {}) {

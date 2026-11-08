@@ -24,6 +24,7 @@ On every event:
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
 | `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @ZhungliPlantsBot) |
+| `tg_version`, `tg_platform` | mini app: Telegram's Bot API version and client (ios, macos, tdesktop…) |
 | `$os`, `$device_type` | parsed from the user agent |
 | `$host`, `$current_url` | page origin and path |
 | `$lib` | `zhungli` |
@@ -47,6 +48,8 @@ On every event:
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
+| `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
+| `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse`; `error` (Telegram's error text) |
 | `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
 | `mini_app_link_clicked` | «Открыть» on the Telegram-browser hint (opens the mini app) | `has_plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |

@@ -16,6 +16,7 @@
     if (!tg) return;
     tg.ready();
     tg.expand();
+    window.tgInfo = { tg_version: tg.version, tg_platform: tg.platform };
 
     // Telegram's light/dark theme instead of the system one, and matching bars.
     const theme = () => {
@@ -62,8 +63,16 @@
   }
 
   /* ---------- Plants in Telegram CloudStorage ---------- */
-  // Values are limited to 4096 characters, so the state is saved as s0, s1, … plus sn (their count).
-  const CHUNK = 4000;
+  // Values are limited to 4096 (counted as bytes by some clients), so the state is saved
+  // as s0, s1, … plus sn (their count) in pieces of 1300 characters: under 4096 bytes for any text.
+  const CHUNK = 1300;
+  // Diagnostics without content: each kind of cloud error is reported once per launch.
+  const reported = new Set();
+  const cloudError = (op, err) => {
+    if (!err || reported.has(op)) return;
+    reported.add(op);
+    track('cloud_error', { op, error: String(err).slice(0, 80) });
+  };
   let cs = null;
   let cloudChunks = [];
   let timer;
@@ -95,10 +104,10 @@
     if (!plantsIn(S) && !hadPlants) { dirty = false; return; }
     // syncV marks copies written by this sync version (older versions could upload empty garbage).
     const chunks = split(JSON.stringify({ ...S, syncV: 2 }));
-    chunks.forEach((c, i) => { if (cloudChunks[i] !== c) cs.setItem('s' + i, c); });
+    chunks.forEach((c, i) => { if (cloudChunks[i] !== c) cs.setItem('s' + i, c, (err) => cloudError('write', err)); });
     const extra = cloudChunks.slice(chunks.length).map((_, i) => 's' + (chunks.length + i));
     if (extra.length) cs.removeItems(extra);
-    if (chunks.length !== cloudChunks.length) cs.setItem('sn', String(chunks.length));
+    if (chunks.length !== cloudChunks.length) cs.setItem('sn', String(chunks.length), (err) => cloudError('write', err));
     cloudChunks = chunks;
     cloudHasPlants = plantsIn(S) > 0;
     dirty = false;
@@ -106,22 +115,37 @@
 
   // Reads Telegram's copy and keeps the newer one: at start and every time the app comes back
   // (Telegram Desktop keeps the mini app open, so start alone isn't enough).
+  // What the first check at launch found, for diagnostics (no content).
+  let checked = false;
+  const report = (result, cloudPlants) => {
+    if (checked) return;
+    checked = true;
+    track('cloud_checked', { result, cloud_plants: cloudPlants, local_plants: plantsIn(S) });
+  };
   function pull() {
     cs.getItem('sn', (err, n) => {
-      const count = err ? 0 : Number(n) || 0;
-      if (!count) { cloudHasPlants = false; if (plantsIn(S)) { dirty = true; push(); } return; }
+      if (err) { cloudError('read', err); report('error', null); return; }
+      const count = Number(n) || 0;
+      if (!count) { cloudHasPlants = false; report(plantsIn(S) ? 'uploaded' : 'both_empty', 0); if (plantsIn(S)) { dirty = true; push(); } return; }
       const keys = Array.from({ length: count }, (_, i) => 's' + i);
       cs.getItems(keys, (err2, vals) => {
-        if (err2 || !vals) return;
+        if (err2 || !vals) { cloudError('read', err2 || 'no values'); report('error', null); return; }
         const chunks = keys.map((k) => vals[k] || '');
         let cloud = null;
-        try { cloud = JSON.parse(chunks.join('')); } catch (e) { return; /* damaged copy: keep this device's data */ }
+        try { cloud = JSON.parse(chunks.join('')); } catch (e) {
+          // Damaged copy (e.g. some pieces were rejected earlier): replace it with this device's plants.
+          cloudError('parse', `${count} chunks, ${chunks.filter((c) => !c).length} missing`);
+          report('damaged', null);
+          cloudChunks = chunks;
+          if (plantsIn(S)) { dirty = true; hadPlants = true; push(); }
+          return;
+        }
         cloudChunks = chunks;
         cloudHasPlants = plantsIn(cloud) > 0;
         const cloudAt = cloud.savedAt || 0;
         const localAt = S.savedAt || 0;
         if (cloudHasPlants && (!plantsIn(S) || cloudAt > localAt)) {
-          if (cloudAt === localAt && plantsIn(S)) return; // already the same
+          if (cloudAt === localAt && plantsIn(S)) { report('same', plantsIn(cloud)); return; } // already the same
           delete cloud.syncV;
           S = prepare(cloud);
           try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full */ }
@@ -129,12 +153,16 @@
           hadPlants = true;
           if (!sheet.open) render();
           toast('Растения загружены из Телеграма 🌿');
+          report('restored', plantsIn(cloud));
           track('cloud_restored', { plants: plantsIn(S) });
         } else if (plantsIn(S) && ((!cloudHasPlants && !cloud.syncV) || localAt > cloudAt)) {
           // An empty copy left by an older version never beats real plants;
           // an empty copy from this version means the plants were deleted on purpose.
+          report('uploaded', plantsIn(cloud));
           dirty = true;
           push();
+        } else {
+          report('same', plantsIn(cloud));
         }
       });
     });
