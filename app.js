@@ -309,7 +309,7 @@ function viewToday() {
   if (!allPlants().length) {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2 style="margin:0 0 6px">Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
-      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">➕ Добавить свои растения</button>
+      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">+ Добавить свои растения</button>
       <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
   }
 
@@ -338,7 +338,7 @@ function viewToday() {
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${yes}</button>
       <button class="btn ok" data-act="wet" data-id="${esc(p.id)}">${no}</button></div>
       <div class="hint">${esc(p.water || '')}</div>
-      <button class="later" data-act="later" data-id="${esc(p.id)}">⏭ Не сейчас, завтра</button></div>`;
+      <button class="later" data-act="later" data-id="${esc(p.id)}">⏭︎ Не сейчас, завтра</button></div>`;
   });
 
   if (!pending) {
@@ -387,7 +387,7 @@ function viewPlants() {
   const ps = allPlants();
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
     ${headButtons()}</header>
-    <button class="btn primary wide" data-act="add-plant">➕ Добавить растение</button>`;
+    <button class="btn primary wide" data-act="add-plant">+ Добавить растение</button>`;
   if (!ps.length) html += `<p class="muted" style="text-align:center;margin-top:24px">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
@@ -1120,7 +1120,7 @@ document.addEventListener('click', (e) => {
       undo = snapshot(); actWet(id); track('plant_checked', { answer: 'wet', ...kindOf(id) });
       afterTask(`Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo); break;
     case 'later':
-      undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭', undo); break;
+      undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭︎', undo); break;
     case 'vent-done':
       undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
       afterTask('Свежий воздух! 🌬️', undo); break;
