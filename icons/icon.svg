@@ -1,8 +1,18 @@
 <!-- Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#2f7d4f"/>
-  <path d="M256 430c0-120 0-200 0-250" stroke="#d9f2e1" stroke-width="22" stroke-linecap="round" fill="none"/>
-  <path d="M256 250C170 250 112 196 104 110c86 0 144 46 152 140z" fill="#a9e2bd"/>
-  <path d="M256 300c86 0 150-56 156-150-94 0-152 54-156 150z" fill="#e8f7ec"/>
-  <path d="M190 430h132l-14 -60H204z" fill="#f2c9a0"/>
+  <rect width="512" height="512" rx="112" fill="#ffc93c"/>
+  <circle cx="400" cy="108" r="150" fill="#ffe197"/>
+  <g transform="translate(76.8 88.4) scale(5.6)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 44C31 34 27 26 21 19M32 44c1-11 5-19 12-26M32 44V22" fill="none" stroke="#1f8a4c" stroke-width="2"/>
+    <path d="M21 20C11 18 6 9 10 3c8 1 14 7 13 15z" fill="#1f8a4c"/>
+    <path d="M44 19c9-3 14-11 11-17-8 0-14 6-13 14z" fill="#33b067"/>
+    <path d="M32 24c-8-4-10-13-5-19 3 2 5 4 5 4s2-2 5-4c5 6 3 15-5 19z" fill="#33b067"/>
+    <path d="M18.5 44h27l-2.6 14.2a2.6 2.6 0 0 1-2.6 2.1H23.7a2.6 2.6 0 0 1-2.6-2.1z" fill="#ff8a3d"/>
+    <rect x="16" y="40.5" width="32" height="6" rx="3" fill="#e2702a"/>
+    <ellipse cx="22" cy="49" rx="1.2" ry="2.6" fill="#ffffff" opacity=".35"/>
+    <ellipse cx="24.6" cy="53" rx="1.9" ry="1.1" fill="#ff6f9f" opacity=".6"/>
+    <ellipse cx="39.4" cy="53" rx="1.9" ry="1.1" fill="#ff6f9f" opacity=".6"/>
+    <path d="M26.2 50.6q1.8-2.4 3.6 0M34.2 50.6q1.8-2.4 3.6 0" fill="none" stroke="#2a2118" stroke-width="1.5"/>
+    <path d="M29.2 53h5.6q-.3 3-2.8 3t-2.8-3z" fill="#2a2118" stroke="#2a2118" stroke-width="1.5"/>
+  </g>
 </svg>
