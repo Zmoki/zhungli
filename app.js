@@ -352,7 +352,7 @@ function viewToday() {
       <div class="task-sub">минут на 15–30</div></div></div>
       <p class="quip">${esc(v.title === 'Коля' ? 'Это Коля. Приоткройте, дайте подышать. С каждым днём можно чуть дольше.' : 'Приоткройте, дайте подышать. С каждым днём можно чуть дольше.')}</p>
       <div class="btns" style="margin-top:12px"><button class="btn ok" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
-      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Теплички больше нет</button></div></div>`;
+      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div></div>`;
   });
 
   shown.forEach((p) => {
