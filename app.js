@@ -174,12 +174,13 @@ function lightStatus(p) {
 
 function mood(p) {
   const t = today();
-  if (p.lastWater === t) return ['droplet', 'напоили сегодня', 'fine'];
-  if (p.nextCheck <= t) return ['droplet', 'проверить', 'need'];
+  // Each status has its own color: watered blue, waiting amber, dark grey, too bright red, fine green.
+  if (p.lastWater === t) return ['laugh', 'напоили сегодня', 'watered'];
+  if (p.nextCheck <= t) return ['frown', 'проверить', 'need'];
   const ls = lightStatus(p);
-  if (ls === 'low') return ['sun-dim', 'темновато', 'warn'];
-  if (ls === 'high') return ['sun', 'слишком ярко', 'warn'];
-  return ['check', 'всё хорошо', 'fine'];
+  if (ls === 'low') return ['meh', 'темновато', 'dim'];
+  if (ls === 'high') return ['annoyed', 'слишком ярко', 'hot'];
+  return ['smile', 'всё хорошо', 'fine'];
 }
 
 function tempRange(p) {

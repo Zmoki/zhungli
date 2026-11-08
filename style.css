@@ -328,9 +328,11 @@ abbr[title] { text-decoration: none; }
 .h-ic .ic { color: var(--green); }
 .task.bonus > b { display: flex; align-items: center; gap: .4em; }
 /* Mood: icon + words, colored by state */
-:is(.mood, .mood-line).need { color: var(--blue); background: var(--blue-soft); }
+:is(.mood, .mood-line).watered { color: var(--blue); background: var(--blue-soft); }
+:is(.mood, .mood-line).need { color: var(--amber); background: var(--amber-soft); }
+:is(.mood, .mood-line).dim { color: var(--muted); background: var(--card); }
+:is(.mood, .mood-line).hot { color: var(--red); background: var(--red-soft); }
 :is(.mood, .mood-line).fine { color: var(--green); background: var(--green-soft); }
-:is(.mood, .mood-line).warn { color: var(--amber); background: var(--amber-soft); }
 .mood-line { display: inline-flex; align-items: center; gap: .3em; padding: 2px 8px; border-radius: 99px; margin-top: 4px; font-weight: 600; }
 /* Plant silhouettes (shapes.js) when there is no photo */
 svg.pl { display: block; }
