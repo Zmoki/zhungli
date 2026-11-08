@@ -150,7 +150,10 @@ button { cursor: pointer; }
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.9 20A9 9 0 1 0 4 16.1L2 22Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .question { font-weight: 600; margin: 12px 0 8px; }
-.btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 8px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Equal widths side by side; a button never splits its text, the row wraps instead.
+   fit-content: one line if it fits the row at all, else the text wraps inside. */
+.btns > .btn { flex: 1 1 0; min-width: fit-content; }
 .btn {
   border: 1.5px solid var(--edge); border-radius: 14px; padding: 12px 10px; font-weight: 600; font-size: 0.941rem;
   background: var(--card); color: var(--ink); min-height: 48px;
@@ -371,7 +374,9 @@ svg.pl { display: block; }
 .nm-pl svg.pl { width: 26px; height: 26px; }
 .nm-pl img { width: 100%; height: 100%; object-fit: cover; }
 /* Hint cards keep empty columns, so a lone button has the same size and place as in a pair */
-.hint-btns { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); margin-top: 10px; }
+.hint-btns { margin-top: 10px; }
+/* A lone hint button keeps the size and place it has in a pair. */
+.hint-btns > .btn:only-child { flex: 0 1 calc(50% - 4px); }
 
 /* Spacing helpers (no inline style attributes: the CSP forbids them) */
 .m-0 { margin: 0; } .mt-0 { margin-top: 0; } .mt-n4 { margin-top: -4px; }

@@ -329,7 +329,7 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
 function currentHint() {
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
-    const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть в Телеграме</a>`;
+    const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>`;
     if (!Object.keys(S.plants).length) {
       return hintCard('triangle-alert', 'Откройте Жунгли как приложение Телеграма',
         'Здесь, во встроенном браузере, растения могут потеряться. В приложении Телеграма они сохраняются в облаке и появятся на любом телефоне.',
