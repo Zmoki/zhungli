@@ -651,8 +651,8 @@ function openSettings() {
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
-    <p class="small muted credit">Сделала Зарема · <a href="https://zmoki.xyz/" target="_blank" rel="noopener">zmoki.xyz</a><br>
-      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" target="_blank" rel="noopener">@zmoki</a></p>`;
+    <p class="small muted credit">Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
+      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a></p>`;
   openSheet();
 }
 
@@ -842,6 +842,12 @@ function render() {
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }
+
+// Author links: send right away, the app may go to background.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-out]');
+  if (a) { track('author_link_clicked', { target: a.dataset.out }); flushStats(); }
+});
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act],[data-tab],[data-open]');
