@@ -1,5 +1,5 @@
 // Сначала сеть (чтобы обновления приходили сразу), без сети — из кэша.
-const CACHE = 'zhungli-v3';
+const CACHE = 'zhungli-v4';
 const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'plants.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

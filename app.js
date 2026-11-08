@@ -36,11 +36,11 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 /* ---------- Состояние ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотри на меня внимательно 👀', 'Я тут, я расту!'];
 const TYPE_LABELS = {
-  soil: ['Сухо — полила 💧', 'Ещё влажно 👌'],
-  sphagnum: ['Сухо — полила 💧', 'Ещё влажно 👌'],
-  dry: ['Сухо — полила 💧', 'Ещё влажно 👌'],
-  bark: ['Да — полила 💧', 'Ещё рано 👌'],
-  water: ['Сменила воду 💧', 'Вода ещё чистая 👌'],
+  soil: ['Сухо → полито 💧', 'Ещё влажно 👌'],
+  sphagnum: ['Сухо → полито 💧', 'Ещё влажно 👌'],
+  dry: ['Сухо → полито 💧', 'Ещё влажно 👌'],
+  bark: ['Да → полито 💧', 'Ещё рано 👌'],
+  water: ['Вода сменена 💧', 'Вода ещё чистая 👌'],
 };
 const TYPE_NAMES = { soil: 'Грунт', sphagnum: 'Сфагнум', bark: 'Кора (орхидеи)', dry: 'Сушить почти полностью', water: 'Черенки в воде' };
 
@@ -51,37 +51,72 @@ let PHOTOS = {};
 
 function blank() {
   return {
-    plants: {}, custom: {}, deleted: [], bonus: {}, snooze: {},
-    vent: { off: false, last: null }, room: null, log: {},
-    settings: { limit: 7 }, hideInstall: false, created: today(),
+    v: 2, plants: {}, custom: {}, bonus: {}, snooze: {}, room: null, log: {},
+    spots: [...SPOTS], settings: { limit: 7 }, hideInstall: false, created: today(),
   };
 }
 
 function load() {
-  let s = null;
-  try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* пусто */ }
-  s = Object.assign(blank(), s || {});
-  seed(s);
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* пусто */ }
+  return prepare(raw);
+}
+
+// Приводит сохранённые данные (или копию) к текущему формату.
+function prepare(raw) {
+  const s = Object.assign(blank(), raw || {});
+  if (raw && !raw.v) migrateV1(s);
+  s.v = 2;
+  initBonus(s);
   return s;
 }
 
-function seed(s) {
-  const t = today();
-  const fresh = PLANTS.filter((p) => !s.plants[p.id] && !s.deleted.includes(p.id)).sort((a, b) => a.every - b.every);
-  // Разносим первые проверки по дням, чтобы в первый день не было 30 дел сразу.
-  fresh.forEach((p, i) => {
-    s.plants[p.id] = runtime(p, addDays(t, Math.min(Math.floor(i / 6), p.every - 1)));
+// v1 — первая версия: коллекция из личного каталога создавалась сама.
+// Личные заметки переезжают в данные растений, чтобы каталог стал общим.
+function migrateV1(s) {
+  s.spots = [...LEGACY_SPOTS];
+  Object.entries(LEGACY_NOTES).forEach(([id, n]) => {
+    const r = s.plants[id];
+    if (!r) return;
+    const { species, ...own } = n;
+    if (species && !r.species) r.species = species;
+    if (Object.keys(own).length) r.own = { ...own, ...(r.own || {}) };
   });
-  let bigIdx = 0;
-  PLANTS.forEach((p) => {
-    if (p.big && !s.bonus['dust:' + p.id]) s.bonus['dust:' + p.id] = addDays(t, -19 + 2 * bigIdx++);
-    if (p.rotate && !s.bonus['rotate:' + p.id]) s.bonus['rotate:' + p.id] = addDays(t, -10);
+  const k = s.plants.kolya;
+  if (k && !(s.vent && s.vent.off)) { k.greenhouse = true; k.ventLast = s.vent ? s.vent.last : null; }
+  delete s.vent;
+  delete s.deleted;
+}
+
+function initBonus(s) {
+  const t = today();
+  Object.keys(s.plants).forEach((id, i) => {
+    const d = defIn(s, id);
+    if (!d) return;
+    if (d.big && !s.bonus['dust:' + id]) s.bonus['dust:' + id] = addDays(t, -19 + 2 * (i % 8));
+    if (d.rotate && !s.bonus['rotate:' + id]) s.bonus['rotate:' + id] = addDays(t, -10);
   });
   if (!s.bonus.feed) s.bonus.feed = addDays(t, -14);
 }
 
 function runtime(p, nextCheck) {
-  return { name: p.name || '', spot: p.spot || '', lux: null, interval: p.every, nextCheck, lastWater: null, wet: 0, repotted: !!p.repotted, hist: [] };
+  return { name: '', spot: '', lux: null, interval: p.every, nextCheck, lastWater: null, wet: 0, repotted: false, hist: [] };
+}
+
+// Добавляет растения из каталога. Первые проверки разносим по дням, чтобы не было 20 дел сразу.
+function addPlants(keys) {
+  const t = today();
+  const base = Date.now().toString(36);
+  const ids = [];
+  keys.map((k) => PLANTS.find((p) => p.id === k)).filter(Boolean)
+    .sort((a, b) => a.every - b.every)
+    .forEach((d, i) => {
+      const id = `p${base}${i}`;
+      S.plants[id] = { ...runtime(d, addDays(t, Math.min(Math.floor(i / 6), d.every - 1))), def: d.id };
+      ids.push(id);
+    });
+  initBonus(S);
+  return ids;
 }
 
 function save() {
@@ -91,14 +126,20 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не получилось сохранить 😢'); }
 }
 
-const def = (id) => PLANTS.find((p) => p.id === id) || S.custom[id];
+// Растение ссылается на карточку каталога через def; у старых растений id и есть карточка.
+function defIn(s, id) {
+  const r = s.plants[id];
+  const k = (r && r.def) || id;
+  return PLANTS.find((p) => p.id === k) || s.custom[k];
+}
+const def = (id) => defIn(S, id);
 function plant(id) {
   const d = def(id), r = S.plants[id];
   if (!d || !r) return null;
   // luxRange — норма из каталога, lux — замер люксметром.
-  // species — своё название, если задано, иначе из каталога.
+  // species — своё название, если задано, иначе из каталога. own — личные заметки поверх каталога.
   const species = r.species || d.species;
-  return { ...d, ...r, id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
+  return { ...d, ...(r.own || {}), ...r, id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
 }
 const allPlants = () => Object.keys(S.plants).map(plant).filter(Boolean);
 
@@ -141,7 +182,7 @@ function tempRange(p) {
   return m ? [Number(m[1]), Number(m[2])] : null;
 }
 
-const spotIdx = (s) => { const i = SPOTS.indexOf(s); return i === -1 ? (s ? SPOTS.length : 99) : i; };
+const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.spots.length : 99) : i; };
 const bySpot = (a, b) => spotIdx(a.spot) - spotIdx(b.spot) || a.title.localeCompare(b.title, 'ru');
 
 /* ---------- Задачи ---------- */
@@ -157,8 +198,7 @@ function dueChecks() {
 }
 
 function ventDue() {
-  if (S.vent.off || S.vent.last === today()) return null;
-  return allPlants().find((p) => p.ventilate) || null;
+  return allPlants().filter((p) => p.greenhouse && p.ventLast !== today());
 }
 
 function bonusTasks() {
@@ -222,7 +262,7 @@ function pendingCount() {
   const due = dueChecks();
   const done = (S.log[today()] || []).filter((e) => e.a === 'water' || e.a === 'wet').length;
   const room = showAll ? due.length : Math.max(0, Math.min(due.length, S.settings.limit - done));
-  return room + (ventDue() ? 1 : 0);
+  return room + ventDue().length;
 }
 
 /* ---------- Сегодня ---------- */
@@ -247,8 +287,8 @@ function viewToday() {
   const room = showAll ? due.length : Math.max(0, S.settings.limit - doneChecks);
   const shown = due.slice(0, room).sort(bySpot);
   const waiting = due.length - shown.length;
-  const vent = ventDue();
-  const pending = shown.length + (vent ? 1 : 0);
+  const vents = ventDue();
+  const pending = shown.length + vents.length;
   const doneMain = log.filter((e) => e.a !== 'later' && !String(e.a).startsWith('bonus')).length;
   const total = pending + doneMain;
   const pct = total ? Math.round((doneMain / total) * 100) : 100;
@@ -261,7 +301,14 @@ function viewToday() {
   if (isIOS && !navigator.standalone && !S.hideInstall) {
     html += `<div class="task bonus"><b>📲 Добавь меня на экран «Домой»</b>
       <p class="small muted" style="margin-top:6px">Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт твои отметки, если пару недель не заходить.</p>
-      <button class="btn ghost" data-act="hide-install">Уже добавила</button></div>`;
+      <button class="btn ghost" data-act="hide-install">Уже на экране</button></div>`;
+  }
+
+  if (!allPlants().length) {
+    return html + `<div class="celebrate"><div class="big">🌱</div><h2 style="margin:0 0 6px">Привет! Это Жунгли</h2>
+      <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
+      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">➕ Добавить свои растения</button>
+      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
   }
 
   if (total > 0) {
@@ -269,13 +316,13 @@ function viewToday() {
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
   }
 
-  if (vent) {
-    html += `<div class="task"><div class="task-top">${ava(vent)}<div><div class="task-name">Проветри тепличку: ${esc(vent.title)}</div>
+  vents.forEach((v) => {
+    html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">Проветри тепличку: ${esc(v.title)}</div>
       <div class="task-sub">минут на 15–30</div></div></div>
-      <p class="quip">${esc(vent.title === 'Коля' ? 'Это Коля. Приоткрой, дай подышать. С каждым днём можно чуть дольше.' : 'Приоткрой тепличку, дай подышать.')}</p>
-      <div class="btns" style="margin-top:12px"><button class="btn ok" data-act="vent-done">Проветрила ✅</button>
-      <button class="btn" data-act="vent-off">Теплички больше нет 🎉</button></div></div>`;
-  }
+      <p class="quip">${esc(v.title === 'Коля' ? 'Это Коля. Приоткрой, дай подышать. С каждым днём можно чуть дольше.' : 'Приоткрой, дай подышать. С каждым днём можно чуть дольше.')}</p>
+      <div class="btns" style="margin-top:12px"><button class="btn ok" data-act="vent-done" data-id="${esc(v.id)}">Проветрено ✅</button>
+      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Теплички больше нет 🎉</button></div></div>`;
+  });
 
   shown.forEach((p) => {
     const [yes, no] = TYPE_LABELS[p.type] || TYPE_LABELS.soil;
@@ -320,7 +367,7 @@ function viewToday() {
 
   const doneRows = log.filter((e) => e.a !== 'later');
   if (doneRows.length) {
-    const label = { water: 'полила 💧', wet: 'ещё влажно 👌', vent: 'проветрила 🌬️', bonus: 'сделано ✨' };
+    const label = { water: 'полито 💧', wet: 'ещё влажно 👌', vent: 'проветрено 🌬️', bonus: 'сделано ✨' };
     html += `<details><summary class="group-title" style="cursor:pointer">Уже сделано сегодня · ${doneRows.length}</summary>`;
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
@@ -339,6 +386,7 @@ function viewPlants() {
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
     <button class="icon-btn" data-act="settings" aria-label="Настройки">⚙️</button></header>
     <button class="btn primary wide" data-act="add-plant">➕ Добавить растение</button>`;
+  if (!ps.length) html += `<p class="muted" style="text-align:center;margin-top:24px">Пока пусто. Добавь первое растение — и джунгли начнутся 🌱</p>`;
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
@@ -359,8 +407,8 @@ function openPlant(id) {
   if (!p) return;
   const [m, mt] = mood(p);
   const ls = lightStatus(p);
-  const hist = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полила 💧' : 'ещё влажно 👌'}`).join('<br>');
-  const spots = [...new Set([...SPOTS, ...allPlants().map((x) => x.spot).filter(Boolean)])];
+  const hist = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив 💧' : 'ещё влажно 👌'}`).join('<br>');
+  const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const pic = PHOTOS[p.id] ? `<img src="${PHOTOS[p.id]}" alt="">` : esc(p.emoji || '🪴');
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
@@ -369,7 +417,7 @@ function openPlant(id) {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
     <p class="quip" style="margin-top:0">${esc(quipOf(p))}</p>
     <div class="info"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
-    <button class="btn water wide" data-act="water-now" data-id="${esc(id)}" style="margin:4px 0 18px">💧 Полила сейчас</button>
+    <button class="btn water wide" data-act="water-now" data-id="${esc(id)}" style="margin:4px 0 18px">💧 Записать полив</button>
 
     <div class="field"><label>Имя</label><input class="input" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумай имя, например Коля" maxlength="40"></div>
     <div class="field"><label>Название (вид, сорт)</label><input class="input" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
@@ -387,7 +435,8 @@ function openPlant(id) {
       <button data-act="int-plus" data-id="${esc(id)}">＋</button></div>
       <p class="small muted" style="margin-top:6px">Подстраивается само по твоим ответам «сухо / влажно».</p></div>
 
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" ${p.repotted ? 'checked' : ''}> Недавно пересажена — без подкормки</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" ${p.repotted ? 'checked' : ''}> Недавно пересажено — без подкормки</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
     ${p.water ? `<div class="info"><b>Как поливать</b>${esc(p.water)}</div>` : ''}
@@ -395,13 +444,54 @@ function openPlant(id) {
     ${p.cond ? `<div class="info"><b>Условия</b>${esc(p.cond)}</div>` : ''}
     ${p.tip ? `<div class="info"><b>Важно</b>${esc(p.tip)}</div>` : ''}
     ${p.toxic ? `<div class="info"><b>⚠️ Осторожно</b>Сок раздражает кожу и слизистые. Работай в перчатках.</div>` : ''}
-    ${p.extra ? `<p class="small muted">Этой карточки нет в каталоге — данные примерные, поправь, если знаешь лучше.</p>` : ''}
+    ${p.generic ? `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по твоим ответам.</p>` : ''}
     ${hist ? `<h2>История</h2><p class="history">${hist}</p>` : ''}
     <button class="btn danger wide" data-act="delete" data-id="${esc(id)}" style="margin-top:20px">Убрать из коллекции</button>`;
   openSheet();
 }
 
+// Выбор из каталога: можно отметить сразу несколько.
+let picked = new Set();
+function pickRow(d) {
+  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
+  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc((d.species + ' ' + (d.hint || '') + ' ' + d.cat).toLowerCase())}">
+    <span class="pe">${esc(d.emoji)}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">＋</span></button>`;
+}
 function openAdd() {
+  picked = new Set();
+  const groups = {};
+  PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
+  const cats = Object.keys(groups).sort((a, b) => (a === 'Общие типы') - (b === 'Общие типы'));
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-head"><div class="ava">🪴</div><h2 style="margin:0">Добавить растения</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
+    <input class="input" id="pick-q" type="search" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
+    <p class="small muted" style="margin:8px 0 0">Отметь все свои растения. Если твоего нет — выбери похожий общий тип.</p>
+    ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
+      ${groups[c].map(pickRow).join('')}</div>`).join('')}
+    <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выбери общий тип или создай своё.</p>
+    <button class="btn ghost wide" data-act="add-custom" style="margin-top:12px">✏️ Своё растение с нуля</button>
+    <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметь растения</button></div>`;
+  $('#pick-q').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    let any = false;
+    document.querySelectorAll('.pick-group').forEach((g) => {
+      let n = 0;
+      g.querySelectorAll('.pick').forEach((b) => { const on = !q || b.dataset.q.includes(q); b.hidden = !on; if (on) n++; });
+      g.hidden = !n; any ||= n > 0;
+    });
+    $('#pick-none').hidden = any;
+  });
+  openSheet();
+}
+function updatePickBar() {
+  const n = picked.size;
+  const b = $('#pick-add');
+  b.disabled = !n;
+  b.textContent = n ? `Добавить ${n} ${plural(n, 'растение', 'растения', 'растений')} 🌱` : 'Отметь растения';
+}
+
+function openCustom() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava">🪴</div><h2 style="margin:0">Новое растение</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
@@ -470,11 +560,11 @@ function lightIdeas() {
         ${esc(L.title)}: сейчас ${kLux(L.lux)} лк, нужно от ${kLux(L.luxRange[0])}.<br>
         ${esc(H.title)}: сейчас ${kLux(H.lux)} лк, хватит и ${kLux(L.lux)}.`);
     } else {
-      out.push(`🔦 <b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} лк, нужно от ${kLux(L.luxRange[0])}. Подвинь ближе к лампе или добавь часов досветки.`);
+      out.push(`🔦 <b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} лк, нужно от ${kLux(L.luxRange[0])}. Подвинь ближе к окну или лампе, или добавь часов досветки.`);
     }
   });
   highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(`🕶️ <b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} лк, нужно до ${kLux(H.luxRange[1])}. Отодвинь от лампы, чтобы не обжечь листья.`);
+    if (!used.has(H.id)) out.push(`🕶️ <b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} лк, нужно до ${kLux(H.luxRange[1])}. Отодвинь от лампы или прямого солнца, чтобы не обжечь листья.`);
   });
   if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
   return out.map((t) => `<div class="idea">${t}</div>`).join('');
@@ -484,7 +574,7 @@ function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
   const measured = ps.filter((p) => p.lux).length;
   return `<header class="hello"><h1>Свет 💡</h1><div class="date">замерено ${measured} из ${ps.length}</div></header>
-    <p class="small muted">Замеряй люксметром у листьев, когда лампы работают как обычно. Впиши цифру — подскажу, кому темно, а кого лучше переставить.</p>
+    <p class="small muted">Замеряй люксметром у листьев днём, при обычном свете. Впиши цифру — подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
     <div id="ideas">${lightIdeas()}</div>
     <h2>От самых светолюбивых</h2>
     ${ps.map(lightRow).join('')}`;
@@ -497,16 +587,16 @@ function viewRoom() {
   const ranges = ps.map((p) => [p, tempRange(p)]).filter(([, t]) => t);
   const lo = Math.max(...ranges.map(([, t]) => t[0]));
   const hi = Math.min(...ranges.map(([, t]) => t[1]));
+  const humidOnes = ps.filter((p) => p.humid || p.cat === 'Алоказии' || p.cat === 'Стромантовые').map((p) => p.title);
   let status = '';
   if (r) {
     const notes = [];
     const cold = ranges.filter(([, t]) => r.t < t[0]).map(([p]) => p.title);
     const hot = ranges.filter(([, t]) => r.t > t[1]).map(([p]) => p.title);
-    if (cold.length) notes.push(`🥶 Прохладно для: ${cold.join(', ')}. Включи обогреватель.`);
-    if (hot.length) notes.push(`🥵 Жарковато для: ${hot.join(', ')}. Проветри или убавь обогреватель.`);
+    if (cold.length) notes.push(`🥶 Прохладно для: ${cold.join(', ')}. Убери от холодного окна или включи обогреватель.`);
+    if (hot.length) notes.push(`🥵 Жарковато для: ${hot.join(', ')}. Проветри или отодвинь от батареи.`);
     if (r.h < 50) {
-      const dry = ps.filter((p) => p.humid || p.cat === 'Алоказии').map((p) => p.title);
-      notes.push(`🏜️ Сухо (${r.h}%). Включи увлажнитель — особенно страдают ${dry.join(', ')}.`);
+      notes.push(`🏜️ Сухо (${r.h}%). Включи увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.join(', ')}` : ''}.`);
     }
     if (r.h > 75) notes.push(`💦 Очень влажно (${r.h}%). Проветри: сырость и застой воздуха — путь к грибкам, следи за сфагнумом.`);
     status = notes.length
@@ -524,18 +614,18 @@ function viewRoom() {
     </div>
     <button class="btn primary wide" data-act="room-save" style="margin-top:10px">Записать</button>
     ${status}
-    <h2>Чтобы было удобно всем</h2>
-    <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем, включая теплолюбивый банан.` : 'Общего диапазона нет — смотри условия в карточках.'}</div>
-    <div class="info"><b>Влажность</b>50–70%. Ниже — сохнут кончики у строманты, ктенанты, алоказий и пальмы. Выше 75% без проветривания — риск грибков.</div>
+    ${ranges.length ? `<h2>Чтобы было удобно всем</h2>
+    <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем твоим растениям.` : 'Общего диапазона нет — смотри условия в карточках.'}</div>
+    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Ниже — сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания — риск грибков.</div>` : ''}
 
-    <h2>🗣️ Сценарии для Алисы</h2>
-    <p class="small muted">Настраиваются в приложении «Дом с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к Алисе.</p>
+    <h2>🗣️ Если есть умный дом</h2>
+    <p class="small muted">Например, в «Доме с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к умному дому.</p>
     <div class="scenario"><span>⏰</span><div><b>Каждый день в 10:00</b> → Алиса говорит: «Пора заглянуть в Жунгли! Растения ждут» 🌿</div></div>
     <div class="scenario"><span>💧</span><div><b>Влажность ниже 50%</b> → включить увлажнитель</div></div>
     <div class="scenario"><span>🛑</span><div><b>Влажность выше 70%</b> → выключить увлажнитель</div></div>
     <div class="scenario"><span>🔥</span><div><b>Температура ниже 21 °C</b> → включить обогреватель</div></div>
     <div class="scenario"><span>❄️</span><div><b>Температура выше 25 °C</b> → выключить обогреватель</div></div>
-    <div class="scenario"><span>💡</span><div><b>Фитолампы через умную розетку:</b> включать в 8:00, выключать в 21:00 — 12–14 часов света в день, без ночного досвета.</div></div>`;
+    <div class="scenario"><span>💡</span><div><b>Фитолампы через умную розетку, если есть:</b> включать в 8:00, выключать в 21:00 — 12–14 часов света в день, без ночного досвета.</div></div>`;
 }
 
 /* ---------- Настройки и бэкап ---------- */
@@ -547,11 +637,15 @@ function openSettings() {
     <div class="field"><label>Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="small muted" style="margin-top:6px">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
+    <h2>Места</h2>
+    <p class="small muted">Где стоят растения. Нажми на место, чтобы убрать его из списка.</p>
+    <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}">${esc(sp)} ✕</button>`).join('')}
+      <button class="chip" data-act="spot-add">＋ место</button></div>
     <h2>Резервная копия</h2>
     <p class="small muted">Все отметки и фото живут только на этом телефоне. Раз в месяц сохраняй копию в «Файлы» или отправь себе в Телеграм.</p>
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Напоминание</h2>
-    <p class="small muted">Попроси Алису: «Алиса, напоминай каждый день в 10 утра проверить растения». Или в iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли».</p>
+    <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>`;
   openSheet();
 }
@@ -575,8 +669,7 @@ async function doImport(file) {
     const data = JSON.parse(await file.text());
     if (data.app !== 'zhungli' || !data.state) throw new Error('bad');
     if (!confirm('Заменить текущие данные копией от ' + new Date(data.at).toLocaleDateString('ru-RU') + '?')) return;
-    S = Object.assign(blank(), data.state);
-    seed(S);
+    S = prepare(data.state);
     save();
     await idbReq((st) => st.clear(), 'readwrite');
     for (const [id, url] of Object.entries(data.photos || {})) await idbReq((st) => st.put(url, id), 'readwrite');
@@ -678,7 +771,7 @@ function confetti() {
   }
 }
 
-const WATER_CHEERS = ['Напоила! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
+const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
 function afterTask(msg, undo) {
   save();
   const before = document.querySelectorAll('.task:not(.bonus):not(.done-row)').length;
@@ -716,11 +809,11 @@ document.addEventListener('click', (e) => {
     case 'later':
       undo = snapshot(); actLater(id); afterTask('Перенесено на завтра ⏭', undo); break;
     case 'vent-done':
-      undo = snapshot(); S.vent.last = today(); logToday({ id: allPlants().find((p) => p.ventilate)?.id, a: 'vent' });
+      undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' });
       afterTask('Свежий воздух! 🌬️', undo); break;
     case 'vent-off':
       if (confirm('Тепличка больше не нужна? Больше не буду напоминать проветривать.')) {
-        undo = snapshot(); S.vent.off = true; afterTask('Ура, Коля стал взрослым! 🎉', undo);
+        undo = snapshot(); S.plants[id].greenhouse = false; afterTask('Ура, без теплички! 🎉', undo);
       }
       break;
     case 'bonus-done': {
@@ -736,6 +829,28 @@ document.addEventListener('click', (e) => {
     case 'hide-install': S.hideInstall = true; save(); render(); break;
     case 'settings': openSettings(); break;
     case 'add-plant': openAdd(); break;
+    case 'add-custom': openCustom(); break;
+    case 'pick': {
+      const k = el.dataset.key;
+      if (picked.has(k)) picked.delete(k); else picked.add(k);
+      el.classList.toggle('on', picked.has(k));
+      el.querySelector('.pc').textContent = picked.has(k) ? '✓' : '＋';
+      updatePickBar(); break;
+    }
+    case 'pick-add': {
+      const ids = addPlants([...picked]);
+      save();
+      if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дай имя и выбери место 🌱'); break; }
+      tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
+      toast(`Добавлено ${ids.length} ${plural(ids.length, 'растение', 'растения', 'растений')} 🌱 Открой каждое, чтобы выбрать место`); break;
+    }
+    case 'spot-del':
+      S.spots = S.spots.filter((x) => x !== el.dataset.spot); save(); openSettings(); break;
+    case 'spot-add': {
+      const sp = prompt('Как называется место?');
+      if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); }
+      break;
+    }
     case 'close': closeSheet(); break;
     case 'photo': photoFor = id; $('#photo-input').click(); break;
     case 'water-now':
@@ -745,7 +860,7 @@ document.addEventListener('click', (e) => {
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
     case 'spot-new': {
       const s = prompt('Как называется место?');
-      if (s && s.trim()) { S.plants[id].spot = s.trim(); save(); openPlant(id); }
+      if (s && s.trim()) { S.plants[id].spot = s.trim(); if (!S.spots.includes(s.trim())) S.spots.push(s.trim()); save(); openPlant(id); }
       break;
     }
     case 'int-minus':
@@ -762,8 +877,9 @@ document.addEventListener('click', (e) => {
     case 'delete':
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
-        if (S.custom[id]) delete S.custom[id]; else S.deleted.push(id);
         delete PHOTOS[id];
+        // Карточка «своего» растения больше никому не нужна.
+        if (S.custom[id]) delete S.custom[id];
         idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
         save(); closeSheet(); toast('Убрано 🍂');
       }
@@ -808,6 +924,7 @@ document.addEventListener('change', (e) => {
     $('#sh-species').textContent = p.species;
   }
   if (f === 'repotted') r.repotted = el.checked;
+  if (f === 'greenhouse') r.greenhouse = el.checked;
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
