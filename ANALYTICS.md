@@ -23,7 +23,7 @@ On every event:
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
-| `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @ZhungliBot) |
+| `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @ZhungliPlantsBot) |
 | `$os`, `$device_type` | parsed from the user agent |
 | `$host`, `$current_url` | page origin and path |
 | `$lib` | `zhungli` |
