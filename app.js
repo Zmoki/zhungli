@@ -402,9 +402,69 @@ function viewPlants() {
   return html;
 }
 
+// Cheat sheet: catalog tips (edits and removals go to r.own, '' = removed)
+// plus the user's own notes in r.notes.
+const NOTE_KEYS = [['water', 'Как поливать'], ['soil', 'Субстрат'], ['cond', 'Условия'], ['tip', 'Важно']];
+let noteEdit = null; // key of the note being edited: 'water' … 'tip', 'n0' … or 'new'
+const isCustom = (id) => !!S.custom[(S.plants[id] && S.plants[id].def) || id];
+
+function cheatHtml(id) {
+  const p = plant(id), r = S.plants[id], d = def(id);
+  const items = [
+    ...NOTE_KEYS.filter(([k]) => p[k]).map(([k, label]) => ({ key: k, label, text: p[k] })),
+    ...(r.notes || []).map((text, i) => ({ key: 'n' + i, label: 'Заметка', text })),
+  ];
+  if (noteEdit === 'new') items.push({ key: 'new', label: 'Новая заметка', text: '' });
+  let html = items.map((it) => {
+    if (noteEdit !== it.key) {
+      return `<button class="info note" data-act="note-edit" data-id="${esc(id)}" data-key="${it.key}"><b>${esc(it.label)} <span class="pen">✎</span></b>${esc(it.text)}</button>`;
+    }
+    const edited = NOTE_KEYS.some(([k]) => k === it.key) && !isCustom(id) && d[it.key] && r.own && r.own[it.key] !== undefined;
+    return `<div class="info note-form"><b>${esc(it.label)}</b>
+      <textarea class="input" id="note-text" rows="4" placeholder="Что важно помнить">${esc(it.text)}</textarea>
+      <div class="btns" style="margin-top:8px"><button class="btn ok" data-act="note-save" data-id="${esc(id)}" data-key="${it.key}">Сохранить</button>
+        <button class="btn ghost" data-act="note-cancel" data-id="${esc(id)}">Отмена</button></div>
+      <p class="small note-links">${it.key !== 'new' ? `<button class="linkish danger-link" data-act="note-del" data-id="${esc(id)}" data-key="${it.key}">Удалить</button>` : ''}
+        ${edited ? `<button class="linkish" data-act="note-reset" data-id="${esc(id)}" data-key="${it.key}">Вернуть как в каталоге</button>` : ''}</p></div>`;
+  }).join('');
+  if (noteEdit !== 'new') html += `<button class="chip" data-act="note-edit" data-id="${esc(id)}" data-key="new">＋ заметка</button>`;
+  const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
+  if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
+  if (p.toxic) html += `<div class="info"><b>⚠️ Осторожно</b>Сок раздражает кожу и слизистые. Работай в перчатках.</div>`;
+  if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по твоим ответам.</p>`;
+  return html;
+}
+function refreshCheat(id) {
+  const box = $('#cheat');
+  if (!box) return;
+  box.innerHTML = cheatHtml(id);
+  const ta = $('#note-text');
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+// Writes a note: text '' removes it. Returns the analytics action.
+function setNote(id, key, text) {
+  const r = S.plants[id];
+  if (key === 'new') { if (!text) return null; r.notes = [...(r.notes || []), text]; return 'add'; }
+  if (key[0] === 'n') {
+    const i = Number(key.slice(1));
+    r.notes = r.notes || [];
+    if (text) r.notes[i] = text; else r.notes.splice(i, 1);
+    if (!r.notes.length) delete r.notes;
+    return text ? 'edit' : 'remove';
+  }
+  r.own = r.own || {};
+  const cat = def(id)[key] || '';
+  // '' hides a catalog tip; a personal tip with nothing behind it is simply dropped.
+  if (text === cat || (!text && !cat)) delete r.own[key]; else r.own[key] = text;
+  if (!Object.keys(r.own).length) delete r.own;
+  return text ? 'edit' : 'remove';
+}
+const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
+
 function openPlant(id) {
   const p = plant(id);
   if (!p) return;
+  noteEdit = null;
   const [m, mt] = mood(p);
   const ls = lightStatus(p);
   const hist = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив 💧' : 'ещё влажно 👌'}`).join('<br>');
@@ -439,12 +499,8 @@ function openPlant(id) {
     <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
-    ${p.water ? `<div class="info"><b>Как поливать</b>${esc(p.water)}</div>` : ''}
-    ${p.soil ? `<div class="info"><b>Субстрат</b>${esc(p.soil)}</div>` : ''}
-    ${p.cond ? `<div class="info"><b>Условия</b>${esc(p.cond)}</div>` : ''}
-    ${p.tip ? `<div class="info"><b>Важно</b>${esc(p.tip)}</div>` : ''}
-    ${p.toxic ? `<div class="info"><b>⚠️ Осторожно</b>Сок раздражает кожу и слизистые. Работай в перчатках.</div>` : ''}
-    ${p.generic ? `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по твоим ответам.</p>` : ''}
+    <p class="small muted" style="margin-top:-4px">Нажми на совет, чтобы поправить или удалить.</p>
+    <div id="cheat">${cheatHtml(id)}</div>
     ${hist ? `<h2>История</h2><p class="history">${hist}</p>` : ''}
     <button class="btn danger wide" data-act="delete" data-id="${esc(id)}" style="margin-top:20px">Убрать из коллекции</button>`;
   openSheet();
@@ -929,6 +985,31 @@ document.addEventListener('click', (e) => {
       const s = prompt('Как называется место?');
       if (s && s.trim()) { S.plants[id].spot = s.trim(); if (!S.spots.includes(s.trim())) S.spots.push(s.trim()); save(); openPlant(id); }
       break;
+    }
+    case 'note-edit': noteEdit = el.dataset.key; refreshCheat(id); break;
+    case 'note-cancel': noteEdit = null; refreshCheat(id); break;
+    case 'note-save':
+    case 'note-del': {
+      const key = el.dataset.key;
+      const text = act === 'note-del' ? '' : $('#note-text').value.trim();
+      if (act === 'note-del' && (key[0] === 'n' || !def(id)[key]) && !confirm('Удалить заметку?')) break;
+      const action = setNote(id, key, text);
+      if (action) track('note_changed', { action, note: noteKind(key) });
+      noteEdit = null; save(); refreshCheat(id); break;
+    }
+    case 'note-reset': {
+      const r = S.plants[id];
+      delete r.own[el.dataset.key];
+      if (!Object.keys(r.own).length) delete r.own;
+      track('note_changed', { action: 'reset', note: el.dataset.key });
+      noteEdit = null; save(); refreshCheat(id); break;
+    }
+    case 'note-restore': {
+      const r = S.plants[id];
+      NOTE_KEYS.forEach(([k]) => { if (r.own && r.own[k] === '') delete r.own[k]; });
+      if (r.own && !Object.keys(r.own).length) delete r.own;
+      track('note_changed', { action: 'restore', note: 'catalog' });
+      save(); refreshCheat(id); break;
     }
     case 'int-minus':
     case 'int-plus': {

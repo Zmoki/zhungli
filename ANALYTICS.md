@@ -37,6 +37,7 @@ On every event:
 | `plant_deleted` | plant deleted | — |
 | `plant_named` | nickname set | — |
 | `photo_added` | photo added to a plant | — |
+| `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back); `note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` |
 | `lux_entered` | lux reading saved | `from`: `light_tab` / `card` |
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
