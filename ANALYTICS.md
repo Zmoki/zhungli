@@ -52,7 +52,7 @@ On every event:
 | `backup_exported` | backup downloaded | — |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
-| `author_link_clicked` | author link in settings | `target`: `website` / `telegram` |
+| `author_link_clicked` | author link in settings or «Что нового» | `target`: `website` / `telegram` |
 
 ## Adding an event
 

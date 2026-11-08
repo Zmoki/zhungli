@@ -687,6 +687,10 @@ function viewRoom() {
 }
 
 /* ---------- Settings and backup ---------- */
+// Author line at the bottom of settings and «Что нового».
+const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
+      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
+
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
 const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
 const headButtons = () => `<div class="head-btns">
@@ -702,7 +706,8 @@ function openNews() {
     <div class="info"><b>Твоя версия</b>${esc(APP_VERSION)}${fresh ? ' — самая свежая' : ''}</div>
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
-      <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}`;
+      <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
+    <p class="small muted credit">${AUTHOR}</p>`;
   track('news_opened', { had_new: hasNews() });
   S.seen = APP_VERSION;
   save();
@@ -730,9 +735,7 @@ function openSettings() {
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
-    <p class="small muted credit">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>
-      Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a><br>
-      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a></p>`;
+    <p class="small muted credit">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
   openSheet();
 }
 
