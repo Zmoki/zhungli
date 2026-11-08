@@ -30,6 +30,7 @@ function rel(d) {
   if (n === -1) return 'вчера';
   return n > 0 ? `через ${days(n)}` : `${days(-n)} назад`;
 }
+const LK = '<abbr title="люкс">лк</abbr>';
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} тыс`;
 const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
@@ -359,7 +360,7 @@ function viewToday() {
   if (bonus.length) {
     html += `<h2>✨ Если есть силы</h2>`;
     bonus.forEach((b) => {
-      html += `<div class="task bonus"><div class="task-top">${b.p ? ava(b.p) : `<div class="ava">${b.emoji}</div>`}<div>
+      html += `<div class="task bonus"><div class="task-top">${b.p ? ava(b.p) : `<div class="ava" aria-hidden="true">${b.emoji}</div>`}<div>
         <div class="task-name">${esc(b.title)}</div></div></div><p class="small muted" style="margin:8px 0 10px">${esc(b.sub)}</p>
         <div class="btns"><button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">Готово ✅</button>
         <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button></div></div>`;
@@ -373,7 +374,7 @@ function viewToday() {
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
       const what = e.title || (p ? p.title : '');
-      html += `<div class="task done-row">${p ? ava(p) : '<div class="ava">✨</div>'}<div style="flex:1">${esc(what)}</div>
+      html += `<div class="task done-row">${p ? ava(p) : '<div class="ava" aria-hidden="true">✨</div>'}<div style="flex:1">${esc(what)}</div>
         <span class="muted small">${label[String(e.a).split(':')[0]] || ''}</span></div>`;
     });
     html += `</details>`;
@@ -418,11 +419,11 @@ function cheatHtml(id) {
   if (noteEdit === 'new') items.push({ key: 'new', label: 'Новая заметка', text: '' });
   let html = items.map((it) => {
     if (noteEdit !== it.key) {
-      return `<button class="info note" data-act="note-edit" data-id="${esc(id)}" data-key="${it.key}"><b>${esc(it.label)} <span class="pen">✎</span></b>${esc(it.text)}</button>`;
+      return `<button class="info note" data-act="note-edit" data-id="${esc(id)}" data-key="${it.key}"><b>${esc(it.label)} <span class="pen" aria-hidden="true">✎</span></b>${esc(it.text)}</button>`;
     }
     const edited = NOTE_KEYS.some(([k]) => k === it.key) && !isCustom(id) && d[it.key] && r.own && r.own[it.key] !== undefined;
     return `<div class="info note-form"><b>${esc(it.label)}</b>
-      <textarea class="input" id="note-text" rows="4" placeholder="Что важно помнить">${esc(it.text)}</textarea>
+      <textarea class="input" id="note-text" rows="4" aria-label="${esc(it.label)}" placeholder="Что важно помнить">${esc(it.text)}</textarea>
       <div class="btns" style="margin-top:8px"><button class="btn ok" data-act="note-save" data-id="${esc(id)}" data-key="${it.key}">Сохранить</button>
         <button class="btn ghost" data-act="note-cancel" data-id="${esc(id)}">Отмена</button></div>
       <p class="small note-links">${it.key !== 'new' ? `<button class="linkish danger-link" data-act="note-del" data-id="${esc(id)}" data-key="${it.key}">Удалить</button>` : ''}
@@ -480,20 +481,20 @@ function openPlant(id) {
     <div class="info"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
     <button class="btn water wide" data-act="water-now" data-id="${esc(id)}" style="margin:4px 0 18px">💧 Записать полив</button>
 
-    <div class="field"><label>Имя</label><input class="input" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
-    <div class="field"><label>Название (вид, сорт)</label><input class="input" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
+    <div class="field"><label for="f-name">Имя</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
+    <div class="field"><label for="f-species">Название (вид, сорт)</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
       ${S.plants[id].species ? `<p class="small muted" style="margin-top:6px">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
 
-    <div class="field"><label>Где стоит</label><div class="chips">
+    <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips">
       ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
       <button class="chip" data-act="spot-new" data-id="${esc(id)}">＋ своё место</button></div></div>
 
-    <div class="field"><label>Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} лк${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
-      <input class="input" type="number" inputmode="numeric" placeholder="Замер люксметром, лк" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
+    <div class="field"><label for="f-lux">Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
+      <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Замер люксметром, люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
       ${ls ? `<p class="small" style="margin-top:6px"><span class="tag ${ls}">${ls === 'low' ? 'темновато' : ls === 'high' ? 'слишком ярко' : 'света хватает'}</span></p>` : ''}</div>
-    <div class="field"><label>Проверять примерно каждые</label><div class="stepper">
-      <button data-act="int-minus" data-id="${esc(id)}">−</button><b id="int-val">${days(Math.round(p.interval))}</b>
-      <button data-act="int-plus" data-id="${esc(id)}">＋</button></div>
+    <div class="field" role="group" aria-labelledby="lbl-int"><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
+      <button data-act="int-minus" data-id="${esc(id)}" aria-label="Реже">−</button><b id="int-val">${days(Math.round(p.interval))}</b>
+      <button data-act="int-plus" data-id="${esc(id)}" aria-label="Чаще">＋</button></div>
       <p class="small muted" style="margin-top:6px">Подстраивается само по вашим ответам «сухо / влажно».</p></div>
 
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" ${p.repotted ? 'checked' : ''}> Недавно пересажено — без подкормки</label></div>
@@ -510,9 +511,9 @@ function openPlant(id) {
 // Catalog picker: several plants can be selected at once.
 let picked = new Set();
 function pickRow(d) {
-  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
+  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
   return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc((d.species + ' ' + (d.hint || '') + ' ' + d.cat).toLowerCase())}">
-    <span class="pe">${esc(d.emoji)}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">＋</span></button>`;
+    <span class="pe" aria-hidden="true">${esc(d.emoji)}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">＋</span></button>`;
 }
 function openAdd() {
   picked = new Set();
@@ -520,13 +521,13 @@ function openAdd() {
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => (a === 'Общие типы') - (b === 'Общие типы'));
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">🪴</div><h2 style="margin:0">Добавить растения</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">🪴</div><h2 style="margin:0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
-    <button class="import-cta" data-act="add-import"><span class="pe">🤖</span>
+    <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">🤖</span>
       <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
-      <span class="pc">›</span></button>
+      <span class="pc" aria-hidden="true">›</span></button>
     <div class="or">или выберите из каталога</div>
-    <input class="input" id="pick-q" type="search" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
+    <input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
     <p class="small muted" style="margin:8px 0 0">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
@@ -554,19 +555,19 @@ function updatePickBar() {
 
 function openCustom() {
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">🪴</div><h2 style="margin:0">Новое растение</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">🪴</div><h2 style="margin:0">Новое растение</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
     <form id="add-form">
-      <div class="field"><label>Что это за растение</label><input class="input" name="species" required placeholder="Например, Пеперомия"></div>
-      <div class="field"><label>Имя (если есть)</label><input class="input" name="name" placeholder="Например, Пепа"></div>
-      <div class="field"><label>Эмодзи</label><input class="input" name="emoji" value="🪴" maxlength="4"></div>
-      <div class="field"><label>В чём растёт</label><select class="input" name="type">
+      <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия"></div>
+      <div class="field"><label for="c-name">Имя (если есть)</label><input class="input" id="c-name" name="name" placeholder="Например, Пепа"></div>
+      <div class="field"><label for="c-emoji">Эмодзи</label><input class="input" id="c-emoji" name="emoji" value="🪴" maxlength="4"></div>
+      <div class="field"><label for="c-type">В чём растёт</label><select class="input" id="c-type" name="type">
         ${Object.entries(TYPE_NAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
-      <div class="field"><label>Сколько света нужно, лк</label><div class="row2">
-        <input class="input" name="lmin" type="number" inputmode="numeric" value="6000" placeholder="от">
-        <input class="input" name="lmax" type="number" inputmode="numeric" value="15000" placeholder="до"></div></div>
-      <div class="field"><label>Проверять каждые … дней</label><input class="input" name="every" type="number" inputmode="numeric" value="6" min="1" max="60"></div>
-      <div class="field"><label>Шпаргалка (по желанию)</label><textarea class="input" name="tip" rows="3" placeholder="Что важно помнить"></textarea></div>
+      <div class="field"><label id="lbl-lux">Сколько света нужно, ${LK}</label><div class="row2">
+        <input class="input" name="lmin" aria-label="Света от, люкс" type="number" inputmode="numeric" value="6000" placeholder="от">
+        <input class="input" name="lmax" aria-label="Света до, люкс" type="number" inputmode="numeric" value="15000" placeholder="до"></div></div>
+      <div class="field"><label for="c-every">Проверять каждые … дней</label><input class="input" id="c-every" name="every" type="number" inputmode="numeric" value="6" min="1" max="60"></div>
+      <div class="field"><label for="c-tip">Шпаргалка (по желанию)</label><textarea class="input" id="c-tip" name="tip" rows="3" placeholder="Что важно помнить"></textarea></div>
       <button class="btn primary wide" type="submit">Добавить 🌱</button>
     </form>`;
   $('#add-form').addEventListener('submit', (e) => {
@@ -670,13 +671,13 @@ function openImport() {
   importItems = [];
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">🤖</div><h2 style="margin:0">Импорт из чата с ИИ</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">🤖</div><h2 style="margin:0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude, Gemini или другой ИИ — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="btn ok wide" data-act="import-copy" style="margin-top:10px">📋 Скопировать запрос</button>
-      <textarea class="input" id="imp-prompt" rows="6" readonly hidden></textarea></div>
+      <textarea class="input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
     <div class="info"><b>Шаг 2</b>Вставьте сюда ответ целиком.
-      <textarea class="input" id="imp-text" rows="5" placeholder="Вставьте ответ ИИ" style="margin-top:8px"></textarea></div>
+      <textarea class="input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ ИИ" style="margin-top:8px"></textarea></div>
     <div id="imp-list"></div>
     <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Вставьте ответ</button></div>`;
   let timer;
@@ -702,9 +703,9 @@ function showImport() {
       importItems.map((it, i) => {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
-        <span class="pe">${esc(it.emoji)}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
-        <small>${dup ? 'уже есть в коллекции · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} лк · раз в ${days(it.every)}</small></span>
-        <span class="pc">${dup ? '＋' : '✓'}</span></button>`;
+        <span class="pe" aria-hidden="true">${esc(it.emoji)}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
+        <small>${dup ? 'уже есть в коллекции · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
+        <span class="pc" aria-hidden="true">${dup ? '＋' : '✓'}</span></button>`;
       }).join('');
   }
   updateImportBar();
@@ -744,7 +745,7 @@ function lightRow(p) {
   const dot = p.lux ? `<i class="dot ${ls}" style="left:${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}%"></i>` : '';
   const tag = ls ? ` <span class="tag ${ls}">${ls === 'low' ? 'темно' : ls === 'high' ? 'ярко' : 'ок'}</span>` : '';
   return `<div class="lux-row" id="lux-${esc(p.id)}"><div class="nm">${esc(p.emoji)} ${esc(p.title)}${tag}</div>
-    <input class="input" type="number" inputmode="numeric" placeholder="лк" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
+    <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
     <div class="need">нужно ${kLux(a)}–${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
     <div class="lux-bar"><i class="range" style="left:${left}%;width:${width}%"></i>${dot}</div></div>`;
 }
@@ -762,14 +763,14 @@ function lightIdeas() {
     if (H) {
       used.add(H.id); used.add(L.id);
       out.push(`🔄 <b>Поменяйте местами: ${esc(L.title)} ⇄ ${esc(H.title)}</b><br>
-        ${esc(L.title)}: сейчас ${kLux(L.lux)} лк, нужно от ${kLux(L.luxRange[0])}.<br>
-        ${esc(H.title)}: сейчас ${kLux(H.lux)} лк, хватит и ${kLux(L.lux)}.`);
+        ${esc(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
+        ${esc(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`);
     } else {
-      out.push(`🔦 <b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} лк, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`);
+      out.push(`🔦 <b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`);
     }
   });
   highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(`🕶️ <b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} лк, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`);
+    if (!used.has(H.id)) out.push(`🕶️ <b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`);
   });
   if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
   return out.map((t) => `<div class="idea">${t}</div>`).join('');
@@ -813,9 +814,9 @@ function viewRoom() {
     <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
     <div class="room-cards">
       <div class="metric"><div class="lbl">Температура</div><div class="val">${r ? esc(r.t) + '°' : '—'}</div>
-        <input class="input" id="in-t" type="number" inputmode="decimal" step="0.5" placeholder="°C" value="${r ? r.t : ''}"></div>
+        <input class="input" id="in-t" aria-label="Температура, °C" type="number" inputmode="decimal" step="0.5" placeholder="°C" value="${r ? r.t : ''}"></div>
       <div class="metric"><div class="lbl">Влажность</div><div class="val">${r ? esc(r.h) + '%' : '—'}</div>
-        <input class="input" id="in-h" type="number" inputmode="numeric" placeholder="%" value="${r ? r.h : ''}"></div>
+        <input class="input" id="in-h" aria-label="Влажность, %" type="number" inputmode="numeric" placeholder="%" value="${r ? r.h : ''}"></div>
     </div>
     <button class="btn primary wide" data-act="room-save" style="margin-top:10px">Записать</button>
     ${status}
@@ -848,7 +849,7 @@ function openNews() {
   const fresh = Number(APP_VERSION) >= CHANGELOG[0].v;
   const date = (d) => parse(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">✨</div><h2 style="margin:0">Что нового</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">✨</div><h2 style="margin:0">Что нового</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
     <div class="info"><b>Ваша версия</b>${esc(APP_VERSION)}${fresh ? ' — самая свежая' : ''}</div>
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
@@ -864,9 +865,9 @@ function openNews() {
 function openSettings() {
   const lim = S.settings.limit;
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava">⚙️</div><h2 style="margin:0">Настройки</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">⚙️</div><h2 style="margin:0">Настройки</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
-    <div class="field"><label>Сколько растений проверять в день, максимум</label><div class="chips">
+    <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="small muted" style="margin-top:6px">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
     <h2>Места</h2>
@@ -1025,7 +1026,12 @@ const kindOf = (id) => { const d = def(id); return { plant_kind: S.custom[(S.pla
 
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
-function openSheet() { if (!sheet.open) sheet.showModal(); sheet.scrollTop = 0; }
+function openSheet() {
+  const h = $('#sheet-body h2');
+  if (h) sheet.setAttribute('aria-label', h.textContent); else sheet.removeAttribute('aria-label');
+  if (!sheet.open) sheet.showModal();
+  sheet.scrollTop = 0;
+}
 // Re-render here: the close event doesn't fire in every browser.
 function closeSheet() { if (sheet.open) sheet.close(); render(); }
 sheet.addEventListener('close', () => render()); // closed by swipe or Esc
@@ -1038,9 +1044,22 @@ function toast(msg, undo) {
   el.className = 'toast';
   el.innerHTML = esc(msg) + (undo ? ' <button class="undo">Отменить</button>' : '');
   document.body.append(el);
-  if (undo) el.querySelector('.undo').onclick = () => { undo(); el.remove(); };
+  $('#live').textContent = msg;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.remove(), 4500);
+  document.removeEventListener('pointerdown', toastAway, true);
+  if (undo) {
+    // No time limit while undo is offered: it stays until the next tap elsewhere.
+    el.querySelector('.undo').onclick = () => { undo(); el.remove(); };
+    setTimeout(() => document.addEventListener('pointerdown', toastAway, true), 0);
+  } else {
+    toastTimer = setTimeout(() => el.remove(), 4500);
+  }
+}
+function toastAway(e) {
+  const el = document.querySelector('.toast');
+  if (el && el.contains(e.target)) return;
+  document.removeEventListener('pointerdown', toastAway, true);
+  el?.remove();
 }
 
 function confetti() {

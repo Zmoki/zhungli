@@ -15,16 +15,17 @@
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
-  <main id="view" aria-live="polite"></main>
+  <main id="view"></main>
+  <div id="live" class="sr-only" role="status" aria-live="polite"></div>
 
   <nav class="tabs" aria-label="Разделы">
-    <button data-tab="today" class="active"><span>🪴</span>Сегодня</button>
-    <button data-tab="plants"><span>🌿</span>Растения</button>
-    <button data-tab="light"><span>💡</span>Свет</button>
-    <button data-tab="room"><span>🌡️</span>Комната</button>
+    <button data-tab="today" class="active"><span aria-hidden="true">🪴</span>Сегодня</button>
+    <button data-tab="plants"><span aria-hidden="true">🌿</span>Растения</button>
+    <button data-tab="light"><span aria-hidden="true">💡</span>Свет</button>
+    <button data-tab="room"><span aria-hidden="true">🌡️</span>Комната</button>
   </nav>
 
   <dialog id="sheet"><div id="sheet-body"></div></dialog>
@@ -32,8 +33,8 @@
   <input type="file" id="import-input" accept="application/json,.json" hidden>
 
   <!-- On every release: bump v here and in version.txt -->
-  <script src="plants.js?v=15"></script>
-  <script src="changelog.js?v=15"></script>
-  <script src="app.js?v=15"></script>
+  <script src="plants.js?v=16"></script>
+  <script src="changelog.js?v=16"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
