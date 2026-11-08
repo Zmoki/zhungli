@@ -1,3 +1,4 @@
+/*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // «Что нового» in the app. Newest first. Add an entry on every release with user-facing changes.
 // v: version from version.txt; d: release date; items: Russian, one line each.
 const CHANGELOG = [

@@ -15,3 +15,5 @@ Anonymous stats (which buttons are tapped, no plant names, nicknames or photos) 
 Catalog: `plants.js`.
 
 Release: bump `?v=` in `index.html` and the number in `version.txt`; the app on the phone reloads itself.
+
+License: all rights reserved. You may read the code and open issues; copying, hosting or reusing it needs written permission. See [LICENSE](LICENSE).

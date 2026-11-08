@@ -1,3 +1,4 @@
+/*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 'use strict';
 
 const KEY = 'zhungli.v1';

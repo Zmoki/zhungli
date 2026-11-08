@@ -11,6 +11,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **Catalog:** don't rename or remove catalog ids; saved plants point at them via `def`. Hide entries with `hidden: true` instead.
 - **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), icons as text glyphs in the text color (no ➕-style emoji), tap targets ≥ 44×44, text sizes in `rem` (1rem = 17px or the iPhone text-size setting, nothing under 14px except tab labels), layouts reflow instead of scrolling sideways, labels tied to fields, decorative emoji `aria-hidden`, toasts go through `#live`.
 - **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call. No plant names, nicknames, notes or photos in events.
+- **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
 
 ## Run locally
