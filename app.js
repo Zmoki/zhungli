@@ -523,6 +523,7 @@ function openCustom() {
     S.plants[id].name = String(f.get('name')).trim();
     save();
     closeSheet();
+    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -644,6 +645,9 @@ function openSettings() {
     <h2>Резервная копия</h2>
     <p class="small muted">Все отметки и фото живут только на этом телефоне. Раз в месяц сохраняй копию в «Файлы» или отправь себе в Телеграм.</p>
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
+    <h2>Статистика</h2>
+    <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
+      <p class="small muted" style="margin-top:6px">Только какие кнопки нажимают и сколько растений — без названий, имён, фото и мест. Помогает понять, что улучшить.</p></div>
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
@@ -677,6 +681,7 @@ async function doImport(file) {
     for (const [id, url] of Object.entries(data.photos || {})) await idbReq((st) => st.put(url, id), 'readwrite');
     PHOTOS = data.photos || {};
     closeSheet();
+    track('backup_imported');
     toast('Готово, всё вернулось 🌿');
   } catch (e) {
     toast('Это не похоже на копию Жунглей 🤔');
@@ -729,6 +734,7 @@ $('#photo-input').addEventListener('change', async (e) => {
     await idbReq((st) => st.put(url, photoFor), 'readwrite');
     openPlant(photoFor);
     render();
+    track('photo_added');
     toast('Красотка! 📸');
   } catch (err) { toast('Не получилось открыть фото'); }
 });
@@ -737,6 +743,55 @@ $('#import-input').addEventListener('change', (e) => {
   e.target.value = '';
   if (f) doImport(f);
 });
+
+/* ---------- Анонимная статистика ---------- */
+// Только какие кнопки нажимают и сколько растений: без названий, имён, фото и мест.
+// Отправляется через /ingest (функция Cloudflare) в PostHog. Выключается в настройках.
+const PH_KEY = 'phc_wbQKWDjgettNukrqC7etDr8NZjucbJ9mKz7cfB3ziEAz';
+const STATS_LOCAL = location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname);
+let statsQueue = [];
+let statsTimer;
+let anonId = null;
+function getAnonId() {
+  if (anonId) return anonId;
+  try {
+    anonId = localStorage.getItem('zhungli.anon');
+    if (!anonId) { anonId = crypto.randomUUID(); localStorage.setItem('zhungli.anon', anonId); }
+  } catch (e) { anonId = 'anon-' + Math.random().toString(36).slice(2); }
+  return anonId;
+}
+function deviceProps() {
+  const ua = navigator.userAgent;
+  const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac OS X' : /Win/.test(ua) ? 'Windows' : 'Other';
+  return {
+    $os: os,
+    $device_type: /iPhone|iPod|Android.*Mobile/.test(ua) ? 'Mobile' : /iPad|Android/.test(ua) ? 'Tablet' : 'Desktop',
+    $current_url: location.origin + location.pathname,
+    $host: location.host,
+    standalone: !!(navigator.standalone || matchMedia('(display-mode: standalone)').matches),
+  };
+}
+function track(event, props = {}) {
+  if (S.settings.stats === false) return;
+  statsQueue.push({
+    event, distinct_id: getAnonId(), timestamp: new Date().toISOString(),
+    properties: { ...deviceProps(), ...props, app_version: APP_VERSION, plants_total: Object.keys(S.plants).length, $lib: 'zhungli', $process_person_profile: false },
+  });
+  clearTimeout(statsTimer);
+  statsTimer = setTimeout(flushStats, 2000);
+}
+function flushStats() {
+  if (!statsQueue.length) return;
+  const batch = statsQueue;
+  statsQueue = [];
+  if (STATS_LOCAL) { console.debug('[stats]', JSON.stringify(batch.map((e) => [e.event, e.properties]))); return; }
+  fetch('/ingest/batch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+    body: JSON.stringify({ api_key: PH_KEY, batch }),
+  }).catch(() => {});
+}
+// Каталожный id не личный (у своих растений — просто 'custom').
+const kindOf = (id) => { const d = def(id); return { plant_kind: S.custom[(S.plants[id] && S.plants[id].def) || id] ? 'custom' : d.id, plant_type: d.type, generic: !!d.generic }; };
 
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
@@ -779,7 +834,7 @@ function afterTask(msg, undo) {
   const before = document.querySelectorAll('.task:not(.bonus):not(.done-row)').length;
   render();
   toast(msg, undo);
-  if (before > 0 && pendingCount() === 0) confetti();
+  if (before > 0 && pendingCount() === 0) { confetti(); track('day_completed', { done_today: (S.log[today()] || []).length }); }
 }
 
 function render() {
@@ -793,6 +848,7 @@ document.addEventListener('click', (e) => {
   if (!el) return;
   if (el.dataset.tab) {
     tab = el.dataset.tab;
+    track('tab_viewed', { tab });
     render();
     window.scrollTo(0, 0);
     return;
@@ -803,32 +859,34 @@ document.addEventListener('click', (e) => {
   let undo;
   switch (act) {
     case 'water':
-      undo = snapshot(); actWater(id);
+      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', ...kindOf(id) });
       afterTask(WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo); break;
     case 'wet':
-      undo = snapshot(); actWet(id);
+      undo = snapshot(); actWet(id); track('plant_checked', { answer: 'wet', ...kindOf(id) });
       afterTask(`Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo); break;
     case 'later':
-      undo = snapshot(); actLater(id); afterTask('Перенесено на завтра ⏭', undo); break;
+      undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭', undo); break;
     case 'vent-done':
-      undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' });
+      undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
       afterTask('Свежий воздух! 🌬️', undo); break;
     case 'vent-off':
       if (confirm('Тепличка больше не нужна? Больше не буду напоминать проветривать.')) {
-        undo = snapshot(); S.plants[id].greenhouse = false; afterTask('Ура, без теплички! 🎉', undo);
+        undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплички! 🎉', undo);
       }
       break;
     case 'bonus-done': {
       undo = snapshot();
       const b = bonusTasks().find((x) => x.key === el.dataset.key);
       S.bonus[el.dataset.key] = today();
+      track('bonus_done', { kind: el.dataset.key.split(':')[0] });
       logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
       afterTask('Бонус засчитан ✨', undo); break;
     }
     case 'bonus-skip':
+      track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
       S.snooze[el.dataset.key] = addDays(today(), 3); save(); render(); toast('Ок, через пару дней 🙂'); break;
-    case 'show-all': showAll = true; render(); break;
-    case 'hide-install': S.hideInstall = true; save(); render(); break;
+    case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
+    case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
     case 'settings': openSettings(); break;
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(); break;
@@ -841,6 +899,7 @@ document.addEventListener('click', (e) => {
     }
     case 'pick-add': {
       const ids = addPlants([...picked]);
+      track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source: 'catalog' });
       save();
       if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дай имя и выбери место 🌱'); break; }
       tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
@@ -856,7 +915,7 @@ document.addEventListener('click', (e) => {
     case 'close': closeSheet(); break;
     case 'photo': photoFor = id; $('#photo-input').click(); break;
     case 'water-now':
-      undo = snapshot(); actWater(id); save(); closeSheet(); toast('Полив записан 💧', undo); break;
+      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast('Полив записан 💧', undo); break;
     case 'spot':
       S.plants[id].spot = el.dataset.spot; save();
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
@@ -883,13 +942,14 @@ document.addEventListener('click', (e) => {
         // Карточка «своего» растения больше никому не нужна.
         if (S.custom[id]) delete S.custom[id];
         idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+        track('plant_deleted');
         save(); closeSheet(); toast('Убрано 🍂');
       }
       break;
     case 'limit':
-      S.settings.limit = Number(el.dataset.n); showAll = false; save();
+      S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
-    case 'export': doExport(); break;
+    case 'export': doExport(); track('backup_exported'); break;
     case 'import': $('#import-input').click(); break;
     case 'reset':
       if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
@@ -901,7 +961,8 @@ document.addEventListener('click', (e) => {
       const t = parseFloat(String($('#in-t').value).replace(',', '.'));
       const h = parseFloat(String($('#in-h').value).replace(',', '.'));
       if (Number.isNaN(t) || Number.isNaN(h)) { toast('Впиши обе цифры 🙂'); break; }
-      S.room = { t, h, d: today() }; save(); render(); toast('Записано 🌡️'); break;
+      S.room = { t, h, d: today() }; save(); render(); toast('Записано 🌡️');
+      track('room_saved', { temp: Math.round(t), humidity: Math.round(h) }); break;
     }
     default: break;
   }
@@ -909,12 +970,19 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (el.id === 'stats-on') {
+    if (!el.checked) statsQueue = [];
+    S.settings.stats = el.checked;
+    save();
+    if (el.checked) track('stats_enabled');
+    return;
+  }
   const f = el.dataset && el.dataset.field;
   if (!f) return;
   const id = el.dataset.id;
   const r = S.plants[id];
   if (!r) return;
-  if (f === 'name') r.name = el.value.trim();
+  if (f === 'name') { r.name = el.value.trim(); if (r.name) track('plant_named'); }
   if (f === 'species') {
     const v = el.value.trim();
     if (!v || v === def(id).species) delete r.species; else r.species = v;
@@ -926,10 +994,11 @@ document.addEventListener('change', (e) => {
     $('#sh-species').textContent = p.species;
   }
   if (f === 'repotted') r.repotted = el.checked;
-  if (f === 'greenhouse') r.greenhouse = el.checked;
+  if (f === 'greenhouse') { r.greenhouse = el.checked; track('greenhouse_toggled', { on: el.checked }); }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
+    if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
   if (f === 'lux' && tab === 'light' && !sheet.open) {
@@ -961,8 +1030,11 @@ async function checkUpdate() {
   } catch (e) { /* офлайн — работаем на том, что есть */ }
 }
 
+let lastOpen = Date.now();
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) return;
+  if (document.hidden) { flushStats(); return; }
+  if (Date.now() - lastOpen > 30 * 60 * 1000) track('app_opened', { how: 'resume' });
+  lastOpen = Date.now();
   checkUpdate();
   if (!sheet.open) render();
 });
@@ -974,3 +1046,4 @@ save();
 render();
 loadPhotos();
 checkUpdate();
+track('app_opened', { how: 'start' });
