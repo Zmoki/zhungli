@@ -1027,6 +1027,8 @@ async function doImport(file) {
     const photos = Object.fromEntries(Object.entries(data.photos || {}).filter(([, url]) => isPhoto(url)));
     for (const [id, url] of Object.entries(photos)) await idbReq((st) => st.put(url, id), 'readwrite');
     PHOTOS = photos;
+    // In the mini app, restored photos are the newest: they replace older ones in Telegram's cloud.
+    if (window.photoChanged) Object.entries(photos).forEach(([id, url]) => window.photoChanged(id, url));
     closeSheet();
     track('backup_imported');
     toast('Готово, всё вернулось 🌿');
@@ -1082,6 +1084,7 @@ $('#photo-input').addEventListener('change', async (e) => {
     const url = await resize(f);
     PHOTOS[photoFor] = url;
     await idbReq((st) => st.put(url, photoFor), 'readwrite');
+    if (window.photoChanged) window.photoChanged(photoFor, url);
     openPlant(photoFor);
     render();
     track('photo_added');

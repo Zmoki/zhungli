@@ -49,7 +49,8 @@ On every event:
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
-| `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse`; `error` (Telegram's error text) |
+| `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`; `error` (Telegram's error text) |
+| `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`, `downloaded`, `removed`, `skipped` (didn't fit the 1024-key limit) |
 | `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
 | `mini_app_link_clicked` | «Открыть» on the Telegram-browser hint (opens the mini app) | `has_plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |

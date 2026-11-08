@@ -111,6 +111,7 @@
     cloudChunks = chunks;
     cloudHasPlants = plantsIn(S) > 0;
     dirty = false;
+    schedulePhotos();
   }
 
   // Reads Telegram's copy and keeps the newer one: at start and every time the app comes back
@@ -126,7 +127,7 @@
     cs.getItem('sn', (err, n) => {
       if (err) { cloudError('read', err); report('error', null); return; }
       const count = Number(n) || 0;
-      if (!count) { cloudHasPlants = false; report(plantsIn(S) ? 'uploaded' : 'both_empty', 0); if (plantsIn(S)) { dirty = true; push(); } return; }
+      if (!count) { cloudHasPlants = false; report(plantsIn(S) ? 'uploaded' : 'both_empty', 0); if (plantsIn(S)) { dirty = true; push(); } else schedulePhotos(); return; }
       const keys = Array.from({ length: count }, (_, i) => 's' + i);
       cs.getItems(keys, (err2, vals) => {
         if (err2 || !vals) { cloudError('read', err2 || 'no values'); report('error', null); return; }
@@ -145,7 +146,7 @@
         const cloudAt = cloud.savedAt || 0;
         const localAt = S.savedAt || 0;
         if (cloudHasPlants && (!plantsIn(S) || cloudAt > localAt)) {
-          if (cloudAt === localAt && plantsIn(S)) { report('same', plantsIn(cloud)); return; } // already the same
+          if (cloudAt === localAt && plantsIn(S)) { report('same', plantsIn(cloud)); schedulePhotos(); return; } // already the same
           delete cloud.syncV;
           S = prepare(cloud);
           try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full */ }
@@ -155,6 +156,7 @@
           toast('Растения загружены из Телеграма 🌿');
           report('restored', plantsIn(cloud));
           track('cloud_restored', { plants: plantsIn(S) });
+          schedulePhotos();
         } else if (plantsIn(S) && ((!cloudHasPlants && !cloud.syncV) || localAt > cloudAt)) {
           // An empty copy left by an older version never beats real plants;
           // an empty copy from this version means the plants were deleted on purpose.
@@ -163,6 +165,7 @@
           push();
         } else {
           report('same', plantsIn(cloud));
+          schedulePhotos();
         }
       });
     });
@@ -174,12 +177,161 @@
     window.cloudSave = later;
     // «Начать с чистого листа» clears Telegram's copy too, or the plants would come back.
     window.cloudClear = () => new Promise((done) => {
-      const keys = ['sn', ...cloudChunks.map((_, i) => 's' + i)];
+      const keys = ['sn', ...cloudChunks.map((_, i) => 's' + i), ...photoKeys()];
+      saveMeta({});
       cs.removeItems(keys, () => done());
       setTimeout(done, 1500); // don't block the reset if Telegram doesn't answer
     });
     pull();
   }
+
+  /* ---------- Photos in Telegram CloudStorage ---------- */
+  // Each photo is synced as a small copy (up to 400 px, about 20–30 KB); the original stays on
+  // the device it was added on. Base64 is plain ASCII, so photo pieces can hold 4000 characters.
+  // Index: m0, m1, … + mn = JSON { plantId: { h: hash of the original, t: when it was set, n: pieces } }.
+  // Pieces: f_<plantId>_<i>. Synced only after the plants are reconciled (end of a pull or push).
+  const PIECE = 4000;
+  const MAX_PHOTO_PIECES = 800; // Telegram allows 1024 keys per user; the rest is for the plants
+  const META_KEY = 'zhungli.photoMeta'; // this device: { plantId: { h, t } } of its photos
+  let manifest = {};
+  let manifestChunks = 0;
+  let photoTimer;
+  let photoBusy = false;
+  let photoAgain = false;
+
+  const loadMeta = () => { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } };
+  const saveMeta = (m) => { try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) { /* storage full */ } };
+  // A quick fingerprint to notice a changed photo (not cryptographic).
+  const hashOf = (str) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i += 7) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36) + '.' + str.length.toString(36);
+  };
+  const pieceKeys = (id, n) => Array.from({ length: n }, (_, i) => `f_${id}_${i}`);
+  const photoKeys = () => ['mn', ...Array.from({ length: manifestChunks }, (_, i) => 'm' + i),
+    ...Object.entries(manifest).flatMap(([id, m]) => pieceKeys(id, m.n))];
+  const cGet = (keys) => new Promise((res) => cs.getItems(keys, (err, vals) => { if (err) cloudError('photo_read', err); res(err ? null : vals || {}); }));
+  const cSet = (k, v) => new Promise((res) => cs.setItem(k, v, (err) => { if (err) cloudError('photo_write', err); res(!err); }));
+  const cDel = (keys) => new Promise((res) => (keys.length ? cs.removeItems(keys, () => res()) : res()));
+  const cut = (text, size) => { const out = []; for (let i = 0; i < text.length; i += size) out.push(text.slice(i, i + size)); return out; };
+
+  function makeThumb(dataUrl) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, 400 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', 0.7).split(',')[1]);
+      };
+      img.onerror = rej;
+      img.src = dataUrl;
+    });
+  }
+
+  async function readManifest() {
+    const head = await cGet(['mn']);
+    if (!head) return null;
+    const count = Number(head.mn) || 0;
+    manifestChunks = count;
+    if (!count) return {};
+    const keys = Array.from({ length: count }, (_, i) => 'm' + i);
+    const vals = await cGet(keys);
+    if (!vals) return null;
+    try { return JSON.parse(keys.map((k) => vals[k] || '').join('')); } catch (e) { cloudError('photo_parse', count + ' chunks'); return {}; }
+  }
+  async function writeManifest() {
+    const pieces = cut(JSON.stringify(manifest), PIECE);
+    for (let i = 0; i < pieces.length; i++) await cSet('m' + i, pieces[i]);
+    if (manifestChunks > pieces.length) await cDel(Array.from({ length: manifestChunks - pieces.length }, (_, i) => 'm' + (pieces.length + i)));
+    await cSet('mn', String(pieces.length));
+    manifestChunks = pieces.length;
+  }
+
+  function schedulePhotos() {
+    clearTimeout(photoTimer);
+    photoTimer = setTimeout(syncPhotos, 1500);
+  }
+
+  async function syncPhotos() {
+    if (!cs) return;
+    if (photoBusy) { photoAgain = true; return; }
+    photoBusy = true;
+    try {
+      const cloud = await readManifest();
+      if (cloud === null) return;
+      manifest = cloud;
+      const meta = loadMeta();
+      const stats = { uploaded: 0, downloaded: 0, removed: 0, skipped: 0 };
+      let changed = false;
+      // Photos added before syncing existed count as old ones.
+      for (const id of Object.keys(PHOTOS)) if (!meta[id]) meta[id] = { h: hashOf(PHOTOS[id]), t: 1 };
+      // Plants that no longer exist: drop their photos in the cloud and here.
+      for (const id of Object.keys(manifest)) {
+        if (S.plants[id]) continue;
+        await cDel(pieceKeys(id, manifest[id].n));
+        delete manifest[id];
+        changed = true;
+        stats.removed++;
+      }
+      for (const id of Object.keys(PHOTOS)) {
+        if (S.plants[id]) continue;
+        delete PHOTOS[id];
+        delete meta[id];
+        idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+      }
+      // Newer photos from other devices.
+      for (const [id, m] of Object.entries(manifest)) {
+        const mine = meta[id];
+        if (mine && (mine.h === m.h || mine.t >= m.t)) continue;
+        const keys = pieceKeys(id, m.n);
+        const vals = await cGet(keys);
+        if (!vals) continue;
+        const url = 'data:image/jpeg;base64,' + keys.map((k) => vals[k] || '').join('');
+        if (!isPhoto(url) || keys.some((k) => !vals[k])) continue;
+        PHOTOS[id] = url;
+        meta[id] = { h: m.h, t: m.t };
+        await idbReq((st) => st.put(url, id), 'readwrite').catch(() => {});
+        stats.downloaded++;
+      }
+      // This device's photos the cloud doesn't have yet, or has older ones of.
+      let used = Object.values(manifest).reduce((sum, m) => sum + m.n, 0);
+      for (const id of Object.keys(PHOTOS)) {
+        const mine = meta[id];
+        const m = manifest[id];
+        if (m && (m.h === mine.h || m.t > mine.t)) continue;
+        const data = await makeThumb(PHOTOS[id]).catch(() => null);
+        if (!data) continue;
+        const pieces = cut(data, PIECE);
+        if (used - (m ? m.n : 0) + pieces.length > MAX_PHOTO_PIECES) { stats.skipped++; continue; }
+        let ok = true;
+        for (let i = 0; i < pieces.length; i++) ok = (await cSet(`f_${id}_${i}`, pieces[i])) && ok;
+        if (!ok) continue;
+        if (m && m.n > pieces.length) await cDel(pieceKeys(id, m.n).slice(pieces.length));
+        used += pieces.length - (m ? m.n : 0);
+        manifest[id] = { h: mine.h, t: mine.t, n: pieces.length };
+        changed = true;
+        stats.uploaded++;
+      }
+      if (changed) await writeManifest();
+      saveMeta(meta);
+      if (stats.downloaded && !sheet.open) render();
+      if (stats.uploaded || stats.downloaded || stats.removed || stats.skipped) track('photos_synced', stats);
+    } finally {
+      photoBusy = false;
+      if (photoAgain) { photoAgain = false; schedulePhotos(); }
+    }
+  }
+
+  // A photo was added or replaced on this device (app.js calls this).
+  window.photoChanged = (id, url) => {
+    const meta = loadMeta();
+    meta[id] = { h: hashOf(url), t: Date.now() };
+    saveMeta(meta);
+    if (cs) schedulePhotos();
+  };
 
   // Saves are batched: one cloud write a few seconds after the last change.
   function later() {
