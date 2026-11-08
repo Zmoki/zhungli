@@ -36,6 +36,7 @@ function plural(n, one, few, many) {
   return many;
 }
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
+const plantsN = (n) => `${n} ${plural(n, 'растение', 'растения', 'растений')}`;
 function rel(d) {
   if (!d) return 'ещё не было';
   const n = diff(today(), d);
@@ -115,20 +116,22 @@ function initBonus(s) {
   if (!s.bonus.feed) s.bonus.feed = addDays(t, -14);
 }
 
+// New plant ids: p… for catalog plants, c… for own and imported ones.
+const newId = (prefix, i = 0) => `${prefix}${Date.now().toString(36)}${i}`;
+// First checks of a batch are spread over days so there aren't 20 tasks at once.
+const firstCheck = (i, every) => addDays(today(), Math.min(Math.floor(i / 6), every - 1));
 function runtime(p, nextCheck) {
   return { name: '', spot: '', lux: null, interval: p.every, nextCheck, lastWater: null, wet: 0, repotted: false, hist: [] };
 }
 
-// Adds plants from the catalog. First checks are spread over days so there aren't 20 tasks at once.
+// Adds plants from the catalog.
 function addPlants(keys) {
-  const t = today();
-  const base = Date.now().toString(36);
   const ids = [];
   keys.map((k) => PLANTS.find((p) => p.id === k)).filter(Boolean)
     .sort((a, b) => a.every - b.every)
     .forEach((d, i) => {
-      const id = `p${base}${i}`;
-      S.plants[id] = { ...runtime(d, addDays(t, Math.min(Math.floor(i / 6), d.every - 1))), def: d.id };
+      const id = newId('p', i);
+      S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id };
       ids.push(id);
     });
   initBonus(S);
@@ -177,20 +180,22 @@ function quipOf(p) {
 }
 
 function lightStatus(p) {
-  if (p.lux == null || !p.lux) return null;
+  if (!p.lux) return null;
   if (p.lux < p.luxRange[0]) return 'low';
   if (p.lux > p.luxRange[1] * 1.25) return 'high';
   return 'ok';
 }
 
+// Light status words, the same in the plant card, the cards grid and the Light tab.
+const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
 function mood(p) {
   const t = today();
   // Each status has its own color: watered blue, waiting amber, dark grey, too bright red, fine green.
   if (p.lastWater === t) return ['laugh', 'напоено', 'watered'];
   if (p.nextCheck <= t) return ['frown', 'проверить', 'need'];
   const ls = lightStatus(p);
-  if (ls === 'low') return ['meh', 'темновато', 'dim'];
-  if (ls === 'high') return ['annoyed', 'ярковато', 'hot'];
+  if (ls === 'low') return ['meh', LIGHT_WORDS.low, 'dim'];
+  if (ls === 'high') return ['annoyed', LIGHT_WORDS.high, 'hot'];
   return ['smile', 'хорошо', 'fine'];
 }
 
@@ -235,7 +240,7 @@ function bonusTasks() {
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     const who = allPlants().filter((p) => !p.noFeed && !p.repotted && p.type !== 'dry' && p.type !== 'bark' && p.type !== 'water');
-    out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: `По инструкции к удобрению, в мокрый грунт: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
+    if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: `По инструкции к удобрению, в мокрый грунт: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
   }
   return out.slice(0, 2);
 }
@@ -275,12 +280,19 @@ function actLater(id) {
   logToday({ id, a: 'later' });
 }
 
-function pendingCount() {
+// What «Сегодня» shows: checks within the daily limit, greenhouses to vent, progress.
+function todayPlan() {
+  const log = S.log[today()] || [];
+  const doneChecks = log.filter((e) => e.a === 'water' || e.a === 'wet').length;
   const due = dueChecks();
-  const done = (S.log[today()] || []).filter((e) => e.a === 'water' || e.a === 'wet').length;
-  const room = showAll ? due.length : Math.max(0, Math.min(due.length, S.settings.limit - done));
-  return room + ventDue().length;
+  const room = showAll ? due.length : Math.max(0, S.settings.limit - doneChecks);
+  const shown = due.slice(0, room).sort(bySpot);
+  const vents = ventDue();
+  const pending = shown.length + vents.length;
+  const doneMain = log.filter((e) => e.a !== 'later' && !String(e.a).startsWith('bonus')).length;
+  return { log, shown, vents, pending, doneMain, waiting: due.length - shown.length, total: pending + doneMain };
 }
+const pendingCount = () => todayPlan().pending;
 
 /* ---------- Today ---------- */
 function greeting() {
@@ -292,14 +304,14 @@ function greeting() {
 }
 
 function ava(p, cls = 'ava') {
-  const inner = PHOTOS[p.id] ? `<img src="${PHOTOS[p.id]}" alt="">` : plantSvg(p);
+  const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p);
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
 }
 
 // Hint cards on «Сегодня»: same layout, at most one at a time.
 // Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
-  <p class="small muted" style="margin-top:6px">${text}</p>
+  <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
 function currentHint() {
   if (IN_TELEGRAM && !S.hideTelegram) {
@@ -323,16 +335,7 @@ function currentHint() {
 
 function viewToday() {
   const t = today();
-  const log = S.log[t] || [];
-  const doneChecks = log.filter((e) => e.a === 'water' || e.a === 'wet').length;
-  const due = dueChecks();
-  const room = showAll ? due.length : Math.max(0, S.settings.limit - doneChecks);
-  const shown = due.slice(0, room).sort(bySpot);
-  const waiting = due.length - shown.length;
-  const vents = ventDue();
-  const pending = shown.length + vents.length;
-  const doneMain = log.filter((e) => e.a !== 'later' && !String(e.a).startsWith('bonus')).length;
-  const total = pending + doneMain;
+  const { log, shown, vents, pending, doneMain, waiting, total } = todayPlan();
   const pct = total ? Math.round((doneMain / total) * 100) : 100;
   const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -342,22 +345,22 @@ function viewToday() {
   html += currentHint();
 
   if (!allPlants().length) {
-    return html + `<div class="celebrate"><div class="big">🌱</div><h2 style="margin:0 0 6px">Привет! Это Жунгли</h2>
+    return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
-      <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить растения</button>
-      <p class="small muted" style="margin-top:12px">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
+      <button class="mt-14 btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>
+      <p class="mt-12 small muted">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
   }
 
   if (total > 0) {
     html += `<div class="progress"><div class="head-row"><b>${pending ? `Осталось ${pending} ${plural(pending, 'дело', 'дела', 'дел')}` : 'Всё на сегодня!'}</b>
-      <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+      <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
 
   vents.forEach((v) => {
     html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">Проветрите тепличку: ${esc(v.title)}</div>
       <div class="task-sub">минут на 15–30</div></div></div>
-      <p class="quip">${esc(v.title === 'Коля' ? 'Это Коля. Приоткройте, дайте подышать. С каждым днём можно чуть дольше.' : 'Приоткройте, дайте подышать. С каждым днём можно чуть дольше.')}</p>
-      <div class="btns" style="margin-top:12px"><button class="btn ok" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
+      <p class="quip">${esc(`${v.name ? `Это ${v.name}. ` : ''}Приоткройте, дайте подышать. С каждым днём можно чуть дольше.`)}</p>
+      <div class="mt-12 btns"><button class="btn ok" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
       <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div></div>`;
   });
 
@@ -378,12 +381,12 @@ function viewToday() {
 
   if (!pending) {
     if (doneMain) {
-      html += `<div class="celebrate"><div class="big">🎉</div><h2 style="margin:0 0 6px">Джунгли довольны!</h2>
+      html += `<div class="celebrate"><div class="big">🎉</div><h2>Джунгли довольны!</h2>
         <p class="muted">Вы сегодня молодец. Остальное — завтра.</p></div>`;
     } else {
       const tom = allPlants().filter((p) => p.nextCheck === addDays(t, 1)).length;
-      html += `<div class="celebrate"><div class="big">😴</div><h2 style="margin:0 0 6px">Сегодня отдыхаем</h2>
-        <p class="muted">Все в порядке, никто не просит пить.${tom ? ` Завтра проверим ${tom} ${plural(tom, 'растение', 'растения', 'растений')}.` : ''}</p></div>`;
+      html += `<div class="celebrate"><div class="big">😴</div><h2>Сегодня отдыхаем</h2>
+        <p class="muted">Все в порядке, никто не просит пить.${tom ? ` Завтра проверим ${plantsN(tom)}.` : ''}</p></div>`;
     }
   }
 
@@ -396,7 +399,7 @@ function viewToday() {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>`;
     bonus.forEach((b) => {
       html += `<div class="task bonus"><div class="task-top">${b.p ? ava(b.p) : `<div class="ava" aria-hidden="true">${I(b.icon)}</div>`}<div>
-        <div class="task-name">${esc(b.title)}</div></div></div><p class="small muted" style="margin:8px 0 10px">${esc(b.sub)}</p>
+        <div class="task-name">${esc(b.title)}</div></div></div><p class="bonus-sub small muted">${esc(b.sub)}</p>
         <div class="btns"><button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
         <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button></div></div>`;
     });
@@ -405,11 +408,11 @@ function viewToday() {
   const doneRows = log.filter((e) => e.a !== 'later');
   if (doneRows.length) {
     const label = { water: 'полито', wet: 'ещё влажно', vent: 'проветрено', bonus: 'сделано' };
-    html += `<details><summary class="group-title" style="cursor:pointer">Уже сделано сегодня · ${doneRows.length}</summary>`;
+    html += `<details><summary class="group-title">Уже сделано сегодня · ${doneRows.length}</summary>`;
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
       const what = e.title || (p ? p.title : '');
-      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div style="flex:1">${esc(what)}</div>
+      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${esc(what)}</div>
         <span class="muted small">${label[String(e.a).split(':')[0]] || ''}</span></div>`;
     });
     html += `</details>`;
@@ -420,17 +423,18 @@ function viewToday() {
 /* ---------- Plants ---------- */
 function viewPlants() {
   const ps = allPlants();
-  let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
+  let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${plantsN(ps.length)}</div></div>
     ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
-  if (!ps.length) html += `<p class="muted" style="text-align:center;margin-top:24px">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
+  if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
     html += `<div class="group-title">${esc(spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const [mi, mt, mc] = mood(p);
-      const pic = PHOTOS[p.id] ? `<img class="fill" src="${PHOTOS[p.id]}" alt=""><img src="${PHOTOS[p.id]}" alt="">` : plantSvg(p);
+      const ph = photoOf(p.id);
+      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p);
       html += `<button class="pcard" data-open="${esc(p.id)}"><div class="pic">${pic}<span class="mood ${mc}">${I(mi)}${esc(mt)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
@@ -460,7 +464,7 @@ function cheatHtml(id) {
     const edited = NOTE_KEYS.some(([k]) => k === it.key) && !isCustom(id) && d[it.key] && r.own && r.own[it.key] !== undefined;
     return `<div class="info note-form"><b>${esc(it.label)}</b>
       <textarea class="input" id="note-text" rows="4" aria-label="${esc(it.label)}" placeholder="Что важно помнить">${esc(it.text)}</textarea>
-      <div class="btns" style="margin-top:8px"><button class="btn ok" data-act="note-save" data-id="${esc(id)}" data-key="${it.key}">Сохранить</button>
+      <div class="mt-8 btns"><button class="btn ok" data-act="note-save" data-id="${esc(id)}" data-key="${it.key}">Сохранить</button>
         <button class="btn ghost" data-act="note-cancel" data-id="${esc(id)}">Отмена</button></div>
       <p class="small note-links">${it.key !== 'new' ? `<button class="linkish danger-link" data-act="note-del" data-id="${esc(id)}" data-key="${it.key}">Удалить</button>` : ''}
         ${edited ? `<button class="linkish" data-act="note-reset" data-id="${esc(id)}" data-key="${it.key}">Вернуть как в каталоге</button>` : ''}</p></div>`;
@@ -505,21 +509,21 @@ function openPlant(id) {
   noteEdit = null;
   const [mi, mt, mc] = mood(p);
   const ls = lightStatus(p);
-  const hist = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
+  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
-  const pic = PHOTOS[p.id] ? `<img src="${PHOTOS[p.id]}" alt="">` : plantSvg(p);
+  const pic = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p);
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><button class="ava" data-act="photo" data-id="${esc(id)}" aria-label="Сменить фото">${pic}</button>
-      <div><h2 style="margin:0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small mood-line ${mc}">${I(mi)}${esc(mt)}</div></div>
+      <div><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small mood-line ${mc}">${I(mi)}${esc(mt)}</div></div>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <p class="quip" style="margin-top:0">${esc(quipOf(p))}</p>
+    <p class="mt-0 quip">${esc(quipOf(p))}</p>
     <div class="info"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
-    <button class="btn water wide" data-act="water-now" data-id="${esc(id)}" style="margin:4px 0 18px">${I('droplet')}Записать полив</button>
+    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(id)}">${I('droplet')}Записать полив</button>
 
     <div class="field"><label for="f-name">Имя</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
     <div class="field"><label for="f-species">Название (вид, сорт)</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
-      ${S.plants[id].species ? `<p class="small muted" style="margin-top:6px">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
+      ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
 
     <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips">
       ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
@@ -527,20 +531,20 @@ function openPlant(id) {
 
     <div class="field"><label for="f-lux">Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
       <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Замер люксметром, люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
-      ${ls ? `<p class="small" style="margin-top:6px"><span class="tag ${ls}">${ls === 'low' ? 'темновато' : ls === 'high' ? 'слишком ярко' : 'света хватает'}</span></p>` : ''}</div>
+      ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>
     <div class="field" role="group" aria-labelledby="lbl-int"><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
-      <button data-act="int-minus" data-id="${esc(id)}" aria-label="Реже">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
-      <button data-act="int-plus" data-id="${esc(id)}" aria-label="Чаще">${I('plus')}</button></div>
-      <p class="small muted" style="margin-top:6px">Подстраивается само по вашим ответам «сухо / влажно».</p></div>
+      <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
+      <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
+      <p class="mt-6 small muted">Подстраивается само по вашим ответам «сухо / влажно».</p></div>
 
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" ${p.repotted ? 'checked' : ''}> Недавно пересажено — без подкормки</label></div>
     <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
-    <p class="small muted" style="margin-top:-4px">Нажмите на совет, чтобы поправить или удалить.</p>
+    <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
     <div id="cheat">${cheatHtml(id)}</div>
-    ${hist ? `<h2>История</h2><p class="history">${hist}</p>` : ''}
-    <button class="btn danger wide" data-act="delete" data-id="${esc(id)}" style="margin-top:20px">Убрать из коллекции</button>`;
+    ${histHtml ? `<h2>История</h2><p class="history">${histHtml}</p>` : ''}
+    <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`;
   openSheet();
 }
 
@@ -571,18 +575,18 @@ function openAdd() {
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => (a === 'Общие типы') - (b === 'Общие типы'));
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 style="margin:0">Добавить растения</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
       <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
     <input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
-    <p class="small muted" style="margin:8px 0 0">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
+    <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выберите общий тип или создайте своё.</p>
-    <button class="btn ghost wide" data-act="add-custom" style="margin-top:12px">${I('pencil')}Своё растение с нуля</button>
+    <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение с нуля</button>
     <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
@@ -603,18 +607,18 @@ function openAdd() {
   });
   openSheet();
 }
-function updatePickBar() {
-  const n = picked.size;
-  const b = $('#pick-add');
+// «Добавить N растений» at the bottom of the catalog and the import list.
+function setAddButton(b, n, emptyText) {
   b.disabled = !n;
-  b.innerHTML = n ? `${I('plus')}Добавить ${n} ${plural(n, 'растение', 'растения', 'растений')}` : 'Отметьте растения';
+  b.innerHTML = n ? `${I('plus')}Добавить ${plantsN(n)}` : emptyText;
 }
+const updatePickBar = () => setAddButton($('#pick-add'), picked.size, 'Отметьте растения');
 
 function openCustom() {
   startAddFlow('custom');
   track('custom_opened');
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('pencil')}</div><h2 style="margin:0">Новое растение</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('pencil')}</div><h2 class="m-0">Новое растение</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <form id="add-form">
       <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия"></div>
@@ -632,7 +636,7 @@ function openCustom() {
     e.preventDefault();
     if (addFlow) addFlow.done = true;
     const f = new FormData(e.target);
-    const id = 'c' + Date.now().toString(36);
+    const id = newId('c');
     const every = clamp(Number(f.get('every')) || 6, 1, 60);
     const lmin = Number(f.get('lmin')) || 5000;
     const lmax = Math.max(lmin, Number(f.get('lmax')) || 15000);
@@ -748,13 +752,13 @@ function openImport() {
   importItems = [];
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('bot')}</div><h2 style="margin:0">Импорт из чата с ИИ</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('bot')}</div><h2 class="m-0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude, Gemini или другой ИИ — в чат, где уже обсуждали растения, или вместе с их фото.
-      <button class="btn ok wide" data-act="import-copy" style="margin-top:10px">${I('copy')}Скопировать запрос</button>
+      <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <textarea class="input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
     <div class="info"><b>Шаг 2</b>Вставьте сюда ответ целиком.
-      <textarea class="input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ ИИ" style="margin-top:8px"></textarea></div>
+      <textarea class="mt-8 input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ ИИ"></textarea></div>
     <div id="imp-list"></div>
     <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Вставьте ответ</button></div>`;
   let timer;
@@ -768,7 +772,7 @@ function showImport() {
   if (res.error) {
     importItems = [];
     importPicked = new Set();
-    box.innerHTML = res.error === 'empty' ? '' : `<p class="small" style="color:var(--red)">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
+    box.innerHTML = res.error === 'empty' ? '' : `<p class="error-note small">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
       <p class="small muted">Всё равно не выходит? Пришлите ответ ИИ в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
     if (res.error !== 'empty') track('import_failed', { length: text.length, reason: res.error, ...res.diag });
   } else {
@@ -777,7 +781,7 @@ function showImport() {
     // Plants already in the collection start unticked.
     const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
     importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
-    box.innerHTML = `<p class="small muted" style="margin:4px 0 8px">Найдено ${importItems.length} ${plural(importItems.length, 'растение', 'растения', 'растений')}. Снимите галочку с лишних.</p>` +
+    box.innerHTML = `<p class="found-note small muted">Найдено ${plantsN(importItems.length)}. Снимите галочку с лишних.</p>` +
       importItems.map((it, i) => {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
@@ -788,29 +792,21 @@ function showImport() {
   }
   updateImportBar();
 }
-function updateImportBar() {
-  const n = importPicked.size;
-  const b = $('#imp-add');
-  b.disabled = !n;
-  b.innerHTML = n ? `${I('plus')}Добавить ${n} ${plural(n, 'растение', 'растения', 'растений')}` : importItems.length ? 'Отметьте растения' : 'Вставьте ответ';
-}
+const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Вставьте ответ');
 function addImported() {
   if (addFlow) addFlow.done = true;
-  const t = today();
-  const base = Date.now().toString(36);
   const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
   list.forEach((it, i) => {
-    const id = `c${base}${i}`;
+    const id = newId('c', i);
     const { name, ...d } = it;
     S.custom[id] = { ...d, id, cat: 'Мои' };
-    // Spread the first checks over days so a big batch doesn't land at once.
-    S.plants[id] = { ...runtime(S.custom[id], addDays(t, Math.min(Math.floor(i / 6), it.every - 1))), name };
+    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name };
   });
   initBonus(S);
   save();
   track('plants_added', { count: list.length, generic_count: 0, source: 'import', repaired: importRepaired });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
-  toast(`Добавлено ${list.length} ${plural(list.length, 'растение', 'растения', 'растений')} 🌱 Откройте каждое, чтобы выбрать место`);
+  toast(`Добавлено ${plantsN(list.length)} 🌱 Откройте каждое, чтобы выбрать место`);
 }
 
 /* ---------- Light ---------- */
@@ -821,12 +817,12 @@ function lightRow(p) {
   const [a, b] = p.luxRange;
   const left = (Math.min(a, LUX_SCALE) / LUX_SCALE) * 100;
   const width = ((Math.min(b, LUX_SCALE) - Math.min(a, LUX_SCALE)) / LUX_SCALE) * 100;
-  const dot = p.lux ? `<i class="dot ${ls}" style="left:${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}%"></i>` : '';
-  const tag = ls ? ` <span class="tag ${ls}">${ls === 'low' ? 'темно' : ls === 'high' ? 'ярко' : 'ок'}</span>` : '';
-  return `<div class="lux-row" id="lux-${esc(p.id)}"><div class="nm"><span class="nm-pl">${PHOTOS[p.id] ? `<img src="${PHOTOS[p.id]}" alt="">` : plantSvg(p)}</span>${esc(p.title)}${tag}</div>
+  const dot = p.lux ? `<i class="dot ${ls}" data-l="${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}"></i>` : '';
+  const tag = ls ? ` <span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '';
+  return `<div class="lux-row" id="lux-${esc(p.id)}"><div class="nm"><span class="nm-pl">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p)}</span>${esc(p.title)}${tag}</div>
     <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
     <div class="need">нужно ${kLux(a)}–${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
-    <div class="lux-bar"><i class="range" style="left:${left}%;width:${width}%"></i>${dot}</div></div>`;
+    <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
 }
 
 function lightIdeas() {
@@ -856,8 +852,8 @@ function lightIdeas() {
 }
 
 // Shown on tabs that need plants when there are none yet.
-const emptyCard = (title, text) => `<div class="celebrate"><h2 style="margin:0 0 6px">${title}</h2><p class="muted">${text}</p>
-  <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить растения</button></div>`;
+const emptyCard = (title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>
+  <button class="mt-14 btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button></div>`;
 
 function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
@@ -880,7 +876,7 @@ function viewRoom() {
   const ranges = ps.map((p) => [p, tempRange(p)]).filter(([, t]) => t);
   const lo = Math.max(...ranges.map(([, t]) => t[0]));
   const hi = Math.min(...ranges.map(([, t]) => t[1]));
-  const humidOnes = ps.filter((p) => p.humid || p.cat === 'Алоказии' || p.cat === 'Стромантовые').map((p) => p.title);
+  const humidOnes = ps.filter((p) => p.humid).map((p) => p.title);
   let status = '';
   if (r) {
     const notes = [];
@@ -906,7 +902,7 @@ function viewRoom() {
       <div class="metric"><div class="lbl">Влажность</div><div class="val">${r ? esc(r.h) + '%' : '—'}</div>
         <input class="input" id="in-h" aria-label="Влажность, %" type="number" inputmode="numeric" placeholder="%" value="${r ? r.h : ''}"></div>
     </div>
-    <button class="btn primary wide" data-act="room-save" style="margin-top:10px">Записать</button>
+    <button class="mt-10 btn primary wide" data-act="room-save">Записать</button>
     ${status}
     ${ranges.length ? `<h2>Чтобы было удобно всем</h2>
     <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем вашим растениям.` : 'Общего диапазона нет — смотрите условия в карточках.'}</div>
@@ -937,7 +933,7 @@ function openNews() {
   const fresh = Number(APP_VERSION) >= CHANGELOG[0].v;
   const date = (d) => parse(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sparkles')}</div><h2 style="margin:0">Что нового</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sparkles')}</div><h2 class="m-0">Что нового</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Ваша версия</b>${esc(APP_VERSION)}${fresh ? ' — самая свежая' : ''}</div>
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
@@ -953,11 +949,11 @@ function openNews() {
 function openSettings() {
   const lim = S.settings.limit;
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('settings')}</div><h2 style="margin:0">Настройки</h2>
+    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('settings')}</div><h2 class="m-0">Настройки</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
-      <p class="small muted" style="margin-top:6px">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
+      <p class="mt-6 small muted">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
     <h2>Места</h2>
     <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
     <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${esc(sp)}${I('x')}</button>`).join('')}
@@ -967,11 +963,11 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="small muted" style="margin-top:6px">Какие кнопки нажимают, версия приложения, тип телефона, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy">Подробнее</a></p>
-      <p class="small muted">Номер устройства: <b>${esc(getAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p></div>
+      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип телефона, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy">Подробнее</a></p>
+      ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попросите голосового помощника напоминать каждый день в 10 утра.</p>
-    <button class="btn danger wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
+    <button class="mt-24 btn danger wide" data-act="reset">Начать с чистого листа</button>
     <p class="small muted credit" data-from="settings">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
   openSheet();
 }
@@ -998,8 +994,9 @@ async function doImport(file) {
     S = prepare(data.state);
     save();
     await idbReq((st) => st.clear(), 'readwrite');
-    for (const [id, url] of Object.entries(data.photos || {})) await idbReq((st) => st.put(url, id), 'readwrite');
-    PHOTOS = data.photos || {};
+    const photos = Object.fromEntries(Object.entries(data.photos || {}).filter(([, url]) => isPhoto(url)));
+    for (const [id, url] of Object.entries(photos)) await idbReq((st) => st.put(url, id), 'readwrite');
+    PHOTOS = photos;
     closeSheet();
     track('backup_imported');
     toast('Готово, всё вернулось 🌿');
@@ -1009,6 +1006,9 @@ async function doImport(file) {
 }
 
 /* ---------- Photos (IndexedDB) ---------- */
+// Photos are JPEG data URLs made by resize(); anything else (e.g. from a crafted backup) is dropped.
+const isPhoto = (u) => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
+const photoOf = (id) => (isPhoto(PHOTOS[id]) ? PHOTOS[id] : null);
 const dbp = new Promise((res, rej) => {
   if (!('indexedDB' in window)) return rej(new Error('no idb'));
   const r = indexedDB.open('zhungli', 1);
@@ -1026,7 +1026,7 @@ function idbReq(fn, mode = 'readonly') {
 async function loadPhotos() {
   try {
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
-    keys.forEach((k, i) => { PHOTOS[k] = vals[i]; });
+    keys.forEach((k, i) => { if (isPhoto(vals[i])) PHOTOS[k] = vals[i]; });
     render();
   } catch (e) { /* works without photos too */ }
 }
@@ -1072,6 +1072,10 @@ const STATS_LOCAL = location.protocol === 'file:' || /^(localhost|127\.|\[::1\])
 let statsQueue = [];
 let statsTimer;
 let anonId = null;
+// Reads the device number without creating one (settings show it only if stats were ever sent).
+function savedAnonId() {
+  try { return anonId || localStorage.getItem('zhungli.anon'); } catch (e) { return null; }
+}
 function getAnonId() {
   if (anonId) return anonId;
   try {
@@ -1112,7 +1116,7 @@ function flushStats() {
   }).catch(() => {});
 }
 // Catalog ids aren't personal (custom plants are sent as 'custom').
-const kindOf = (id) => { const d = def(id); return { plant_kind: S.custom[(S.plants[id] && S.plants[id].def) || id] ? 'custom' : d.id, plant_type: d.type, generic: !!d.generic }; };
+const kindOf = (id) => { const d = def(id); return { plant_kind: isCustom(id) ? 'custom' : d.id, plant_type: d.type, generic: !!d.generic }; };
 
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
@@ -1176,9 +1180,17 @@ function afterTask(msg, undo) {
   if (before > 0 && pendingCount() === 0) { confetti(); track('day_completed', { done_today: (S.log[today()] || []).length }); }
 }
 
+// Sizes from data-l / data-w (percent), set through CSSOM: the CSP forbids inline style attributes.
+function applySizes(root = document) {
+  root.querySelectorAll('[data-l], [data-w]').forEach((el) => {
+    if (el.dataset.l) el.style.left = el.dataset.l + '%';
+    if (el.dataset.w) el.style.width = el.dataset.w + '%';
+  });
+}
 function render() {
   const view = $('#view');
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
+  applySizes(view);
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }
 
@@ -1272,10 +1284,15 @@ document.addEventListener('click', (e) => {
       save();
       if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); break; }
       tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
-      toast(`Добавлено ${ids.length} ${plural(ids.length, 'растение', 'растения', 'растений')} 🌱 Откройте каждое, чтобы выбрать место`); break;
+      toast(`Добавлено ${plantsN(ids.length)} 🌱 Откройте каждое, чтобы выбрать место`); break;
     }
-    case 'spot-del':
-      S.spots = S.spots.filter((x) => x !== el.dataset.spot); save(); openSettings(); break;
+    case 'spot-del': {
+      const sp = el.dataset.spot;
+      const there = Object.values(S.plants).filter((r) => r.spot === sp);
+      if (there.length && !confirm(`Здесь ${plantsN(there.length)}. Убрать место «${sp}»? Растения останутся без места.`)) break;
+      there.forEach((r) => { r.spot = ''; });
+      S.spots = S.spots.filter((x) => x !== sp); save(); openSettings(); break;
+    }
     case 'spot-add': {
       const sp = prompt('Как называется место?');
       if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); }
@@ -1333,6 +1350,7 @@ document.addEventListener('click', (e) => {
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
         delete PHOTOS[id];
+        for (const k of ['dust:' + id, 'rotate:' + id]) { delete S.bonus[k]; delete S.snooze[k]; }
         // A custom plant's card is no longer needed.
         if (S.custom[id]) delete S.custom[id];
         idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
@@ -1404,6 +1422,7 @@ document.addEventListener('change', (e) => {
       const fresh = tmp.firstElementChild;
       row.querySelector('.nm').replaceWith(fresh.querySelector('.nm'));
       row.querySelector('.lux-bar').replaceWith(fresh.querySelector('.lux-bar'));
+      applySizes(row);
     }
     $('#ideas').innerHTML = lightIdeas();
     document.querySelector('.hello .date').textContent = `замерено ${allPlants().filter((p) => p.lux).length} из ${allPlants().length}`;

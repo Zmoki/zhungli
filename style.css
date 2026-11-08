@@ -352,3 +352,25 @@ svg.pl { display: block; }
 .nm-pl img { width: 100%; height: 100%; object-fit: cover; }
 /* Hint cards keep empty columns, so a lone button has the same size and place as in a pair */
 .hint-btns { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); margin-top: 10px; }
+
+/* Spacing helpers (no inline style attributes: the CSP forbids them) */
+.m-0 { margin: 0; } .mt-0 { margin-top: 0; } .mt-n4 { margin-top: -4px; }
+.mt-6 { margin-top: 6px; } .mt-8 { margin-top: 8px; } .mt-10 { margin-top: 10px; } .mt-12 { margin-top: 12px; }
+.mt-14 { margin-top: 14px; } .mt-20 { margin-top: 20px; } .mt-24 { margin-top: 24px; }
+.grow { flex: 1; }
+.celebrate h2 { margin: 0 0 6px; }
+summary { cursor: pointer; }
+.error-note { color: var(--red); }
+.empty-note { text-align: center; margin-top: 24px; }
+.bonus-sub { margin: 8px 0 10px; }
+.pick-help { margin: 8px 0 0; }
+.found-note { margin: 4px 0 8px; }
+.water-now { margin: 4px 0 18px; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* Privacy page */
+.doc { padding-bottom: calc(env(safe-area-inset-bottom) + 40px); }
+.doc h2 { margin-top: 28px; }
+.doc ul { padding-left: 1.2em; margin: 8px 0; }
+.doc li { margin-bottom: 6px; }
+.doc a { color: var(--green); }
+.back { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; color: var(--green); font-weight: 600; text-decoration: none; }

@@ -12,6 +12,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), icons as text glyphs in the text color (no ➕-style emoji), tap targets ≥ 44×44, text sizes in `rem` (1rem = 17px or the iPhone text-size setting, nothing under 14px except tab labels), layouts reflow instead of scrolling sideways, labels tied to fields, decorative emoji `aria-hidden`, toasts go through `#live`.
 - **Icons:** Lucide 0.468.0 symbols in the sprite in `index.html`, used via `I('name')`; add new ones from `lucide-static@0.468.0/icons/`. Plants without a photo use `plantSvg()` from `shapes.js`. Emoji only where they carry mood: quips, toasts, celebrations, confetti.
 - **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call, and update `privacy.html` if it sends a new kind of data. No plant names, nicknames, notes or photos in events.
+- **Security headers:** `_headers` sets a strict CSP (no inline scripts or `style=""` attributes; dynamic sizes go through `data-l`/`data-w` and `applySizes()`). Keep securityheaders.com at A+.
 - **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
 
