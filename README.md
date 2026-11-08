@@ -17,3 +17,5 @@ Catalog: `plants.js`.
 Release: bump `?v=` in `index.html` and the number in `version.txt`; the app on the phone reloads itself.
 
 License: all rights reserved. You may read the code and open issues; copying, hosting or reusing it needs written permission. See [LICENSE](LICENSE).
+
+Pull requests are open to collaborators only. Bugs and ideas are welcome as [issues](https://github.com/Zmoki/zhungli/issues).
