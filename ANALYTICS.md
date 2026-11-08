@@ -48,6 +48,7 @@ On every event:
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
 | `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
+| `mini_app_link_clicked` | «Открыть в Телеграме» on the Telegram-browser hint | `has_plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |
 | `plant_deleted` | plant deleted | — |
 | `plant_named` | nickname set | — |

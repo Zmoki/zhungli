@@ -394,3 +394,4 @@ summary { cursor: pointer; }
 .doc li { margin-bottom: 6px; }
 .doc a { color: var(--green); }
 .back { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; color: var(--green); font-weight: 600; text-decoration: none; }
+a.btn { text-decoration: none; }

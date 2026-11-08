@@ -5,6 +5,7 @@ const KEY = 'zhungli.v1';
 // Opened inside Telegram's own browser: data there is separate from Safari/Chrome and can be lost.
 const IN_TELEGRAM = /Telegram/i.test(navigator.userAgent) || typeof window.TelegramWebviewProxy !== 'undefined';
 // Opened as the Telegram mini app (/tg). Remembered for the session, so pages like /privacy keep it.
+const MINI_APP_LINK = 'https://t.me/ZhungliPlantsBot?startapp';
 const MINI_APP = (() => {
   try {
     if (location.pathname.startsWith('/tg')) sessionStorage.setItem('zhungli.mini', '1');
@@ -326,10 +327,17 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
 function currentHint() {
+  // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
-    return hintCard('triangle-alert', 'Вы открыли Жунгли внутри Телеграма',
-      'Растения, добавленные здесь, могут потеряться. Нажмите ⋯ или ⋮ вверху → «Открыть в браузере», чтобы перейти в Safari или Chrome.',
-      '<button class="btn" data-act="hide-telegram">Понятно</button>');
+    const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть в Телеграме</a>`;
+    if (!Object.keys(S.plants).length) {
+      return hintCard('triangle-alert', 'Откройте Жунгли как приложение Телеграма',
+        'Здесь, во встроенном браузере, растения могут потеряться. В приложении Телеграма они сохраняются в облаке и появятся на любом телефоне.',
+        `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
+    }
+    return hintCard('triangle-alert', 'Растения здесь могут потеряться',
+      'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить» там.',
+      `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
   if (!S.statsNotice && S.settings.stats !== false) {
     return hintCard('lightbulb', 'Анонимная статистика',
@@ -1271,6 +1279,7 @@ document.addEventListener('click', (e) => {
     case 'stats-ok': S.statsNotice = true; save(); render(); break;
     case 'stats-off':
       statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); break;
+    case 'open-mini-app': track('mini_app_link_clicked', { has_plants: Object.keys(S.plants).length > 0 }); flushStats(); break; // the link opens Telegram
     case 'hide-telegram': S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); break;
     case 'settings': openSettings(); break;
     case 'news': openNews(); break;
