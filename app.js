@@ -424,7 +424,7 @@ function viewToday() {
       <p class="quip">${esc(quipOf(p))}</p>
       <div class="question">${esc(waterTask(p))}</div>
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
-      <button class="btn" data-act="wet" data-id="${esc(p.id)}">${I('check')}${no}</button></div>
+      <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button></div>
       <div class="hint">${esc(p.water || '')}</div>
       <button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button></div>`;
   });
@@ -640,7 +640,7 @@ function openAdd() {
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выберите общий тип или создайте своё.</p>
-    <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение с нуля</button>
+    <button class="mt-12 btn ghost wide" data-act="add-custom">Своё растение с нуля</button>
     <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
