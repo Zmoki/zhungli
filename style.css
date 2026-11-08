@@ -265,6 +265,7 @@ button { cursor: pointer; }
 .hint { font-size: 0.882rem; color: var(--muted); margin-top: 8px; }
 /* In task cards the task and the tip under the buttons are centered */
 .task .question, .task .hint { text-align: center; }
+.task .btns + .hint { margin-top: 16px; }
 
 .task.bonus { border: 2px dashed var(--edge); }
 .task.done-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 8px; border-radius: 22px; }
