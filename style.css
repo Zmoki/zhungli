@@ -410,6 +410,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .tag.ok { background: var(--leafy); }
 .idea { border-radius: 22px; padding: 12px 16px; margin-bottom: 10px; border: 1px solid var(--glass-rim); border-left: 6px solid var(--sun); }
 .idea > .ic:first-child { margin-right: .4em; color: var(--ink); }
+/* Too dark: plum like the «темновато» status; too bright and swaps: sun */
+.idea.low { border-left-color: var(--plum); }
 
 /* Room */
 .room-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 10px; }
