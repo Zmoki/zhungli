@@ -6,6 +6,7 @@
   --field: #ffffff;
   --bubble: #fff4e2; /* plant speech and inset blocks: cream on white */
   --sheet-solid: #ffffff;
+  --bubble-edge: #ecd3a8; /* outline so the bubble shows on glass too */
   --ink: #2a2118;
   --muted: #4a3b2e;
   --line: rgba(42, 33, 24, .12);
@@ -55,6 +56,7 @@
     --card: rgba(52, 44, 68, .66);
     --field: #2a2338;
     --bubble: #352c47;
+    --bubble-edge: #54486c;
     --ink: #fff6ea;
     --muted: #efe5d8;
     --line: rgba(255, 246, 234, .14);
@@ -87,6 +89,7 @@
   --card: rgba(52, 44, 68, .66);
   --field: #2a2338;
   --bubble: #352c47;
+  --bubble-edge: #54486c;
   --ink: #fff6ea;
   --muted: #efe5d8;
   --line: rgba(255, 246, 234, .14);
@@ -229,8 +232,8 @@ button { cursor: pointer; }
 .task-name { font-weight: 900; font-size: 1.176rem; line-height: 1.2; }
 .task-sub { color: var(--muted); font-size: 0.882rem; font-weight: 700; }
 /* The plant talks: a speech bubble with a tail toward its picture */
-.quip { position: relative; font-size: 1rem; font-weight: 700; margin: 16px 0 12px; padding: 12px 16px; background: var(--bubble); border-radius: 20px; }
-.quip::before { content: ''; position: absolute; left: 26px; top: -7px; width: 16px; height: 16px; background: var(--bubble); transform: rotate(45deg); border-radius: 3px; }
+.quip { position: relative; font-size: 1rem; font-weight: 700; margin: 16px 0 12px; padding: 10px 14px; background: var(--bubble); border: 2px solid var(--bubble-edge); border-radius: 20px; }
+.quip::before { content: ''; position: absolute; left: 24px; top: -11px; width: 16px; height: 16px; background: var(--bubble); border: 2px solid var(--bubble-edge); border-right: 0; border-bottom: 0; transform: rotate(45deg); border-radius: 3px 0 0 0; }
 .question { font-weight: 900; font-size: 1.059rem; margin: 14px 0 10px; }
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
 /* Equal widths side by side; a button never splits its text, the row wraps instead.
