@@ -9,7 +9,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **Release:** on any change to app files, bump the version in `index.html` (`?v=` on every asset), `version.txt` and `CACHE` in `sw.js`. Phones compare `version.txt` and reload. Docs-only changes need no bump. Add user-facing changes to `changelog.js` (Russian, short); that lights the ✨ dot for existing users.
 - **User data:** people keep real data in localStorage (`zhungli.v1`) and IndexedDB (`zhungli`/`photos`). Never reset it. A format change needs a migration in `prepare()` (see `migrateV1`) and a bump of `v`.
 - **Catalog:** don't rename or remove catalog ids; saved plants point at them via `def`. Hide entries with `hidden: true` instead.
-- **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), icons as text glyphs in the text color (no ➕-style emoji), tap targets ≥ 44×44, labels tied to fields, decorative emoji `aria-hidden`, toasts go through `#live`.
+- **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), icons as text glyphs in the text color (no ➕-style emoji), tap targets ≥ 44×44, text sizes in `rem` (1rem = 17px or the iPhone text-size setting, nothing under 14px except tab labels), layouts reflow instead of scrolling sideways, labels tied to fields, decorative emoji `aria-hidden`, toasts go through `#live`.
 - **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call. No plant names, nicknames, notes or photos in events.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
 

@@ -42,13 +42,17 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* 1rem = 17px, the iOS body size. On iPhone it follows Settings → Display & Text Size. */
+html { -webkit-text-size-adjust: 100%; font-size: 106.25%; }
+@supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+  html { font: -apple-system-body; }
+}
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.5 ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
+  font: 1rem/1.5 ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -58,11 +62,11 @@ main {
   padding: calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 96px);
 }
 
-h1 { font-size: clamp(24px, 7vw, 28px); line-height: 1.15; margin: 0 0 4px; letter-spacing: -.01em; }
-h2 { font-size: 18px; margin: 28px 0 10px; }
+h1 { font-size: clamp(1.45rem, 7vw, 1.75rem); line-height: 1.15; margin: 0 0 4px; letter-spacing: -.01em; }
+h2 { font-size: 1.118rem; margin: 28px 0 10px; }
 p { margin: 0 0 10px; }
 .muted { color: var(--muted); }
-.small { font-size: 14px; }
+.small { font-size: 0.882rem; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -78,7 +82,7 @@ button { cursor: pointer; }
 }
 .tabs button {
   flex: 1; max-width: 130px; border: 0; background: none; padding: 6px 0;
-  font-size: 12px; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: clamp(13px, .78rem, 16px); color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px;
   border-radius: 12px;
 }
 .tabs button span { font-size: 22px; line-height: 1; filter: grayscale(.6); }
@@ -87,7 +91,7 @@ button { cursor: pointer; }
 
 /* Header */
 .hello { margin-bottom: 18px; }
-.hello .date { color: var(--muted); font-size: 15px; text-transform: lowercase; }
+.hello .date { color: var(--muted); font-size: 0.941rem; text-transform: lowercase; }
 .head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .head-btns { display: flex; gap: 6px; flex: none; }
 .icon-btn.has-new { position: relative; }
@@ -114,14 +118,14 @@ button { cursor: pointer; }
   overflow: hidden; border: 0; padding: 0;
 }
 .ava img { width: 100%; height: 100%; object-fit: cover; }
-.task-name { font-weight: 700; font-size: 17px; }
-.task-sub { color: var(--muted); font-size: 14px; }
-.quip { font-size: 15px; margin: 10px 0 0; padding: 10px 12px; background: var(--bg); border-radius: 12px; }
+.task-name { font-weight: 700; font-size: 1.059rem; }
+.task-sub { color: var(--muted); font-size: 0.882rem; }
+.quip { font-size: 0.941rem; margin: 10px 0 0; padding: 10px 12px; background: var(--bg); border-radius: 12px; }
 .quip::before { content: "💬 "; }
 .question { font-weight: 600; margin: 12px 0 8px; }
-.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 8px; }
 .btn {
-  border: 1.5px solid var(--edge); border-radius: 14px; padding: 12px 10px; font-weight: 600; font-size: 15px;
+  border: 1.5px solid var(--edge); border-radius: 14px; padding: 12px 10px; font-weight: 600; font-size: 0.941rem;
   background: var(--card); color: var(--ink); min-height: 48px;
 }
 .btn.water { background: var(--blue-soft); color: var(--blue); border-color: var(--blue); }
@@ -130,8 +134,8 @@ button { cursor: pointer; }
 .btn.ghost { background: none; color: var(--ink); font-weight: 500; }
 .btn.danger { background: var(--red-soft); color: var(--red); border-color: var(--red); }
 .btn.wide { width: 100%; }
-.later { display: block; margin: 6px auto 0; border: 0; background: none; color: var(--muted); font-size: 14px; padding: 6px 12px; min-height: 44px; }
-.hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.later { display: block; margin: 6px auto 0; border: 0; background: none; color: var(--muted); font-size: 0.882rem; padding: 6px 12px; min-height: 44px; }
+.hint { font-size: 0.882rem; color: var(--muted); margin-top: 8px; }
 
 .task.bonus { border: 1px dashed var(--line); box-shadow: none; background: transparent; }
 .task.done-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; box-shadow: none; background: transparent; border: 1px solid var(--line); margin-bottom: 8px; }
@@ -149,7 +153,7 @@ button { cursor: pointer; }
 .celebrate .big { font-size: 56px; line-height: 1; margin-bottom: 8px; }
 
 /* Plants grid */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 7rem), 1fr)); gap: 10px; }
 .pcard {
   background: var(--card); border: 0; border-radius: var(--radius); box-shadow: var(--shadow);
   padding: 10px; text-align: left; display: flex; flex-direction: column; gap: 6px;
@@ -162,9 +166,9 @@ button { cursor: pointer; }
 .pcard .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .pcard .pic img.fill { object-fit: cover; filter: blur(14px) saturate(1.1); transform: scale(1.15); }
 .pcard .mood { position: absolute; right: 6px; bottom: 6px; font-size: 22px; background: var(--card); border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; }
-.pcard b { font-size: 15px; line-height: 1.2; }
-.pcard small { color: var(--muted); font-size: 12px; line-height: 1.5; }
-.group-title { min-height: 24px; font-size: 14px; color: var(--muted); font-weight: 600; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .04em; }
+.pcard b { font-size: 0.941rem; line-height: 1.2; }
+.pcard small { color: var(--muted); font-size: 0.824rem; line-height: 1.5; }
+.group-title { min-height: 24px; font-size: 0.882rem; color: var(--muted); font-weight: 600; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .04em; }
 
 /* Sheet */
 dialog {
@@ -177,7 +181,7 @@ dialog::backdrop { background: rgba(10, 20, 12, .45); }
 .sheet-head .ava { width: 72px; height: 72px; font-size: 40px; border-radius: 20px; }
 .close { margin-left: auto; align-self: flex-start; }
 .info { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
-.info b { display: block; font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+.info b { display: block; font-size: 0.882rem; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
 button.info { display: block; width: 100%; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .info .pen { font-weight: 400; }
 .note-form textarea { margin-top: 4px; resize: vertical; }
@@ -185,59 +189,59 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .note-links .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
 .field { margin-bottom: 14px; }
-.field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+.field label { display: block; font-size: 0.882rem; color: var(--muted); margin-bottom: 6px; }
 .input {
   width: 100%; border: 1.5px solid var(--edge); border-radius: 12px; padding: 12px; background: var(--card);
-  font-size: 16px;
+  font-size: 1rem;
 }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  border: 1.5px solid var(--edge); background: var(--card); border-radius: 99px; padding: 8px 14px; font-size: 14px; min-height: 44px; min-width: 44px;
+  border: 1.5px solid var(--edge); background: var(--card); border-radius: 99px; padding: 8px 14px; font-size: 0.882rem; min-height: 44px; min-width: 44px;
 }
 .chip.on { background: var(--green); color: var(--on-green); border-color: var(--green); }
 .stepper { display: flex; align-items: center; gap: 10px; }
 .stepper button { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--edge); background: var(--card); color: var(--ink); font-size: 20px; }
-.toggle { display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 44px; }
+.toggle { display: flex; align-items: center; gap: 10px; font-size: 0.941rem; min-height: 44px; }
 .toggle input { width: 22px; height: 22px; accent-color: var(--green); }
-.history { font-size: 14px; color: var(--muted); }
+.history { font-size: 0.882rem; color: var(--muted); }
 
 /* Light */
 .lux-row {
   background: var(--card); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px;
   display: grid; grid-template-columns: 1fr 96px; gap: 4px 10px; align-items: center;
 }
-.lux-row .nm { font-weight: 600; font-size: 15px; }
-.lux-row .need { font-size: 13px; color: var(--muted); }
+.lux-row .nm { font-weight: 600; font-size: 0.941rem; }
+.lux-row .need { font-size: 0.882rem; color: var(--muted); }
 .lux-row input { grid-row: span 2; text-align: right; padding: 10px; }
 .lux-bar { grid-column: 1 / -1; position: relative; height: 8px; background: var(--bg); border-radius: 99px; margin-top: 4px; }
 .lux-bar .range { position: absolute; top: 0; bottom: 0; background: var(--green-soft); border-radius: 99px; }
 .lux-bar .dot { position: absolute; top: -3px; width: 14px; height: 14px; border-radius: 50%; margin-left: -7px; background: var(--green); border: 2px solid var(--card); }
 .lux-bar .dot.low { background: var(--amber); }
 .lux-bar .dot.high { background: var(--red); }
-.tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+.tag { display: inline-block; font-size: 0.824rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
 .tag.low { background: var(--amber-soft); color: var(--amber); }
 .tag.high { background: var(--red-soft); color: var(--red); }
 .tag.ok { background: var(--green-soft); color: var(--green); }
 .idea { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border-left: 4px solid var(--amber); }
 
 /* Room */
-.room-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.room-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 10px; }
 .metric { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
-.metric .val { font-size: 34px; font-weight: 700; line-height: 1.1; }
-.metric .lbl { font-size: 13px; color: var(--muted); }
+.metric .val { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.metric .lbl { font-size: 0.882rem; color: var(--muted); }
 .metric input { margin-top: 8px; }
 .status { border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
 .status.ok { background: var(--green-soft); }
 .status.warn { background: var(--amber-soft); }
 .scenario { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
-.scenario div { flex: 1; font-size: 15px; }
-.scenario button { flex: none; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+.scenario div { flex: 1; font-size: 0.941rem; }
+.scenario button { flex: none; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 6px 10px; font-size: 0.882rem; }
 
 /* Toast + confetti */
 .toast {
   position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 86px); transform: translateX(-50%);
-  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 99px; font-size: 15px;
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 99px; font-size: 0.941rem;
   z-index: 20; max-width: calc(100vw - 32px); text-align: center; animation: pop .25s ease;
 }
 .toast .undo { border: 0; background: none; color: var(--bg); font: inherit; font-weight: 700; margin: -10px -6px -10px 4px; padding: 12px 10px; min-height: 44px; text-decoration: underline; }
@@ -259,7 +263,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 }
 .pick .pe { font-size: 26px; width: 34px; text-align: center; flex: none; }
 .pick .pt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.pick .pt small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.pick .pt small { color: var(--muted); font-size: 0.824rem; line-height: 1.5; }
 .pick .pc { font-size: 18px; font-weight: 700; color: var(--muted); flex: none; }
 .pick.on { border-color: var(--green); background: var(--green-soft); }
 .pick.on .pc { color: var(--green); }
@@ -271,10 +275,10 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* What's new */
 .news { margin: 18px 0 0; }
-.news h3 { margin: 0 0 6px; font-size: 17px; }
+.news h3 { margin: 0 0 6px; font-size: 1.059rem; }
 .news ul { margin: 0; padding-left: 20px; }
 .news li { margin-bottom: 4px; }
-.news.current h3::after { content: 'у вас'; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 99px; padding: 2px 8px; vertical-align: 2px; }
+.news.current h3::after { content: 'у вас'; margin-left: 8px; font-size: 0.824rem; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 99px; padding: 2px 8px; vertical-align: 2px; }
 
 /* AI import entry in the add sheet */
 .import-cta {
@@ -283,10 +287,10 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 }
 .import-cta .pe { font-size: 34px; flex: none; }
 .import-cta .pt { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.import-cta b { font-size: 17px; color: var(--green); }
-.import-cta small { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.import-cta b { font-size: 1.059rem; color: var(--green); }
+.import-cta small { font-size: 0.882rem; color: var(--muted); line-height: 1.5; }
 .import-cta .pc { font-size: 28px; color: var(--green); flex: none; }
-.or { text-align: center; color: var(--muted); font-size: 13px; margin: 14px 0 10px; }
+.or { text-align: center; color: var(--muted); font-size: 0.882rem; margin: 14px 0 10px; }
 
 /* Accessibility */
 :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
