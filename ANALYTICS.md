@@ -20,6 +20,7 @@ On every event:
 | `app_version` | `?v=` of `app.js` |
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
+| `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
 | `$os`, `$device_type` | parsed from the user agent |
 | `$host`, `$current_url` | page origin and path |
 | `$lib` | `zhungli` |
@@ -36,6 +37,13 @@ On every event:
 | `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
 | `import_prompt_copied` | «Скопировать запрос» in AI import | — |
 | `import_failed` | pasted text has no plant list | `length` of the pasted text |
+| `add_opened` | «Добавить растения» sheet opened | `from`: tab it was opened from |
+| `custom_opened` | «Своё растение с нуля» form opened | — |
+| `import_opened` | AI import sheet opened | — |
+| `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
+| `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open) |
+| `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
+| `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |
 | `plant_deleted` | plant deleted | — |
 | `plant_named` | nickname set | — |
 | `photo_added` | photo added to a plant | — |

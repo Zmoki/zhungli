@@ -2,6 +2,17 @@
 'use strict';
 
 const KEY = 'zhungli.v1';
+// Opened inside Telegram's own browser: data there is separate from Safari/Chrome and can be lost.
+const IN_TELEGRAM = /Telegram/i.test(navigator.userAgent) || typeof window.TelegramWebviewProxy !== 'undefined';
+// Report script errors to stats (message and place only), at most 5 per page load.
+let errorsSent = 0;
+function reportError(message, source, line) {
+  if (errorsSent >= 5) return;
+  errorsSent++;
+  try { track('js_error', { message: String(message || '').slice(0, 150), source: String(source || '').split('/').pop().split('?')[0], line: line || 0 }); } catch (e) { /* stats not ready yet */ }
+}
+window.addEventListener('error', (e) => reportError(e.message, e.filename, e.lineno));
+window.addEventListener('unhandledrejection', (e) => reportError(e.reason && (e.reason.message || e.reason), 'promise', 0));
 // Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
 const $ = (s, el = document) => el.querySelector(s);
@@ -303,8 +314,13 @@ function viewToday() {
   let html = `<header class="hello head-row"><div><h1>${greeting()}!</h1><div class="date">${esc(date)}</div></div>
     ${headButtons()}</header>`;
 
+  if (IN_TELEGRAM && !S.hideTelegram) {
+    html += `<div class="task bonus"><b>${I('triangle-alert')}Вы открыли Жунгли внутри Телеграма</b>
+      <p class="small muted" style="margin-top:6px">Растения, добавленные здесь, могут потеряться. Нажмите ⋯ или ⋮ вверху → «Открыть в браузере», чтобы перейти в Safari или Chrome.</p>
+      <button class="btn ghost" data-act="hide-telegram">Понятно</button></div>`;
+  }
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  if (isIOS && !navigator.standalone && !S.hideInstall) {
+  if (isIOS && !IN_TELEGRAM && !navigator.standalone && !S.hideInstall) {
     html += `<div class="task bonus"><b>${I('smartphone')}Добавьте меня на экран «Домой»</b>
       <p class="small muted" style="margin-top:6px">Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт ваши отметки, если пару недель не заходить.</p>
       <button class="btn ghost" data-act="hide-install">Уже на экране</button></div>`;
@@ -520,8 +536,22 @@ function pickRow(d) {
   return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc((d.species + ' ' + (d.hint || '') + ' ' + d.cat).toLowerCase())}">
     <span class="pe" aria-hidden="true">${plantSvg(d)}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">${I('plus')}</span></button>`;
 }
+// What happens in the add flow, reported once when the sheet closes without adding.
+let addFlow = null;
+function startAddFlow(sheetName) {
+  if (!addFlow) addFlow = { sheet: sheetName, searched: false, no_results: false, picked: 0, done: false };
+  addFlow.sheet = sheetName;
+}
+function endAddFlow(leftApp = false) {
+  if (addFlow && !addFlow.done) track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp });
+  addFlow = null;
+}
+let searchTimer;
 function openAdd() {
   picked = new Set();
+  if (!sheet.open) endAddFlow(); // the close event doesn't fire in every browser
+  startAddFlow('catalog');
+  track('add_opened', { from: tab });
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => (a === 'Общие типы') - (b === 'Общие типы'));
@@ -547,6 +577,13 @@ function openAdd() {
       g.querySelectorAll('.pick').forEach((b) => { const on = !q || b.dataset.q.includes(q); b.hidden = !on; if (on) n++; });
       g.hidden = !n; any ||= n > 0;
     });
+    if (q) {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
+        track('catalog_searched', { found: any });
+      }, 1200);
+    }
     $('#pick-none').hidden = any;
   });
   openSheet();
@@ -559,6 +596,8 @@ function updatePickBar() {
 }
 
 function openCustom() {
+  startAddFlow('custom');
+  track('custom_opened');
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('pencil')}</div><h2 style="margin:0">Новое растение</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
@@ -576,6 +615,7 @@ function openCustom() {
     </form>`;
   $('#add-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    if (addFlow) addFlow.done = true;
     const f = new FormData(e.target);
     const id = 'c' + Date.now().toString(36);
     const every = clamp(Number(f.get('every')) || 6, 1, 60);
@@ -671,6 +711,8 @@ function normImport(o) {
 let importItems = [];
 let importPicked = new Set();
 function openImport() {
+  startAddFlow('import');
+  track('import_opened');
   importItems = [];
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
@@ -720,6 +762,7 @@ function updateImportBar() {
   b.innerHTML = n ? `${I('plus')}Добавить ${n} ${plural(n, 'растение', 'растения', 'растений')}` : importItems.length ? 'Отметьте растения' : 'Вставьте ответ';
 }
 function addImported() {
+  if (addFlow) addFlow.done = true;
   const t = today();
   const base = Date.now().toString(36);
   const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
@@ -779,9 +822,17 @@ function lightIdeas() {
   return out.map((t) => `<div class="idea">${t}</div>`).join('');
 }
 
+// Shown on tabs that need plants when there are none yet.
+const emptyCard = (title, text) => `<div class="celebrate"><h2 style="margin:0 0 6px">${title}</h2><p class="muted">${text}</p>
+  <button class="btn primary wide" data-act="add-plant" style="margin-top:14px">${I('plus')}Добавить растения</button></div>`;
+
 function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
   const measured = ps.filter((p) => p.lux).length;
+  if (!ps.length) {
+    return `<header class="hello"><h1>Свет</h1></header>
+      ${emptyCard('Свет для каждого растения', 'Добавьте растения — покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.')}`;
+  }
   return `<header class="hello"><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></header>
     <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру — подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
     <div id="ideas">${lightIdeas()}</div>
@@ -814,6 +865,7 @@ function viewRoom() {
   }
   const ago = r ? (r.d === today() ? 'сегодня' : rel(r.d)) : '';
   return `<header class="hello"><h1>Комната</h1><div class="date">${r ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></header>
+    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения — подскажу, какая температура и влажность удобны именно им.')}
     <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
     <div class="room-cards">
       <div class="metric"><div class="lbl">Температура</div><div class="val">${r ? esc(r.t) + '°' : '—'}</div>
@@ -1003,6 +1055,7 @@ function deviceProps() {
     $current_url: location.origin + location.pathname,
     $host: location.host,
     standalone: !!(navigator.standalone || matchMedia('(display-mode: standalone)').matches),
+    in_telegram: IN_TELEGRAM,
   };
 }
 function track(event, props = {}) {
@@ -1036,8 +1089,8 @@ function openSheet() {
   sheet.scrollTop = 0;
 }
 // Re-render here: the close event doesn't fire in every browser.
-function closeSheet() { if (sheet.open) sheet.close(); render(); }
-sheet.addEventListener('close', () => render()); // closed by swipe or Esc
+function closeSheet() { endAddFlow(); if (sheet.open) sheet.close(); render(); }
+sheet.addEventListener('close', () => { endAddFlow(); render(); }); // closed by swipe, Esc or the close button
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
 let toastTimer;
@@ -1145,6 +1198,7 @@ document.addEventListener('click', (e) => {
       S.snooze[el.dataset.key] = addDays(today(), 3); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
+    case 'hide-telegram': S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); break;
     case 'settings': openSettings(); break;
     case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
@@ -1159,6 +1213,7 @@ document.addEventListener('click', (e) => {
     case 'import-pick': {
       const i = Number(el.dataset.i);
       if (importPicked.has(i)) importPicked.delete(i); else importPicked.add(i);
+      if (addFlow) addFlow.picked = importPicked.size;
       el.classList.toggle('on', importPicked.has(i));
       el.querySelector('.pc').innerHTML = I(importPicked.has(i) ? 'check' : 'plus');
       updateImportBar(); break;
@@ -1167,11 +1222,13 @@ document.addEventListener('click', (e) => {
     case 'pick': {
       const k = el.dataset.key;
       if (picked.has(k)) picked.delete(k); else picked.add(k);
+      if (addFlow) addFlow.picked = picked.size;
       el.classList.toggle('on', picked.has(k));
       el.querySelector('.pc').innerHTML = I(picked.has(k) ? 'check' : 'plus');
       updatePickBar(); break;
     }
     case 'pick-add': {
+      if (addFlow) addFlow.done = true;
       const ids = addPlants([...picked]);
       track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source: 'catalog' });
       save();
@@ -1331,7 +1388,7 @@ async function checkUpdate() {
 
 let lastOpen = Date.now();
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { flushStats(); return; }
+  if (document.hidden) { if (sheet.open) endAddFlow(true); flushStats(); return; }
   if (Date.now() - lastOpen > 30 * 60 * 1000) track('app_opened', { how: 'resume' });
   lastOpen = Date.now();
   checkUpdate();
