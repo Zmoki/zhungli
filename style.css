@@ -409,8 +409,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .tag.low { background: var(--dusk); }
 .tag.high { background: var(--sun); }
 .tag.ok { background: var(--leafy); }
-.idea { border-radius: 22px; padding: 12px 16px; margin-bottom: 10px; border: 1px solid var(--glass-rim); border-left: 6px solid var(--sun-d); }
-.idea > .ic:first-child { margin-right: .4em; color: var(--amber); }
+.idea { border-radius: 22px; padding: 12px 16px; margin-bottom: 10px; border: 1px solid var(--glass-rim); border-left: 6px solid var(--edge); }
+.idea > .ic:first-child { margin-right: .4em; color: var(--ink); }
+/* Same colors as the statuses: dark is dusky grey, too bright is sun */
+.idea.low { border-left-color: var(--dusk-d); }
+.idea.high { border-left-color: var(--sun-d); }
 
 /* Room */
 .room-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 10px; }
