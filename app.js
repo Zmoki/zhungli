@@ -336,6 +336,15 @@ function currentHint() {
       'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
   }
+  // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
+  if (MINI_APP) {
+    if (window.tgHome && !S.hideInstall) {
+      return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
+        'Иконка будет открывать приложение сразу, без поиска бота в Телеграме.',
+        '<button class="btn" data-act="tg-home">Добавить</button><button class="btn ghost" data-act="hide-install">Не нужно</button>');
+    }
+    return '';
+  }
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   if (isIOS && !navigator.standalone && !S.hideInstall) {
     return hintCard('smartphone', 'Добавьте меня на экран «Домой»',
@@ -1258,6 +1267,7 @@ document.addEventListener('click', (e) => {
       S.snooze[el.dataset.key] = addDays(today(), 3); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
+    case 'tg-home': if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); break;
     case 'stats-ok': S.statsNotice = true; save(); render(); break;
     case 'stats-off':
       statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); break;

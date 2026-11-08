@@ -48,6 +48,16 @@
       if (/^https:\/\/t\.me\//.test(a.href)) tg.openTelegramLink(a.href); else tg.openLink(a.href);
     });
 
+    // Telegram's own «add to home screen» (Bot API 8.0): offer it only if the icon isn't there yet.
+    if (tg.isVersionAtLeast('8.0')) {
+      tg.checkHomeScreenStatus((status) => {
+        if (status !== 'missed') return;
+        window.tgHome = { add: () => tg.addToHomeScreen() };
+        render();
+      });
+      tg.onEvent('homeScreenAdded', () => { window.tgHome = null; S.hideInstall = true; save(); render(); });
+    }
+
     if (tg.isVersionAtLeast('6.9')) cloudInit(tg.CloudStorage);
   }
 
