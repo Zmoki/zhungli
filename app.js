@@ -55,7 +55,8 @@ function rel(d) {
   return n > 0 ? `через ${days(n)}` : `${days(-n)} назад`;
 }
 const LK = '<abbr title="люкс">лк</abbr>';
-const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} тыс`;
+// No-break space: «20 тыс» never splits
+const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
 const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
 /* ---------- State ---------- */
@@ -873,10 +874,11 @@ function lightRow(p) {
   const left = (Math.min(a, LUX_SCALE) / LUX_SCALE) * 100;
   const width = ((Math.min(b, LUX_SCALE) - Math.min(a, LUX_SCALE)) / LUX_SCALE) * 100;
   const dot = p.lux ? `<i class="dot ${ls}" data-l="${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}"></i>` : '';
-  const tag = ls ? ` <span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '';
-  return `<div class="lux-row" id="lux-${esc(p.id)}"><div class="nm"><span class="nm-pl">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p)}</span>${esc(p.title)}${tag}</div>
+  const state = ls ? `<span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '<span class="small muted">ещё не замерено</span>';
+  return `<div class="lux-row" id="lux-${esc(p.id)}"><span class="nm-pl lux-pic">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2])}</span>
+    <div class="nm">${esc(p.title)}</div><div class="lux-state">${state}</div>
     <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
-    <div class="need">нужно ${kLux(a)}–${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
+    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
     <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
 }
 
@@ -1492,8 +1494,7 @@ document.addEventListener('change', (e) => {
       const tmp = document.createElement('div');
       tmp.innerHTML = lightRow(plant(id));
       const fresh = tmp.firstElementChild;
-      row.querySelector('.nm').replaceWith(fresh.querySelector('.nm'));
-      row.querySelector('.lux-bar').replaceWith(fresh.querySelector('.lux-bar'));
+      for (const sel of ['.lux-pic', '.lux-state', '.lux-bar']) row.querySelector(sel).replaceWith(fresh.querySelector(sel));
       applySizes(row);
     }
     $('#ideas').innerHTML = lightIdeas();
