@@ -655,7 +655,7 @@ function openCustom() {
 // and the plants become custom plants with their care tips.
 const IMPORT_PROMPT = `Сделай список моих растений для приложения «Жунгли». Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
 
-Ответь только JSON-массивом, без пояснений. Один объект на растение, поля:
+Ответь только JSON-массивом, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species — вид или сорт по-русски
 - name — имя, если оно есть у растения, иначе ""
 - type — в чём растёт: "soil" (грунт), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "dry" (сушить почти полностью: суккуленты, кактусы), "water" (черенки в воде)
@@ -673,26 +673,39 @@ const IMPORT_PROMPT = `Сделай список моих растений дл�
 Пример:
 [{"species":"Пеперомия туполистная","name":"","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
 
-// Finds the JSON array in a pasted answer (code fences, text around it, comments, trailing commas).
+// Cleans formatting chat apps add, so JSON.parse can read the answer.
+function repairJson(src) {
+  return src
+    .replace(/^\s*\/\/.*$/gm, '') // line comments
+    .replace(/[“”„‟″]/g, '"').replace(/[‘’]/g, "'") // typographic quotes
+    .replace(/(\d)[   ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
+    .replace(/,\s*([\]}])/g, '$1'); // trailing commas
+}
+// Finds the plant list in a pasted answer: code fences, text around it (even with brackets),
+// typographic quotes, spaced numbers, a single object or objects without [ ].
 function parseImport(text) {
   const t = String(text || '').trim();
   if (!t) return { error: 'empty' };
+  // What the text looked like, without any of its content.
+  const diag = { has_code_fence: t.includes('```'), has_curly_quotes: /[“”„]/.test(t), has_spaced_numbers: /\d[   ]\d{3}\b/.test(t) };
   const tries = [];
-  const a = t.indexOf('['), b = t.lastIndexOf(']');
-  if (a !== -1 && b > a) tries.push(t.slice(a, b + 1));
+  const end = t.lastIndexOf(']');
+  for (let a = t.indexOf('['), n = 0; a !== -1 && a < end && n < 8; a = t.indexOf('[', a + 1), n++) tries.push(t.slice(a, end + 1));
   const c = t.indexOf('{'), d = t.lastIndexOf('}');
-  if (c !== -1 && d > c) tries.push(t.slice(c, d + 1));
+  if (c !== -1 && d > c) tries.push(t.slice(c, d + 1), `[${t.slice(c, d + 1)}]`);
+  if (!tries.length) return { error: 'no_list', diag };
+  let parsed = false;
   for (const raw of tries) {
-    for (const src of [raw, raw.replace(/^\s*\/\/.*$/gm, '').replace(/,\s*([\]}])/g, '$1')]) {
-      try {
-        let v = JSON.parse(src);
-        if (v && !Array.isArray(v)) v = Array.isArray(v.plants) ? v.plants : [v];
-        const items = v.map(normImport).filter(Boolean);
-        if (items.length) return { items };
-      } catch (e) { /* try the next variant */ }
+    for (const [src, repaired] of [[raw, false], [repairJson(raw), true]]) {
+      let v;
+      try { v = JSON.parse(src); } catch (e) { continue; }
+      parsed = true;
+      if (v && !Array.isArray(v)) v = Array.isArray(v.plants) ? v.plants : Object.values(v).find(Array.isArray) || [v];
+      const items = v.map(normImport).filter(Boolean);
+      if (items.length) return { items, repaired };
     }
   }
-  return { error: 'no_json' };
+  return { error: parsed ? 'no_plants' : 'bad_json', diag };
 }
 // Common off-format answers: 'succulent', 'orchid', 'грунт'…
 function importType(x) {
@@ -709,8 +722,11 @@ function normImport(o) {
   const str = (x, max = 500) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
   const species = str(o.species, 80) || str(o.name, 80);
   if (!species) return null;
-  const num = (x) => Number(String(x).replace(/\s/g, ''));
-  let lux = Array.isArray(o.lux) ? o.lux.map(num).filter((x) => x > 0) : [];
+  // Numbers may come as strings: "7–10", "8 000", "8000–15000 лк".
+  const nums = (x) => (String(x ?? '').replace(/(\d)[\s\u00a0\u202f](?=\d{3}\b)/g, '$1').match(/\d+(?:[.,]\d+)?/g) || []).map((m) => Number(m.replace(',', '.')));
+  const num = (x) => nums(x)[0];
+  const yes = (x) => x === true || /^(true|да|yes)$/i.test(String(x).trim());
+  let lux = (Array.isArray(o.lux) ? o.lux.map(num) : nums(o.lux)).filter((x) => x > 0);
   lux = lux.length ? [Math.min(...lux), Math.max(...lux)].map((x) => clamp(Math.round(x), 300, 100000)) : [6000, 15000];
   const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
   return {
@@ -719,11 +735,12 @@ function normImport(o) {
     type: importType(o.type),
     lux, every: clamp(Math.round(num(o.every)) || 6, 1, 60),
     check: str(o.check, 100), water: str(o.water), soil: str(o.soil), cond: str(o.cond), tip: str(o.tip),
-    toxic: o.toxic === true, big: o.big === true, quips: quips.length ? quips : GENERIC_QUIPS,
+    toxic: yes(o.toxic), big: yes(o.big), quips: quips.length ? quips : GENERIC_QUIPS,
   };
 }
 
 let importItems = [];
+let importRepaired = false;
 let importPicked = new Set();
 function openImport() {
   startAddFlow('import');
@@ -753,9 +770,10 @@ function showImport() {
     importPicked = new Set();
     box.innerHTML = res.error === 'empty' ? '' : `<p class="small" style="color:var(--red)">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
       <p class="small muted">Всё равно не выходит? Пришлите ответ ИИ в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
-    if (res.error === 'no_json') track('import_failed', { length: text.length });
+    if (res.error !== 'empty') track('import_failed', { length: text.length, reason: res.error, ...res.diag });
   } else {
     importItems = res.items;
+    importRepaired = res.repaired;
     // Plants already in the collection start unticked.
     const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
     importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
@@ -790,7 +808,7 @@ function addImported() {
   });
   initBonus(S);
   save();
-  track('plants_added', { count: list.length, generic_count: 0, source: 'import' });
+  track('plants_added', { count: list.length, generic_count: 0, source: 'import', repaired: importRepaired });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
   toast(`Добавлено ${list.length} ${plural(list.length, 'растение', 'растения', 'растений')} 🌱 Откройте каждое, чтобы выбрать место`);
 }
@@ -1224,6 +1242,7 @@ document.addEventListener('click', (e) => {
     case 'add-custom': openCustom(); break;
     case 'add-import': openImport(); break;
     case 'import-copy': {
+      if (addFlow) addFlow.promptCopied = true;
       const done = () => { el.innerHTML = `${I('check')}Скопировано`; track('import_prompt_copied'); };
       const show = () => { const ta = $('#imp-prompt'); ta.value = IMPORT_PROMPT; ta.hidden = false; ta.select(); el.textContent = 'Выделите и скопируйте текст ниже'; };
       if (navigator.clipboard) navigator.clipboard.writeText(IMPORT_PROMPT).then(done, show); else show();
@@ -1407,7 +1426,13 @@ async function checkUpdate() {
 
 let lastOpen = Date.now();
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (sheet.open) endAddFlow(true); flushStats(); return; }
+  if (document.hidden) {
+    // Leaving for the AI chat after copying the prompt is the expected path, not abandoning.
+    const toAiChat = addFlow && addFlow.sheet === 'import' && addFlow.promptCopied;
+    if (sheet.open && !toAiChat) endAddFlow(true);
+    flushStats();
+    return;
+  }
   if (Date.now() - lastOpen > 30 * 60 * 1000) track('app_opened', { how: 'resume' });
   lastOpen = Date.now();
   checkUpdate();
