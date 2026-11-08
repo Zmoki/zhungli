@@ -647,7 +647,8 @@ function openSettings() {
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
-    <p class="small muted credit">Сделала Зарема · <a href="https://zmoki.xyz/" target="_blank" rel="noopener">zmoki.xyz</a></p>`;
+    <p class="small muted credit">Сделала Зарема · <a href="https://zmoki.xyz/" target="_blank" rel="noopener">zmoki.xyz</a><br>
+      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" target="_blank" rel="noopener">@zmoki</a></p>`;
   openSheet();
 }
 
