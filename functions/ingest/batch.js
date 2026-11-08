@@ -1,5 +1,5 @@
-// Пересылает анонимную статистику в PostHog через свой домен,
-// чтобы её не резали блокировщики. Принимает только POST /ingest/batch.
+// Forwards anonymous stats to PostHog through our own domain so ad blockers
+// don't drop them. Accepts only POST /ingest/batch.
 const POSTHOG = 'https://us.i.posthog.com/batch/';
 
 export async function onRequestPost({ request }) {
@@ -9,7 +9,7 @@ export async function onRequestPost({ request }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // Страну PostHog определяет по IP посетителя, а не по IP Cloudflare.
+      // PostHog gets the country from the visitor's IP, not Cloudflare's.
       'X-Forwarded-For': request.headers.get('CF-Connecting-IP') || '',
       'User-Agent': request.headers.get('User-Agent') || '',
     },

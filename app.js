@@ -1,12 +1,12 @@
 'use strict';
 
 const KEY = 'zhungli.v1';
-// Версия берётся из ?v= в index.html и сверяется с version.txt на сервере.
+// Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-/* ---------- Даты ---------- */
+/* ---------- Dates ---------- */
 const pad = (n) => String(n).padStart(2, '0');
 const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = () => iso(new Date());
@@ -33,7 +33,7 @@ function rel(d) {
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} тыс`;
 const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
-/* ---------- Состояние ---------- */
+/* ---------- State ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотри на меня внимательно 👀', 'Я тут, я расту!'];
 const TYPE_LABELS = {
   soil: ['Сухо → полито 💧', 'Ещё влажно 👌'],
@@ -58,11 +58,11 @@ function blank() {
 
 function load() {
   let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* пусто */ }
+  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* empty */ }
   return prepare(raw);
 }
 
-// Приводит сохранённые данные (или копию) к текущему формату.
+// Brings saved data (or a backup) to the current format.
 function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
@@ -71,8 +71,8 @@ function prepare(raw) {
   return s;
 }
 
-// v1 — первая версия: коллекция из личного каталога создавалась сама.
-// Личные заметки переезжают в данные растений, чтобы каталог стал общим.
+// v1: the collection was created automatically from the personal catalog.
+// Personal notes move into plant data so the catalog can be generic.
 function migrateV1(s) {
   s.spots = [...LEGACY_SPOTS];
   Object.entries(LEGACY_NOTES).forEach(([id, n]) => {
@@ -103,7 +103,7 @@ function runtime(p, nextCheck) {
   return { name: '', spot: '', lux: null, interval: p.every, nextCheck, lastWater: null, wet: 0, repotted: false, hist: [] };
 }
 
-// Добавляет растения из каталога. Первые проверки разносим по дням, чтобы не было 20 дел сразу.
+// Adds plants from the catalog. First checks are spread over days so there aren't 20 tasks at once.
 function addPlants(keys) {
   const t = today();
   const base = Date.now().toString(36);
@@ -120,13 +120,13 @@ function addPlants(keys) {
 }
 
 function save() {
-  // Лог храним только за неделю.
+  // Keep the log for one week only.
   const cutoff = addDays(today(), -7);
   Object.keys(S.log).forEach((d) => { if (d < cutoff) delete S.log[d]; });
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не получилось сохранить 😢'); }
 }
 
-// Растение ссылается на карточку каталога через def; у старых растений id и есть карточка.
+// A plant points to its catalog card via def; for older plants the id is the card.
 function defIn(s, id) {
   const r = s.plants[id];
   const k = (r && r.def) || id;
@@ -136,8 +136,8 @@ const def = (id) => defIn(S, id);
 function plant(id) {
   const d = def(id), r = S.plants[id];
   if (!d || !r) return null;
-  // luxRange — норма из каталога, lux — замер люксметром.
-  // species — своё название, если задано, иначе из каталога. own — личные заметки поверх каталога.
+  // luxRange: catalog range; lux: light meter reading.
+  // species: custom name if set, else the catalog one. own: personal notes over the catalog.
   const species = r.species || d.species;
   return { ...d, ...(r.own || {}), ...r, id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
 }
@@ -185,7 +185,7 @@ function tempRange(p) {
 const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.spots.length : 99) : i; };
 const bySpot = (a, b) => spotIdx(a.spot) - spotIdx(b.spot) || a.title.localeCompare(b.title, 'ru');
 
-/* ---------- Задачи ---------- */
+/* ---------- Tasks ---------- */
 function priority(p) {
   const overdue = diff(p.nextCheck, today());
   const thirsty = p.type === 'sphagnum' || p.type === 'water' || p.interval <= 3 ? 0.3 : 0;
@@ -223,7 +223,7 @@ function bonusTasks() {
   return out.slice(0, 2);
 }
 
-/* ---------- Действия ---------- */
+/* ---------- Actions ---------- */
 function snapshot() {
   const copy = JSON.stringify(S);
   return () => { S = JSON.parse(copy); save(); render(); };
@@ -233,8 +233,8 @@ function actWater(id, silent) {
   const r = S.plants[id], d = def(id), t = today();
   if (r.lastWater && r.lastWater !== t) {
     const measured = diff(r.lastWater, t);
-    // Если до этого были ответы «ещё влажно», реальный интервал ≈ measured.
-    // Если сразу оказалось сухо, растение высохло раньше — интервал не растёт.
+    // After "still wet" answers, the real interval is about the measured one.
+    // If it was already dry, it dried out earlier, so the interval doesn't grow.
     const iv = r.wet > 0 ? (r.interval + measured) / 2 : Math.min(r.interval, (r.interval + measured) / 2) * 0.95;
     r.interval = clamp(iv, Math.max(1, d.every * 0.4), d.every * 3);
   }
@@ -265,7 +265,7 @@ function pendingCount() {
   return room + ventDue().length;
 }
 
-/* ---------- Сегодня ---------- */
+/* ---------- Today ---------- */
 function greeting() {
   const h = new Date().getHours();
   if (h < 5) return 'Доброй ночи';
@@ -380,7 +380,7 @@ function viewToday() {
   return html;
 }
 
-/* ---------- Растения ---------- */
+/* ---------- Plants ---------- */
 function viewPlants() {
   const ps = allPlants();
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${ps.length} ${plural(ps.length, 'растение', 'растения', 'растений')}</div></div>
@@ -450,7 +450,7 @@ function openPlant(id) {
   openSheet();
 }
 
-// Выбор из каталога: можно отметить сразу несколько.
+// Catalog picker: several plants can be selected at once.
 let picked = new Set();
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
@@ -529,7 +529,7 @@ function openCustom() {
   openSheet();
 }
 
-/* ---------- Свет ---------- */
+/* ---------- Light ---------- */
 const LUX_SCALE = 40000;
 
 function lightRow(p) {
@@ -581,7 +581,7 @@ function viewLight() {
     ${ps.map(lightRow).join('')}`;
 }
 
-/* ---------- Комната ---------- */
+/* ---------- Room ---------- */
 function viewRoom() {
   const r = S.room;
   const ps = allPlants();
@@ -629,7 +629,7 @@ function viewRoom() {
     <div class="scenario"><span>💡</span><div><b>Фитолампы через умную розетку, если есть:</b> включать в 8:00, выключать в 21:00 — 12–14 часов света в день, без ночного досвета.</div></div>`;
 }
 
-/* ---------- Настройки и бэкап ---------- */
+/* ---------- Settings and backup ---------- */
 function openSettings() {
   const lim = S.settings.limit;
   $('#sheet-body').innerHTML = `
@@ -688,7 +688,7 @@ async function doImport(file) {
   }
 }
 
-/* ---------- Фото (IndexedDB) ---------- */
+/* ---------- Photos (IndexedDB) ---------- */
 const dbp = new Promise((res, rej) => {
   if (!('indexedDB' in window)) return rej(new Error('no idb'));
   const r = indexedDB.open('zhungli', 1);
@@ -708,7 +708,7 @@ async function loadPhotos() {
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
     keys.forEach((k, i) => { PHOTOS[k] = vals[i]; });
     render();
-  } catch (e) { /* без фото тоже работаем */ }
+  } catch (e) { /* works without photos too */ }
 }
 async function resize(file) {
   const url = URL.createObjectURL(file);
@@ -744,9 +744,9 @@ $('#import-input').addEventListener('change', (e) => {
   if (f) doImport(f);
 });
 
-/* ---------- Анонимная статистика ---------- */
-// Только какие кнопки нажимают и сколько растений: без названий, имён, фото и мест.
-// Отправляется через /ingest (функция Cloudflare) в PostHog. Выключается в настройках.
+/* ---------- Anonymous stats ---------- */
+// Only which buttons are tapped and how many plants: no plant names, nicknames, photos or spots.
+// Sent to PostHog via /ingest (a Cloudflare function). Can be turned off in settings.
 const PH_KEY = 'phc_wbQKWDjgettNukrqC7etDr8NZjucbJ9mKz7cfB3ziEAz';
 const STATS_LOCAL = location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname);
 let statsQueue = [];
@@ -790,15 +790,15 @@ function flushStats() {
     body: JSON.stringify({ api_key: PH_KEY, batch }),
   }).catch(() => {});
 }
-// Каталожный id не личный (у своих растений — просто 'custom').
+// Catalog ids aren't personal (custom plants are sent as 'custom').
 const kindOf = (id) => { const d = def(id); return { plant_kind: S.custom[(S.plants[id] && S.plants[id].def) || id] ? 'custom' : d.id, plant_type: d.type, generic: !!d.generic }; };
 
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
 function openSheet() { if (!sheet.open) sheet.showModal(); sheet.scrollTop = 0; }
-// Перерисовываем сами: событие close срабатывает не во всех браузерах.
+// Re-render here: the close event doesn't fire in every browser.
 function closeSheet() { if (sheet.open) sheet.close(); render(); }
-sheet.addEventListener('close', () => render()); // закрытие свайпом/Esc
+sheet.addEventListener('close', () => render()); // closed by swipe or Esc
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
 let toastTimer;
@@ -939,7 +939,7 @@ document.addEventListener('click', (e) => {
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
         delete PHOTOS[id];
-        // Карточка «своего» растения больше никому не нужна.
+        // A custom plant's card is no longer needed.
         if (S.custom[id]) delete S.custom[id];
         idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
         track('plant_deleted');
@@ -1002,7 +1002,7 @@ document.addEventListener('change', (e) => {
   }
   save();
   if (f === 'lux' && tab === 'light' && !sheet.open) {
-    // Обновляем только строку и подсказки, чтобы не сбивать фокус при вводе подряд.
+    // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
     if (row) {
       const tmp = document.createElement('div');
@@ -1016,18 +1016,18 @@ document.addEventListener('change', (e) => {
   }
 });
 
-// iPhone не перезагружает приложение с экрана «Домой», а возвращает старую страницу.
-// Поэтому при каждом открытии проверяем, не вышла ли новая версия.
+// iPhone doesn't reload a home-screen app; it resumes the old page.
+// So check for a new version every time the app is opened.
 async function checkUpdate() {
   if (location.protocol === 'file:') return;
   try {
     const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
     const v = r.ok ? (await r.text()).trim() : '';
     if (!v || v === APP_VERSION || sheet.open) return;
-    if (sessionStorage.getItem('zhungli.reloadedFor') === v) return; // не зацикливаемся
+    if (sessionStorage.getItem('zhungli.reloadedFor') === v) return; // avoid a reload loop
     sessionStorage.setItem('zhungli.reloadedFor', v);
     location.reload();
-  } catch (e) { /* офлайн — работаем на том, что есть */ }
+  } catch (e) { /* offline: run with what we have */ }
 }
 
 let lastOpen = Date.now();

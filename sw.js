@@ -1,4 +1,4 @@
-// Сначала сеть (чтобы обновления приходили сразу), без сети — из кэша.
+// Network first so updates arrive right away; cache when offline.
 const CACHE = 'zhungli-v7';
 const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'plants.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
@@ -14,7 +14,7 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
-  // cache: 'no-cache' — всегда сверяемся с сервером, а не с HTTP-кэшем браузера.
+  // cache: 'no-cache' revalidates with the server instead of the browser HTTP cache.
   e.respondWith(
     fetch(e.request.url, { cache: 'no-cache' })
       .then((r) => {

@@ -1,7 +1,7 @@
-// Каталог для выбора при добавлении. Основа — личный каталог на 28 растений, плюс общие типы.
-// Личные заметки первой коллекции живут в LEGACY_NOTES и переезжают в данные растения при миграции.
-// every — стартовый интервал проверки в днях; приложение подстраивает его по ответам.
-// type: soil | sphagnum | bark | dry (почти полное просыхание) | water (черенки в воде)
+// Catalog for the add-plants picker: based on a personal catalog of 28 plants, plus generic types.
+// Personal notes of the first collection live in LEGACY_NOTES and move into plant data on migration.
+// every: starting check interval in days; the app adjusts it from the answers.
+// type: soil | sphagnum | bark | dry (dries out almost fully) | water (cuttings in water)
 
 const CHECK_TEXT = {
   soil: 'Верхние 2–3 см сухие?',
@@ -12,7 +12,7 @@ const CHECK_TEXT = {
 };
 
 const PLANTS = [
-  // Общие типы — если растения нет в списке. Интервал всё равно подстроится по ответам.
+  // Generic types for plants not in the list. The interval adjusts from the answers anyway.
   {
     id: 'g-easy', species: 'Неприхотливое лиственное', cat: 'Общие типы', emoji: '🍀', generic: true,
     hint: 'потос, сциндапсус, хлорофитум, драцена, сингониум',
@@ -368,7 +368,7 @@ const PLANTS = [
 const SPOTS = ['Подоконник', 'Полка', 'Стол', 'Пол'];
 const LEGACY_SPOTS = ['Стеллаж', 'Пол', 'Этажерка', 'Белый стол', 'У кровати'];
 
-// Личные заметки первой коллекции: при миграции копируются в данные этих растений.
+// Personal notes of the first collection: copied into those plants' data on migration.
 const LEGACY_NOTES = {
   'alo-regal': { soil: 'Сейчас — сфагнум. Не держать постоянно мокрым; важны тепло и воздух у корней.' },
   'mon-adan': { soil: 'Пересажена из сфагнума в твою смесь: грунт + перлит + диатомит + кокосовые чипсы + уголь.' },

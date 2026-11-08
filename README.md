@@ -1,17 +1,17 @@
 # Жунгли 🌿
 
-Каждый день показывает несколько растений, которые пора проверить, и запоминает, как быстро сохнет каждое.
+A small PWA in Russian that shows a few plants to check each day and learns how fast each one dries out.
 
-- Полив по проверке, а не по календарю: «сухо → полито» или «ещё влажно».
-- Не больше N растений в день, без долгов и красных просрочек.
-- Растения добавляются из каталога или общего типа («Суккулент», «Цветущее»…) — интервал подстроится сам.
-- Свет: замеры люксметром и подсказки, кого переставить.
-- Комната: температура, влажность и сценарии для умного дома.
+- Watering by checking, not by calendar: "dry → watered" or "still wet".
+- At most N plants a day, no backlog or red overdue items.
+- Plants come from the catalog or a generic type ("Succulent", "Flowering"…); the interval adjusts itself.
+- Light: lux meter readings and tips on what to move.
+- Room: temperature, humidity and smart home scenarios.
 
-Данные хранятся только на телефоне (localStorage + IndexedDB). Копия — в настройках.
+Data stays on the phone (localStorage + IndexedDB). Backup is in settings.
 
-Анонимная статистика (какие кнопки нажимают, без названий, имён и фото) уходит в PostHog через `functions/ingest/batch.js`. Выключается в настройках.
+Anonymous stats (which buttons are tapped, no plant names, nicknames or photos) go to PostHog via `functions/ingest/batch.js`. They can be turned off in settings.
 
-Каталог — `plants.js`.
+Catalog: `plants.js`.
 
-Релиз: поднять `?v=` в `index.html` и число в `version.txt` — приложение на телефоне само перезагрузится.
+Release: bump `?v=` in `index.html` and the number in `version.txt`; the app on the phone reloads itself.
