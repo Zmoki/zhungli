@@ -8,8 +8,8 @@
   <meta name="description" content="Что сегодня сделать с растениями">
   <meta name="robots" content="noindex, nofollow">
   <meta name="copyright" content="© 2026 Zarema Khalilova. All rights reserved.">
-  <meta name="theme-color" content="#f3f7ef" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#121a14" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fff4e2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1524" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,7 +17,8 @@
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="preload" href="fonts/nunito-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=39">
 </head>
 <body>
   <!-- Icons: Lucide v0.468.0, ISC License, (c) Lucide Contributors. See icons/LUCIDE-LICENSE.txt -->
@@ -60,6 +61,7 @@
     <symbol id="i-meh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <line x1="8" x2="16" y1="15" y2="15" /> <line x1="9" x2="9.01" y1="9" y2="9" /> <line x1="15" x2="15.01" y1="9" y2="9" /></symbol>
     <symbol id="i-annoyed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M8 15h8" /> <path d="M8 9h2" /> <path d="M14 9h2" /></symbol>
   </svg>
+  <div class="blobs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <main id="view"></main>
   <div id="live" class="sr-only" role="status" aria-live="polite"></div>
 
@@ -75,10 +77,10 @@
   <input type="file" id="import-input" accept="application/json,.json" hidden>
 
   <!-- On every release: bump v here and in version.txt -->
-  <script src="plants.js?v=38"></script>
-  <script src="shapes.js?v=38"></script>
-  <script src="changelog.js?v=38"></script>
-  <script src="app.js?v=38"></script>
-  <script src="telegram.js?v=38"></script>
+  <script src="plants.js?v=39"></script>
+  <script src="shapes.js?v=39"></script>
+  <script src="changelog.js?v=39"></script>
+  <script src="app.js?v=39"></script>
+  <script src="telegram.js?v=39"></script>
 </body>
 </html>

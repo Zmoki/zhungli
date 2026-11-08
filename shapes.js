@@ -1,6 +1,6 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Plant silhouettes shown when a plant has no photo. Colors come from CSS tokens (.lf, .pot…).
-const POT_SVG = '<path class="pot2" d="M17 41h30v5H17z"/><path class="pot" d="M18 44h28l-3 16H21z"/>';
+const POT_SVG = '<path class="pot" d="M18.5 44h27l-2.6 14.2a2.6 2.6 0 0 1-2.6 2.1H23.7a2.6 2.6 0 0 1-2.6-2.1z"/><rect class="pot2" x="16" y="40.5" width="32" height="6" rx="3"/><ellipse class="shine" cx="22" cy="49" rx="1.2" ry="2.6"/>';
 const SHAPES = {
   leafy: `<path class="st" d="M32 44C31 34 27 26 21 19M32 44c1-11 5-19 12-26M32 44V22"/>
     <path class="lf2" d="M21 20C11 18 6 9 10 3c8 1 14 7 13 15z"/><path class="lf" d="M44 19c9-3 14-11 11-17-8 0-14 6-13 14z"/>
@@ -97,4 +97,25 @@ function shapeOf(d) {
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';
 }
-const plantSvg = (d) => `<svg class="pl" viewBox="0 0 64 64" aria-hidden="true">${SHAPES[shapeOf(d)]}</svg>`;
+// Each plant gets one of six pot/tile color pairs (style.css .v0–.v5), stable by id.
+function toneOf(d) {
+  let h = 0;
+  for (const c of String((d && (d.id || d.species)) || '')) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return Math.abs(h) % 6;
+}
+// Faces on the pot, one per mood (app.js mood()): eyes, extra strokes, mouth.
+const FACES = {
+  fine: '<circle class="fe" cx="28" cy="50" r="1.5"/><circle class="fe" cx="36" cy="50" r="1.5"/><path class="fs" d="M29.4 53.2q2.6 2.4 5.2 0"/>',
+  need: '<circle class="fe" cx="28" cy="50.4" r="1.5"/><circle class="fe" cx="36" cy="50.4" r="1.5"/><path class="fs" d="M25.6 48.3l3.2-1.1M38.4 48.3l-3.2-1.1M29.6 55q2.4-2.2 4.8 0"/>',
+  watered: '<path class="fs" d="M26.2 50.6q1.8-2.4 3.6 0M34.2 50.6q1.8-2.4 3.6 0"/><path class="fe fs" d="M29.2 53h5.6q-.3 3-2.8 3t-2.8-3z"/>',
+  dim: '<path class="fs" d="M26.2 50.4h3.6M34.2 50.4h3.6M30.6 54.2h2.8"/>',
+  hot: '<path class="fs" d="M26.4 48.8l2.8 1.5-2.8 1.5M37.6 48.8l-2.8 1.5 2.8 1.5M29 54.6q.8-1.2 1.7 0t1.7 0 1.7 0"/>',
+};
+const CHEEKS = '<ellipse class="ck" cx="24.6" cy="53" rx="1.9" ry="1.1"/><ellipse class="ck" cx="39.4" cy="53" rx="1.9" ry="1.1"/>';
+// m: mood class (fine, need, watered, dim, hot) to draw a face; none for tiny icons.
+const plantSvg = (d, m) => {
+  const shape = shapeOf(d);
+  let face = m && FACES[m] ? CHEEKS + FACES[m] : '';
+  if (face && shape === 'cutting') face = `<g transform="translate(0 -12)">${face}</g>`;
+  return `<svg class="pl v${toneOf(d)}" viewBox="0 0 64 64" aria-hidden="true">${SHAPES[shape]}${face}</svg>`;
+};
