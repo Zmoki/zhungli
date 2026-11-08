@@ -555,7 +555,7 @@ function openPlant(id) {
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
-    <div class="info water"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
+    <div class="info water"><b>Полив</b>${p.lastWater ? `Последний полив ${esc(rel(p.lastWater))}` : 'Поливов ещё не было'}<br>${p.nextCheck <= today() ? 'Пора проверить сегодня' : `Следующая проверка ${esc(rel(p.nextCheck))}`}</div>
     <button class="water-now btn water wide" data-act="water-now" data-id="${esc(id)}">${I('droplet')}Записать полив</button>
 
     <div class="field"><label for="f-name">Имя</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
