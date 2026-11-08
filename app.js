@@ -545,10 +545,12 @@ function openPlant(id) {
   const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
+    <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
-      <button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button>
-      <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button></div>
-    <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div><div class="small mood-line ${mc}">${I(mi)}${esc(mt)}</div></div>
+      <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
+      <span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span></div>
+    <div class="sheet-main">
+    <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
     <div class="info water"><b>Полив</b>Последний: ${esc(rel(p.lastWater))} · следующая проверка: ${esc(rel(p.nextCheck))}</div>
     <button class="water-now btn water wide" data-act="water-now" data-id="${esc(id)}">${I('droplet')}Записать полив</button>
@@ -576,7 +578,7 @@ function openPlant(id) {
     <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
     <div id="cheat">${cheatHtml(id)}</div>
     ${histHtml ? `<h2>История</h2><p class="history">${histHtml}</p>` : ''}
-    <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`;
+    <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button></div>`;
   openSheet();
 }
 
