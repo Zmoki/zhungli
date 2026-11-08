@@ -1460,6 +1460,13 @@ document.addEventListener('change', (e) => {
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
+  // The status and greenhouse badge on the card photo follow the toggle and the light reading right away.
+  const badges = sheet.open && (f === 'greenhouse' || f === 'lux') && $('.hero-badges');
+  if (badges) {
+    const p = plant(id);
+    const [mi, mt, mc] = mood(p);
+    badges.innerHTML = `<span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}`;
+  }
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
