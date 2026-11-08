@@ -33,7 +33,9 @@ On every event:
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type`; `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
-| `plants_added` | plants added from the picker or the custom form | `count`, `source`: `catalog` / `custom`; catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
+| `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
+| `import_prompt_copied` | «Скопировать запрос» in AI import | — |
+| `import_failed` | pasted text has no plant list | `length` of the pasted text |
 | `plant_deleted` | plant deleted | — |
 | `plant_named` | nickname set | — |
 | `photo_added` | photo added to a plant | — |

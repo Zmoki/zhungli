@@ -527,7 +527,8 @@ function openAdd() {
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выбери общий тип или создай своё.</p>
-    <button class="btn ghost wide" data-act="add-custom" style="margin-top:12px">✏️ Своё растение с нуля</button>
+    <button class="btn ghost wide" data-act="add-import" style="margin-top:12px">🤖 Импорт из ChatGPT — сразу много</button>
+    <button class="btn ghost wide" data-act="add-custom" style="margin-top:4px">✏️ Своё растение с нуля</button>
     <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметь растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
@@ -584,6 +585,148 @@ function openCustom() {
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
+}
+
+/* ---------- Import from an AI chat ---------- */
+// The user copies a prompt into ChatGPT/Claude, pastes the JSON answer back,
+// and the plants become custom plants with their care tips.
+const IMPORT_PROMPT = `Сделай список моих растений для приложения «Жунгли». Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
+
+Ответь только JSON-массивом, без пояснений. Один объект на растение, поля:
+- species — вид или сорт по-русски
+- name — имя, если я его дала, иначе ""
+- emoji — один эмодзи
+- type — в чём растёт: "soil" (грунт), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "dry" (сушить почти полностью: суккуленты, кактусы), "water" (черенки в воде)
+- lux — сколько света нужно, люксы: [от, до]
+- every — через сколько дней обычно проверять почву
+- check — вопрос при проверке, например "Верхние 2–3 см сухие?"
+- water — как поливать
+- soil — грунт и горшок
+- cond — условия; начни с температуры так: "18–26 °C; ..."
+- tip — самое важное в уходе
+- toxic — true, если сок ядовит или раздражает кожу
+- big — true, если крупные листья, которые надо протирать от пыли
+- quips — 3 коротких смешных фразы от лица растения
+
+Пример:
+[{"species":"Пеперомия туполистная","name":"","emoji":"🌿","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливай меня, я и так сочная.","Поверни меня к свету, пожалуйста."]}]`;
+
+// Finds the JSON array in a pasted answer (code fences, text around it, comments, trailing commas).
+function parseImport(text) {
+  const t = String(text || '').trim();
+  if (!t) return { error: 'empty' };
+  const tries = [];
+  const a = t.indexOf('['), b = t.lastIndexOf(']');
+  if (a !== -1 && b > a) tries.push(t.slice(a, b + 1));
+  const c = t.indexOf('{'), d = t.lastIndexOf('}');
+  if (c !== -1 && d > c) tries.push(t.slice(c, d + 1));
+  for (const raw of tries) {
+    for (const src of [raw, raw.replace(/^\s*\/\/.*$/gm, '').replace(/,\s*([\]}])/g, '$1')]) {
+      try {
+        let v = JSON.parse(src);
+        if (v && !Array.isArray(v)) v = Array.isArray(v.plants) ? v.plants : [v];
+        const items = v.map(normImport).filter(Boolean);
+        if (items.length) return { items };
+      } catch (e) { /* try the next variant */ }
+    }
+  }
+  return { error: 'no_json' };
+}
+// Common off-format answers: 'succulent', 'orchid', 'грунт'…
+function importType(x) {
+  const t = String(x || '').toLowerCase();
+  if (TYPE_NAMES[t]) return t;
+  if (/succ|cact|dry|сух|сукк|какт/.test(t)) return 'dry';
+  if (/bark|orchid|кор|орхид/.test(t)) return 'bark';
+  if (/sphag|moss|сфаг|мох/.test(t)) return 'sphagnum';
+  if (/water|вод/.test(t)) return 'water';
+  return 'soil';
+}
+function normImport(o) {
+  if (!o || typeof o !== 'object') return null;
+  const str = (x, max = 500) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
+  const species = str(o.species, 80) || str(o.name, 80);
+  if (!species) return null;
+  const num = (x) => Number(String(x).replace(/\s/g, ''));
+  let lux = Array.isArray(o.lux) ? o.lux.map(num).filter((x) => x > 0) : [];
+  lux = lux.length ? [Math.min(...lux), Math.max(...lux)].map((x) => clamp(Math.round(x), 300, 100000)) : [6000, 15000];
+  const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
+  return {
+    species, name: str(o.name, 40) === species ? '' : str(o.name, 40),
+    emoji: [...str(o.emoji, 16)].slice(0, 2).join('') || '🪴',
+    type: importType(o.type),
+    lux, every: clamp(Math.round(num(o.every)) || 6, 1, 60),
+    check: str(o.check, 100), water: str(o.water), soil: str(o.soil), cond: str(o.cond), tip: str(o.tip),
+    toxic: o.toxic === true, big: o.big === true, quips: quips.length ? quips : GENERIC_QUIPS,
+  };
+}
+
+let importItems = [];
+let importPicked = new Set();
+function openImport() {
+  importItems = [];
+  importPicked = new Set();
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-head"><div class="ava">🤖</div><h2 style="margin:0">Импорт из ChatGPT</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">✕</button></div>
+    <div class="info"><b>Шаг 1</b>Скопируй запрос и отправь в ChatGPT или другой чат с ИИ — туда, где уже обсуждала растения, или пришли вместе с ним фото.
+      <button class="btn ok wide" data-act="import-copy" style="margin-top:10px">📋 Скопировать запрос</button>
+      <textarea class="input" id="imp-prompt" rows="6" readonly hidden></textarea></div>
+    <div class="info"><b>Шаг 2</b>Вставь сюда ответ целиком.
+      <textarea class="input" id="imp-text" rows="5" placeholder="Вставь ответ ИИ" style="margin-top:8px"></textarea></div>
+    <div id="imp-list"></div>
+    <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Вставь ответ</button></div>`;
+  let timer;
+  $('#imp-text').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(showImport, 300); });
+  openSheet();
+}
+function showImport() {
+  const text = $('#imp-text').value;
+  const res = parseImport(text);
+  const box = $('#imp-list');
+  if (res.error) {
+    importItems = [];
+    importPicked = new Set();
+    box.innerHTML = res.error === 'empty' ? '' : `<p class="small" style="color:var(--red)">Не нашла здесь список растений. Скопируй ответ ИИ целиком — вместе со скобками [ ].</p>`;
+    if (res.error === 'no_json') track('import_failed', { length: text.length });
+  } else {
+    importItems = res.items;
+    // Plants already in the collection start unticked.
+    const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
+    importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
+    box.innerHTML = `<p class="small muted" style="margin:4px 0 8px">Нашла ${importItems.length} ${plural(importItems.length, 'растение', 'растения', 'растений')}. Сними галочку с лишних.</p>` +
+      importItems.map((it, i) => {
+        const dup = !importPicked.has(i);
+        return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
+        <span class="pe">${esc(it.emoji)}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
+        <small>${dup ? 'уже есть в коллекции · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} лк · раз в ${days(it.every)}</small></span>
+        <span class="pc">${dup ? '＋' : '✓'}</span></button>`;
+      }).join('');
+  }
+  updateImportBar();
+}
+function updateImportBar() {
+  const n = importPicked.size;
+  const b = $('#imp-add');
+  b.disabled = !n;
+  b.textContent = n ? `Добавить ${n} ${plural(n, 'растение', 'растения', 'растений')} 🌱` : importItems.length ? 'Отметь растения' : 'Вставь ответ';
+}
+function addImported() {
+  const t = today();
+  const base = Date.now().toString(36);
+  const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
+  list.forEach((it, i) => {
+    const id = `c${base}${i}`;
+    const { name, ...d } = it;
+    S.custom[id] = { ...d, id, cat: 'Мои' };
+    // Spread the first checks over days so a big batch doesn't land at once.
+    S.plants[id] = { ...runtime(S.custom[id], addDays(t, Math.min(Math.floor(i / 6), it.every - 1))), name };
+  });
+  initBonus(S);
+  save();
+  track('plants_added', { count: list.length, generic_count: 0, source: 'import' });
+  tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
+  toast(`Добавлено ${list.length} ${plural(list.length, 'растение', 'растения', 'растений')} 🌱 Открой каждое, чтобы выбрать место`);
 }
 
 /* ---------- Light ---------- */
@@ -980,6 +1123,21 @@ document.addEventListener('click', (e) => {
     case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(); break;
+    case 'add-import': openImport(); break;
+    case 'import-copy': {
+      const done = () => { el.textContent = 'Скопировано ✅'; track('import_prompt_copied'); };
+      const show = () => { const ta = $('#imp-prompt'); ta.value = IMPORT_PROMPT; ta.hidden = false; ta.select(); el.textContent = 'Выдели и скопируй текст ниже'; };
+      if (navigator.clipboard) navigator.clipboard.writeText(IMPORT_PROMPT).then(done, show); else show();
+      break;
+    }
+    case 'import-pick': {
+      const i = Number(el.dataset.i);
+      if (importPicked.has(i)) importPicked.delete(i); else importPicked.add(i);
+      el.classList.toggle('on', importPicked.has(i));
+      el.querySelector('.pc').textContent = importPicked.has(i) ? '✓' : '＋';
+      updateImportBar(); break;
+    }
+    case 'import-add': addImported(); break;
     case 'pick': {
       const k = el.dataset.key;
       if (picked.has(k)) picked.delete(k); else picked.add(k);

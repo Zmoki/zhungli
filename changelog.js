@@ -1,6 +1,8 @@
 // «Что нового» in the app. Newest first. Add an entry on every release with user-facing changes.
 // v: version from version.txt; d: release date; items: Russian, one line each.
 const CHANGELOG = [
+  { v: 12, d: '2026-11-08', items: ['Импорт из ChatGPT: скопируй запрос, вставь ответ — и сразу много растений с советами по уходу.'] },
+  { v: 11, d: '2026-11-08', items: ['Автор и контакты — и в «Что нового».'] },
   { v: 10, d: '2026-11-08', items: ['Раздел «Что нового»: твоя версия и история изменений.'] },
   { v: 9, d: '2026-11-08', items: ['Шпаргалку можно править: меняй и удаляй советы, добавляй свои заметки.'] },
   { v: 8, d: '2026-11-08', items: ['Технические улучшения.'] },
