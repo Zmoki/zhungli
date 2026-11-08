@@ -300,7 +300,7 @@ function ava(p, cls = 'ava') {
 function statsNotice() {
   if (S.statsNotice || S.settings.stats === false) return '';
   return `<div class="task bonus"><b>${I('lightbulb')}Анонимная статистика</b>
-    <p class="small muted" style="margin-top:6px">Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy.html">Подробнее</a></p>
+    <p class="small muted" style="margin-top:6px">Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a></p>
     <div class="btns" style="margin-top:10px"><button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button></div></div>`;
 }
 
@@ -900,7 +900,7 @@ function viewRoom() {
 
 /* ---------- Settings and backup ---------- */
 // Author line at the bottom of settings and «Что нового».
-const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy.html">Конфиденциальность</a><br>
+const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy">Конфиденциальность</a><br>
       Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
@@ -943,7 +943,7 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="small muted" style="margin-top:6px">Какие кнопки нажимают, версия приложения, тип телефона, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy.html">Подробнее</a></p>
+      <p class="small muted" style="margin-top:6px">Какие кнопки нажимают, версия приложения, тип телефона, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy">Подробнее</a></p>
       <p class="small muted">Номер устройства: <b>${esc(getAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p></div>
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попросите голосового помощника напоминать каждый день в 10 утра.</p>
