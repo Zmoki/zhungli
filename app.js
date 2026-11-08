@@ -690,7 +690,8 @@ function showImport() {
   if (res.error) {
     importItems = [];
     importPicked = new Set();
-    box.innerHTML = res.error === 'empty' ? '' : `<p class="small" style="color:var(--red)">Не нашла здесь список растений. Скопируй ответ ИИ целиком — вместе со скобками [ ].</p>`;
+    box.innerHTML = res.error === 'empty' ? '' : `<p class="small" style="color:var(--red)">Не нашла здесь список растений. Скопируй ответ ИИ целиком — вместе со скобками [ ].</p>
+      <p class="small muted">Всё равно не выходит? Пришли ответ ИИ в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
     if (res.error === 'no_json') track('import_failed', { length: text.length });
   } else {
     importItems = res.items;
@@ -853,7 +854,7 @@ function openNews() {
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
       <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
-    <p class="small muted credit">${AUTHOR}</p>`;
+    <p class="small muted credit" data-from="news">${AUTHOR}</p>`;
   track('news_opened', { had_new: hasNews() });
   S.seen = APP_VERSION;
   save();
@@ -881,7 +882,7 @@ function openSettings() {
     <h2>Напоминание</h2>
     <p class="small muted">В iPhone: «Команды» → «Автоматизация» → «Время суток» → открыть приложение «Жунгли». Или попроси голосового помощника напоминать каждый день в 10 утра.</p>
     <button class="btn ghost wide" data-act="reset" style="margin-top:24px">Начать с чистого листа</button>
-    <p class="small muted credit">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
+    <p class="small muted credit" data-from="settings">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
   openSheet();
 }
 
@@ -1075,7 +1076,7 @@ function render() {
 // Author links: send right away, the app may go to background.
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-out]');
-  if (a) { track('author_link_clicked', { target: a.dataset.out }); flushStats(); }
+  if (a) { track('author_link_clicked', { target: a.dataset.out, from: a.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
 });
 
 document.addEventListener('click', (e) => {
