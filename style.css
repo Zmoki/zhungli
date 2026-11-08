@@ -20,7 +20,10 @@
   --sky: #6bb5ff; --sky-d: #2f6fb8;
   --leafy: #4cc77a; --leafy-d: #237a46;
   --plum: #b3a7ff; --plum-d: #5a49c8;
-  --danger: #ffb3c1; --danger-d: #a8283e;
+  --danger: #ff9a9a; --danger-d: #b3262e;
+  /* Button meanings: beige = common actions and adding, blue = watering, green = done, teal = greenhouse and airing, red = deleting */
+  --beige: #f7e6c8;
+  --air: #6ad9cd; --air-d: #1d7d73;
   /* Pastel tiles behind plants, one per color pair (.v0–.v5) */
   --t0: #d3e8ff; --t1: #ffe7a8; --t2: #c9f0d6; --t3: #ffe0c7; --t4: #e3ddff; --t5: #ffd1e3;
   --blob-1: #ffe197; --blob-2: #ffcdd4; --blob-3: #aee0b3; --blob-4: #bcd8ef; /* soft enough for 7:1 text on top */
@@ -62,7 +65,7 @@
     --muted: #efe5d8;
     --line: rgba(255, 246, 234, .14);
     --edge: #a69cb2;
-    --gum-d: #ff9ec4; --plum-d: #b3a7ff; --danger-d: #ffb3c1;
+    --gum-d: #ff9ec4; --plum-d: #b3a7ff; --danger-d: #ff9a9a; --beige: #3b3150;
     --t0: #22344a; --t1: #4a3d1c; --t2: #1f4a33; --t3: #4a3326; --t4: #342d52; --t5: #4b2a42;
     --blob-1: #40366d; --blob-2: #61304d; --blob-3: #1e4636; --blob-4: #263c67;
     --glass: #3a5878;
@@ -95,7 +98,7 @@
   --muted: #efe5d8;
   --line: rgba(255, 246, 234, .14);
   --edge: #a69cb2;
-  --gum-d: #ff9ec4; --plum-d: #b3a7ff; --danger-d: #ffb3c1;
+  --gum-d: #ff9ec4; --plum-d: #b3a7ff; --danger-d: #ff9a9a; --beige: #3b3150;
   --t0: #22344a; --t1: #4a3d1c; --t2: #1f4a33; --t3: #4a3326; --t4: #342d52; --t5: #4b2a42;
   --blob-1: #40366d; --blob-2: #61304d; --blob-3: #1e4636; --blob-4: #263c67;
   --glass: #3a5878;
@@ -247,13 +250,15 @@ button { cursor: pointer; }
   display: inline-flex; align-items: center; justify-content: center; gap: .4em; text-align: center;
   transition: transform .08s ease, box-shadow .08s ease;
 }
-.btn.water, .btn.ok, .btn.primary, .btn.danger { color: var(--on-color); font-weight: 900; }
+.btn.water, .btn.ok, .btn.air, .btn.danger { color: var(--on-color); font-weight: 900; }
+.btn.primary { color: var(--ink); font-weight: 900; }
 .btns { padding-bottom: 4px; } /* room for the button floor */
 .btn.water { background: var(--sky); border-color: var(--sky-d); box-shadow: 0 4px 0 var(--sky-d); }
 .btn.ok { background: var(--leafy); border-color: var(--leafy-d); box-shadow: 0 4px 0 var(--leafy-d); }
-.btn.primary { background: var(--sun); border-color: var(--sun-d); box-shadow: 0 4px 0 var(--sun-d); }
+.btn.primary { background: var(--beige); border-color: var(--edge); box-shadow: 0 4px 0 var(--edge); }
+.btn.air { background: var(--air); border-color: var(--air-d); box-shadow: 0 4px 0 var(--air-d); }
 .btn.danger { background: var(--danger); border-color: var(--danger-d); box-shadow: 0 4px 0 var(--danger-d); }
-:is(.btn.water, .btn.ok, .btn.primary, .btn.danger):active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+:is(.btn.water, .btn.ok, .btn.air, .btn.primary, .btn.danger):active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
 .btn.ghost { background: none; color: var(--ink); font-weight: 700; }
 .btn.wide { width: 100%; }
 .later { display: flex; align-items: center; gap: .4em; margin: 8px auto 0; border: 0; background: none; color: var(--muted); font-size: 0.941rem; font-weight: 800; padding: 6px 12px; min-height: 44px; }
@@ -347,8 +352,8 @@ dialog { --card: var(--bubble); }
   font-size: 0.941rem; font-weight: 900; padding: 5px 14px 5px 8px; border-radius: 99px; border: 2px solid var(--chip-ring);
 }
 .hero-mood .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-/* Greenhouse badge: a round sky-blue chip as tall as the status chip */
-.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; background: var(--sky); color: var(--on-color); border: 2px solid var(--chip-ring); }
+/* Greenhouse badge: a round teal chip as tall as the status chip */
+.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; background: var(--air); color: var(--on-color); border: 2px solid var(--chip-ring); }
 .gh .ic { width: 17px; height: 17px; stroke-width: 2.4; }
 .hero-badges .gh { font-size: 0.941rem; width: calc(1.5em + 14px); height: calc(1.5em + 14px); }
 .hero-badges .gh .ic { width: 19px; height: 19px; }
@@ -469,14 +474,14 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* AI import entry in the add sheet */
 .import-cta {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: inherit;
-  background: var(--sun); color: var(--on-color); border: 2px solid var(--sun-d); box-shadow: 0 4px 0 var(--sun-d); border-radius: var(--radius); padding: 16px; margin-bottom: 8px;
+  background: var(--beige); color: var(--ink); border: 2px solid var(--edge); box-shadow: 0 4px 0 var(--edge); border-radius: var(--radius); padding: 16px; margin-bottom: 8px;
 }
-.import-cta .pe { flex: none; color: var(--on-color); display: inline-flex; }
+.import-cta .pe { flex: none; color: var(--ink); display: inline-flex; }
 .import-cta .pe .ic { width: 34px; height: 34px; }
 .import-cta .pt { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.import-cta b { font-size: 1.118rem; font-weight: 900; color: var(--on-color); }
-.import-cta small { font-size: 0.882rem; font-weight: 700; color: var(--on-color); line-height: 1.5; }
-.import-cta .pc { color: var(--on-color); flex: none; display: inline-flex; }
+.import-cta b { font-size: 1.118rem; font-weight: 900; color: var(--ink); }
+.import-cta small { font-size: 0.882rem; font-weight: 700; color: var(--ink); line-height: 1.5; }
+.import-cta .pc { color: var(--ink); flex: none; display: inline-flex; }
 .import-cta .pc .ic { width: 26px; height: 26px; }
 .or { text-align: center; color: var(--muted); font-size: 0.882rem; margin: 14px 0 10px; }
 

@@ -393,7 +393,7 @@ function viewToday() {
     html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">Проветрите тепличку: ${esc(v.title)}</div>
       <div class="task-sub">минут на 15–30</div></div></div>
       <p class="quip">${esc(`${v.name ? `Это ${v.name}. ` : ''}Приоткройте, дайте подышать. С каждым днём можно чуть дольше.`)}</p>
-      <div class="mt-12 btns"><button class="btn ok" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
+      <div class="mt-12 btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
       <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div></div>`;
   });
 
