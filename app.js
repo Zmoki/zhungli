@@ -220,9 +220,9 @@ function mood(p) {
   const t = today();
   // Each status has its own color: watered blue, check orange, too dark plum, too bright sun, fine green.
   const ls = lightStatus(p);
-  // Too much light matters more than a fresh watering: show «ярковато» even on a watering day.
-  if (p.lastWater === t) return ls === 'high' ? ['annoyed', LIGHT_WORDS.high, 'hot'] : ['laugh', 'напоено', 'watered'];
-  if (p.nextCheck <= t) return ['frown', 'проверить', 'need'];
+  // Wrong light matters more than a fresh watering: «темновато» or «ярковато» even on a watering day.
+  if (p.lastWater === t && ls !== 'low' && ls !== 'high') return ['laugh', 'напоено', 'watered'];
+  if (p.nextCheck <= t && p.lastWater !== t) return ['frown', 'проверить', 'need'];
   if (ls === 'low') return ['meh', LIGHT_WORDS.low, 'dim'];
   if (ls === 'high') return ['annoyed', LIGHT_WORDS.high, 'hot'];
   return ['smile', 'хорошо', 'fine'];
