@@ -21,8 +21,9 @@
   color-scheme: light dark;
 }
 
+/* Dark: follows the system, or Telegram's theme inside the mini app (data-theme). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #121a14;
     --card: #1b261e;
     --ink: #e8f0e9;
@@ -41,6 +42,25 @@
     --red-soft: #3d2222;
     --shadow: none;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #121a14;
+  --card: #1b261e;
+  --ink: #e8f0e9;
+  --muted: #bbc6bd;
+  --line: #2a3a2e;
+  --edge: #768379;
+  --leaf: #5fae7d; --leaf-2: #3f8a5a; --leaf-3: #9fd6b3; --pot: #b5765a; --pot-2: #93593f; --bloom: #e48fb0; --glass: #2b4352; --coleus: #c56584; --trunk: #a9744f;
+  --green: #8ed2a9;
+  --on-green: #0f1f14;
+  --green-soft: #1f3a29;
+  --blue: #8dbaee;
+  --blue-soft: #1c2c40;
+  --amber: #f0b552;
+  --amber-soft: #3a2e17;
+  --red: #f29e9e;
+  --red-soft: #3d2222;
+  --shadow: none;
 }
 
 * { box-sizing: border-box; }

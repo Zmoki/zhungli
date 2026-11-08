@@ -23,6 +23,7 @@ On every event:
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
+| `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @ZhungliBot) |
 | `$os`, `$device_type` | parsed from the user agent |
 | `$host`, `$current_url` | page origin and path |
 | `$lib` | `zhungli` |
@@ -45,6 +46,7 @@ On every event:
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
+| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |
 | `plant_deleted` | plant deleted | — |
 | `plant_named` | nickname set | — |

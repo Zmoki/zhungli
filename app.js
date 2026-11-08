@@ -4,6 +4,13 @@
 const KEY = 'zhungli.v1';
 // Opened inside Telegram's own browser: data there is separate from Safari/Chrome and can be lost.
 const IN_TELEGRAM = /Telegram/i.test(navigator.userAgent) || typeof window.TelegramWebviewProxy !== 'undefined';
+// Opened as the Telegram mini app (/tg). Remembered for the session, so pages like /privacy keep it.
+const MINI_APP = (() => {
+  try {
+    if (location.pathname.startsWith('/tg')) sessionStorage.setItem('zhungli.mini', '1');
+    return sessionStorage.getItem('zhungli.mini') === '1';
+  } catch (e) { return location.pathname.startsWith('/tg'); }
+})();
 // Report script errors to stats (message and place only), at most 5 per page load.
 let errorsSent = 0;
 function reportError(message, source, line) {
@@ -60,6 +67,7 @@ const TYPE_LABELS = {
 };
 const TYPE_NAMES = { soil: 'Грунт', sphagnum: 'Сфагнум', bark: 'Кора (орхидеи)', dry: 'Сушить почти полностью', water: 'Черенки в воде' };
 
+let booting = true;
 let S = load();
 let tab = 'today';
 let showAll = false;
@@ -142,7 +150,11 @@ function save() {
   // Keep the log for one week only.
   const cutoff = addDays(today(), -7);
   Object.keys(S.log).forEach((d) => { if (d < cutoff) delete S.log[d]; });
+  // When the data last changed: the newer copy wins when syncing with Telegram.
+  // The save at startup only stores migrations, so it doesn't count as a change.
+  if (!booting) S.savedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не получилось сохранить 😢'); }
+  if (window.cloudSave) window.cloudSave();
 }
 
 // A plant points to its catalog card via def; for older plants the id is the card.
@@ -314,7 +326,7 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
 function currentHint() {
-  if (IN_TELEGRAM && !S.hideTelegram) {
+  if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
     return hintCard('triangle-alert', 'Вы открыли Жунгли внутри Телеграма',
       'Растения, добавленные здесь, могут потеряться. Нажмите ⋯ или ⋮ вверху → «Открыть в браузере», чтобы перейти в Safari или Chrome.',
       '<button class="btn" data-act="hide-telegram">Понятно</button>');
@@ -1094,6 +1106,7 @@ function deviceProps() {
     $host: location.host,
     standalone: !!(navigator.standalone || matchMedia('(display-mode: standalone)').matches),
     in_telegram: IN_TELEGRAM,
+    mini_app: MINI_APP,
   };
 }
 function track(event, props = {}) {
@@ -1173,6 +1186,7 @@ function confetti() {
 
 const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
 function afterTask(msg, undo) {
+  if (window.haptic) window.haptic('success');
   save();
   const before = document.querySelectorAll('.task:not(.bonus):not(.done-row)').length;
   render();
@@ -1462,6 +1476,7 @@ if (navigator.storage && navigator.storage.persist) navigator.storage.persist().
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 save();
+booting = false;
 render();
 loadPhotos();
 checkUpdate();
