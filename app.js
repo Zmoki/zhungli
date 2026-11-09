@@ -507,24 +507,20 @@ function viewPlants() {
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
   if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>`;
-  // With several rooms: room headings, places inside each room.
-  if (S.rooms.length > 1) {
-    S.rooms.forEach((rm) => {
-      const inRoom = ps.filter((p) => roomOf(p) === rm);
-      if (inRoom.length) html += `<section class="proom"><h2 class="room-title">${esc(rm.name)}</h2>${spotGroups(inRoom)}</section>`;
-    });
-  } else html += spotGroups(ps);
+  // With several rooms: groups go room by room, titled «Кухня · Белый стол».
+  if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
+  else html += spotGroups(ps);
   if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово.</p>`;
   return html;
 }
 
-// Plant cards grouped by place, in the order of the places list.
-function spotGroups(ps) {
+// Plant cards grouped by place, in the order of the places list; `room` prefixes the titles.
+function spotGroups(ps, room) {
   let html = '';
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
-    html += `<section class="pgroup"><div class="group-title">${esc(spot || 'Место не выбрано')}</div><div class="grid">`;
+    html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
@@ -548,7 +544,6 @@ function filterPlants() {
     g.querySelectorAll('.pcard').forEach((c) => { const on = !q || c.dataset.q.includes(q); c.hidden = !on; if (on) n++; });
     g.hidden = !n; any ||= n > 0;
   });
-  document.querySelectorAll('.proom').forEach((r) => { r.hidden = !r.querySelector('.pgroup:not([hidden])'); });
   const none = $('#plants-none');
   if (none) none.hidden = any;
   return any;
