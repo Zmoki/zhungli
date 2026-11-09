@@ -38,7 +38,7 @@ On every event:
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type`; `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
-| `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; import: `repaired` (the answer needed fixing: quotes, spaced numbers, comments); catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
+| `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; import: `repaired` (the answer needed fixing: quotes, spaced numbers, comments), `with_room` / `with_spot` (how many came with a room / place, no names sent), `rooms_created`; catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
 | `import_prompt_copied` | «Скопировать запрос» in AI import | — |
 | `import_failed` | pasted text has no plant list | `length` of the pasted text; `reason`: `no_list` (no brackets) / `bad_json` (could not be read even after repairs) / `no_plants` (read, but no plant had a name); `has_code_fence`, `has_curly_quotes`, `has_spaced_numbers`. No answer text is sent |
 | `add_opened` | «Добавить растения» sheet opened | `from`: tab it was opened from |

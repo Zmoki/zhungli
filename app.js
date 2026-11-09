@@ -783,6 +783,8 @@ const IMPORT_PROMPT = `Сделай список моих растений дл�
 Ответь только JSON-массивом, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species — вид или сорт по-русски
 - name — имя, если оно есть у растения, иначе ""
+- room — комната, где стоит, если я её называла (например "Кухня"), иначе ""
+- spot — место в комнате: подоконник, полка, стол и т. п., если я его называла, иначе ""
 - type — в чём растёт: "soil" (грунт), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "dry" (сушить почти полностью: суккуленты, кактусы), "water" (черенки в воде)
 - lux — сколько света нужно, люксы: [от, до]
 - every — через сколько дней обычно проверять почву
@@ -796,7 +798,7 @@ const IMPORT_PROMPT = `Сделай список моих растений дл�
 - quips — 3 коротких смешных фразы от лица растения, на «вы» ко мне
 
 Пример:
-[{"species":"Пеперомия туполистная","name":"","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
+[{"species":"Пеперомия туполистная","name":"","room":"Кухня","spot":"Подоконник","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
 
 // Cleans formatting chat apps add, so JSON.parse can read the answer.
 function repairJson(src) {
@@ -842,6 +844,7 @@ function importType(x) {
   if (/water|вод/.test(t)) return 'water';
   return 'soil';
 }
+const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 function normImport(o) {
   if (!o || typeof o !== 'object') return null;
   const str = (x, max = 500) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
@@ -856,6 +859,7 @@ function normImport(o) {
   const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
   return {
     species, name: str(o.name, 40) === species ? '' : str(o.name, 40),
+    room: cap(str(o.room, 40)), spot: cap(str(o.spot ?? o.place, 40)),
     emoji: [...str(o.emoji, 16)].slice(0, 2).join('') || '🪴',
     type: importType(o.type),
     lux, every: clamp(Math.round(num(o.every)) || 6, 1, 60),
@@ -907,7 +911,7 @@ function showImport() {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
         <span class="pe" aria-hidden="true">${plantSvg(it, 'fine')}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
-        <small>${dup ? 'уже есть в коллекции · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
+        <small>${dup ? 'уже есть в коллекции · ' : ''}${it.room || it.spot ? esc([it.room, it.spot].filter(Boolean).join(' · ')) + ' · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
         <span class="pc" aria-hidden="true">${I(dup ? 'plus' : 'check')}</span></button>`;
       }).join('');
   }
@@ -917,17 +921,42 @@ const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, imp
 function addImported() {
   if (addFlow) addFlow.done = true;
   const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
+  // A new collection where every plant has a room keeps no empty «Комната»: the first imported room takes its place.
+  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && S.rooms[0].t == null && list.every((it) => it.room);
+  const roomsBefore = S.rooms.length;
   list.forEach((it, i) => {
     const id = newId('c', i);
-    const { name, ...d } = it;
+    const { name, room, spot: rawSpot, ...d } = it;
+    // Reuse a place that differs only in case («подоконник» → «Подоконник»).
+    const spot = rawSpot && (S.spots.find((x) => norm(x) === norm(rawSpot)) || rawSpot);
+    if (spot && !S.spots.includes(spot)) S.spots.push(spot);
     S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
-    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name };
+    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, fresh) };
   });
   initBonus(S);
   save();
-  track('plants_added', { count: list.length, generic_count: 0, source: 'import', repaired: importRepaired });
+  const noSpot = list.filter((it) => !it.spot).length;
+  track('plants_added', {
+    count: list.length, generic_count: 0, source: 'import', repaired: importRepaired,
+    with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
+  });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
-  toast(`Добавлено ${plantsN(list.length)} 🌱 Откройте каждое, чтобы выбрать место`);
+  toast(`Добавлено ${plantsN(list.length)} 🌱${noSpot ? ' Откройте каждое без места, чтобы его выбрать' : ''}`);
+}
+// The room id for an imported plant: an existing room with that name, or a new one.
+// Without a room the plant lives in the first room (no `room` field needed).
+function importRoom(name, fresh) {
+  if (!name) return undefined;
+  const found = S.rooms.find((r) => norm(r.name) === norm(name));
+  if (found) return found.id;
+  const first = S.rooms[0];
+  if (fresh && first.id === 'home' && first.name === 'Комната' && !Object.values(S.plants).some((r) => r.room === 'home')) {
+    first.name = name;
+    return first.id;
+  }
+  const rm = newRoom('r' + Date.now().toString(36) + S.rooms.length, name);
+  S.rooms.push(rm);
+  return rm.id;
 }
 
 /* ---------- Light ---------- */
