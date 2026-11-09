@@ -1926,6 +1926,30 @@ document.addEventListener('visibilitychange', () => {
   if (!sheet.open) render();
 });
 
+// iOS 26 home-screen apps: after the keyboard closes, the viewport can stay as short as it was with
+// the keyboard up, so the tab bar floats mid-screen and sheets end early, until the app is restarted.
+// When the height is stuck after a field loses focus, hiding and showing the page for one reflow
+// makes iOS measure it again. The tallest height seen per width tells "stuck" from a rotation.
+if (navigator.standalone) {
+  const tallest = {};
+  const remember = () => { tallest[innerWidth] = Math.max(tallest[innerWidth] || 0, innerHeight); };
+  remember();
+  addEventListener('resize', remember);
+  const isField = (el) => el && el.matches && el.matches('input, textarea, select, [contenteditable]');
+  const remeasure = () => {
+    if (isField(document.activeElement)) return; // the keyboard is still up
+    if ((tallest[innerWidth] || 0) - innerHeight <= 4) return; // not stuck
+    const y = scrollY, inSheet = sheet.scrollTop;
+    document.body.style.display = 'none';
+    void document.body.offsetHeight; // a synchronous reflow, nothing gets painted in between
+    document.body.style.display = '';
+    scrollTo(0, y);
+    sheet.scrollTop = inSheet;
+    remember();
+  };
+  document.addEventListener('focusout', (e) => { if (isField(e.target)) setTimeout(remeasure, 150); });
+}
+
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
