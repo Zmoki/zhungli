@@ -1130,6 +1130,12 @@ function openSettings() {
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
+    <h2>Комнаты</h2>
+    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Растения в разных комнатах? Добавьте ещё одну.'}</p>
+    <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
+    ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${esc(rm.name)}${I('x')}</button>`
+    : `<span class="chip">${esc(rm.name)}</span>`)).join('')}
+      <button class="chip" data-act="room-add" data-from="settings">${I('plus')}комната</button></div>
     <h2>Места</h2>
     <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
     <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${esc(sp)}${I('x')}</button>`).join('')}
@@ -1569,6 +1575,7 @@ document.addEventListener('click', (e) => {
       const name = (prompt('Как называется комната? Например, «Спальня» или «Кухня»') || '').trim();
       if (!name) break;
       S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
+      if (el.dataset.from === 'settings') openSettings();
       toast('Комната добавлена. Выберите её в карточках растений 🪴');
       track('room_added', { rooms: S.rooms.length }); break;
     }
@@ -1585,6 +1592,7 @@ document.addEventListener('click', (e) => {
       if (!confirm(`Убрать комнату «${rm.name}»? Её растения перейдут в «${rest[0].name}».`)) break;
       Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
       S.rooms = rest; save(); render();
+      if (el.dataset.from === 'settings') openSettings();
       track('room_removed', { rooms: S.rooms.length }); break;
     }
     case 'room-pick':
