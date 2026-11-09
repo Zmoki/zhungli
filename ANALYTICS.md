@@ -45,6 +45,7 @@ On every event:
 | `custom_opened` | «Своё растение с нуля» form opened | — |
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
+| `plants_filtered` | a status chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |

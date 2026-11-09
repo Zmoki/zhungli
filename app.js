@@ -244,17 +244,29 @@ function lightStatus(p) {
 
 // Light status words, the same in the plant card, the cards grid and the Light tab.
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
-function mood(p) {
-  const t = today();
-  // Each status has its own color: watered blue, check orange, too dark plum, too bright sun, fine green.
+// Face and word per state, from most to least urgent (also the order of the filter chips).
+// Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
+const STATES = { need: ['frown', 'проверить'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+// Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
+function states(p) {
+  const t = today(), out = [];
+  if (p.lastWater === t) out.push('watered');
+  else if (p.nextCheck <= t) out.push('need');
   const ls = lightStatus(p);
-  // Wrong light matters more than a fresh watering: «темновато» or «ярковато» even on a watering day.
-  if (p.lastWater === t && ls !== 'low' && ls !== 'high') return ['laugh', 'напоено', 'watered'];
-  if (p.nextCheck <= t && p.lastWater !== t) return ['frown', 'проверить', 'need'];
-  if (ls === 'low') return ['meh', LIGHT_WORDS.low, 'dim'];
-  if (ls === 'high') return ['annoyed', LIGHT_WORDS.high, 'hot'];
-  return ['smile', 'хорошо', 'fine'];
+  if (ls === 'low') out.push('dim');
+  if (ls === 'high') out.push('hot');
+  return out.length ? out : ['fine'];
 }
+// The one state for the face on the pot: a due check first, then wrong light, then the rest.
+function mood(p) {
+  const st = states(p);
+  const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
+  return [...STATES[k], k];
+}
+// Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
+const stateChips = (p, words) => states(p).map((k) => (words
+  ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${STATES[k][1]}</span>`
+  : `<span class="mood ${k}" title="${STATES[k][1]}">${I(STATES[k][0])}<span class="sr-only">${STATES[k][1]}</span></span>`)).join('');
 
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
@@ -506,11 +518,11 @@ function viewPlants() {
     ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>`;
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
   else html += spotGroups(ps);
-  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово.</p>`;
+  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово или «Все».</p>`;
   return html;
 }
 
@@ -522,10 +534,9 @@ function spotGroups(ps, room) {
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
     html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
-      const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
-      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}" title="${esc(mt)}">${I(mi)}<span class="sr-only">${esc(mt)}</span></span>${ghBadge(p)}</span></div>
+      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p)[2]);
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${states(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p)}${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
     html += `</div></section>`;
@@ -533,16 +544,31 @@ function spotGroups(ps, room) {
   return html;
 }
 
+// Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
+// The chips also teach which face means what.
+let plantSt = '';
+function stateFilter(ps) {
+  const n = {};
+  ps.forEach((p) => states(p).forEach((k) => { n[k] = (n[k] || 0) + 1; }));
+  if (plantSt && !n[plantSt]) plantSt = '';
+  const chip = (k, label) => `<button class="chip ${k} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
+  return `<div class="chips st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
+    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}</div>`;
+}
+
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.
 let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {
-  if (!$('#plants-q')) plantQ = ''; // the field is gone (fewer than 6 plants): show everything
+  if (!$('#plants-q')) { plantQ = ''; plantSt = ''; } // no search or filter (fewer than 6 plants): show everything
   const q = norm(plantQ.trim());
   let any = false;
   document.querySelectorAll('.pgroup').forEach((g) => {
     let n = 0;
-    g.querySelectorAll('.pcard').forEach((c) => { const on = !q || c.dataset.q.includes(q); c.hidden = !on; if (on) n++; });
+    g.querySelectorAll('.pcard').forEach((c) => {
+      const on = (!q || c.dataset.q.includes(q)) && (!plantSt || c.dataset.st.split(' ').includes(plantSt));
+      c.hidden = !on; if (on) n++;
+    });
     g.hidden = !n; any ||= n > 0;
   });
   const none = $('#plants-none');
@@ -633,7 +659,7 @@ function openPlant(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
       <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
-      <span class="hero-badges"><span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
+      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
@@ -1595,6 +1621,11 @@ document.addEventListener('click', (e) => {
       if (el.dataset.from === 'settings') openSettings();
       track('room_removed', { rooms: S.rooms.length }); break;
     }
+    case 'st-filter':
+      plantSt = el.dataset.st;
+      el.parentElement.querySelectorAll('.chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
+      filterPlants();
+      track('plants_filtered', { status: plantSt || 'all' }); break;
     case 'room-pick':
       S.plants[id].room = el.dataset.room; save();
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
@@ -1639,10 +1670,9 @@ document.addEventListener('change', (e) => {
   const badges = sheet.open && (f === 'greenhouse' || f === 'lux') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
-    const [mi, mt, mc] = mood(p);
-    badges.innerHTML = `<span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}`;
+    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p)}`;
     const pic = $('.hero-pic');
-    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mc);
+    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
   }
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
