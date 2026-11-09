@@ -246,7 +246,7 @@ function lightStatus(p) {
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
 // Face and word per state, from most to least urgent (also the order of the filter chips).
 // Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
-const STATES = { need: ['frown', 'полить?'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
 // Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
 function states(p) {
   const t = today(), out = [];
@@ -263,10 +263,12 @@ function mood(p) {
   const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
   return [...STATES[k], k];
 }
+// The word for a state on one plant: cuttings in water get «мутновато» (time to change the water).
+const stateWord = (k, p) => (k === 'need' && p.type === 'water' ? 'мутновато' : STATES[k][1]);
 // Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
 const stateChips = (p, words) => states(p).map((k) => (words
-  ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${STATES[k][1]}</span>`
-  : `<span class="mood ${k}" title="${STATES[k][1]}">${I(STATES[k][0])}<span class="sr-only">${STATES[k][1]}</span></span>`)).join('');
+  ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
+  : `<span class="mood ${k}" title="${stateWord(k, p)}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
 
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
@@ -649,7 +651,7 @@ function openPlant(id) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
-  const [mi, mt, mc] = mood(p);
+  const mc = mood(p)[2];
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
