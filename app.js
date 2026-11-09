@@ -246,7 +246,7 @@ function lightStatus(p) {
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
 // Face and word per state, from most to least urgent (also the order of the filter chips).
 // Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
-const STATES = { need: ['frown', 'проверить'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+const STATES = { need: ['frown', 'полить?'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
 // Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
 function states(p) {
   const t = today(), out = [];
