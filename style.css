@@ -372,19 +372,17 @@ dialog { --card: var(--bubble); }
   font-size: 0.941rem; font-weight: 900; padding: 5px 14px 5px 8px; border-radius: 99px; border: 2px solid var(--chip-ring);
 }
 .hero-mood .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-/* Over photos the chips turn white glass; the status color moves to the face and the word */
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) :is(.mood, .gh) {
-  background: var(--glass-photo); border-color: transparent; box-shadow: 0 1px 6px rgba(0, 0, 0, .16);
-  -webkit-backdrop-filter: blur(12px) saturate(1.6); backdrop-filter: blur(12px) saturate(1.6);
-}
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .mood.need { color: var(--st-need); }
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .mood.fine { color: var(--st-fine); }
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .mood.watered { color: var(--st-watered); }
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .mood.dim { color: var(--st-dim); }
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .mood.hot { color: var(--st-hot); }
-:is(.pcard .pic:has(> img), .hero:has(> .hero-pic > img)) .gh { color: var(--st-gh); }
-/* Greenhouse badge: a round pink chip as tall as the status chip */
-.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; background: var(--air); color: var(--on-color); border: 2px solid var(--chip-ring); }
+/* Status and greenhouse chips, on photos and drawings alike: white glass, the status color
+   on the face and the word (7:1 even over a black photo). No blur: dozens of them in the grid */
+.mood, .gh { background: var(--glass-photo); box-shadow: 0 1px 6px rgba(0, 0, 0, .16); }
+.mood.need { color: var(--st-need); }
+.mood.fine { color: var(--st-fine); }
+.mood.watered { color: var(--st-watered); }
+.mood.dim { color: var(--st-dim); }
+.mood.hot { color: var(--st-hot); }
+.gh { color: var(--st-gh); }
+/* Greenhouse badge: a round chip as tall as the status chip */
+.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
 .gh .ic { width: 17px; height: 17px; stroke-width: 2.4; }
 .hero-badges .gh { font-size: 0.941rem; width: calc(1.5em + 14px); height: calc(1.5em + 14px); }
 .hero-badges .gh .ic { width: 19px; height: 19px; }
@@ -543,12 +541,6 @@ abbr[title] { text-decoration: none; }
 .h-ic .ic { color: var(--green); }
 .task.bonus > b { display: flex; align-items: center; gap: .4em; }
 /* Mood: face + word on a bright fill, one color per state */
-.mood { color: var(--on-color); }
-.mood.watered { background: var(--sky); }
-.mood.need { background: var(--tangerine); }
-.mood.dim { background: var(--plum); }
-.mood.hot { background: var(--sun); }
-.mood.fine { background: var(--leafy); }
 /* Plant silhouettes (shapes.js) when there is no photo */
 svg.pl { display: block; }
 .ava svg.pl { width: 92%; height: 92%; }
