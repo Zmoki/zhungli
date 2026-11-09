@@ -50,6 +50,8 @@ Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succul
 
 New plants get staggered start dates (`initBonus`), so wiping tasks don't all arrive on one day.
 
+The card follows the check card: picture and name (the plant, or an icon and «День подкормки» with who to feed), the task, the buttons, and how to do it under them.
+
 «Готово» stores today's date. «Не сегодня» hides the task for 3 days. Bonus tasks don't count toward progress.
 
 ## Progress and the day log

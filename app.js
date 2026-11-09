@@ -306,17 +306,17 @@ function bonusTasks() {
   allPlants().forEach((p) => {
     const dk = 'dust:' + p.id;
     if (p.big && S.bonus[dk] && diff(S.bonus[dk], t) >= 21 && !snoozed(dk)) {
-      out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, sub: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
+      out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, task: 'Протрите листья', hint: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
     }
     const rk = 'rotate:' + p.id;
     if (p.rotate && S.bonus[rk] && diff(S.bonus[rk], t) >= 14 && !snoozed(rk)) {
-      out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, sub: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
+      out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
     }
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (p.type !== 'dry' || p.feed) && p.type !== 'bark' && p.type !== 'water');
-    if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: `По инструкции к удобрению, в мокрый грунт: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
+    if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', name: 'День подкормки', sub: who.map((p) => p.title).join(', '), task: 'Подкормите по инструкции к удобрению, в мокрый грунт', hint: 'Не кормим недавно пересаженных и больных.' });
   }
   return out.slice(0, 2);
 }
@@ -505,11 +505,15 @@ function viewToday() {
   const bonus = bonusTasks();
   if (bonus.length) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>`;
+    // Same layout as a watering card: picture and name, the task, the buttons, the how-to under them.
     bonus.forEach((b) => {
+      const sub = b.p ? [b.p.name ? b.p.species : '', b.p.spot].filter(Boolean).join(' · ') : b.sub;
       html += `<div class="task bonus"><div class="task-top">${b.p ? ava(b.p) : `<div class="ava" aria-hidden="true">${I(b.icon)}</div>`}<div>
-        <div class="task-name">${esc(b.title)}</div></div></div><p class="bonus-sub small muted">${esc(b.sub)}</p>
+        <div class="task-name">${esc(b.p ? b.p.title : b.name)}</div>${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
+        <div class="question">${esc(b.task)}</div>
         <div class="btns"><button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
-        <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button></div></div>`;
+        <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button></div>
+        <div class="hint">${esc(b.hint)}</div></div>`;
     });
   }
 
