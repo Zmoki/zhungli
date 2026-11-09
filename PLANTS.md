@@ -99,7 +99,7 @@ The card's tips (`water`, `soil`, `cond`, `tip`) can be edited, hidden and resto
 
 - **Quick picks:** empty «Сегодня», «Растения», «Свет» and «Комната» show 8 common plants as tiles (`QUICK` in `app.js`). Tap the ones you have, then add them in one go.
 - **Catalog:** pick several at once. Generic types cover plants that aren't listed. Search ignores case and ё, and every typed word must match the name, the hint, the category or `aka` (search-only folk and Latin names). When nothing matches, the sheet offers to add the typed name as an own plant and shows all generic types.
-- **Own plant:** a name and «На что похоже» (a generic type). The care, light and check interval come from that type and can be changed under «Тонкая настройка». It creates a card in `S.custom`.
+- **Own plant:** a name and «На что похоже» (a generic type). The care, light and check interval come from that type and can be changed under «Тонкая настройка». If the growing medium is changed there, the type's check question and care tips are left out, since they no longer fit. It creates a card in `S.custom`.
 - **AI import:** a prompt for ChatGPT or Claude, and the JSON answer pasted back. It creates own cards with tips and quips, plus their rooms and spots. Rooms are created in the AI's order, and an existing room whose name differs only in case is reused.
 
 ## Pictures

@@ -393,7 +393,7 @@ function ava(p, cls = 'ava') {
 
 // Hint cards on «Сегодня»: same layout, at most one at a time.
 // Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
-// With no plants only the Telegram one shows, below the welcome.
+// With no plants they show below the welcome, and «add to home screen» waits for the first plant.
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
@@ -411,13 +411,14 @@ function currentHint() {
       'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить» там.',
       `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
-  // A first visit sees the welcome, not notices: the rest wait for the first plant.
-  if (!Object.keys(S.plants).length) return '';
+  // Stats run from the first screen, so their notice shows from the first screen too.
   if (!S.statsNotice && S.settings.stats !== false) {
     return hintCard('lightbulb', 'Анонимная статистика',
       'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
   }
+  // «Add to home screen» waits for the first plant: before that there's nothing to keep.
+  if (!Object.keys(S.plants).length) return '';
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
   if (MINI_APP) {
     if (window.tgHome && !S.hideInstall) {
@@ -745,6 +746,8 @@ function startAddFlow(sheetName) {
   addFlow.sheet = sheetName;
 }
 function endAddFlow(leftApp = false) {
+  // What the catalog lacks: sent whether or not something was added in the end.
+  if (addFlow && addFlow.missed) track('catalog_missed', { query: addFlow.missed, added: addFlow.done });
   if (addFlow && !addFlow.done) track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp });
   addFlow = null;
 }
@@ -786,18 +789,20 @@ function openAdd() {
     none.hidden = any;
     if (!any) {
       none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
-        <button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.slice(0, 30))}»</button>
+        <button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>
         <p class="mt-12 small muted">Или выберите похожий общий тип — уход у них почти одинаковый:</p>`;
       const g = document.querySelector('.pick-group[data-generic]');
       g.hidden = false;
       g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
     }
+    // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
+    // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
+    if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
     if (raw) {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
-        // The search text is sent only when nothing was found: it tells which plants the catalog lacks.
-        track('catalog_searched', any ? { found: true } : { found: false, query: raw.slice(0, 40) });
+        track('catalog_searched', { found: any });
       }, 1200);
     }
   });
@@ -832,7 +837,7 @@ function openCustom(species = '', from = 'button') {
         <div class="field"><label id="lbl-lux">Сколько света нужно, ${LK}</label><div class="row2">
           <input class="input" name="lmin" aria-label="Света от, люкс" type="number" inputmode="numeric" placeholder="от">
           <input class="input" name="lmax" aria-label="Света до, люкс" type="number" inputmode="numeric" placeholder="до"></div></div>
-        <div class="field"><label for="c-every">Проверять каждые … дней</label><input class="input" id="c-every" name="every" type="number" inputmode="numeric" min="1" max="60"></div>
+        <div class="field"><label for="c-every">Проверять каждые … дней</label><input class="input" id="c-every" name="every" type="number" inputmode="numeric"></div>
         <div class="field"><label for="c-tip">Шпаргалка</label><textarea class="input" id="c-tip" name="tip" rows="3" placeholder="Что важно помнить"></textarea></div>
       </details>
       <button class="mt-14 btn primary wide" type="submit">${I('plus')}Добавить</button>
@@ -863,11 +868,14 @@ function openCustom(species = '', from = 'button') {
     const every = clamp(Number(f.get('every')) || base.every, 1, 60);
     const lmin = Number(f.get('lmin')) || base.lux[0];
     const lmax = Math.max(lmin, Number(f.get('lmax')) || base.lux[1]);
-    const { check, water, soil, cond, humid, big, quips } = base;
+    const type = String(f.get('type'));
+    const { humid, big, quips } = base;
+    // The type's check question and care tips fit only its own growing medium: changed by hand, they're left out.
+    const care = type === base.type ? { check: base.check, water: base.water, soil: base.soil, cond: base.cond } : {};
     S.custom[id] = {
       id, species: String(f.get('species')).trim() || 'Растение', cat: 'Мои', emoji: base.emoji || '🪴',
-      check, water, soil, cond, humid, big,
-      lux: [lmin, lmax], every, type: f.get('type'), tip: String(f.get('tip')).trim(), quips: quips || GENERIC_QUIPS,
+      ...care, humid, big,
+      lux: [lmin, lmax], every, type, tip: String(f.get('tip')).trim(), quips: quips || GENERIC_QUIPS,
     };
     S.custom[id].tone = toneOf(S.custom[id]);
     S.plants[id] = runtime(S.custom[id], today());
@@ -1152,7 +1160,7 @@ function addFromCatalog(keys, source) {
 }
 
 // Shown on tabs that need plants when there are none yet.
-const emptyCard =(title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>${quickStart()}</div>`;
+const emptyCard = (title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>${quickStart()}</div>`;
 
 function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
@@ -1524,6 +1532,8 @@ function applySizes(root = document) {
 }
 function render() {
   const view = $('#view');
+  // Tile ticks only matter while the collection is empty: once plants are in, by any way, they're done.
+  if (Object.keys(S.plants).length) { qsPicked.clear(); qsReported = false; }
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   applySizes(view);
   if (tab === 'plants') filterPlants();

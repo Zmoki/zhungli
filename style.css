@@ -601,14 +601,13 @@ summary { cursor: pointer; }
   background: var(--card); border: 2px solid var(--edge); border-radius: 18px;
   padding: 4px 6px 4px 4px; color: inherit; font: inherit; font-weight: 800; line-height: 1.25;
 }
-.qs-pic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--green-soft); border-radius: 14px; }
+.qs-pic { position: relative; width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--green-soft); border-radius: 14px; }
 .qs-pic svg.pl { width: 36px; height: 36px; }
 .qs-name { min-width: 0; font-size: 0.941rem; overflow-wrap: anywhere; hyphens: auto; }
 .qs.on { border-color: var(--leafy-d); background: var(--green-soft); }
-.qs-pic { position: relative; }
 .qs.on .qs-pic::after {
-  content: "✓"; position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--leafy-d); color: #fff; font-size: 13px; line-height: 1;
+  content: "✓"; position: absolute; right: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--green); color: var(--on-green); font-size: 0.824rem; font-weight: 900; line-height: 1;
 }
 .celebrate .btn:disabled { opacity: .5; }
 .tune summary { display: flex; align-items: center; gap: 4px; min-height: 44px; color: var(--green); font-weight: 800; list-style: none; }
