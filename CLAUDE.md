@@ -17,7 +17,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **Telegram mini app:** see [TELEGRAM.md](TELEGRAM.md). Test sync with a fake Telegram before changing it. When bot texts change in BotFather, update the snapshot there.
 - **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
-- **Docs:** [PLANTS.md](PLANTS.md), [TASKS.md](TASKS.md), [TELEGRAM.md](TELEGRAM.md), [DESIGN.md](DESIGN.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README.
+- **Docs:** [PLANTS.md](PLANTS.md), [TASKS.md](TASKS.md), [TELEGRAM.md](TELEGRAM.md), [DESIGN.md](DESIGN.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README. Images go in `images/` (app icons stay in `icons/`).
 
 ## Run locally
 
