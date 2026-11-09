@@ -74,10 +74,14 @@ const TYPE_LABELS = {
   bark: ['Полито', 'Ещё рано'],
   water: ['Вода сменена', 'Вода ещё чистая'],
 };
+// Wick watering: the plant drinks from a reservoir, so the check is about the water in it.
+const WICK_LABELS = ['Долито', 'Вода есть'];
+const labelsOf = (p) => (p.wick ? WICK_LABELS : TYPE_LABELS[p.type] || TYPE_LABELS.soil);
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
 // A check written as an instruction (imported from an AI chat) is shown as is.
 function waterTask(p) {
+  if (p.wick) return 'Загляните в бак фитильного полива и долейте воды, если её мало';
   const water = p.type === 'water';
   const own = p.check && !(water && p.check === CHECK_TEXT.water) ? p.check : '';
   if (water && !own) return 'Смените воду в банке';
@@ -264,8 +268,8 @@ function mood(p, st = states(p)) {
   const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
   return [...STATES[k], k];
 }
-// The word for a state on one plant: cuttings in water get «мутновато» (time to change the water).
-const stateWord = (k, p) => (k === 'need' && p.type === 'water' ? 'мутновато' : STATES[k][1]);
+// The word for a state on one plant: a wick reservoir is «пустовато», cuttings in water «мутновато».
+const stateWord = (k, p) => (k !== 'need' ? STATES[k][1] : p.wick ? 'пустовато' : p.type === 'water' ? 'мутновато' : STATES[k][1]);
 // Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
 const stateChips = (p, words, st = states(p)) => st.map((k) => (words
   ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
@@ -330,7 +334,8 @@ function actWater(id, silent) {
     // After "still wet" answers, the real interval is about the measured one.
     // If it was already dry, it dried out earlier, so the interval doesn't grow.
     const iv = r.wet > 0 ? (r.interval + measured) / 2 : Math.min(r.interval, (r.interval + measured) / 2) * 0.95;
-    r.interval = clamp(iv, Math.max(1, d.every * 0.4), d.every * 3);
+    // A wick reservoir lasts its own time, not the soil's: wider bounds.
+    r.interval = r.wick ? clamp(iv, 2, 45) : clamp(iv, Math.max(1, d.every * 0.4), d.every * 3);
   }
   r.lastWater = t;
   r.wet = 0;
@@ -463,8 +468,8 @@ function viewToday() {
   });
 
   shown.forEach((p) => {
-    const [yes, no] = TYPE_LABELS[p.type] || TYPE_LABELS.soil;
-    const last = p.lastWater ? `полив ${rel(p.lastWater)}` : '';
+    const [yes, no] = labelsOf(p);
+    const last = p.lastWater ? `${p.wick ? 'долив' : 'полив'} ${rel(p.lastWater)}` : '';
     const sub = [p.name ? p.species : '', p.spot, last].filter(Boolean).join(' · ');
     html += `<div class="task"><div class="task-top">${ava(p)}<div><div class="task-name">${esc(p.title)}</div>
       <div class="task-sub">${esc(sub)}</div></div></div>
@@ -472,7 +477,7 @@ function viewToday() {
       <div class="question">${esc(waterTask(p))}</div>
       <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
       <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button></div>
-      ${p.water ? `<div class="hint">${esc(p.water)}</div>` : ''}
+      ${p.water && !p.wick ? `<div class="hint">${esc(p.water)}</div>` : ''}
       <button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button></div>`;
   });
 
@@ -564,8 +569,8 @@ function stateFilter(ps) {
   const sel = n[plantSt] ? plantSt : '';
   // Same chips as in the plant card; the chosen one gets a ring in its own color.
   const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
-  // «мутновато» when every plant due is a cutting in water, else «суховато».
-  const word = (k) => (k === 'need' && due.every((p) => p.type === 'water') ? 'мутновато' : STATES[k][1]);
+  // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
+  const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
@@ -660,6 +665,14 @@ function setNote(id, key, text) {
 }
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
+// Watering block in the plant card: last watering, next check and the button; for a wick, the reservoir.
+function waterBox(p) {
+  const w = p.wick;
+  return `<div class="info water"><b>${w ? 'Фитильный полив' : 'Полив'}</b>${p.lastWater ? `${w ? 'Последний долив' : 'Последний полив'} ${esc(rel(p.lastWater))}` : w ? 'Доливов ещё не было' : 'Поливов ещё не было'}<br>${p.nextCheck <= today() ? (w ? 'Пора заглянуть в бак сегодня' : 'Пора проверить сегодня') : `${w ? 'Заглянуть в бак' : 'Следующая проверка'} ${esc(rel(p.nextCheck))}`}</div>
+    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(p.id)}">${I('droplet')}${w ? 'Записать долив' : 'Записать полив'}</button>`;
+}
+const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
+
 function openPlant(id) {
   const p = plant(id);
   if (!p) return;
@@ -679,8 +692,7 @@ function openPlant(id) {
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
-    <div class="info water"><b>Полив</b>${p.lastWater ? `Последний полив ${esc(rel(p.lastWater))}` : 'Поливов ещё не было'}<br>${p.nextCheck <= today() ? 'Пора проверить сегодня' : `Следующая проверка ${esc(rel(p.nextCheck))}`}</div>
-    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(id)}">${I('droplet')}Записать полив</button>
+    <div id="water-box">${waterBox(p)}</div>
 
     <div class="field"><label for="f-name">Имя</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
     <div class="field"><label for="f-species">Название (вид, сорт)</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
@@ -698,11 +710,13 @@ function openPlant(id) {
     <div class="field" role="group" aria-labelledby="lbl-int"><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
       <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
       <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
-      <p class="mt-6 small muted">Подстраивается само, когда на «Сегодня» вы отвечаете «${esc((TYPE_LABELS[p.type] || TYPE_LABELS.soil)[0])}» или «${esc((TYPE_LABELS[p.type] || TYPE_LABELS.soil)[1])}».</p></div>
+      <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
 
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
       <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
     <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="wick" data-id="${esc(id)}" aria-describedby="wick-hint" ${p.wick ? 'checked' : ''}> Фитильный полив</label>
+      <p class="mt-6 small muted" id="wick-hint">Не буду звать поливать — напомню заглянуть в бак, есть ли вода. Как часто, настраивается выше.</p></div>
 
     <h2>Шпаргалка</h2>
     <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
@@ -1538,7 +1552,7 @@ document.addEventListener('click', (e) => {
     case 'close': closeSheet(); break;
     case 'photo': photoFor = id; $('#photo-input').click(); break;
     case 'water-now':
-      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast('Полив записан 💧', undo); break;
+      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(plant(id).wick ? 'Долив записан 💧' : 'Полив записан 💧', undo); break;
     case 'spot':
       S.plants[id].spot = el.dataset.spot; save();
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
@@ -1680,6 +1694,18 @@ document.addEventListener('change', (e) => {
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').textContent = repotHint(r); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; track('greenhouse_toggled', { on: el.checked }); }
+  if (f === 'wick') {
+    // A reservoir lasts longer than soil: start with a weekly look, keep the soil interval to come back to.
+    if (el.checked) { r.wick = true; r.soilInterval = r.interval; r.interval = 7; }
+    else { delete r.wick; r.interval = r.soilInterval || def(id).every; delete r.soilInterval; }
+    r.wet = 0;
+    r.nextCheck = addDays(today(), Math.round(r.interval));
+    const p = plant(id);
+    $('#water-box').innerHTML = waterBox(p);
+    $('#int-val').textContent = days(Math.round(r.interval));
+    $('#int-hint').textContent = intHint(p);
+    track('wick_toggled', { on: el.checked });
+  }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
@@ -1687,7 +1713,7 @@ document.addEventListener('change', (e) => {
   }
   save();
   // The status and greenhouse badge on the card photo follow the toggle and the light reading right away.
-  const badges = sheet.open && (f === 'greenhouse' || f === 'lux') && $('.hero-badges');
+  const badges = sheet.open && (f === 'greenhouse' || f === 'lux' || f === 'wick') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
     badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}`;
