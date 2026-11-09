@@ -592,7 +592,6 @@ svg.pl.v5 { --pot: #4cc77a; --pot-2: #34ad62; }
 summary { cursor: pointer; }
 .error-note { color: var(--red); }
 .empty-note { text-align: center; margin-top: 24px; }
-.bonus-sub { margin: 8px 0 10px; }
 .pick-help { margin: 8px 0 0; }
 /* Quick picks on empty screens: two columns of compact plant tiles */
 .qs-title { text-align: left; margin-bottom: 10px; }
