@@ -538,7 +538,7 @@ function spotGroups(ps, room) {
     groups[spot].forEach((p) => {
       const ph = photoOf(p.id);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${states(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p)}${ghBadge(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p)}${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
     html += `</div></section>`;
@@ -549,14 +549,17 @@ function spotGroups(ps, room) {
 // Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
 // The chips also teach which face means what.
 let plantSt = '';
+// Filter keys of a plant: its states, plus «greenhouse» when it lives in the тепличка.
+const filterKeys = (p) => (p.greenhouse ? [...states(p), 'greenhouse'] : states(p));
 function stateFilter(ps) {
   const n = {};
-  ps.forEach((p) => states(p).forEach((k) => { n[k] = (n[k] || 0) + 1; }));
+  ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; }));
   if (plantSt && !n[plantSt]) plantSt = '';
   // Same chips as in the plant card; the chosen one gets a ring in its own color.
   const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
-    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}</div>`;
+    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}
+    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в тепличке <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
 }
 
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.

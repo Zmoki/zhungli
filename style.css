@@ -305,6 +305,7 @@ button { cursor: pointer; }
 .st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
 .st-filter .st-chip { min-height: 44px; }
 .st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
+.st-filter .st-chip.greenhouse { color: var(--st-gh); }
 .st-filter .st-chip.on { border-color: currentColor; }
 /* Counts stay quiet: regular weight, smaller, grey */
 .st-filter .st-chip .n { font-size: 0.824rem; font-weight: 600; color: var(--muted); }
