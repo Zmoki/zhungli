@@ -116,11 +116,9 @@ function load() {
 function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
-  if (raw && (raw.v || 1) < 3) migrateV2(s);
+  if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
   if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
   s.v = 3;
-  // «Недавно пересажено» used to be a plain flag; start its 6 weeks now.
-  Object.values(s.plants).forEach((r) => { if (r.repotted === true) r.repotted = today(); });
   initBonus(s);
   return s;
 }
@@ -145,11 +143,13 @@ function migrateV1(s) {
 // v2: one reading for the whole home → a list of rooms, each with its own reading.
 // Plants without `room` live in the first room.
 function newRoom(id, name) { return { id, name, t: null, h: null, d: null }; }
-function migrateV2(s) {
+// «Недавно пересажено» was a plain flag; it now holds the date and lapses after 6 weeks.
+function migrateV2(s, raw) {
   const r = s.room;
   delete s.room;
-  // An older app on another device may have saved over a state that already has rooms.
-  if (Array.isArray(s.rooms) && s.rooms.length && s.rooms[0].id !== 'home') return;
+  Object.values(s.plants).forEach((p) => { if (p.repotted === true) p.repotted = today(); });
+  // An older app on another device (Telegram sync) may have saved over a state that already has rooms.
+  if (Array.isArray(raw.rooms) && raw.rooms.length) return;
   s.rooms = [{ ...newRoom('home', 'Комната'), ...(r ? { t: r.t, h: r.h, d: r.d } : {}) }];
 }
 
@@ -537,6 +537,7 @@ function spotGroups(ps, room) {
 let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {
+  if (!$('#plants-q')) plantQ = ''; // the field is gone (fewer than 6 plants): show everything
   const q = norm(plantQ.trim());
   let any = false;
   document.querySelectorAll('.pgroup').forEach((g) => {
@@ -921,8 +922,9 @@ const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, imp
 function addImported() {
   if (addFlow) addFlow.done = true;
   const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
-  // A new collection where every plant has a room keeps no empty «Комната»: the first imported room takes its place.
-  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && S.rooms[0].t == null && list.every((it) => it.room);
+  // A new collection where every plant has a room keeps no empty default «Комната»: the first imported room takes its place.
+  const first = S.rooms[0];
+  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
   const roomsBefore = S.rooms.length;
   list.forEach((it, i) => {
     const id = newId('c', i);
@@ -949,10 +951,9 @@ function importRoom(name, fresh) {
   if (!name) return undefined;
   const found = S.rooms.find((r) => norm(r.name) === norm(name));
   if (found) return found.id;
-  const first = S.rooms[0];
-  if (fresh && first.id === 'home' && first.name === 'Комната' && !Object.values(S.plants).some((r) => r.room === 'home')) {
-    first.name = name;
-    return first.id;
+  if (fresh && S.rooms.length === 1 && !Object.keys(S.plants).length) {
+    S.rooms[0].name = name;
+    return S.rooms[0].id;
   }
   const rm = newRoom('r' + Date.now().toString(36) + S.rooms.length, name);
   S.rooms.push(rm);
@@ -1025,8 +1026,7 @@ const roomOf = (p) => S.rooms.find((r) => r.id === p.room) || S.rooms[0];
 const roomsN = (n) => `${n} ${plural(n, 'комната', 'комнаты', 'комнат')}`;
 
 // One room: its reading, who is uncomfortable, and what suits everyone in it.
-function roomCard(rm, many) {
-  const ps = many ? allPlants().filter((p) => roomOf(p) === rm) : allPlants();
+function roomCard(rm, ps, many) {
   const ranges = ps.map((p) => [p, tempRange(p)]).filter(([, t]) => t);
   const lo = Math.max(...ranges.map(([, t]) => t[0]));
   const hi = Math.min(...ranges.map(([, t]) => t[1]));
@@ -1080,7 +1080,7 @@ function viewRoom() {
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
     ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения — подскажу, какая температура и влажность удобны именно им.')}
     <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
-    ${S.rooms.map((rm) => roomCard(rm, many)).join('')}
+    ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
     ${many ? '' : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату — у каждой будет свой замер.</p>'}
 
@@ -1131,10 +1131,10 @@ function openSettings() {
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
     <h2>Комнаты</h2>
-    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Растения в разных комнатах? Добавьте ещё одну.'}</p>
+    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
     <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
     ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${esc(rm.name)}${I('x')}</button>`
-    : `<span class="chip">${esc(rm.name)}</span>`)).join('')}
+    : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${esc(rm.name)}${I('pencil')}</button>`)).join('')}
       <button class="chip" data-act="room-add" data-from="settings">${I('plus')}комната</button></div>
     <h2>Места</h2>
     <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
@@ -1582,7 +1582,7 @@ document.addEventListener('click', (e) => {
     case 'room-rename': {
       const rm = S.rooms.find((x) => x.id === el.dataset.room);
       const name = rm && (prompt('Новое название комнаты', rm.name) || '').trim();
-      if (name) { rm.name = name; save(); render(); }
+      if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
       break;
     }
     case 'room-del': {
