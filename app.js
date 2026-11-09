@@ -813,9 +813,9 @@ const updatePickBar = () => setAddButton($('#pick-add'), picked.size, 'Отме�
 // Two fields are enough: what it is and what it's like. The care comes from that generic type;
 // the numbers stay editable under «Тонкая настройка».
 const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
-function openCustom(species = '') {
+function openCustom(species = '', from = 'button') {
   startAddFlow('custom');
-  track('custom_opened');
+  track('custom_opened', { from });
   const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('pencil')}</div><h2 class="m-0">Новое растение</h2>
@@ -849,6 +849,10 @@ function openCustom(species = '') {
   };
   fillFrom(like);
   form.like.addEventListener('change', () => fillFrom(def(form.like.value)));
+  // Changing the care in «Тонкая настройка» by hand (not the values a type fills in, not the name)
+  // tells whether two fields are enough.
+  let tuned = false;
+  form.querySelector('.tune').addEventListener('input', (e) => { if (e.target.name !== 'name') tuned = true; });
   if (!species) form.species.focus();
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -870,7 +874,7 @@ function openCustom(species = '') {
     S.plants[id].name = String(f.get('name') || '').trim();
     save();
     closeSheet();
-    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type, like: base.id });
+    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type, like: base.id, tuned });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -1115,6 +1119,14 @@ function lightIdeas() {
 const QUICK = [['mon-del', 'Монстера'], ['zz', 'Замиокулькас'], ['spath', 'Спатифиллум'], ['phal', 'Орхидея'],
   ['g-easy', 'Потос, драцена'], ['g-flower', 'Фиалка, бегония'], ['g-succ', 'Суккулент'], ['g-cactus', 'Кактус']];
 let qsPicked = new Set();
+let qsReported = false;
+// Tiles ticked but not added: reported once when the person turns to another way of adding or leaves the app.
+// The ticks stay, so coming back to the same screen keeps them.
+function endQuick(then) {
+  if (!qsPicked.size || qsReported) return;
+  track('quick_abandoned', { picked: qsPicked.size, then });
+  qsReported = true;
+}
 function quickStart() {
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);
@@ -1537,6 +1549,8 @@ document.addEventListener('click', (e) => {
   if (el.dataset.open) { openPlant(el.dataset.open); return; }
   const id = el.dataset.id;
   const act = el.dataset.act;
+  const otherWay = { 'add-plant': 'catalog', 'add-import': 'import', import: 'restore' }[act];
+  if (otherWay) endQuick(otherWay);
   let undo;
   switch (act) {
     case 'water':
@@ -1577,7 +1591,7 @@ document.addEventListener('click', (e) => {
     case 'settings': openSettings(); break;
     case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
-    case 'add-custom': openCustom(el.dataset.q || ''); break;
+    case 'add-custom': openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); break;
     case 'add-import': openImport(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
@@ -1610,6 +1624,7 @@ document.addEventListener('click', (e) => {
     case 'qs-pick': {
       const k = el.dataset.key;
       if (qsPicked.has(k)) qsPicked.delete(k); else qsPicked.add(k);
+      qsReported = false;
       el.classList.toggle('on', qsPicked.has(k));
       el.setAttribute('aria-pressed', qsPicked.has(k));
       setAddButton($('#qs-add'), qsPicked.size, 'Отметьте, что есть'); break;
@@ -1837,6 +1852,7 @@ document.addEventListener('visibilitychange', () => {
     // Leaving for the AI chat after copying the prompt is the expected path, not abandoning.
     const toAiChat = addFlow && addFlow.sheet === 'import' && addFlow.promptCopied;
     if (sheet.open && !toAiChat) endAddFlow(true);
+    endQuick('left_app');
     flushStats();
     return;
   }
