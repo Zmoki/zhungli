@@ -1,6 +1,6 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 :root {
-  /* Whimsy + glass: cream ground, bright flat colors, glass on what floats */
+  /* Whimsy + glass: plain cream ground, bright flat colors, glass on what floats */
   --bg: #fff4e2;
   --card: rgba(255, 255, 255, .66);
   --field: #ffffff;
@@ -13,7 +13,7 @@
   --line: rgba(42, 33, 24, .12);
   --edge: #857a6e; /* control borders: ≥ 3:1 on bg, glass and tiles */
   --on-color: #2a2118; /* text on the bright fills below, both themes */
-  /* Bright fills (chips, buttons, blobs) and their darker rims (≥ 3:1 on bg) */
+  /* Bright fills (chips, buttons) and their darker rims (≥ 3:1 on bg) */
   --sun: #ffc93c; --sun-d: #9c6c00;
   --tangerine: #ff9a55; --tangerine-d: #b4520c;
   --gum: #ff9ec4; --gum-d: #b8336a;
@@ -26,7 +26,11 @@
   --air: #ff9ec4; --air-d: #b8336a; /* bubblegum */
   /* Pastel tiles behind plants, one per color pair (.v0–.v5) */
   --t0: #d3e8ff; --t1: #ffe7a8; --t2: #c9f0d6; --t3: #ffe0c7; --t4: #e3ddff; --t5: #ffd1e3;
-  --blob-1: #ffe197; --blob-2: #ffcdd4; --blob-3: #aee0b3; --blob-4: #bcd8ef; /* soft enough for 7:1 text on top */
+  /* Three soft blobs behind everything: sun, leaf, sky. Soft enough for 7:1 text on top */
+  --blob-1: #ffe197; --blob-2: #aee0b3; --blob-3: #bcd8ef;
+  /* Status chips over photos: white glass, the status color on the face and the word (7:1 even over black) */
+  --glass-photo: rgba(255, 255, 255, .9);
+  --st-need: #7a3200; --st-fine: #1a522e; --st-watered: #00478f; --st-dim: #4a2fb0; --st-hot: #614600; --st-gh: #94003a;
   /* Plant drawings */
   --leaf: #33b067; --leaf-2: #1f8a4c; --leaf-3: #8ee3ae; --bloom: #ff7fb0; --glass: #d3e8ff; --coleus: #e2457e; --trunk: #8a5a3c;
   /* Text accents and soft fills (older names, still used across the app) */
@@ -40,8 +44,7 @@
   --red: #741f2a;
   --red-soft: #ffd1da;
   /* Glass */
-  --glass-bg: rgba(255, 255, 255, .62);
-  --glass-flat: rgba(255, 255, 255, .82); /* long lists: no blur, denser fill */
+  --glass-bg: rgba(255, 255, 255, .72);
   --glass-strong: rgba(255, 255, 255, .84); /* over photos: keeps 7:1 even on black */
   --glass-rim: rgba(255, 255, 255, .8);
   --glass-hi: rgba(255, 255, 255, .95);
@@ -50,6 +53,8 @@
   --tab-on: rgba(255, 255, 255, .92);
   --chip-ring: #ffffff;
   --shadow: 0 10px 30px rgba(90, 50, 10, .12);
+  --shadow-soft: 0 2px 10px rgba(90, 50, 10, .07); /* cards: quiet, so photos stand out */
+  --surface: #ffffff; /* solid card fill for plant lists */
   --radius: 26px;
   color-scheme: light dark;
 }
@@ -68,7 +73,6 @@
     --edge: #a69cb2;
     --gum-d: #ff9ec4; --plum-d: #b3a7ff; --air-d: #ff9ec4; --danger-d: #ff9a9a; --beige: #3b3150;
     --t0: #22344a; --t1: #4a3d1c; --t2: #1f4a33; --t3: #4a3326; --t4: #342d52; --t5: #4b2a42;
-    --blob-1: #40366d; --blob-2: #61304d; --blob-3: #1e4636; --blob-4: #263c67;
     --glass: #3a5878;
     --green: #a5ecc0;
     --on-green: #1a1524;
@@ -80,7 +84,6 @@
     --red: #ffccd6;
     --red-soft: #4b2a35;
     --glass-bg: rgba(34, 28, 46, .62);
-    --glass-flat: rgba(34, 28, 46, .84);
     --glass-strong: rgba(34, 28, 46, .84);
     --glass-rim: rgba(255, 255, 255, .16);
     --glass-hi: rgba(255, 255, 255, .18);
@@ -88,6 +91,11 @@
     --tab-on: rgba(255, 255, 255, .16);
     --chip-ring: transparent;
     --shadow: 0 10px 30px rgba(0, 0, 0, .4);
+    --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
+    --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
+    --glass-photo: rgba(34, 28, 46, .9);
+    --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0;
+    --surface: #2a2338;
   }
 }
 :root[data-theme="dark"] {
@@ -102,7 +110,6 @@
   --edge: #a69cb2;
   --gum-d: #ff9ec4; --plum-d: #b3a7ff; --air-d: #ff9ec4; --danger-d: #ff9a9a; --beige: #3b3150;
   --t0: #22344a; --t1: #4a3d1c; --t2: #1f4a33; --t3: #4a3326; --t4: #342d52; --t5: #4b2a42;
-  --blob-1: #40366d; --blob-2: #61304d; --blob-3: #1e4636; --blob-4: #263c67;
   --glass: #3a5878;
   --green: #a5ecc0;
   --on-green: #1a1524;
@@ -114,7 +121,6 @@
   --red: #ffccd6;
   --red-soft: #4b2a35;
   --glass-bg: rgba(34, 28, 46, .62);
-  --glass-flat: rgba(34, 28, 46, .84);
   --glass-strong: rgba(34, 28, 46, .84);
   --glass-rim: rgba(255, 255, 255, .16);
   --glass-hi: rgba(255, 255, 255, .18);
@@ -122,15 +128,20 @@
   --tab-on: rgba(255, 255, 255, .16);
   --chip-ring: transparent;
   --shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
+  --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
+  --glass-photo: rgba(34, 28, 46, .9);
+  --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0;
+  --surface: #2a2338;
 }
 
 /* Solid layers for people who turn off transparency */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-bg: #ffffff; --glass-strong: #ffffff; --glass-flat: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
-  :root[data-theme="dark"] { --glass-bg: #2a2338; --glass-strong: #2a2338; --glass-flat: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
+  :root { --glass-photo: #ffffff; --glass-bg: #ffffff; --glass-strong: #ffffff; --card: #ffffff; --sheet-bg: var(--sheet-solid); --glass-blur: none; }
+  :root[data-theme="dark"] { --glass-photo: #2a2338; --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
 }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --glass-bg: #2a2338; --glass-strong: #2a2338; --glass-flat: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
+  :root:not([data-theme="light"]) { --glass-photo: #2a2338; --glass-bg: #2a2338; --glass-strong: #2a2338; --card: #2a2338; --bubble: #3b3150; --sheet-bg: var(--sheet-solid); }
 }
 
 /* Nunito (SIL OFL 1.1, fonts/OFL.txt), self-hosted: the CSP allows fonts from this site only */
@@ -154,18 +165,16 @@ body {
 }
 b, strong { font-weight: 800; }
 
-/* Big flat blobs behind everything; glass layers blur them */
+/* Three soft blobs behind everything (sun, leaf, sky); glass layers blur them */
 .blobs { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .blobs i { position: absolute; display: block; }
 .blobs i:nth-child(1) { right: -70px; top: -60px; width: 230px; height: 230px; border-radius: 50%; background: var(--blob-1); }
-.blobs i:nth-child(2) { left: -90px; top: 38%; width: 230px; height: 270px; border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%; background: var(--blob-2); }
-.blobs i:nth-child(3) { right: -80px; top: 62%; width: 260px; height: 250px; border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; background: var(--blob-3); }
-.blobs i:nth-child(4) { left: -40px; bottom: -60px; width: 170px; height: 170px; border-radius: 50%; background: var(--blob-4); }
+.blobs i:nth-child(2) { right: -80px; top: 62%; width: 260px; height: 250px; border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; background: var(--blob-2); }
+.blobs i:nth-child(3) { left: -40px; bottom: -60px; width: 170px; height: 170px; border-radius: 50%; background: var(--blob-3); }
 @media (min-width: 700px) {
   .blobs i:nth-child(1) { right: calc(50% - 400px); }
-  .blobs i:nth-child(2) { left: calc(50% - 420px); }
-  .blobs i:nth-child(3) { right: calc(50% - 420px); }
-  .blobs i:nth-child(4) { left: calc(50% - 360px); }
+  .blobs i:nth-child(2) { right: calc(50% - 420px); }
+  .blobs i:nth-child(3) { left: calc(50% - 360px); }
 }
 
 main {
@@ -183,14 +192,16 @@ p { margin: 0 0 10px; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
-/* Glass: floating layers and cards over the blobs */
+/* Glass: floating layers and the cards on «Сегодня» */
 .tabs, .icon-btn, .progress, .task, .celebrate, .metric, .scenario, .idea, .more {
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
 }
-/* Long lists (dozens of cards): a denser fill without blur, so scrolling stays smooth on cheaper phones */
-.pcard, .lux-row { background: var(--glass-flat); box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow); }
+/* Cards sit on a plain ground: quiet shadow and a hairline, only floating layers keep the big shadow */
+.progress, .task, .celebrate, .metric, .scenario, .idea, .more { box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-soft); }
+/* Long lists (dozens of cards): solid white, no blur, so photos read clearly and scrolling stays smooth */
+.pcard, .lux-row { background: var(--surface); box-shadow: var(--shadow-soft); }
 
 /* Tabs: a floating glass pill */
 .tabs {
@@ -289,9 +300,10 @@ button { cursor: pointer; }
 .celebrate h2 { font-size: 1.412rem; }
 
 /* Plants grid */
+.pcard[hidden], .pgroup[hidden] { display: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 12px; }
 .pcard {
-  border: 1px solid var(--glass-rim); border-radius: 28px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 28px; color: var(--ink);
   padding: 9px 9px 12px; text-align: left; display: flex; flex-direction: column; gap: 6px;
 }
 .pcard .pic {
@@ -301,21 +313,10 @@ button { cursor: pointer; }
 /* Whole photo, uncropped; empty edges are a blurred copy of the same photo */
 .pcard .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .pcard .pic img.fill { object-fit: cover; filter: blur(14px) saturate(1.1); transform: scale(1.15); }
-/* Status chip at the bottom, the greenhouse badge always right above it */
-.pcard .badges { position: absolute; left: 7px; right: 7px; bottom: 7px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.pcard .badges .gh { order: -1; }
-.pcard .mood {
-  display: inline-flex; align-items: center; gap: .3em; max-width: 100%;
-  font-size: 0.824rem; font-weight: 900; line-height: 1.2; padding: 4px 10px 4px 6px; border-radius: 99px; border: 2px solid var(--chip-ring);
-}
-.pcard .mood .ic { width: 16px; height: 16px; stroke-width: 2.4; }
-/* Narrow cards (very large text): drop the face, keep the word on one line */
-.pcard .pic { container-type: inline-size; }
-@container (max-width: 7.5rem) {
-  .pcard .badges { left: 4px; right: 4px; bottom: 4px; }
-  .pcard .mood { padding: 4px 7px; }
-  .pcard .mood .ic { display: none; }
-}
+/* Grid cards show only the face; the word is in the plant card. Greenhouse badge to its right */
+.pcard .badges { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 6px; }
+.pcard :is(.mood, .gh) { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
+.pcard :is(.mood, .gh) .ic { width: 22px; height: 22px; stroke-width: 2.4; }
 .pcard b { font-size: 1rem; font-weight: 900; line-height: 1.2; padding: 0 4px; }
 .pcard small { color: var(--muted); font-size: 0.824rem; font-weight: 700; line-height: 1.5; padding: 0 4px; }
 .group-title { min-height: 24px; font-size: 0.882rem; color: var(--ink); font-weight: 900; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .06em; }
@@ -360,8 +361,17 @@ dialog { --card: var(--bubble); }
   font-size: 0.941rem; font-weight: 900; padding: 5px 14px 5px 8px; border-radius: 99px; border: 2px solid var(--chip-ring);
 }
 .hero-mood .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-/* Greenhouse badge: a round pink chip as tall as the status chip */
-.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; background: var(--air); color: var(--on-color); border: 2px solid var(--chip-ring); }
+/* Status and greenhouse chips, on photos and drawings alike: white glass, the status color
+   on the face and the word (7:1 even over a black photo). No blur: dozens of them in the grid */
+.mood, .gh { background: var(--glass-photo); box-shadow: 0 1px 6px rgba(0, 0, 0, .16); }
+.mood.need { color: var(--st-need); }
+.mood.fine { color: var(--st-fine); }
+.mood.watered { color: var(--st-watered); }
+.mood.dim { color: var(--st-dim); }
+.mood.hot { color: var(--st-hot); }
+.gh { color: var(--st-gh); }
+/* Greenhouse badge: a round chip as tall as the status chip */
+.gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
 .gh .ic { width: 17px; height: 17px; stroke-width: 2.4; }
 .hero-badges .gh { font-size: 0.941rem; width: calc(1.5em + 14px); height: calc(1.5em + 14px); }
 .hero-badges .gh .ic { width: 19px; height: 19px; }
@@ -380,8 +390,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .note-links { display: flex; gap: 16px; margin: 4px 0 0; }
 .note-links .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
-.field { margin-bottom: 14px; }
-.field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
+.field { margin-bottom: 26px; }
+.field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
 .input {
   width: 100%; border: 2px solid var(--edge); border-radius: 16px; padding: 12px 14px; background: var(--field);
   font-size: 1rem;
@@ -428,6 +438,10 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .idea.swap { border-left-color: var(--leafy); }
 
 /* Room */
+.room { margin-top: 28px; }
+.room-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.room-head > div { flex: 1; min-width: 0; }
+.room-head h2 { margin: 0; overflow-wrap: anywhere; }
 .room-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 10px; }
 .metric { border-radius: var(--radius); padding: 16px; border: 1px solid var(--glass-rim); }
 .metric .val { font-size: 2.118rem; font-weight: 900; line-height: 1.1; }
@@ -508,6 +522,10 @@ summary.group-title { display: flex; align-items: center; min-height: 44px; marg
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 abbr[title] { text-decoration: none; }
 .input::placeholder { color: var(--muted); opacity: 1; }
+/* Search fields: a magnifier on the left, clear of the browser's clear button on the right */
+.search { position: relative; }
+.search .input { padding-left: 46px; }
+.search > .ic { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; color: var(--muted); pointer-events: none; }
 
 /* Icons (Lucide sprite in index.html) take the text color */
 .ic { width: 1.15em; height: 1.15em; flex: none; vertical-align: -.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -516,12 +534,6 @@ abbr[title] { text-decoration: none; }
 .h-ic .ic { color: var(--green); }
 .task.bonus > b { display: flex; align-items: center; gap: .4em; }
 /* Mood: face + word on a bright fill, one color per state */
-.mood { color: var(--on-color); }
-.mood.watered { background: var(--sky); }
-.mood.need { background: var(--tangerine); }
-.mood.dim { background: var(--plum); }
-.mood.hot { background: var(--sun); }
-.mood.fine { background: var(--leafy); }
 /* Plant silhouettes (shapes.js) when there is no photo */
 svg.pl { display: block; }
 .ava svg.pl { width: 92%; height: 92%; }

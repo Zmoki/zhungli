@@ -36,6 +36,12 @@ const today = () => iso(new Date());
 const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
 const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
 const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+// «Недавно пересажено» holds the date it was ticked and lapses after 6 weeks.
+const REPOT_DAYS = 42;
+const repotted = (p) => !!p.repotted && diff(p.repotted, today()) < REPOT_DAYS;
+const repotHint = (p) => (repotted(p)
+  ? `Не зовём на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`
+  : '6 недель не будем звать на подкормку, пока приживаются корни. Потом галочка снимется сама.');
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 function plural(n, one, few, many) {
@@ -95,7 +101,7 @@ let PHOTOS = {};
 
 function blank() {
   return {
-    v: 2, plants: {}, custom: {}, bonus: {}, snooze: {}, room: null, log: {},
+    v: 3, plants: {}, custom: {}, bonus: {}, snooze: {}, rooms: [newRoom('home', 'Комната')], log: {},
     spots: [...SPOTS], settings: { limit: 7 }, hideInstall: false, created: today(),
   };
 }
@@ -110,8 +116,9 @@ function load() {
 function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
+  if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
   if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
-  s.v = 2;
+  s.v = 3;
   initBonus(s);
   return s;
 }
@@ -131,6 +138,19 @@ function migrateV1(s) {
   if (k && !(s.vent && s.vent.off)) { k.greenhouse = true; k.ventLast = s.vent ? s.vent.last : null; }
   delete s.vent;
   delete s.deleted;
+}
+
+// v2: one reading for the whole home → a list of rooms, each with its own reading.
+// Plants without `room` live in the first room.
+function newRoom(id, name) { return { id, name, t: null, h: null, d: null }; }
+// «Недавно пересажено» was a plain flag; it now holds the date and lapses after 6 weeks.
+function migrateV2(s, raw) {
+  const r = s.room;
+  delete s.room;
+  Object.values(s.plants).forEach((p) => { if (p.repotted === true) p.repotted = today(); });
+  // An older app on another device (Telegram sync) may have saved over a state that already has rooms.
+  if (Array.isArray(raw.rooms) && raw.rooms.length) return;
+  s.rooms = [{ ...newRoom('home', 'Комната'), ...(r ? { t: r.t, h: r.h, d: r.d } : {}) }];
 }
 
 function initBonus(s) {
@@ -276,7 +296,7 @@ function bonusTasks() {
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
-    const who = allPlants().filter((p) => !p.noFeed && !p.repotted && p.type !== 'dry' && p.type !== 'bark' && p.type !== 'water');
+    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && p.type !== 'dry' && p.type !== 'bark' && p.type !== 'water');
     if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: `По инструкции к удобрению, в мокрый грунт: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
   }
   return out.slice(0, 2);
@@ -486,21 +506,57 @@ function viewPlants() {
     ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>`;
+  // With several rooms: groups go room by room, titled «Кухня · Белый стол».
+  if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
+  else html += spotGroups(ps);
+  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово.</p>`;
+  return html;
+}
+
+// Plant cards grouped by place, in the order of the places list; `room` prefixes the titles.
+function spotGroups(ps, room) {
+  let html = '';
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
-    html += `<div class="group-title">${esc(spot || 'Место не выбрано')}</div><div class="grid">`;
+    html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
-      html += `<button class="pcard" data-open="${esc(p.id)}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}" title="${esc(mt)}">${I(mi)}<span class="sr-only">${esc(mt)}</span></span>${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
-    html += `</div>`;
+    html += `</div></section>`;
   });
   return html;
 }
+
+// Search on the Plants tab: filters the cards in place, so the field keeps focus.
+let plantQ = '';
+const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
+function filterPlants() {
+  if (!$('#plants-q')) plantQ = ''; // the field is gone (fewer than 6 plants): show everything
+  const q = norm(plantQ.trim());
+  let any = false;
+  document.querySelectorAll('.pgroup').forEach((g) => {
+    let n = 0;
+    g.querySelectorAll('.pcard').forEach((c) => { const on = !q || c.dataset.q.includes(q); c.hidden = !on; if (on) n++; });
+    g.hidden = !n; any ||= n > 0;
+  });
+  const none = $('#plants-none');
+  if (none) none.hidden = any;
+  return any;
+}
+let plantsSearchTimer;
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'plants-q') return;
+  plantQ = e.target.value;
+  const found = filterPlants();
+  clearTimeout(plantsSearchTimer);
+  if (plantQ.trim()) plantsSearchTimer = setTimeout(() => track('plants_searched', { found }), 1200);
+});
 
 // Cheat sheet: catalog tips (edits and removals go to r.own, '' = removed)
 // plus the user's own notes in r.notes.
@@ -588,6 +644,8 @@ function openPlant(id) {
     <div class="field"><label for="f-species">Название (вид, сорт)</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
       ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
 
+    ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
+      ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
     <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips">
       ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
       <button class="chip" data-act="spot-new" data-id="${esc(id)}">${I('plus')}место</button></div></div>
@@ -598,9 +656,10 @@ function openPlant(id) {
     <div class="field" role="group" aria-labelledby="lbl-int"><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
       <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
       <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
-      <p class="mt-6 small muted">Подстраивается само по вашим ответам «сухо / влажно».</p></div>
+      <p class="mt-6 small muted">Подстраивается само, когда на «Сегодня» вы отвечаете «${esc((TYPE_LABELS[p.type] || TYPE_LABELS.soil)[0])}» или «${esc((TYPE_LABELS[p.type] || TYPE_LABELS.soil)[1])}».</p></div>
 
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" ${p.repotted ? 'checked' : ''}> Недавно пересажено — без подкормки</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
+      <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
     <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
@@ -644,7 +703,7 @@ function openAdd() {
       <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
-    <input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
+    <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
@@ -725,6 +784,8 @@ const IMPORT_PROMPT = `Сделай список моих растений дл�
 Ответь только JSON-массивом, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species — вид или сорт по-русски
 - name — имя, если оно есть у растения, иначе ""
+- room — комната, где стоит, если я её называла (например "Кухня"), иначе ""
+- spot — место в комнате: подоконник, полка, стол и т. п., если я его называла, иначе ""
 - type — в чём растёт: "soil" (грунт), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "dry" (сушить почти полностью: суккуленты, кактусы), "water" (черенки в воде)
 - lux — сколько света нужно, люксы: [от, до]
 - every — через сколько дней обычно проверять почву
@@ -738,7 +799,7 @@ const IMPORT_PROMPT = `Сделай список моих растений дл�
 - quips — 3 коротких смешных фразы от лица растения, на «вы» ко мне
 
 Пример:
-[{"species":"Пеперомия туполистная","name":"","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
+[{"species":"Пеперомия туполистная","name":"","room":"Кухня","spot":"Подоконник","type":"soil","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
 
 // Cleans formatting chat apps add, so JSON.parse can read the answer.
 function repairJson(src) {
@@ -784,6 +845,7 @@ function importType(x) {
   if (/water|вод/.test(t)) return 'water';
   return 'soil';
 }
+const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 function normImport(o) {
   if (!o || typeof o !== 'object') return null;
   const str = (x, max = 500) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
@@ -798,6 +860,7 @@ function normImport(o) {
   const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
   return {
     species, name: str(o.name, 40) === species ? '' : str(o.name, 40),
+    room: cap(str(o.room, 40)), spot: cap(str(o.spot ?? o.place, 40)),
     emoji: [...str(o.emoji, 16)].slice(0, 2).join('') || '🪴',
     type: importType(o.type),
     lux, every: clamp(Math.round(num(o.every)) || 6, 1, 60),
@@ -849,7 +912,7 @@ function showImport() {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
         <span class="pe" aria-hidden="true">${plantSvg(it, 'fine')}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
-        <small>${dup ? 'уже есть в коллекции · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
+        <small>${dup ? 'уже есть в коллекции · ' : ''}${it.room || it.spot ? esc([it.room, it.spot].filter(Boolean).join(' · ')) + ' · ' : ''}${esc(TYPE_NAMES[it.type])} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
         <span class="pc" aria-hidden="true">${I(dup ? 'plus' : 'check')}</span></button>`;
       }).join('');
   }
@@ -859,17 +922,42 @@ const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, imp
 function addImported() {
   if (addFlow) addFlow.done = true;
   const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
+  // A new collection where every plant has a room keeps no empty default «Комната»: the first imported room takes its place.
+  const first = S.rooms[0];
+  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
+  const roomsBefore = S.rooms.length;
   list.forEach((it, i) => {
     const id = newId('c', i);
-    const { name, ...d } = it;
+    const { name, room, spot: rawSpot, ...d } = it;
+    // Reuse a place that differs only in case («подоконник» → «Подоконник»).
+    const spot = rawSpot && (S.spots.find((x) => norm(x) === norm(rawSpot)) || rawSpot);
+    if (spot && !S.spots.includes(spot)) S.spots.push(spot);
     S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
-    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name };
+    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, fresh) };
   });
   initBonus(S);
   save();
-  track('plants_added', { count: list.length, generic_count: 0, source: 'import', repaired: importRepaired });
+  const noSpot = list.filter((it) => !it.spot).length;
+  track('plants_added', {
+    count: list.length, generic_count: 0, source: 'import', repaired: importRepaired,
+    with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
+  });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
-  toast(`Добавлено ${plantsN(list.length)} 🌱 Откройте каждое, чтобы выбрать место`);
+  toast(`Добавлено ${plantsN(list.length)} 🌱${noSpot ? ' Откройте каждое без места, чтобы его выбрать' : ''}`);
+}
+// The room id for an imported plant: an existing room with that name, or a new one.
+// Without a room the plant lives in the first room (no `room` field needed).
+function importRoom(name, fresh) {
+  if (!name) return undefined;
+  const found = S.rooms.find((r) => norm(r.name) === norm(name));
+  if (found) return found.id;
+  if (fresh && S.rooms.length === 1 && !Object.keys(S.plants).length) {
+    S.rooms[0].name = name;
+    return S.rooms[0].id;
+  }
+  const rm = newRoom('r' + Date.now().toString(36) + S.rooms.length, name);
+  S.rooms.push(rm);
+  return rm.id;
 }
 
 /* ---------- Light ---------- */
@@ -933,44 +1021,68 @@ function viewLight() {
     ${ps.map(lightRow).join('')}`;
 }
 
-/* ---------- Room ---------- */
-function viewRoom() {
-  const r = S.room;
-  const ps = allPlants();
+/* ---------- Rooms ---------- */
+const roomOf = (p) => S.rooms.find((r) => r.id === p.room) || S.rooms[0];
+const roomsN = (n) => `${n} ${plural(n, 'комната', 'комнаты', 'комнат')}`;
+
+// One room: its reading, who is uncomfortable, and what suits everyone in it.
+function roomCard(rm, ps, many) {
   const ranges = ps.map((p) => [p, tempRange(p)]).filter(([, t]) => t);
   const lo = Math.max(...ranges.map(([, t]) => t[0]));
   const hi = Math.min(...ranges.map(([, t]) => t[1]));
   const humidOnes = ps.filter((p) => p.humid).map((p) => p.title);
+  const has = rm.t != null && rm.h != null;
   let status = '';
-  if (r) {
+  if (has) {
     const notes = [];
-    const cold = ranges.filter(([, t]) => r.t < t[0]).map(([p]) => p.title);
-    const hot = ranges.filter(([, t]) => r.t > t[1]).map(([p]) => p.title);
+    const cold = ranges.filter(([, t]) => rm.t < t[0]).map(([p]) => p.title);
+    const hot = ranges.filter(([, t]) => rm.t > t[1]).map(([p]) => p.title);
     if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
     if (hot.length) notes.push(['flame', `Жарковато для: ${hot.join(', ')}. Проветрите или отодвиньте от батареи.`]);
-    if (r.h < 50) {
-      notes.push(['droplet-off', `Сухо (${r.h}%). Включите увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.join(', ')}` : ''}.`]);
+    if (rm.h < 50) {
+      notes.push(['droplet-off', `Сухо (${rm.h}%). Включите увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.join(', ')}` : ''}.`]);
     }
-    if (r.h > 75) notes.push(['droplets', `Очень влажно (${r.h}%). Проветрите: сырость и застой воздуха — путь к грибкам, следите за сфагнумом.`]);
+    if (rm.h > 75) notes.push(['droplets', `Очень влажно (${rm.h}%). Проветрите: сырость и застой воздуха — путь к грибкам, следите за сфагнумом.`]);
     status = notes.length
       ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${esc(n)}</span></div>`).join('')
-      : `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>`;
+      : ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '';
   }
-  const ago = r ? (r.d === today() ? 'сегодня' : rel(r.d)) : '';
-  return `<header class="hello head-row"><div><h1>Комната</h1><div class="date">${r ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></div>${headButtons()}</header>
+  const ago = has ? (rm.d === today() ? 'сегодня' : rel(rm.d)) : '';
+  const name = esc(rm.name);
+  const head = many ? `<div class="room-head"><div><h2>${name}</h2>
+      <div class="small muted">${plantsN(ps.length)} · ${has ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></div>
+      <button class="icon-btn" data-act="room-rename" data-room="${esc(rm.id)}" aria-label="Переименовать комнату ${name}">${I('pencil')}</button>
+      <button class="icon-btn" data-act="room-del" data-room="${esc(rm.id)}" aria-label="Убрать комнату ${name}">${I('x')}</button></div>` : '';
+  const comfort = !ranges.length ? '' : many
+    ? `<p class="small muted mt-10">Удобно всем здесь: ${lo <= hi ? `${lo}–${hi} °C` : 'общего диапазона нет, смотрите карточки'}, влажность 50–70%.</p>`
+    : `<h2>Чтобы было удобно всем</h2>
+    <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем вашим растениям.` : 'Общего диапазона нет — смотрите условия в карточках.'}</div>
+    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Ниже — сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания — риск грибков.</div>`;
+  return `<section class="${many ? 'room' : ''}">${head}
+    <div class="room-cards">
+      <div class="metric"><div class="lbl">Температура</div><div class="val">${has ? esc(rm.t) + '°' : '—'}</div>
+        <input class="input" id="in-t-${esc(rm.id)}" aria-label="Температура${many ? ', ' + name : ''}, °C" type="number" inputmode="decimal" step="0.5" placeholder="°C" value="${has ? rm.t : ''}"></div>
+      <div class="metric"><div class="lbl">Влажность</div><div class="val">${has ? esc(rm.h) + '%' : '—'}</div>
+        <input class="input" id="in-h-${esc(rm.id)}" aria-label="Влажность${many ? ', ' + name : ''}, %" type="number" inputmode="numeric" placeholder="%" value="${has ? rm.h : ''}"></div>
+    </div>
+    <button class="mt-10 btn primary wide" data-act="room-save" data-room="${esc(rm.id)}">Записать</button>
+    ${status}
+    ${many && !ps.length ? '<p class="small muted mt-10">Пока без растений. Выберите эту комнату в карточке растения.</p>' : ''}
+    ${comfort}</section>`;
+}
+
+function viewRoom() {
+  const ps = allPlants();
+  const many = S.rooms.length > 1;
+  const one = S.rooms[0];
+  const date = many ? roomsN(S.rooms.length)
+    : one.t != null ? 'замер: ' + (one.d === today() ? 'сегодня' : rel(one.d)) : 'замеров пока нет';
+  return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
     ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения — подскажу, какая температура и влажность удобны именно им.')}
     <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
-    <div class="room-cards">
-      <div class="metric"><div class="lbl">Температура</div><div class="val">${r ? esc(r.t) + '°' : '—'}</div>
-        <input class="input" id="in-t" aria-label="Температура, °C" type="number" inputmode="decimal" step="0.5" placeholder="°C" value="${r ? r.t : ''}"></div>
-      <div class="metric"><div class="lbl">Влажность</div><div class="val">${r ? esc(r.h) + '%' : '—'}</div>
-        <input class="input" id="in-h" aria-label="Влажность, %" type="number" inputmode="numeric" placeholder="%" value="${r ? r.h : ''}"></div>
-    </div>
-    <button class="mt-10 btn primary wide" data-act="room-save">Записать</button>
-    ${status}
-    ${ranges.length ? `<h2>Чтобы было удобно всем</h2>
-    <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем вашим растениям.` : 'Общего диапазона нет — смотрите условия в карточках.'}</div>
-    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Ниже — сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания — риск грибков.</div>` : ''}
+    ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
+    <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
+    ${many ? '' : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату — у каждой будет свой замер.</p>'}
 
     <h2>Если есть умный дом</h2>
     <p class="small muted">Например, в «Доме с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к умному дому.</p>
@@ -1018,6 +1130,12 @@ function openSettings() {
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
+    <h2>Комнаты</h2>
+    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
+    <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
+    ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${esc(rm.name)}${I('x')}</button>`
+    : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${esc(rm.name)}${I('pencil')}</button>`)).join('')}
+      <button class="chip" data-act="room-add" data-from="settings">${I('plus')}комната</button></div>
     <h2>Места</h2>
     <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
     <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${esc(sp)}${I('x')}</button>`).join('')}
@@ -1261,6 +1379,7 @@ function render() {
   const view = $('#view');
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   applySizes(view);
+  if (tab === 'plants') filterPlants();
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }
 
@@ -1444,12 +1563,41 @@ document.addEventListener('click', (e) => {
       }
       break;
     case 'room-save': {
-      const t = parseFloat(String($('#in-t').value).replace(',', '.'));
-      const h = parseFloat(String($('#in-h').value).replace(',', '.'));
+      const rm = S.rooms.find((x) => x.id === el.dataset.room);
+      if (!rm) break;
+      const t = parseFloat(String($(`#in-t-${rm.id}`).value).replace(',', '.'));
+      const h = parseFloat(String($(`#in-h-${rm.id}`).value).replace(',', '.'));
       if (Number.isNaN(t) || Number.isNaN(h)) { toast('Впишите обе цифры 🙂'); break; }
-      S.room = { t, h, d: today() }; save(); render(); toast('Записано 🌡️');
-      track('room_saved', { temp: Math.round(t), humidity: Math.round(h) }); break;
+      Object.assign(rm, { t, h, d: today() }); save(); render(); toast('Записано 🌡️');
+      track('room_saved', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length }); break;
     }
+    case 'room-add': {
+      const name = (prompt('Как называется комната? Например, «Спальня» или «Кухня»') || '').trim();
+      if (!name) break;
+      S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
+      if (el.dataset.from === 'settings') openSettings();
+      toast('Комната добавлена. Выберите её в карточках растений 🪴');
+      track('room_added', { rooms: S.rooms.length }); break;
+    }
+    case 'room-rename': {
+      const rm = S.rooms.find((x) => x.id === el.dataset.room);
+      const name = rm && (prompt('Новое название комнаты', rm.name) || '').trim();
+      if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
+      break;
+    }
+    case 'room-del': {
+      const rm = S.rooms.find((x) => x.id === el.dataset.room);
+      if (!rm || S.rooms.length < 2) break;
+      const rest = S.rooms.filter((x) => x !== rm);
+      if (!confirm(`Убрать комнату «${rm.name}»? Её растения перейдут в «${rest[0].name}».`)) break;
+      Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
+      S.rooms = rest; save(); render();
+      if (el.dataset.from === 'settings') openSettings();
+      track('room_removed', { rooms: S.rooms.length }); break;
+    }
+    case 'room-pick':
+      S.plants[id].room = el.dataset.room; save();
+      el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
     default: break;
   }
 });
@@ -1479,7 +1627,7 @@ document.addEventListener('change', (e) => {
     $('#sh-title').textContent = p.title;
     $('#sh-species').textContent = p.species;
   }
-  if (f === 'repotted') r.repotted = el.checked;
+  if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').textContent = repotHint(r); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; track('greenhouse_toggled', { on: el.checked }); }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);

@@ -38,13 +38,14 @@ On every event:
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type`; `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
-| `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; import: `repaired` (the answer needed fixing: quotes, spaced numbers, comments); catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
+| `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `custom` / `import`; import: `repaired` (the answer needed fixing: quotes, spaced numbers, comments), `with_room` / `with_spot` (how many came with a room / place, no names sent), `rooms_created`; catalog: `generic_count`, `catalog_ids`; custom: `plant_type` |
 | `import_prompt_copied` | «Скопировать запрос» in AI import | — |
 | `import_failed` | pasted text has no plant list | `length` of the pasted text; `reason`: `no_list` (no brackets) / `bad_json` (could not be read even after repairs) / `no_plants` (read, but no plant had a name); `has_code_fence`, `has_curly_quotes`, `has_spaced_numbers`. No answer text is sent |
 | `add_opened` | «Добавить растения» sheet opened | `from`: tab it was opened from |
 | `custom_opened` | «Своё растение с нуля» form opened | — |
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
+| `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
@@ -68,7 +69,9 @@ On every event:
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |
-| `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded) |
+| `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
+| `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
+| `room_removed` | a room removed (no room name sent) | `rooms` |
 | `backup_exported` | backup downloaded | — |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
