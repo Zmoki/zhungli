@@ -316,7 +316,10 @@ function bonusTasks() {
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (p.type !== 'dry' || p.feed) && p.type !== 'bark' && p.type !== 'water');
-    if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', name: 'День подкормки', sub: who.map((p) => p.title).join(', '), task: 'Подкормите по инструкции к удобрению, в мокрый грунт', hint: 'Не кормим недавно пересаженных и больных.' });
+    if (who.length) {
+      out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
+        hint: `Кого: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
+    }
   }
   return out.slice(0, 2);
 }
@@ -437,6 +440,21 @@ function currentHint() {
   return '';
 }
 
+// «Species · place» under a plant's name on task cards; `extra` adds e.g. the last watering.
+const plantSub = (p, ...extra) => [p.name ? p.species : '', p.spot, ...extra].filter(Boolean).join(' · ');
+// Every task card on «Сегодня» has one layout: picture and name, the plant's words, the task,
+// the buttons, then how to do it. `p` is the plant (or `icon` and `name` for tasks without one).
+function taskCard({ cls = '', p, icon, name, sub, quip, task, buttons, hint, after = '' }) {
+  const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
+  const line = p && sub === undefined ? plantSub(p) : sub;
+  return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${esc(p ? p.title : name)}</div>
+    ${line ? `<div class="task-sub">${esc(line)}</div>` : ''}</div></div>
+    ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
+    <div class="question">${esc(task)}</div>
+    <div class="btns">${buttons}</div>
+    ${hint ? `<div class="hint">${esc(hint)}</div>` : ''}${after}</div>`;
+}
+
 function viewToday() {
   const t = today();
   const { log, shown, vents, pending, doneMain, waiting, total } = todayPlan();
@@ -461,30 +479,24 @@ function viewToday() {
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
 
-  // Same layout as a watering card: picture, names, the plant's words, then the task.
   vents.forEach((v) => {
-    const sub = [v.name ? v.species : '', v.spot].filter(Boolean).join(' · ');
-    html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">${esc(v.title)}</div>
-      ${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
-      <p class="quip">${esc(pickDaily(v.id, VENT_QUIPS))}</p>
-      <div class="question">Проветрите теплицу минут на&nbsp;15–&#8288;30</div>
-      <div class="btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
-      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплицы</button></div>
-      <div class="hint">С каждым днём можно держать открытой чуть дольше.</div></div>`;
+    html += taskCard({
+      p: v, quip: pickDaily(v.id, VENT_QUIPS), task: 'Проветрите теплицу минут на\u00a015–\u206030', // no line break inside «на 15–30»
+      buttons: `<button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
+        <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплицы</button>`,
+      hint: 'С каждым днём можно держать открытой чуть дольше.',
+    });
   });
 
   shown.forEach((p) => {
     const [yes, no] = labelsOf(p);
-    const last = p.lastWater ? `${p.wick ? 'долив' : 'полив'} ${rel(p.lastWater)}` : '';
-    const sub = [p.name ? p.species : '', p.spot, last].filter(Boolean).join(' · ');
-    html += `<div class="task"><div class="task-top">${ava(p)}<div><div class="task-name">${esc(p.title)}</div>
-      <div class="task-sub">${esc(sub)}</div></div></div>
-      <p class="quip">${esc(quipOf(p))}</p>
-      <div class="question">${esc(waterTask(p))}</div>
-      <div class="btns"><button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
-      <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button></div>
-      ${p.water && !p.wick ? `<div class="hint">${esc(p.water)}</div>` : ''}
-      <button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button></div>`;
+    html += taskCard({
+      p, sub: plantSub(p, p.lastWater ? `${p.wick ? 'долив' : 'полив'} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
+      buttons: `<button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
+        <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button>`,
+      hint: p.wick ? '' : p.water,
+      after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button>`,
+    });
   });
 
   if (!pending) {
@@ -505,15 +517,12 @@ function viewToday() {
   const bonus = bonusTasks();
   if (bonus.length) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>`;
-    // Same layout as a watering card: picture and name, the task, the buttons, the how-to under them.
     bonus.forEach((b) => {
-      const sub = b.p ? [b.p.name ? b.p.species : '', b.p.spot].filter(Boolean).join(' · ') : b.sub;
-      html += `<div class="task bonus"><div class="task-top">${b.p ? ava(b.p) : `<div class="ava" aria-hidden="true">${I(b.icon)}</div>`}<div>
-        <div class="task-name">${esc(b.p ? b.p.title : b.name)}</div>${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
-        <div class="question">${esc(b.task)}</div>
-        <div class="btns"><button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
-        <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button></div>
-        <div class="hint">${esc(b.hint)}</div></div>`;
+      html += taskCard({
+        cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, hint: b.hint,
+        buttons: `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
+          <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button>`,
+      });
     });
   }
 
