@@ -1,10 +1,10 @@
 # Design
 
-The core look and feel of Жунгли. Accessibility, icon and tone rules are in [CLAUDE.md](CLAUDE.md); tokens and their values are in `style.css` `:root`.
+The core look and feel of Жунгли. Accessibility and tone rules are in [CLAUDE.md](CLAUDE.md); tokens and their values are in `style.css` `:root`.
 
 ## Character
 
-- **Playful and calm.** Plants are characters: a face on the pot, their own words in green bubbles, emoji only where they carry mood (quips, toasts, confetti).
+- **Playful and calm.** Plants are characters: a face on the pot, their own words in green bubbles, emoji for mood (see below).
 - **No guilt.** No red overdue items or backlog counters. A skipped plant waits until tomorrow. A finished day gets «Джунгли довольны!», a quiet one «Сегодня отдыхаем».
 - **Short and warm text.** One idea per line, buttons of one or two words.
 
@@ -48,10 +48,15 @@ Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim colo
 
 ## Plant pictures
 
-A photo, or a drawn silhouette from `shapes.js`:
+A photo, or a drawn silhouette from `plantSvg(plant, mood)` in `shapes.js`:
 - one of 16 shapes (leafy, trailing, succulent, palm…);
 - one of six pot and tile color pairs (`.v0`–`.v5`, tiles `--t0`–`--t5`), kept per plant;
 - a face on the pot showing the plant's mood, with pink cheeks.
+
+## Icons and emoji
+
+- **Icons:** Lucide 0.468.0 symbols in the sprite in `index.html`, used via `I('name')`. Add new ones from `lucide-static@0.468.0/icons/` (`house-heart` comes from 1.70.0, same ISC license). They're line glyphs in the text color, never ➕-style emoji.
+- **Emoji:** only where they carry mood: quips, toasts, celebrations, confetti. Decorative emoji are `aria-hidden`.
 
 ## Type
 
