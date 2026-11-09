@@ -45,6 +45,7 @@ On every event:
 | `custom_opened` | «Своё растение с нуля» form opened | — |
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
+| `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
@@ -68,7 +69,9 @@ On every event:
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |
-| `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded) |
+| `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
+| `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
+| `room_removed` | a room removed (no room name sent) | `rooms` |
 | `backup_exported` | backup downloaded | — |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |

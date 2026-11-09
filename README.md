@@ -6,7 +6,7 @@ A small PWA in Russian that shows a few plants to check each day and learns how 
 - At most N plants a day, no backlog or red overdue items.
 - Plants come from the catalog or a generic type ("Succulent", "Flowering"…); the interval adjusts itself.
 - Light: lux meter readings and tips on what to move.
-- Room: temperature, humidity and smart home scenarios.
+- Room: temperature and humidity for each room, and smart home scenarios.
 
 Data stays on the phone (localStorage + IndexedDB). Backup is in settings.
 
