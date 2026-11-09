@@ -515,7 +515,7 @@ function viewPlants() {
       const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}" title="${esc(mt)}">${I(mi)}<span class="sr-only">${esc(mt)}</span></span>${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
     html += `</div></section>`;
