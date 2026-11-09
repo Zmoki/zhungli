@@ -734,9 +734,12 @@ function openPlant(id) {
 
 // Catalog picker: several plants can be selected at once.
 let picked = new Set();
+// Crude Russian stem for catalog search: longer words drop their ending, so «лиана» finds «лианы»,
+// «трава» finds «травы», «черенок» finds «черенки».
+const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
-  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka, d.cat].join(' ')))}">
+  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
     <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">${I('plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
@@ -777,16 +780,41 @@ function openAdd() {
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+  const pickGroups = [...document.querySelectorAll('.pick-group')];
+  const pickEnd = pickGroups[pickGroups.length - 1].nextElementSibling; // the bottom «Своё растение»
+  const genericTitle = document.querySelector('.pick-group[data-generic] .group-title');
+  let shownOrder = pickGroups;
   $('#pick-q').addEventListener('input', (e) => {
     const raw = e.target.value.trim();
     // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
-    const words = norm(raw).split(/\s+/).filter(Boolean);
+    const words = norm(raw).split(/\s+/).filter(Boolean).map(searchStem);
+    const hits = (text) => words.every((w) => text.includes(w));
+    // The group name counts only when nothing else matched: «лиана» finds the vines,
+    // but «кактус» doesn't list every succulent.
+    const byCat = words.length > 0 && !pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => hits(b.dataset.q)));
     let any = false;
-    document.querySelectorAll('.pick-group').forEach((g) => {
-      let n = 0;
-      g.querySelectorAll('.pick').forEach((b) => { const on = words.every((w) => b.dataset.q.includes(w)); b.hidden = !on; if (on) n++; });
+    const score = new Map();
+    pickGroups.forEach((g) => {
+      let n = 0, best = 0;
+      g.querySelectorAll('.pick').forEach((b) => {
+        const on = hits(byCat ? `${b.dataset.q} ${b.dataset.cat}` : b.dataset.q);
+        b.hidden = !on;
+        if (!on) return;
+        n++;
+        // A plant matched by its own name ranks highest; a specific plant matched by a folk name ties
+        // with a generic type matched by name, and ties keep the catalog order (specific first).
+        const named = hits(b.dataset.name);
+        best = Math.max(best, b.dataset.generic === '1' ? (named ? 2 : 1) : (named ? 3 : 2));
+      });
       g.hidden = !n; any ||= n > 0;
+      score.set(g, best);
     });
+    // Best-matching groups first: «рассада» and «черенок» show their generic type on top,
+    // «орхидея» shows «Фаленопсис» before «Орхидея на коре». Without a search, the usual order.
+    const order = words.length ? [...pickGroups].sort((a, b) => score.get(b) - score.get(a) || pickGroups.indexOf(a) - pickGroups.indexOf(b)) : pickGroups;
+    if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
+    // «— если нет в списке» only reads right at the end of the full list.
+    genericTitle.textContent = words.length ? 'Общие типы' : 'Общие типы — если нет в списке';
     // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
     const none = $('#pick-none');
     none.hidden = any;
