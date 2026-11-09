@@ -248,27 +248,28 @@ const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: '
 // Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
 const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
 // Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
+// A plant nobody has answered about yet isn't called dry on its first check day: we don't know yet.
 function states(p) {
   const t = today(), out = [];
+  const known = (p.hist && p.hist.length) || p.lastWater || p.nextCheck < t;
   if (p.lastWater === t) out.push('watered');
-  else if (p.nextCheck <= t) out.push('need');
+  else if (p.nextCheck <= t && known) out.push('need');
   const ls = lightStatus(p);
   if (ls === 'low') out.push('dim');
   if (ls === 'high') out.push('hot');
   return out.length ? out : ['fine'];
 }
 // The one state for the face on the pot: a due check first, then wrong light, then the rest.
-function mood(p) {
-  const st = states(p);
+function mood(p, st = states(p)) {
   const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
   return [...STATES[k], k];
 }
 // The word for a state on one plant: cuttings in water get «мутновато» (time to change the water).
 const stateWord = (k, p) => (k === 'need' && p.type === 'water' ? 'мутновато' : STATES[k][1]);
 // Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
-const stateChips = (p, words) => states(p).map((k) => (words
+const stateChips = (p, words, st = states(p)) => st.map((k) => (words
   ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
-  : `<span class="mood ${k}" title="${stateWord(k, p)}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
+  : `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
 
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
@@ -540,8 +541,9 @@ function spotGroups(ps, room) {
     html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const ph = photoOf(p.id);
-      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p)}${ghBadge(p)}</span></div>
+      const st = states(p);
+      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
     });
     html += `</div></section>`;
@@ -553,15 +555,19 @@ function spotGroups(ps, room) {
 // The chips also teach which face means what.
 let plantSt = '';
 // Filter keys of a plant: its states, plus «greenhouse» when it lives in the теплица.
-const filterKeys = (p) => (p.greenhouse ? [...states(p), 'greenhouse'] : states(p));
+const filterKeys = (p, st = states(p)) => (p.greenhouse ? [...st, 'greenhouse'] : st);
 function stateFilter(ps) {
   const n = {};
-  ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; }));
-  if (plantSt && !n[plantSt]) plantSt = '';
+  const due = [];
+  ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
+  // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
+  const sel = n[plantSt] ? plantSt : '';
   // Same chips as in the plant card; the chosen one gets a ring in its own color.
-  const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
+  const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
+  // «мутновато» when every plant due is a cutting in water, else «суховато».
+  const word = (k) => (k === 'need' && due.every((p) => p.type === 'water') ? 'мутновато' : STATES[k][1]);
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
-    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}
+    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
 }
 
@@ -570,6 +576,7 @@ let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {
   if (!$('#plants-q')) { plantQ = ''; plantSt = ''; } // no search or filter (fewer than 6 plants): show everything
+  if (plantSt && !document.querySelector(`.st-chip.on[data-st="${plantSt}"]`)) plantSt = ''; // no plants left in that state
   const q = norm(plantQ.trim());
   let any = false;
   document.querySelectorAll('.pgroup').forEach((g) => {
@@ -956,11 +963,14 @@ function showImport() {
 const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Вставьте ответ');
 function addImported() {
   if (addFlow) addFlow.done = true;
-  const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
+  const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
+  const list = [...picked].sort((a, b) => a.every - b.every);
   // A new collection where every plant has a room keeps no empty default «Комната»: the first imported room takes its place.
   const first = S.rooms[0];
-  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
+  let rename = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
   const roomsBefore = S.rooms.length;
+  // Rooms come in the order the AI listed them (plants below are sorted by how often to check them).
+  picked.forEach((it) => { if (it.room) { importRoom(it.room, rename); rename = false; } });
   list.forEach((it, i) => {
     const id = newId('c', i);
     const { name, room, spot: rawSpot, ...d } = it;
@@ -968,7 +978,7 @@ function addImported() {
     const spot = rawSpot && (S.spots.find((x) => norm(x) === norm(rawSpot)) || rawSpot);
     if (spot && !S.spots.includes(spot)) S.spots.push(spot);
     S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
-    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, fresh) };
+    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, false) };
   });
   initBonus(S);
   save();
@@ -980,13 +990,14 @@ function addImported() {
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
   toast(`Добавлено ${plantsN(list.length)} 🌱${noSpot ? ' Откройте каждое без места, чтобы его выбрать' : ''}`);
 }
-// The room id for an imported plant: an existing room with that name, or a new one.
+// The room id for an imported plant: an existing room with that name, or a new one
+// (`renameFirst`: the empty default room takes this name instead).
 // Without a room the plant lives in the first room (no `room` field needed).
-function importRoom(name, fresh) {
+function importRoom(name, renameFirst) {
   if (!name) return undefined;
   const found = S.rooms.find((r) => norm(r.name) === norm(name));
   if (found) return found.id;
-  if (fresh && S.rooms.length === 1 && !Object.keys(S.plants).length) {
+  if (renameFirst) {
     S.rooms[0].name = name;
     return S.rooms[0].id;
   }
