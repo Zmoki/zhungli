@@ -10,14 +10,14 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **User data:** people keep real data in localStorage (`zhungli.v1`) and IndexedDB (`zhungli`/`photos`). Never reset it. A format change needs a migration in `prepare()` (see `migrateV1`) and a bump of `v`.
 - **Catalog:** don't rename or remove catalog ids; saved plants point at them via `def`. Hide entries with `hidden: true` instead.
 - **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), icons as text glyphs in the text color (no ➕-style emoji), tap targets ≥ 44×44, text sizes in `rem` (1rem = 17px or the iPhone text-size setting, nothing under 14px except tab labels), layouts reflow instead of scrolling sideways, button text stays on one line (button rows wrap instead; keep labels short), labels tied to fields, decorative emoji `aria-hidden`, toasts go through `#live`.
-- **Look:** follow [docs/design.md](docs/design.md).
+- **Look:** follow [DESIGN.md](DESIGN.md).
 - **Icons:** Lucide 0.468.0 symbols in the sprite in `index.html`, used via `I('name')`; add new ones from `lucide-static@0.468.0/icons/` (`house-heart` comes from 1.70.0, same ISC license). Plants without a photo use `plantSvg(plant, mood)` from `shapes.js`. Emoji only where they carry mood: quips, toasts, celebrations, confetti.
 - **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call, and update `privacy.html` if it sends a new kind of data. No plant names, nicknames, notes or photos in events.
 - **Security headers:** `_headers` sets a strict CSP (no inline scripts or `style=""` attributes; dynamic sizes go through `data-l`/`data-w` and `applySizes()`). Keep securityheaders.com at A+.
-- **Telegram mini app:** see [docs/telegram.md](docs/telegram.md). Test sync with a fake Telegram before changing it. When bot texts change in BotFather, update the snapshot there.
+- **Telegram mini app:** see [TELEGRAM.md](TELEGRAM.md). Test sync with a fake Telegram before changing it. When bot texts change in BotFather, update the snapshot there.
 - **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
-- **Docs:** [plants](docs/plants.md), [tasks](docs/tasks.md), [telegram](docs/telegram.md), [design](docs/design.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README.
+- **Docs:** [PLANTS.md](PLANTS.md), [TASKS.md](TASKS.md), [TELEGRAM.md](TELEGRAM.md), [DESIGN.md](DESIGN.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README.
 
 ## Run locally
 

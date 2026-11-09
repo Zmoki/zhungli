@@ -1,6 +1,6 @@
 # Tasks
 
-What «Сегодня» shows and why. The idea: a few plants a day, no backlog, nothing turns red. Plant fields and interval learning are in [plants.md](plants.md).
+What «Сегодня» shows and why. The idea: a few plants a day, no backlog, nothing turns red. Plant fields and interval learning are in [PLANTS.md](PLANTS.md).
 
 ## Screen order
 

@@ -42,7 +42,7 @@ Snapshot of 2026-11-09. Only Name and About can be checked from outside (on the 
 
 **Welcome picture** (640×360):
 
-![Welcome picture: «Жунгли. Каждый день подскажу, кого из растений полить» with three potted plant characters](telegram-welcome.png)
+![Welcome picture: «Жунгли. Каждый день подскажу, кого из растений полить» with three potted plant characters](icons/telegram-welcome.png)
 
 When the app's features change, update these texts in BotFather and here.
 
@@ -83,7 +83,7 @@ Telegram CloudStorage belongs to the Telegram account, so plants follow the pers
 - **Pieces:** `f_<plantId>_<i>`, 4000 characters each, at most 800 pieces in all (the rest of the keys are for the plants).
 - Photos sync after the plants are reconciled. Newer photos replace older ones, and photos of removed plants are deleted.
 
-Before changing sync, test it with a fake `Telegram.WebApp` and CloudStorage. Sync events (`cloud_checked`, `cloud_restored`, `cloud_error`, `photos_synced`) are in [ANALYTICS.md](../ANALYTICS.md).
+Before changing sync, test it with a fake `Telegram.WebApp` and CloudStorage. Sync events (`cloud_checked`, `cloud_restored`, `cloud_error`, `photos_synced`) are in [ANALYTICS.md](ANALYTICS.md).
 
 ## Hosting
 

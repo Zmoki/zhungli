@@ -1,6 +1,6 @@
 # Design
 
-The core look and feel of Жунгли. Accessibility, icon and tone rules are in [CLAUDE.md](../CLAUDE.md); tokens and their values are in `style.css` `:root`.
+The core look and feel of Жунгли. Accessibility, icon and tone rules are in [CLAUDE.md](CLAUDE.md); tokens and their values are in `style.css` `:root`.
 
 ## Character
 
@@ -65,4 +65,4 @@ It follows the system, or Telegram's theme in the mini app. Same meanings and la
 
 - **Name:** Жунгли, a playful «джунгли».
 - **Icon** (`icons/icon.svg`): a sprout in a smiling orange pot on a sun-yellow square with a pale sun circle.
-- **Telegram welcome picture:** see [telegram.md](telegram.md).
+- **Telegram welcome picture:** see [TELEGRAM.md](TELEGRAM.md).

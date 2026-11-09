@@ -12,7 +12,7 @@ Data stays on the phone (localStorage + IndexedDB). Backup is in settings.
 
 Anonymous stats (which buttons are tapped, no plant names, nicknames or photos) go to PostHog via `functions/ingest/batch.js`, without IP addresses. They can be turned off in settings. What users are told: `privacy.html`. Events: [ANALYTICS.md](ANALYTICS.md).
 
-Catalog: `plants.js`. How it works: [plants](docs/plants.md), [tasks](docs/tasks.md), [Telegram](docs/telegram.md), [design](docs/design.md).
+Catalog: `plants.js`. How it works: [plants](PLANTS.md), [tasks](TASKS.md), [Telegram](TELEGRAM.md), [design](DESIGN.md).
 
 Release: bump `?v=` in `index.html` and the number in `version.txt`; the app on the phone reloads itself.
 
