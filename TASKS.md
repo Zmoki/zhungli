@@ -46,7 +46,7 @@ Every plant marked «В теплице» gets an airing task each day until it's
 | `rotate:<id>` | Plants that lean to the light (`rotate`) | 14 days after the last turn. |
 | `feed` | Everyone fed, from March to September | 14 days after the last feeding. |
 
-Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents, orchids on bark and cuttings in water. If nobody is left, there's no task.
+Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents (except flowering ones marked `feed`, like kalanchoe), orchids on bark and cuttings in water. If nobody is left, there's no task.
 
 New plants get staggered start dates (`initBonus`), so wiping tasks don't all arrive on one day.
 
