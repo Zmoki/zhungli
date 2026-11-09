@@ -306,6 +306,8 @@ button { cursor: pointer; }
 .st-filter .st-chip { min-height: 44px; }
 .st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
 .st-filter .st-chip.on { border-color: currentColor; }
+/* Counts stay quiet: regular weight, smaller, grey */
+.st-filter .st-chip .n { font-size: 0.824rem; font-weight: 600; color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 12px; }
 .pcard {
   border: 1px solid var(--line); border-radius: 28px; color: var(--ink);
