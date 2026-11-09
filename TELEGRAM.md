@@ -42,7 +42,7 @@ Snapshot of 2026-11-09. Only Name and About can be checked from outside (on the 
 
 **Welcome picture** (640×360):
 
-![Welcome picture: «Жунгли. Каждый день подскажу, кого из растений полить» with three potted plant characters](icons/telegram-welcome.png)
+![Welcome picture: «Жунгли. Каждый день подскажу, кого из растений полить» with three potted plant characters](images/telegram-welcome.png)
 
 When the app's features change, update these texts in BotFather and here.
 
