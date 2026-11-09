@@ -593,6 +593,31 @@ summary { cursor: pointer; }
 .empty-note { text-align: center; margin-top: 24px; }
 .bonus-sub { margin: 8px 0 10px; }
 .pick-help { margin: 8px 0 0; }
+/* Quick picks on empty screens: two columns of compact plant tiles */
+.qs-title { text-align: left; margin-bottom: 10px; }
+.qs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.qs {
+  display: flex; align-items: center; gap: 6px; min-height: 52px; text-align: left;
+  background: var(--card); border: 2px solid var(--edge); border-radius: 18px;
+  padding: 4px 6px 4px 4px; color: inherit; font: inherit; font-weight: 800; line-height: 1.25;
+}
+.qs-pic { position: relative; width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--green-soft); border-radius: 14px; }
+.qs-pic svg.pl { width: 36px; height: 36px; }
+.qs-name { min-width: 0; font-size: 0.941rem; overflow-wrap: anywhere; hyphens: auto; }
+.qs.on { border-color: var(--leafy-d); background: var(--green-soft); }
+.qs.on .qs-pic::after {
+  content: "✓"; position: absolute; right: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--green); color: var(--on-green); font-size: 0.824rem; font-weight: 900; line-height: 1;
+}
+.celebrate .btn:disabled { opacity: .5; }
+.tune summary { display: flex; align-items: center; gap: 4px; min-height: 44px; color: var(--green); font-weight: 800; list-style: none; }
+.tune summary::-webkit-details-marker { display: none; }
+.tune summary .ic { width: 18px; height: 18px; transition: transform .2s; }
+.tune[open] summary .ic { transform: rotate(90deg); }
+.tune[open] summary { margin-bottom: 4px; }
+.pick-none { margin: 14px 0 4px; }
+.pick-none p { margin-bottom: 0; }
+.pick-none p:first-child { margin-top: 0; }
 .found-note { margin: 4px 0 8px; }
 .water-now { margin: 4px 0 18px; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }

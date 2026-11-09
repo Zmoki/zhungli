@@ -393,6 +393,7 @@ function ava(p, cls = 'ava') {
 
 // Hint cards on «Сегодня»: same layout, at most one at a time.
 // Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
+// With no plants they show below the welcome, and «add to home screen» waits for the first plant.
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
@@ -400,20 +401,24 @@ function currentHint() {
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
     const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>`;
+    // Nothing to lose yet: a friendly invite, not a warning.
     if (!Object.keys(S.plants).length) {
-      return hintCard('triangle-alert', 'Откройте Жунгли как приложение Телеграма',
-        'Здесь, во встроенном браузере, растения могут потеряться. В приложении Телеграма они сохраняются в облаке и появятся на любом телефоне.',
+      return hintCard('sprout', 'Удобнее в приложении Телеграма',
+        'Там растения хранятся в облаке Телеграма и появятся на любом телефоне.',
         `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
     }
     return hintCard('triangle-alert', 'Растения здесь могут потеряться',
       'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить» там.',
       `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
+  // Stats run from the first screen, so their notice shows from the first screen too.
   if (!S.statsNotice && S.settings.stats !== false) {
     return hintCard('lightbulb', 'Анонимная статистика',
       'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
   }
+  // «Add to home screen» waits for the first plant: before that there's nothing to keep.
+  if (!Object.keys(S.plants).length) return '';
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
   if (MINI_APP) {
     if (window.tgHome && !S.hideInstall) {
@@ -441,14 +446,15 @@ function viewToday() {
   let html = `<header class="hello head-row"><div><h1>${greeting()}!</h1><div class="date">${esc(date)}</div></div>
     ${headButtons()}</header>`;
 
-  html += currentHint();
-
   if (!allPlants().length) {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
-      <button class="mt-14 btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>
-      <p class="mt-12 small muted">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>`;
+      ${quickStart()}
+      <p class="mt-12 small muted">Уже вели Жунгли на другом телефоне? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
+      ${currentHint()}`;
   }
+
+  html += currentHint();
 
   if (total > 0) {
     html += `<div class="progress"><div class="head-row"><b>${pending ? `Осталось ${pending} ${plural(pending, 'дело', 'дела', 'дел')}` : 'Всё на сегодня!'}</b>
@@ -527,8 +533,8 @@ function viewPlants() {
   const ps = allPlants();
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${plantsN(ps.length)}</div></div>
     ${headButtons()}</header>
-    <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
-  if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
+    ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
+  if (!ps.length) html += `<div class="celebrate"><h2>Пока пусто</h2><p class="muted">Добавьте первое растение — и джунгли начнутся 🌱</p>${quickStart()}</div>`;
   if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
@@ -730,7 +736,7 @@ function openPlant(id) {
 let picked = new Set();
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
-  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc((d.species + ' ' + (d.hint || '') + ' ' + d.cat).toLowerCase())}">
+  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka, d.cat].join(' ')))}">
     <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">${I('plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
@@ -740,6 +746,8 @@ function startAddFlow(sheetName) {
   addFlow.sheet = sheetName;
 }
 function endAddFlow(leftApp = false) {
+  // What the catalog lacks: sent whether or not something was added in the end.
+  if (addFlow && addFlow.missed) track('catalog_missed', { query: addFlow.missed, added: addFlow.done });
   if (addFlow && !addFlow.done) track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp });
   addFlow = null;
 }
@@ -761,27 +769,42 @@ function openAdd() {
     <div class="or">или выберите из каталога</div>
     <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
-    ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
+    <div id="pick-none" class="pick-none" hidden></div>
+    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
-    <p id="pick-none" class="muted small" hidden>Ничего не нашлось. Выберите общий тип или создайте своё.</p>
     <button class="mt-12 btn ghost wide" data-act="add-custom">Своё растение с нуля</button>
     <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
-    const q = e.target.value.trim().toLowerCase();
+    const raw = e.target.value.trim();
+    // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
+    const words = norm(raw).split(/\s+/).filter(Boolean);
     let any = false;
     document.querySelectorAll('.pick-group').forEach((g) => {
       let n = 0;
-      g.querySelectorAll('.pick').forEach((b) => { const on = !q || b.dataset.q.includes(q); b.hidden = !on; if (on) n++; });
+      g.querySelectorAll('.pick').forEach((b) => { const on = words.every((w) => b.dataset.q.includes(w)); b.hidden = !on; if (on) n++; });
       g.hidden = !n; any ||= n > 0;
     });
-    if (q) {
+    // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
+    const none = $('#pick-none');
+    none.hidden = any;
+    if (!any) {
+      none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
+        <button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>
+        <p class="mt-12 small muted">Или выберите похожий общий тип — уход у них почти одинаковый:</p>`;
+      const g = document.querySelector('.pick-group[data-generic]');
+      g.hidden = false;
+      g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
+    }
+    // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
+    // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
+    if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
+    if (raw) {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
         track('catalog_searched', { found: any });
       }, 1200);
     }
-    $('#pick-none').hidden = any;
   });
   openSheet();
 }
@@ -792,41 +815,74 @@ function setAddButton(b, n, emptyText) {
 }
 const updatePickBar = () => setAddButton($('#pick-add'), picked.size, 'Отметьте растения');
 
-function openCustom() {
+// Two fields are enough: what it is and what it's like. The care comes from that generic type;
+// the numbers stay editable under «Тонкая настройка».
+const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
+function openCustom(species = '', from = 'button') {
   startAddFlow('custom');
-  track('custom_opened');
+  track('custom_opened', { from });
+  const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('pencil')}</div><h2 class="m-0">Новое растение</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <form id="add-form">
-      <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия"></div>
-      <div class="field"><label for="c-name">Имя (если есть)</label><input class="input" id="c-name" name="name" placeholder="Например, Пепа"></div>
-      <div class="field"><label for="c-type">В чём растёт</label><select class="input" id="c-type" name="type">
-        ${Object.entries(TYPE_NAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
-      <div class="field"><label id="lbl-lux">Сколько света нужно, ${LK}</label><div class="row2">
-        <input class="input" name="lmin" aria-label="Света от, люкс" type="number" inputmode="numeric" value="6000" placeholder="от">
-        <input class="input" name="lmax" aria-label="Света до, люкс" type="number" inputmode="numeric" value="15000" placeholder="до"></div></div>
-      <div class="field"><label for="c-every">Проверять каждые … дней</label><input class="input" id="c-every" name="every" type="number" inputmode="numeric" value="6" min="1" max="60"></div>
-      <div class="field"><label for="c-tip">Шпаргалка (по желанию)</label><textarea class="input" id="c-tip" name="tip" rows="3" placeholder="Что важно помнить"></textarea></div>
-      <button class="btn primary wide" type="submit">${I('plus')}Добавить</button>
+      <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия" value="${esc(species)}"></div>
+      <div class="field"><label for="c-like">На что похоже</label><select class="input" id="c-like" name="like" aria-describedby="c-like-hint">
+        ${GENERIC_TYPES().map((d) => `<option value="${esc(d.id)}">${esc(d.species)}</option>`).join('')}</select>
+        <p class="mt-6 small muted" id="c-like-hint"></p></div>
+      <details class="tune"><summary>Тонкая настройка${I('chevron-right')}</summary>
+        <div class="field"><label for="c-name">Имя (если есть)</label><input class="input" id="c-name" name="name" placeholder="Например, Пепа"></div>
+        <div class="field"><label for="c-type">В чём растёт</label><select class="input" id="c-type" name="type">
+          ${Object.entries(TYPE_NAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+        <div class="field"><label id="lbl-lux">Сколько света нужно, ${LK}</label><div class="row2">
+          <input class="input" name="lmin" aria-label="Света от, люкс" type="number" inputmode="numeric" placeholder="от">
+          <input class="input" name="lmax" aria-label="Света до, люкс" type="number" inputmode="numeric" placeholder="до"></div></div>
+        <div class="field"><label for="c-every">Проверять каждые … дней</label><input class="input" id="c-every" name="every" type="number" inputmode="numeric"></div>
+        <div class="field"><label for="c-tip">Шпаргалка</label><textarea class="input" id="c-tip" name="tip" rows="3" placeholder="Что важно помнить"></textarea></div>
+      </details>
+      <button class="mt-14 btn primary wide" type="submit">${I('plus')}Добавить</button>
     </form>`;
-  $('#add-form').addEventListener('submit', (e) => {
+  const form = $('#add-form');
+  // Picking a type fills in its care: watering, light and how often to check.
+  const fillFrom = (d) => {
+    form.type.value = d.type;
+    form.lmin.value = d.lux[0];
+    form.lmax.value = d.lux[1];
+    form.every.value = d.every;
+    form.tip.value = d.tip || '';
+    $('#c-like-hint').textContent = d.hint ? `Например: ${d.hint}.` : '';
+  };
+  fillFrom(like);
+  form.like.addEventListener('change', () => fillFrom(def(form.like.value)));
+  // Changing the care in «Тонкая настройка» by hand (not the values a type fills in, not the name)
+  // tells whether two fields are enough.
+  let tuned = false;
+  form.querySelector('.tune').addEventListener('input', (e) => { if (e.target.name !== 'name') tuned = true; });
+  if (!species) form.species.focus();
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (addFlow) addFlow.done = true;
     const f = new FormData(e.target);
+    const base = def(String(f.get('like'))) || like;
     const id = newId('c');
-    const every = clamp(Number(f.get('every')) || 6, 1, 60);
-    const lmin = Number(f.get('lmin')) || 5000;
-    const lmax = Math.max(lmin, Number(f.get('lmax')) || 15000);
+    const every = clamp(Number(f.get('every')) || base.every, 1, 60);
+    const lmin = Number(f.get('lmin')) || base.lux[0];
+    const lmax = Math.max(lmin, Number(f.get('lmax')) || base.lux[1]);
+    const type = String(f.get('type'));
+    const { humid, big, quips } = base;
+    // The type's check question and care tips fit only its own growing medium: changed by hand, they're left out.
+    const care = type === base.type ? { check: base.check, water: base.water, soil: base.soil, cond: base.cond } : {};
     S.custom[id] = {
-      id, species: String(f.get('species')).trim() || 'Растение', cat: 'Мои', emoji: '🪴',
-      lux: [lmin, lmax], every, type: f.get('type'), tip: String(f.get('tip')).trim(), quips: GENERIC_QUIPS,
+      id, species: String(f.get('species')).trim() || 'Растение', cat: 'Мои', emoji: base.emoji || '🪴',
+      ...care, humid, big,
+      lux: [lmin, lmax], every, type, tip: String(f.get('tip')).trim(), quips: quips || GENERIC_QUIPS,
     };
+    S.custom[id].tone = toneOf(S.custom[id]);
     S.plants[id] = runtime(S.custom[id], today());
-    S.plants[id].name = String(f.get('name')).trim();
+    S.plants[id].name = String(f.get('name') || '').trim();
     save();
     closeSheet();
-    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type });
+    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type, like: base.id, tuned });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -951,12 +1007,16 @@ function showImport() {
   const text = $('#imp-text').value;
   const res = parseImport(text);
   const box = $('#imp-list');
+  // A few characters are typing or a stray tap, not an answer: a nudge instead of an error.
+  const tooShort = res.error === 'no_list' && text.trim().length < 40;
   if (res.error) {
     importItems = [];
     importPicked = new Set();
-    box.innerHTML = res.error === 'empty' ? '' : `<p class="error-note small">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
+    box.innerHTML = res.error === 'empty' ? ''
+      : tooShort ? '<p class="small muted">Сюда — ответ ИИ целиком: длинный текст со списком растений в скобках [ ].</p>'
+        : `<p class="error-note small">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
       <p class="small muted">Всё равно не выходит? Пришлите ответ ИИ в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
-    if (res.error !== 'empty') track('import_failed', { length: text.length, reason: res.error, ...res.diag });
+    if (res.error !== 'empty' && !tooShort) track('import_failed', { length: text.length, reason: res.error, ...res.diag });
   } else {
     importItems = res.items;
     importRepaired = res.repaired;
@@ -1063,9 +1123,44 @@ function lightIdeas() {
   return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
 }
 
+// Empty screens: tap the plants you have and add them in one go. Anything else is one tap away.
+const QUICK = [['mon-del', 'Монстера'], ['zz', 'Замиокулькас'], ['spath', 'Спатифиллум'], ['phal', 'Орхидея'],
+  ['g-easy', 'Потос, драцена'], ['g-flower', 'Фиалка, бегония'], ['g-succ', 'Суккулент'], ['g-cactus', 'Кактус']];
+let qsPicked = new Set();
+let qsReported = false;
+// Tiles ticked but not added: reported once when the person turns to another way of adding or leaves the app.
+// The ticks stay, so coming back to the same screen keeps them.
+function endQuick(then) {
+  if (!qsPicked.size || qsReported) return;
+  track('quick_abandoned', { picked: qsPicked.size, then });
+  qsReported = true;
+}
+function quickStart() {
+  const tiles = QUICK.map(([k, label]) => {
+    const on = qsPicked.has(k);
+    return `<button class="qs${on ? ' on' : ''}" data-act="qs-pick" data-key="${k}" aria-pressed="${on}">
+      <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`;
+  }).join('');
+  const n = qsPicked.size;
+  return `<p class="mt-14 qs-title"><b>Что у вас растёт?</b> Отметьте — остальное найдём в каталоге.</p>
+    <div class="qs-grid">${tiles}</div>
+    <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
+    <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
+    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенесите из чата с ИИ</button></p>`;
+}
+// After adding from the catalog or the quick picks: one plant opens its card, several go to «Растения».
+function addFromCatalog(keys, source) {
+  const ids = addPlants(keys);
+  if (!ids.length) return;
+  track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source });
+  save();
+  if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); return; }
+  tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
+  toast(`Добавлено ${plantsN(ids.length)} 🌱 Откройте каждое, чтобы выбрать место`);
+}
+
 // Shown on tabs that need plants when there are none yet.
-const emptyCard = (title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>
-  <button class="mt-14 btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button></div>`;
+const emptyCard = (title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>${quickStart()}</div>`;
 
 function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
@@ -1437,6 +1532,8 @@ function applySizes(root = document) {
 }
 function render() {
   const view = $('#view');
+  // Tile ticks only matter while the collection is empty: once plants are in, by any way, they're done.
+  if (Object.keys(S.plants).length) { qsPicked.clear(); qsReported = false; }
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   applySizes(view);
   if (tab === 'plants') filterPlants();
@@ -1462,6 +1559,8 @@ document.addEventListener('click', (e) => {
   if (el.dataset.open) { openPlant(el.dataset.open); return; }
   const id = el.dataset.id;
   const act = el.dataset.act;
+  const otherWay = { 'add-plant': 'catalog', 'add-import': 'import', import: 'restore' }[act];
+  if (otherWay) endQuick(otherWay);
   let undo;
   switch (act) {
     case 'water':
@@ -1502,7 +1601,7 @@ document.addEventListener('click', (e) => {
     case 'settings': openSettings(); break;
     case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
-    case 'add-custom': openCustom(); break;
+    case 'add-custom': openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); break;
     case 'add-import': openImport(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
@@ -1530,12 +1629,20 @@ document.addEventListener('click', (e) => {
     }
     case 'pick-add': {
       if (addFlow) addFlow.done = true;
-      const ids = addPlants([...picked]);
-      track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source: 'catalog' });
-      save();
-      if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); break; }
-      tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
-      toast(`Добавлено ${plantsN(ids.length)} 🌱 Откройте каждое, чтобы выбрать место`); break;
+      addFromCatalog([...picked], 'catalog'); break;
+    }
+    case 'qs-pick': {
+      const k = el.dataset.key;
+      if (qsPicked.has(k)) qsPicked.delete(k); else qsPicked.add(k);
+      qsReported = false;
+      el.classList.toggle('on', qsPicked.has(k));
+      el.setAttribute('aria-pressed', qsPicked.has(k));
+      setAddButton($('#qs-add'), qsPicked.size, 'Отметьте, что есть'); break;
+    }
+    case 'qs-add': {
+      const keys = [...qsPicked];
+      qsPicked = new Set();
+      addFromCatalog(keys, 'quick'); break;
     }
     case 'spot-del': {
       const sp = el.dataset.spot;
@@ -1755,6 +1862,7 @@ document.addEventListener('visibilitychange', () => {
     // Leaving for the AI chat after copying the prompt is the expected path, not abandoning.
     const toAiChat = addFlow && addFlow.sheet === 'import' && addFlow.promptCopied;
     if (sheet.open && !toAiChat) endAddFlow(true);
+    endQuick('left_app');
     flushStats();
     return;
   }

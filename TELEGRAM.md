@@ -48,7 +48,7 @@ When the app's features change, update these texts in BotFather and here.
 
 ## Mini app vs. Telegram's browser
 
-A zhungli.zmoki.xyz link tapped in a chat opens in Telegram's in-app browser, not the mini app. Its storage can be wiped, so «Сегодня» shows a hint with a button to the mini app. The hint changes if plants are already there: move them with «Сохранить копию» / «Восстановить».
+A zhungli.zmoki.xyz link tapped in a chat opens in Telegram's in-app browser, not the mini app. Its storage can be wiped, so «Сегодня» shows a hint with a button to the mini app. With no plants it's a friendly invite below the welcome card. With plants it's a warning: move them with «Сохранить копию» / «Восстановить».
 
 The app counts as the mini app when it was opened at `/tg`. The flag stays in `sessionStorage`, so it holds after navigation inside the app.
 

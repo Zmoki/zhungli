@@ -4,6 +4,8 @@ What «Сегодня» shows and why. The idea: a few plants a day, no backlog,
 
 ## Screen order
 
+With no plants yet, «Сегодня» shows the welcome card with quick picks (see [PLANTS.md](PLANTS.md#adding-plants)) and the hint card below it. «Add to home screen» waits for the first plant.
+
 1. **Hint card**, at most one:
    - in Telegram's in-app browser: open the mini app;
    - the stats notice;
