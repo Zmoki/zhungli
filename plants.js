@@ -3,6 +3,7 @@
 // Personal notes of the first collection live in LEGACY_NOTES and move into plant data on migration.
 // every: starting check interval in days; the app adjusts it from the answers.
 // type: soil | sphagnum | bark | dry (dries out almost fully) | water (cuttings in water)
+// aka: extra search words only (folk and Latin names, close relatives); never shown.
 
 const CHECK_TEXT = {
   soil: 'Верхние 2–3 см сухие?',
@@ -16,6 +17,7 @@ const PLANTS = [
   // Generic types for plants not in the list. The interval adjusts from the answers anyway.
   {
     id: 'g-easy', species: 'Неприхотливое лиственное', cat: 'Общие типы', emoji: '🍀', generic: true,
+    aka: 'фикус бенджамина, фикус лировидный, пеперомия, традесканция, плющ, хойя, шефлера, шеффлера, кротон, кодиеум, юкка, эпипремнум, пилея, аспидистра, кордилина, scindapsus, pothos, epipremnum, chlorophytum, dracaena, syngonium, peperomia, hoya, schefflera, croton, yucca, pilea',
     hint: 'потос, сциндапсус, хлорофитум, драцена, сингониум',
     lux: [3000, 12000], every: 7, type: 'soil',
     water: 'Когда подсохнут верхние 2–3 см. Лишнюю воду из поддона слить.',
@@ -26,6 +28,7 @@ const PLANTS = [
   },
   {
     id: 'g-humid', species: 'Тропическое влаголюбивое', cat: 'Общие типы', emoji: '🌿', generic: true, humid: true,
+    aka: 'калатеи, ктенанта, нефролепис, адиантум, асплениум, селагинелла, calathea, maranta, fern, fittonia',
     hint: 'калатея, папоротник, фиттония, маранта',
     lux: [3000, 10000], every: 4, type: 'soil', check: 'Верхний 1 см подсох?',
     water: 'Грунт слегка влажный всегда: поливать, как только подсох верх. Мягкой отстоянной водой.',
@@ -36,6 +39,7 @@ const PLANTS = [
   },
   {
     id: 'g-succ', species: 'Суккулент', cat: 'Общие типы', emoji: '💠', generic: true,
+    aka: 'щучий хвост, тещин язык, денежное дерево, крассула, молодило, литопсы, sansevieria, aloe, haworthia, crassula, echeveria, succulent',
     hint: 'сансевиерия, алоэ, хавортия, толстянка, эхеверия',
     lux: [10000, 40000], every: 14, type: 'dry',
     water: 'Только когда грунт сухой почти до дна. Зимой — совсем редко.',
@@ -46,6 +50,7 @@ const PLANTS = [
   },
   {
     id: 'g-cactus', species: 'Кактус', cat: 'Общие типы', emoji: '🌵', generic: true,
+    aka: 'опунция, маммиллярия, эхинокактус, cactus',
     lux: [20000, 60000], every: 18, type: 'dry',
     water: 'Когда грунт полностью сухой. С ноября по февраль почти не поливать.',
     soil: 'Грунт для кактусов с пемзой или песком.',
@@ -55,6 +60,7 @@ const PLANTS = [
   },
   {
     id: 'g-flower', species: 'Цветущее', cat: 'Общие типы', emoji: '🌸', generic: true,
+    aka: 'сенполия, узамбарская фиалка, герань, пеларгония, глоксиния, цикламен, азалия, хризантема, роза, begonia, violet, kalanchoe, geranium',
     hint: 'фиалка, бегония, гербера, каланхоэ',
     lux: [8000, 20000], every: 5, type: 'soil',
     water: 'Когда подсох верхний слой. Воду — под корень, не на цветы и листья.',
@@ -65,6 +71,7 @@ const PLANTS = [
   },
   {
     id: 'g-orchid', species: 'Орхидея на коре', cat: 'Общие типы', emoji: '🌺', generic: true,
+    aka: 'орхидея, ванда, ванда на коре, orchid',
     hint: 'дендробиум, онцидиум, камбрия',
     lux: [8000, 20000], every: 7, type: 'bark',
     water: 'Когда кора просохла. Погружением на 15–20 минут, потом дать стечь.',
@@ -75,6 +82,7 @@ const PLANTS = [
   },
   {
     id: 'g-herbs', species: 'Травы и рассада', cat: 'Общие типы', emoji: '🌱', generic: true,
+    aka: 'зелень, укроп, кинза, розмарин, тимьян, салат, рассада томатов, basil, mint, herbs',
     hint: 'базилик, мята, петрушка, рассада',
     lux: [20000, 50000], every: 2, type: 'soil', check: 'Верх подсох?',
     water: 'Часто и понемногу: грунт всегда слегка влажный.',
@@ -130,6 +138,7 @@ const PLANTS = [
   },
   {
     id: 'mon-del', species: 'Монстера deliciosa', cat: 'Монстеры', emoji: '🌿',
+    aka: 'монстера деликатесная, monstera',
     lux: [8000, 20000], every: 8, type: 'soil', big: true, rotate: true,
     check: 'Верхние 3–5 см сухие?',
     water: 'После подсыхания верхних 3–5 см; зимой интервалы обычно длиннее.',
@@ -140,6 +149,7 @@ const PLANTS = [
   },
   {
     id: 'mon-adan', species: 'Монстера adansonii ‘Monkey Mask’', cat: 'Монстеры', emoji: '🐒',
+    aka: 'монстера адансона, monstera, monkey mask',
     lux: [8000, 18000], every: 5, type: 'soil',
     water: 'В пластиковом горшке с отверстиями: проверять просыхание верхних 2–3 см и влажность глубже.',
     soil: 'Рыхлая смесь для ароидных: грунт + перлит + кора или кокосовые чипсы + уголь.',
@@ -149,6 +159,7 @@ const PLANTS = [
   },
   {
     id: 'phi-eru', species: 'Филодендрон краснеющий', cat: 'Филодендроны', emoji: '❤️',
+    aka: 'philodendron, филодендрон эрубесценс',
     lux: [8000, 18000], every: 6, type: 'soil',
     water: 'После подсыхания верхних 2–3 см; не держать корни в воде.',
     soil: 'Рыхлая ароидная смесь; точный текущий состав не зафиксирован.',
@@ -158,6 +169,7 @@ const PLANTS = [
   },
   {
     id: 'phi-birkin', species: 'Филодендрон Birkin', cat: 'Филодендроны', emoji: '🤍',
+    aka: 'philodendron',
     lux: [8000, 16000], every: 6, type: 'soil',
     water: 'Умеренно, после подсыхания верхней части субстрата.',
     soil: 'Рыхлый воздухопроницаемый субстрат для ароидных.',
@@ -167,6 +179,7 @@ const PLANTS = [
   },
   {
     id: 'phi-congo', species: 'Филодендрон Green Congo', cat: 'Филодендроны', emoji: '🌱',
+    aka: 'philodendron',
     lux: [6000, 16000], every: 7, type: 'soil', big: true,
     check: 'Верхние 2–4 см сухие?',
     water: 'Поливать после подсыхания верхних 2–4 см, с поправкой на размер горшка.',
@@ -177,6 +190,7 @@ const PLANTS = [
   },
   {
     id: 'agl-siam', species: 'Аглаонема Siam Aurora', cat: 'Аглаонемы', emoji: '🌺',
+    aka: 'aglaonema',
     lux: [5000, 12000], every: 7, type: 'soil',
     water: 'Умеренно: дать верхним 2–3 см подсохнуть.',
     soil: 'Лёгкий влагоёмкий, но воздухопроницаемый грунт.',
@@ -186,6 +200,7 @@ const PLANTS = [
   },
   {
     id: 'agl-silver', species: 'Аглаонема серебристая', cat: 'Аглаонемы', emoji: '🪩',
+    aka: 'aglaonema',
     lux: [5000, 12000], every: 7, type: 'soil',
     water: 'Умеренно, без полного пересушивания надолго и без заболачивания.',
     soil: 'Лёгкий субстрат с хорошим дренажом.',
@@ -195,6 +210,7 @@ const PLANTS = [
   },
   {
     id: 'agl-pink', species: 'Аглаонема Pink Star', cat: 'Аглаонемы', emoji: '⭐',
+    aka: 'aglaonema',
     lux: [6000, 14000], every: 4, type: 'sphagnum',
     water: 'В сфагнуме проверять влажность внутри, не только поверхность; не заливать.',
     soil: 'Лёгкий субстрат с хорошим дренажом; слабые корни можно нарастить в сфагнуме.',
@@ -204,6 +220,7 @@ const PLANTS = [
   },
   {
     id: 'stro-tri', species: 'Строманта ‘Triostar’', cat: 'Стромантовые', emoji: '🎨', humid: true,
+    aka: 'stromanthe, калатея, маранта',
     lux: [5000, 12000], every: 4, type: 'soil', check: 'Поверхность подсохла?',
     water: 'Поддерживать слегка равномерную влажность; поливать после подсыхания поверхности.',
     soil: 'Рыхлый влагоёмкий субстрат; не допускать застоя воды.',
@@ -213,6 +230,7 @@ const PLANTS = [
   },
   {
     id: 'cten', species: 'Ктенанта', cat: 'Стромантовые', emoji: '🪶', humid: true,
+    aka: 'ctenanthe, калатея, маранта',
     lux: [5000, 10000], every: 4, type: 'soil', check: 'Верхний слой слегка подсох?',
     water: 'Не пересушивать полностью; поливать после лёгкого подсыхания верхнего слоя.',
     soil: 'Рыхлый, умеренно влагоёмкий субстрат.',
@@ -222,6 +240,7 @@ const PLANTS = [
   },
   {
     id: 'dif-camille', species: 'Диффенбахия Camille', cat: 'Диффенбахии', emoji: '🍋', toxic: true,
+    aka: 'dieffenbachia',
     lux: [6000, 15000], every: 6, type: 'soil',
     water: 'После подсыхания верхних 2–3 см; сливать лишнюю воду из поддона.',
     soil: 'Рыхлый универсальный грунт с разрыхлителями.',
@@ -231,6 +250,7 @@ const PLANTS = [
   },
   {
     id: 'dif-gm', species: 'Диффенбахия Green Magic', cat: 'Диффенбахии', emoji: '🪄', toxic: true,
+    aka: 'dieffenbachia',
     lux: [6000, 15000], every: 6, type: 'soil',
     water: 'Умеренно, после подсыхания верхней части грунта.',
     soil: 'Воздухопроницаемый субстрат; обязательны дренажные отверстия.',
@@ -240,6 +260,7 @@ const PLANTS = [
   },
   {
     id: 'ficus', species: 'Фикус эластика ‘Ruby’', cat: 'Декоративно-лиственные', emoji: '💎', big: true,
+    aka: 'фикус каучуконосный, резиновый фикус, ficus elastica, ficus',
     lux: [10000, 20000], every: 8, type: 'soil', check: 'Верхние 3–5 см сухие?',
     water: 'После подсыхания верхних 3–5 см; зимой реже.',
     soil: 'Рыхлый грунт с перлитом и корой, хороший дренаж.',
@@ -249,6 +270,7 @@ const PLANTS = [
   },
   {
     id: 'raderm', species: 'Радермахера китайская', cat: 'Декоративно-лиственные', emoji: '🌳',
+    aka: 'radermachera, комнатный ясень',
     lux: [8000, 15000], every: 5, type: 'soil', spot: 'Белый стол', check: 'Верхний слой подсох?',
     water: 'Поливать, когда верхний слой подсох, не допуская длительного полного пересыхания.',
     soil: 'Рыхлый питательный грунт с разрыхлителями.',
@@ -258,6 +280,7 @@ const PLANTS = [
   },
   {
     id: 'anth', species: 'Антуриум', cat: 'Декоративно-лиственные', emoji: '🌷',
+    aka: 'мужское счастье, anthurium',
     lux: [8000, 15000], every: 6, type: 'soil', check: 'Верхний слой частично подсох?',
     water: 'После частичного подсыхания верхнего слоя; корни не должны стоять в воде.',
     soil: 'Рыхлая смесь для ароидных с корой; корни не должны стоять в воде.',
@@ -267,6 +290,7 @@ const PLANTS = [
   },
   {
     id: 'spath', species: 'Спатифиллум', cat: 'Декоративно-лиственные', emoji: '🕊️', big: true,
+    aka: 'женское счастье, spathiphyllum, peace lily',
     lux: [5000, 12000], every: 5, type: 'soil', spot: 'У кровати', check: 'Верхний слой слегка подсох?',
     water: 'Поливать после лёгкого подсыхания верхнего слоя; не доводить регулярно до сильного увядания.',
     soil: 'Грунт + перлит.',
@@ -276,6 +300,7 @@ const PLANTS = [
   },
   {
     id: 'zz', species: 'Замиокулькас', cat: 'Декоративно-лиственные', emoji: '🐫',
+    aka: 'долларовое дерево, zz, замиокулькас, zamioculcas',
     lux: [3000, 10000], every: 21, type: 'dry',
     water: 'Редко: дать грунту просохнуть почти полностью; зимой особенно осторожно.',
     soil: 'Очень рыхлый субстрат с большим количеством минеральных компонентов.',
@@ -285,6 +310,7 @@ const PLANTS = [
   },
   {
     id: 'chamae', species: 'Хамедорея изящная', cat: 'Пальмы', emoji: '🌴', humid: true,
+    aka: 'пальма, chamaedorea',
     lux: [4000, 10000], every: 5, type: 'soil', check: 'Верхний слой подсох?',
     water: 'Умеренно: верхний слой подсох, но весь ком не пересушивать надолго.',
     soil: 'Лёгкий грунт для пальм с разрыхлителем.',
@@ -294,6 +320,7 @@ const PLANTS = [
   },
   {
     id: 'rhapis', species: 'Рапис высокий', cat: 'Пальмы', emoji: '🎋',
+    aka: 'пальма, rhapis',
     lux: [4000, 10000], every: 7, type: 'soil', check: 'Верхний слой подсох?',
     water: 'Умеренно, после подсыхания верхнего слоя.',
     soil: 'Питательный, но дренированный субстрат для пальм.',
@@ -303,6 +330,7 @@ const PLANTS = [
   },
   {
     id: 'strel1', species: 'Стрелиция Николая', cat: 'Крупные и цветущие', emoji: '🦜', big: true,
+    aka: 'стрелиция, райская птица, strelitzia',
     lux: [20000, 40000], every: 8, type: 'soil', check: 'Верх подсох и в глубине не сыро? (палочкой)',
     water: 'После подсыхания верхней части субстрата; в прохладе поливать реже.',
     soil: 'Воздухопроницаемый субстрат с хорошим дренажом.',
@@ -321,6 +349,7 @@ const PLANTS = [
   },
   {
     id: 'banana', species: 'Банан комнатный', cat: 'Крупные и цветущие', emoji: '🍌', big: true, humid: true,
+    aka: 'банан, musa, banana',
     lux: [20000, 40000], every: 5, type: 'soil',
     water: 'В активный рост поливать обильно после подсыхания верхних 2–3 см, лишнюю воду сливать.',
     soil: 'Питательный, рыхлый; крупный горшок с хорошим дренажом.',
@@ -330,6 +359,7 @@ const PLANTS = [
   },
   {
     id: 'phal', species: 'Фаленопсис', cat: 'Крупные и цветущие', emoji: '🦋',
+    aka: 'орхидея, phalaenopsis, orchid',
     lux: [5000, 12000], every: 7, type: 'bark',
     water: 'Поливать после просыхания коры и посеребрения корней; воду из кашпо сливать.',
     soil: 'Кора; прозрачный горшок помогает наблюдать за корнями.',
@@ -339,6 +369,7 @@ const PLANTS = [
   },
   {
     id: 'coleus1', species: 'Колеус', cat: 'Декоративно-лиственные', emoji: '🍇',
+    aka: 'coleus',
     lux: [10000, 25000], every: 3, type: 'soil', check: 'Верх подсох или листья чуть поникли?',
     water: 'Любит равномерно влажный грунт: поливать, как только подсох верх.',
     soil: 'Рыхлый универсальный грунт.',
@@ -357,6 +388,7 @@ const PLANTS = [
   },
   {
     id: 'cuttings', species: 'Черенки в воде', cat: 'Общие типы', emoji: '🧪', generic: true, noFeed: true,
+    aka: 'черенок, черенки, укоренение, cuttings',
     lux: [5000, 12000], every: 5, type: 'water',
     water: 'Менять воду раз в несколько дней, доливать до уровня.',
     soil: 'Вода. Когда корни 2–3 см — можно сажать в грунт или сфагнум.',
