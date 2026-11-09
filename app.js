@@ -506,7 +506,7 @@ function viewPlants() {
     ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
-  if (ps.length >= 6) html += `<input class="input mt-12" id="plants-q" type="search" aria-label="Найти растение" placeholder="Найти: имя, вид или место" autocomplete="off" value="${esc(plantQ)}">`;
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="Найти: имя, вид или место" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>`;
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
@@ -693,7 +693,7 @@ function openAdd() {
       <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
-    <input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">
+    <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
     ${cats.map((c) => `<div class="pick-group"><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
