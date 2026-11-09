@@ -551,8 +551,9 @@ function stateFilter(ps) {
   const n = {};
   ps.forEach((p) => states(p).forEach((k) => { n[k] = (n[k] || 0) + 1; }));
   if (plantSt && !n[plantSt]) plantSt = '';
-  const chip = (k, label) => `<button class="chip ${k} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
-  return `<div class="chips st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
+  // Same chips as in the plant card; the chosen one gets a ring in its own color.
+  const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
+  return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}</div>`;
 }
 
@@ -1623,7 +1624,7 @@ document.addEventListener('click', (e) => {
     }
     case 'st-filter':
       plantSt = el.dataset.st;
-      el.parentElement.querySelectorAll('.chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
+      el.parentElement.querySelectorAll('.st-chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
       filterPlants();
       track('plants_filtered', { status: plantSt || 'all' }); break;
     case 'room-pick':

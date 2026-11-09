@@ -301,14 +301,11 @@ button { cursor: pointer; }
 
 /* Plants grid */
 .pcard[hidden], .pgroup[hidden] { display: none; }
-/* Status filter: «Все» and a chip per state with its colored face and a count */
-.st-filter .chip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-.st-filter .chip .n { font-weight: 900; }
-.st-filter .chip.need:not(.on) .ic { color: var(--st-need); }
-.st-filter .chip.dim:not(.on) .ic { color: var(--st-dim); }
-.st-filter .chip.hot:not(.on) .ic { color: var(--st-hot); }
-.st-filter .chip.watered:not(.on) .ic { color: var(--st-watered); }
-.st-filter .chip.fine:not(.on) .ic { color: var(--st-fine); }
+/* Status filter: the plant card's status chips as buttons; the chosen one gets a ring in its own color */
+.st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-filter .st-chip { min-height: 44px; }
+.st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
+.st-filter .st-chip.on { border-color: currentColor; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 12px; }
 .pcard {
   border: 1px solid var(--line); border-radius: 28px; color: var(--ink);
