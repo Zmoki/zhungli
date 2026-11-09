@@ -327,6 +327,9 @@ button { cursor: pointer; }
 .pcard :is(.mood, .gh) .ic { width: 20px; height: 20px; stroke-width: 2.4; }
 .pcard b { font-size: 1rem; font-weight: 900; line-height: 1.2; padding: 0 4px; }
 .pcard small { color: var(--muted); font-size: 0.824rem; font-weight: 700; line-height: 1.5; padding: 0 4px; }
+/* Next watering check: a drop and the day («сегодня», «через 4 дня») in watering blue */
+.pcard .next { display: inline-flex; align-items: center; gap: .25em; color: var(--blue); }
+.pcard .next .ic { width: 1.05em; height: 1.05em; stroke-width: 2.4; flex: none; }
 .group-title { min-height: 24px; font-size: 0.882rem; color: var(--ink); font-weight: 900; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .06em; }
 
 /* Sheet */
