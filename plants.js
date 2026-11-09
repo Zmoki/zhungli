@@ -4,6 +4,7 @@
 // Personal notes of the first collection live in LEGACY_NOTES and move into plant data on migration.
 // every: starting check interval in days; the app adjusts it from the answers.
 // type: soil | sphagnum | bark | dry (dries out almost fully) | water (cuttings in water)
+// feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 
 const CHECK_TEXT = {
@@ -221,7 +222,7 @@ const PLANTS = [
   },
   {
     id: 'stro-tri', species: 'Строманта ‘Triostar’', cat: 'Влаголюбивые', emoji: '🎨', humid: true,
-    aka: 'stromanthe, калатея, маранта',
+    aka: 'stromanthe, triostar',
     lux: [5000, 12000], every: 4, type: 'soil', check: 'Поверхность подсохла?',
     water: 'Поддерживать слегка равномерную влажность; поливать после подсыхания поверхности.',
     soil: 'Рыхлый влагоёмкий субстрат; не допускать застоя воды.',
@@ -231,7 +232,7 @@ const PLANTS = [
   },
   {
     id: 'cten', species: 'Ктенанта', cat: 'Влаголюбивые', emoji: '🪶', humid: true,
-    aka: 'ctenanthe, калатея, маранта',
+    aka: 'ctenanthe, бурле-маркса',
     lux: [5000, 10000], every: 4, type: 'soil', check: 'Верхний слой слегка подсох?',
     water: 'Не пересушивать полностью; поливать после лёгкого подсыхания верхнего слоя.',
     soil: 'Рыхлый, умеренно влагоёмкий субстрат.',
@@ -483,7 +484,7 @@ const PLANTS = [
   {
     id: 'aspidistra', species: 'Аспидистра', cat: 'Декоративно-лиственные', emoji: '🗡️', big: true,
     aka: 'аспидистра, aspidistra, чугунное растение, дружная семейка',
-    lux: [1000, 6000], every: 9, type: 'soil',
+    lux: [1000, 10000], every: 9, type: 'soil',
     water: 'Умеренно, после подсыхания верхней трети.',
     soil: 'Плотноватый универсальный грунт.',
     cond: '10–22 °C; переносит прохладу и тень.',
@@ -504,7 +505,7 @@ const PLANTS = [
   {
     id: 'calathea', species: 'Калатея', cat: 'Влаголюбивые', emoji: '🎏', humid: true,
     aka: 'калатея, calathea, горетта, медальон, орбифолия, макояна, зебрина, гетея',
-    lux: [2000, 8000], every: 4, type: 'soil', check: 'Верхний 1 см подсох?',
+    lux: [3000, 12000], every: 4, type: 'soil', check: 'Верхний 1 см подсох?',
     water: 'Грунт всегда слегка влажный; мягкой отстоянной или фильтрованной водой.',
     soil: 'Лёгкий влагоёмкий грунт с перлитом.',
     cond: '20–26 °C; влажность 60% и выше.',
@@ -514,7 +515,7 @@ const PLANTS = [
   {
     id: 'maranta', species: 'Маранта', cat: 'Влаголюбивые', emoji: '🙏', humid: true,
     aka: 'маранта, maranta, молитвенное растение, леуконевра, фашинатор',
-    lux: [2000, 8000], every: 4, type: 'soil', check: 'Верхний 1 см подсох?',
+    lux: [3000, 12000], every: 4, type: 'soil', check: 'Верхний 1 см подсох?',
     water: 'Равномерно влажный грунт; мягкой водой комнатной температуры.',
     soil: 'Лёгкий кислый грунт с перлитом; неглубокий широкий горшок.',
     cond: '20–26 °C; влажный воздух.',
@@ -523,7 +524,7 @@ const PLANTS = [
   },
   {
     id: 'fern', species: 'Нефролепис (папоротник)', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
-    aka: 'нефролепис, папоротник, nephrolepis, бостонский, fern, адиантум',
+    aka: 'нефролепис, папоротник, nephrolepis, бостонский, fern',
     lux: [3000, 10000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
     water: 'Часто, грунт всегда слегка влажный; не пересушивать ни разу.',
     soil: 'Лёгкий кислый грунт с торфом.',
@@ -534,7 +535,7 @@ const PLANTS = [
   {
     id: 'fittonia', species: 'Фиттония', cat: 'Влаголюбивые', emoji: '🕸️', humid: true,
     aka: 'фиттония, fittonia, фитония, растение-нерв',
-    lux: [2000, 8000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
+    lux: [3000, 12000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
     water: 'Часто и понемногу; при пересушке падает «в обморок», после полива встаёт.',
     soil: 'Лёгкий влагоёмкий грунт.',
     cond: '20–26 °C; очень влажный воздух, хорошо во флорариуме.',
@@ -583,7 +584,7 @@ const PLANTS = [
     quips: ['Меня зовут кукурузой. Обидно, но похоже.', 'Протрите мне листья, пожалуйста.', 'Тень переношу, свет люблю.'],
   },
   {
-    id: 'dracaena-sanderiana', species: 'Счастливый бамбук (драцена Сандера)', cat: 'Пальмы, драцены и деревья', emoji: '🎍', noFeed: true,
+    id: 'dracaena-sanderiana', species: 'Счастливый бамбук (драцена Сандера)', cat: 'Пальмы, драцены и деревья', emoji: '🎍',
     aka: 'бамбук, счастливый бамбук, драцена сандера, сандериана, lucky bamboo, dracaena sanderiana',
     lux: [3000, 10000], every: 7, type: 'water',
     water: 'В воде: доливать до уровня, менять воду раз в 1–2 недели.',
@@ -623,7 +624,7 @@ const PLANTS = [
     quips: ['У меня в ноге запас воды.', 'Забыли полить? Я и не заметила.', 'Солнце — моё всё.'],
   },
   {
-    id: 'citrus', species: 'Лимон (цитрус)', cat: 'Пальмы, драцены и деревья', emoji: '🍋', rotate: true,
+    id: 'citrus', species: 'Лимон (цитрус)', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
     aka: 'лимон, цитрус, мандарин, апельсин, каламондин, citrus, lemon, павловский',
     lux: [20000, 50000], every: 4, type: 'soil', check: 'Верхние 2 см сухие?',
     water: 'Регулярно, грунт не пересушивать; мягкой тёплой водой.',
@@ -715,7 +716,7 @@ const PLANTS = [
     quips: ['Обрежьте меня весной — скажу спасибо цветами.', 'Солнце люблю, болото — нет.', 'Я пахну, это нормально.'],
   },
   {
-    id: 'kalanchoe', species: 'Каланхоэ', cat: 'Цветущие и орхидеи', emoji: '🌼',
+    id: 'kalanchoe', species: 'Каланхоэ', cat: 'Цветущие и орхидеи', emoji: '🌼', feed: true,
     aka: 'каланхоэ, kalanchoe, блоссфельда, каландива, дегремона',
     lux: [15000, 35000], every: 10, type: 'dry',
     water: 'Как суккулент: после просушки грунта, понемногу.',
@@ -725,7 +726,7 @@ const PLANTS = [
     quips: ['Я суккулент в нарядном платье.', 'Перелив — и цветы до свидания.', 'Хотите цветов? Подарите мне ночь.'],
   },
   {
-    id: 'hibiscus', species: 'Гибискус (китайская роза)', cat: 'Цветущие и орхидеи', emoji: '🌺', rotate: true,
+    id: 'hibiscus', species: 'Гибискус (китайская роза)', cat: 'Цветущие и орхидеи', emoji: '🌺',
     aka: 'гибискус, китайская роза, hibiscus, розан',
     lux: [15000, 35000], every: 4, type: 'soil', check: 'Верхние 2 см сухие?',
     water: 'Обильно летом, грунт не пересушивать; зимой умеренно.',

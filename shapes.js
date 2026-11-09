@@ -76,7 +76,7 @@ const SHAPE_BY_ID = {
   'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', raderm: 'tree', anth: 'flowering', coleus1: 'coleus', coleus2: 'coleus',
   chamae: 'palm', rhapis: 'palm', strel1: 'palm', kolya: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
   // Where the name or growing medium would pick the wrong drawing.
-  peperomia: 'leafy', syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
+  syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
   schlumbergera: 'trailing', kalanchoe: 'flowering',
 };
 function shapeOf(d) {
@@ -91,11 +91,11 @@ function shapeOf(d) {
   if (/алоказ|колоказ|ксантосом/.test(s)) return 'arrow';
   if (/монстер|ракафор/.test(s)) return 'split';
   if (/филодендр/.test(s)) return 'heart';
-  if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр|бокарне/.test(s)) return 'upright';
+  if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр/.test(s)) return 'upright';
   if (/фикус|радермах|дерев|лимон|цитрус|оливк|кофе|мирт|лавр|шеффлер|кротон/.test(s)) return 'tree';
   if (/калате|строман|ктенант|марант|фиттон/.test(s)) return 'prayer';
   if (/колеус/.test(s)) return 'coleus';
-  if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|пепером|филодендрон скан/.test(s)) return 'trailing';
+  if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|филодендрон скан/.test(s)) return 'trailing';
   if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';

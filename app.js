@@ -315,7 +315,7 @@ function bonusTasks() {
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
-    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && p.type !== 'dry' && p.type !== 'bark' && p.type !== 'water');
+    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (p.type !== 'dry' || p.feed) && p.type !== 'bark' && p.type !== 'water');
     if (who.length) out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: `По инструкции к удобрению, в мокрый грунт: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
   }
   return out.slice(0, 2);
@@ -771,10 +771,11 @@ function openAdd() {
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
     <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
-    <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет — выберите похожий общий тип.</p>
+    <p class="pick-help small muted">Отметьте все свои растения. Нет вашего — добавьте его как своё или выберите похожий общий тип.</p>
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
+    <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const raw = e.target.value.trim();
@@ -820,7 +821,12 @@ const updatePickBar = () => { setAddButton($('#pick-add'), picked.size, 'Отм�
 // Picker groups go by care, from the most common plants; generic types close the list.
 const CAT_ORDER = ['Лианы и ампельные', 'Декоративно-лиственные', 'Пальмы, драцены и деревья', 'Ароидные', 'Влаголюбивые',
   'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Общие типы'];
-const catRank = (c) => (CAT_ORDER.includes(c) ? CAT_ORDER.indexOf(c) : CAT_ORDER.length - 1);
+// A category missing from CAT_ORDER (a typo in plants.js) still shows, just before the generic types, and warns.
+const catRank = (c) => {
+  const r = CAT_ORDER.indexOf(c);
+  if (r < 0) console.warn('Catalog category missing from CAT_ORDER:', c);
+  return r < 0 ? CAT_ORDER.length - 1.5 : r;
+};
 
 // Two fields are enough: what it is and what it's like. The care comes from that generic type;
 // the numbers stay editable under «Тонкая настройка».
