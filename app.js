@@ -759,12 +759,15 @@ function openAdd() {
   track('add_opened', { from: tab });
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
-  const cats = Object.keys(groups).sort((a, b) => (a === 'Общие типы') - (b === 'Общие типы'));
+  const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
       <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
+      <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
+    <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
+      <span class="pt"><b>Своё растение</b><small>Название и на что похоже — уход подставлю сам.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
     <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
@@ -772,8 +775,7 @@ function openAdd() {
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
-    <button class="mt-12 btn ghost wide" data-act="add-custom">Своё растение с нуля</button>
-    <div class="pick-bar"><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+    <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   $('#pick-q').addEventListener('input', (e) => {
     const raw = e.target.value.trim();
     // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
@@ -813,7 +815,12 @@ function setAddButton(b, n, emptyText) {
   b.disabled = !n;
   b.innerHTML = n ? `${I('plus')}Добавить ${plantsN(n)}` : emptyText;
 }
-const updatePickBar = () => setAddButton($('#pick-add'), picked.size, 'Отметьте растения');
+// The catalog's add bar appears only once something is ticked.
+const updatePickBar = () => { setAddButton($('#pick-add'), picked.size, 'Отметьте растения'); $('#pick-bar').hidden = !picked.size; };
+// Picker groups go by care, from the most common plants; generic types close the list.
+const CAT_ORDER = ['Лианы и ампельные', 'Декоративно-лиственные', 'Пальмы, драцены и деревья', 'Ароидные', 'Влаголюбивые',
+  'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Общие типы'];
+const catRank = (c) => (CAT_ORDER.includes(c) ? CAT_ORDER.indexOf(c) : CAT_ORDER.length - 1);
 
 // Two fields are enough: what it is and what it's like. The care comes from that generic type;
 // the numbers stay editable under «Тонкая настройка».
@@ -1125,7 +1132,7 @@ function lightIdeas() {
 
 // Empty screens: tap the plants you have and add them in one go. Anything else is one tap away.
 const QUICK = [['mon-del', 'Монстера'], ['zz', 'Замиокулькас'], ['spath', 'Спатифиллум'], ['phal', 'Орхидея'],
-  ['g-easy', 'Потос, драцена'], ['g-flower', 'Фиалка, бегония'], ['g-succ', 'Суккулент'], ['g-cactus', 'Кактус']];
+  ['pothos', 'Потос'], ['ficus-benj', 'Фикус Бенджамина'], ['sansevieria', 'Сансевиерия'], ['violet', 'Фиалка']];
 let qsPicked = new Set();
 let qsReported = false;
 // Tiles ticked but not added: reported once when the person turns to another way of adding or leaves the app.

@@ -42,7 +42,7 @@ On every event:
 | `import_prompt_copied` | «Скопировать запрос» in AI import | — |
 | `import_failed` | pasted text has no plant list (not sent for under 40 characters without brackets: that's typing, not an answer) | `length` of the pasted text; `reason`: `no_list` (no brackets) / `bad_json` (could not be read even after repairs) / `no_plants` (read, but no plant had a name); `has_code_fence`, `has_curly_quotes`, `has_spaced_numbers`. No answer text is sent |
 | `add_opened` | «Добавить растения» sheet opened | `from`: tab it was opened from |
-| `custom_opened` | own plant form opened | `from`: `button` («Своё растение с нуля») / `search_miss` («Добавить «…»» after a catalog search found nothing) |
+| `custom_opened` | own plant form opened | `from`: `button` («Своё растение» in the add sheet) / `search_miss` («Добавить «…»» after a catalog search found nothing) |
 | `quick_abandoned` | tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app | `picked` (how many ticked); `then`: `catalog` / `import` / `restore` / `left_app` (what they turned to instead of «Добавить»; they may still add there) |
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |

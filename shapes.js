@@ -75,6 +75,9 @@ const SHAPE_BY_ID = {
   'agl-siam': 'upright', 'agl-silver': 'upright', 'agl-pink': 'upright', 'dif-camille': 'upright', 'dif-gm': 'upright', spath: 'upright', zz: 'upright',
   'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', raderm: 'tree', anth: 'flowering', coleus1: 'coleus', coleus2: 'coleus',
   chamae: 'palm', rhapis: 'palm', strel1: 'palm', kolya: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
+  // Where the name or growing medium would pick the wrong drawing.
+  peperomia: 'leafy', syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
+  schlumbergera: 'trailing', kalanchoe: 'flowering',
 };
 function shapeOf(d) {
   if (!d) return 'leafy';
@@ -84,16 +87,16 @@ function shapeOf(d) {
   if (d.type === 'bark' || /орхид|фаленопс|дендроб/.test(s)) return 'orchid';
   if (/кактус|опунц|маммил|эхинок/.test(s)) return 'cactus';
   if (d.type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев/.test(s)) return 'succulent';
-  if (/пальм|стрелиц|драцен|юкк|банан|хамедор|рапис/.test(s)) return 'palm';
+  if (/пальм|стрелиц|драцен|юкк|банан|хамедор|рапис|бамбук/.test(s)) return 'palm';
   if (/алоказ|колоказ|ксантосом/.test(s)) return 'arrow';
   if (/монстер|ракафор/.test(s)) return 'split';
   if (/филодендр/.test(s)) return 'heart';
-  if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр/.test(s)) return 'upright';
-  if (/фикус|радермах|дерев|лимон|оливк|кофе|мирт|лавр/.test(s)) return 'tree';
-  if (/калате|строман|ктенант|марант/.test(s)) return 'prayer';
+  if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр|бокарне/.test(s)) return 'upright';
+  if (/фикус|радермах|дерев|лимон|цитрус|оливк|кофе|мирт|лавр|шеффлер|кротон/.test(s)) return 'tree';
+  if (/калате|строман|ктенант|марант|фиттон/.test(s)) return 'prayer';
   if (/колеус/.test(s)) return 'coleus';
-  if (/потос|сциндапс|хойя|плющ|традеск|пеперон|филодендрон скан/.test(s)) return 'trailing';
-  if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум/.test(s)) return 'flowering';
+  if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|пепером|филодендрон скан/.test(s)) return 'trailing';
+  if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';
 }
