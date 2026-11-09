@@ -736,7 +736,7 @@ function openPlant(id) {
 let picked = new Set();
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
-  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka, d.cat].join(' ')))}">
+  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka, d.cat].join(' ')))}" data-name="${esc(norm(d.species))}">
     <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">${I('plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
@@ -777,16 +777,25 @@ function openAdd() {
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+  const pickGroups = [...document.querySelectorAll('.pick-group')];
+  const pickEnd = pickGroups[pickGroups.length - 1].nextElementSibling; // the bottom «Своё растение»
   $('#pick-q').addEventListener('input', (e) => {
     const raw = e.target.value.trim();
     // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
     const words = norm(raw).split(/\s+/).filter(Boolean);
     let any = false;
-    document.querySelectorAll('.pick-group').forEach((g) => {
+    const strong = new Set();
+    pickGroups.forEach((g) => {
       let n = 0;
-      g.querySelectorAll('.pick').forEach((b) => { const on = words.every((w) => b.dataset.q.includes(w)); b.hidden = !on; if (on) n++; });
+      g.querySelectorAll('.pick').forEach((b) => {
+        const on = words.every((w) => b.dataset.q.includes(w)); b.hidden = !on; if (on) n++;
+        if (on && words.length && words.every((w) => b.dataset.name.includes(w))) strong.add(g);
+      });
       g.hidden = !n; any ||= n > 0;
     });
+    // Groups where the name itself matches come first: «рассада» shows «Травы и рассада» on top,
+    // not after every group matched only by a search word. Without a search, the usual order.
+    [...pickGroups.filter((g) => strong.has(g)), ...pickGroups.filter((g) => !strong.has(g))].forEach((g) => pickEnd.before(g));
     // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
     const none = $('#pick-none');
     none.hidden = any;

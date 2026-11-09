@@ -300,7 +300,8 @@ button { cursor: pointer; }
 .celebrate h2 { font-size: 1.412rem; }
 
 /* Plants grid */
-.pcard[hidden], .pgroup[hidden] { display: none; }
+/* Catalog rows and plant cards set their own display, which would override the hidden attribute */
+.pcard[hidden], .pgroup[hidden], .pick[hidden] { display: none; }
 /* Status filter: the plant card's status chips as buttons, with a control edge; the chosen one gets a ring in its own color */
 .st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
 .st-filter .st-chip { min-height: 44px; border-color: var(--edge); } /* controls keep a 3:1 edge */
