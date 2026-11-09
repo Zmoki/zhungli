@@ -1926,6 +1926,43 @@ document.addEventListener('visibilitychange', () => {
   if (!sheet.open) render();
 });
 
+// iOS 26, home-screen app or Telegram mini app: after the keyboard closes, the viewport can stay as
+// short as it was with the keyboard up, so the tab bar floats mid-screen and sheets end early, until
+// the app is restarted. When the height is stuck, hiding and showing the whole page for one reflow
+// makes iOS measure it again. The tallest height seen per width tells "stuck" from a rotation.
+// Not in Safari: its toolbars change the height on their own.
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (IOS && (navigator.standalone || MINI_APP)) {
+  const tallest = {};
+  const remember = () => { tallest[innerWidth] = Math.max(tallest[innerWidth] || 0, innerHeight); };
+  remember();
+  addEventListener('resize', remember);
+  const isField = (el) => el && el.matches && el.matches('input, textarea, select, [contenteditable="true"]');
+  let reported = 0;
+  const remeasure = () => {
+    if (isField(document.activeElement)) return; // the keyboard is still up
+    // In Telegram a collapsed mini app is short on purpose.
+    if (MINI_APP && window.Telegram?.WebApp && !window.Telegram.WebApp.isExpanded) return;
+    const before = innerHeight, full = tallest[innerWidth] || 0;
+    if (full - before <= 4) return; // not stuck
+    const root = document.documentElement, y = scrollY, inSheet = sheet.scrollTop;
+    root.style.display = 'none';
+    void root.offsetHeight; // a synchronous reflow, nothing gets painted in between
+    root.style.display = '';
+    scrollTo(0, y);
+    sheet.scrollTop = inSheet;
+    // Whether it happens and whether this helps: at most 3 reports per launch.
+    if (reported++ < 3) setTimeout(() => track('viewport_stuck', { before, full, after: innerHeight }), 300);
+    remember();
+  };
+  // Check after the keyboard has had time to slide away, and again in case it was still moving.
+  const soon = () => { setTimeout(remeasure, 150); setTimeout(remeasure, 600); };
+  document.addEventListener('focusout', (e) => { if (isField(e.target)) soon(); });
+  // The keyboard can also close without the field losing focus (scrolling, «Готово»).
+  let vvTimer;
+  window.visualViewport?.addEventListener('resize', () => { clearTimeout(vvTimer); vvTimer = setTimeout(remeasure, 250); });
+}
+
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 

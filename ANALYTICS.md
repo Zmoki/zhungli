@@ -52,6 +52,7 @@ On every event:
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
+| `viewport_stuck` | iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch | `before` (height when stuck), `full` (tallest height seen at this width), `after` (height 0.3 s after the re-measure), in CSS pixels |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
 | `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`; `error` (Telegram's error text) |
