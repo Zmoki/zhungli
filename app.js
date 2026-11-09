@@ -233,7 +233,7 @@ function pickDaily(id, list) {
 function quipOf(p) {
   return pickDaily(p.id, p.quips && p.quips.length ? p.quips : GENERIC_QUIPS);
 }
-const VENT_QUIPS = ['Душновато под крышкой — приоткройте, дайте подышать.', 'Немного свежего воздуха — и мне сразу легче.', 'Приоткройте тепличку, хочу подышать.'];
+const VENT_QUIPS = ['Душновато под крышкой — приоткройте, дайте подышать.', 'Немного свежего воздуха — и мне сразу легче.', 'Приоткройте теплицу, хочу подышать.'];
 
 function lightStatus(p) {
   if (!p.lux) return null;
@@ -375,7 +375,7 @@ function greeting() {
 }
 
 // Little greenhouse badge next to the status
-const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В тепличке">${I('house-heart')}<span class="sr-only">в тепличке</span></span>` : '');
+const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>` : '');
 
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
@@ -452,9 +452,9 @@ function viewToday() {
     html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">${esc(v.title)}</div>
       ${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
       <p class="quip">${esc(pickDaily(v.id, VENT_QUIPS))}</p>
-      <div class="question">Проветрите тепличку минут на&nbsp;15–&#8288;30</div>
+      <div class="question">Проветрите теплицу минут на&nbsp;15–&#8288;30</div>
       <div class="btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
-      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div>
+      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплицы</button></div>
       <div class="hint">С каждым днём можно держать открытой чуть дольше.</div></div>`;
   });
 
@@ -549,7 +549,7 @@ function spotGroups(ps, room) {
 // Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
 // The chips also teach which face means what.
 let plantSt = '';
-// Filter keys of a plant: its states, plus «greenhouse» when it lives in the тепличка.
+// Filter keys of a plant: its states, plus «greenhouse» when it lives in the теплица.
 const filterKeys = (p) => (p.greenhouse ? [...states(p), 'greenhouse'] : states(p));
 function stateFilter(ps) {
   const n = {};
@@ -559,7 +559,7 @@ function stateFilter(ps) {
   const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${STATES[k][1]} <span class="n">${n[k]}</span>`)).join('')}
-    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в тепличке <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
+    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
 }
 
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.
@@ -692,7 +692,7 @@ function openPlant(id) {
 
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
       <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
     <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
@@ -1448,8 +1448,8 @@ document.addEventListener('click', (e) => {
       undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
       afterTask('Свежий воздух! 🌬️', undo); break;
     case 'vent-off':
-      if (confirm('Тепличка больше не нужна? Больше не буду напоминать проветривать.')) {
-        undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплички! 🎉', undo);
+      if (confirm('Теплица больше не нужна? Больше не буду напоминать проветривать.')) {
+        undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
       }
       break;
     case 'bonus-done': {
