@@ -233,7 +233,7 @@ function pickDaily(id, list) {
 function quipOf(p) {
   return pickDaily(p.id, p.quips && p.quips.length ? p.quips : GENERIC_QUIPS);
 }
-const VENT_QUIPS = ['Душновато под крышкой — приоткройте, дайте подышать.', 'Немного свежего воздуха — и мне сразу легче.', 'Приоткройте тепличку, хочу подышать.'];
+const VENT_QUIPS = ['Душновато под крышкой — приоткройте, дайте подышать.', 'Немного свежего воздуха — и мне сразу легче.', 'Приоткройте теплицу, хочу подышать.'];
 
 function lightStatus(p) {
   if (!p.lux) return null;
@@ -244,17 +244,32 @@ function lightStatus(p) {
 
 // Light status words, the same in the plant card, the cards grid and the Light tab.
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
-function mood(p) {
-  const t = today();
-  // Each status has its own color: watered blue, check orange, too dark plum, too bright sun, fine green.
+// Face and word per state, from most to least urgent (also the order of the filter chips).
+// Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
+const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+// Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
+// A plant nobody has answered about yet isn't called dry on its first check day: we don't know yet.
+function states(p) {
+  const t = today(), out = [];
+  const known = (p.hist && p.hist.length) || p.lastWater || p.nextCheck < t;
+  if (p.lastWater === t) out.push('watered');
+  else if (p.nextCheck <= t && known) out.push('need');
   const ls = lightStatus(p);
-  // Wrong light matters more than a fresh watering: «темновато» or «ярковато» even on a watering day.
-  if (p.lastWater === t && ls !== 'low' && ls !== 'high') return ['laugh', 'напоено', 'watered'];
-  if (p.nextCheck <= t && p.lastWater !== t) return ['frown', 'проверить', 'need'];
-  if (ls === 'low') return ['meh', LIGHT_WORDS.low, 'dim'];
-  if (ls === 'high') return ['annoyed', LIGHT_WORDS.high, 'hot'];
-  return ['smile', 'хорошо', 'fine'];
+  if (ls === 'low') out.push('dim');
+  if (ls === 'high') out.push('hot');
+  return out.length ? out : ['fine'];
 }
+// The one state for the face on the pot: a due check first, then wrong light, then the rest.
+function mood(p, st = states(p)) {
+  const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
+  return [...STATES[k], k];
+}
+// The word for a state on one plant: cuttings in water get «мутновато» (time to change the water).
+const stateWord = (k, p) => (k === 'need' && p.type === 'water' ? 'мутновато' : STATES[k][1]);
+// Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
+const stateChips = (p, words, st = states(p)) => st.map((k) => (words
+  ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
+  : `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
 
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
@@ -361,7 +376,10 @@ function greeting() {
 }
 
 // Little greenhouse badge next to the status
-const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В тепличке">${I('house-heart')}<span class="sr-only">в тепличке</span></span>` : '');
+// Greenhouse badge: a round icon on grid cards, a worded chip like the status ones in the plant card.
+const ghBadge = (p, words) => (!p.greenhouse ? ''
+  : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
+    : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`);
 
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
@@ -438,9 +456,9 @@ function viewToday() {
     html += `<div class="task"><div class="task-top">${ava(v)}<div><div class="task-name">${esc(v.title)}</div>
       ${sub ? `<div class="task-sub">${esc(sub)}</div>` : ''}</div></div>
       <p class="quip">${esc(pickDaily(v.id, VENT_QUIPS))}</p>
-      <div class="question">Проветрите тепличку минут на&nbsp;15–&#8288;30</div>
+      <div class="question">Проветрите теплицу минут на&nbsp;15–&#8288;30</div>
       <div class="btns"><button class="btn air" data-act="vent-done" data-id="${esc(v.id)}">${I('wind')}Проветрено</button>
-      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплички</button></div>
+      <button class="btn" data-act="vent-off" data-id="${esc(v.id)}">Без теплицы</button></div>
       <div class="hint">С каждым днём можно держать открытой чуть дольше.</div></div>`;
   });
 
@@ -506,11 +524,11 @@ function viewPlants() {
     ${headButtons()}</header>
     <button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>`;
   if (!ps.length) html += `<p class="empty-note muted">Пока пусто. Добавьте первое растение — и джунгли начнутся 🌱</p>`;
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>`;
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
   else html += spotGroups(ps);
-  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово.</p>`;
+  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово или «Все».</p>`;
   return html;
 }
 
@@ -522,27 +540,51 @@ function spotGroups(ps, room) {
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
     html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
     groups[spot].forEach((p) => {
-      const [mi, mt, mc] = mood(p);
       const ph = photoOf(p.id);
-      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges"><span class="mood ${mc}" title="${esc(mt)}">${I(mi)}<span class="sr-only">${esc(mt)}</span></span>${ghBadge(p)}</span></div>
-        <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}проверка ${esc(rel(p.nextCheck))}</small></button>`;
+      const st = states(p);
+      const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}</span></div>
+        <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span></small></button>`;
     });
     html += `</div></section>`;
   });
   return html;
 }
 
+// Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
+// The chips also teach which face means what.
+let plantSt = '';
+// Filter keys of a plant: its states, plus «greenhouse» when it lives in the теплица.
+const filterKeys = (p, st = states(p)) => (p.greenhouse ? [...st, 'greenhouse'] : st);
+function stateFilter(ps) {
+  const n = {};
+  const due = [];
+  ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
+  // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
+  const sel = n[plantSt] ? plantSt : '';
+  // Same chips as in the plant card; the chosen one gets a ring in its own color.
+  const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
+  // «мутновато» when every plant due is a cutting in water, else «суховато».
+  const word = (k) => (k === 'need' && due.every((p) => p.type === 'water') ? 'мутновато' : STATES[k][1]);
+  return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
+    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
+    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
+}
+
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.
 let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {
-  if (!$('#plants-q')) plantQ = ''; // the field is gone (fewer than 6 plants): show everything
+  if (!$('#plants-q')) { plantQ = ''; plantSt = ''; } // no search or filter (fewer than 6 plants): show everything
+  if (plantSt && !document.querySelector(`.st-chip.on[data-st="${plantSt}"]`)) plantSt = ''; // no plants left in that state
   const q = norm(plantQ.trim());
   let any = false;
   document.querySelectorAll('.pgroup').forEach((g) => {
     let n = 0;
-    g.querySelectorAll('.pcard').forEach((c) => { const on = !q || c.dataset.q.includes(q); c.hidden = !on; if (on) n++; });
+    g.querySelectorAll('.pcard').forEach((c) => {
+      const on = (!q || c.dataset.q.includes(q)) && (!plantSt || c.dataset.st.split(' ').includes(plantSt));
+      c.hidden = !on; if (on) n++;
+    });
     g.hidden = !n; any ||= n > 0;
   });
   const none = $('#plants-none');
@@ -622,7 +664,7 @@ function openPlant(id) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
-  const [mi, mt, mc] = mood(p);
+  const mc = mood(p)[2];
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
@@ -633,7 +675,7 @@ function openPlant(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
       <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
-      <span class="hero-badges"><span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}</span></div>
+      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
@@ -660,7 +702,7 @@ function openPlant(id) {
 
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
       <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В тепличке — напоминать проветривать</label></div>
+    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div>
 
     <h2>Шпаргалка</h2>
     <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
@@ -921,11 +963,14 @@ function showImport() {
 const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Вставьте ответ');
 function addImported() {
   if (addFlow) addFlow.done = true;
-  const list = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]).sort((a, b) => a.every - b.every);
+  const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
+  const list = [...picked].sort((a, b) => a.every - b.every);
   // A new collection where every plant has a room keeps no empty default «Комната»: the first imported room takes its place.
   const first = S.rooms[0];
-  const fresh = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
+  let rename = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
   const roomsBefore = S.rooms.length;
+  // Rooms come in the order the AI listed them (plants below are sorted by how often to check them).
+  picked.forEach((it) => { if (it.room) { importRoom(it.room, rename); rename = false; } });
   list.forEach((it, i) => {
     const id = newId('c', i);
     const { name, room, spot: rawSpot, ...d } = it;
@@ -933,7 +978,7 @@ function addImported() {
     const spot = rawSpot && (S.spots.find((x) => norm(x) === norm(rawSpot)) || rawSpot);
     if (spot && !S.spots.includes(spot)) S.spots.push(spot);
     S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
-    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, fresh) };
+    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, false) };
   });
   initBonus(S);
   save();
@@ -945,13 +990,14 @@ function addImported() {
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
   toast(`Добавлено ${plantsN(list.length)} 🌱${noSpot ? ' Откройте каждое без места, чтобы его выбрать' : ''}`);
 }
-// The room id for an imported plant: an existing room with that name, or a new one.
+// The room id for an imported plant: an existing room with that name, or a new one
+// (`renameFirst`: the empty default room takes this name instead).
 // Without a room the plant lives in the first room (no `room` field needed).
-function importRoom(name, fresh) {
+function importRoom(name, renameFirst) {
   if (!name) return undefined;
   const found = S.rooms.find((r) => norm(r.name) === norm(name));
   if (found) return found.id;
-  if (fresh && S.rooms.length === 1 && !Object.keys(S.plants).length) {
+  if (renameFirst) {
     S.rooms[0].name = name;
     return S.rooms[0].id;
   }
@@ -1416,8 +1462,8 @@ document.addEventListener('click', (e) => {
       undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
       afterTask('Свежий воздух! 🌬️', undo); break;
     case 'vent-off':
-      if (confirm('Тепличка больше не нужна? Больше не буду напоминать проветривать.')) {
-        undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплички! 🎉', undo);
+      if (confirm('Теплица больше не нужна? Больше не буду напоминать проветривать.')) {
+        undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
       }
       break;
     case 'bonus-done': {
@@ -1595,6 +1641,11 @@ document.addEventListener('click', (e) => {
       if (el.dataset.from === 'settings') openSettings();
       track('room_removed', { rooms: S.rooms.length }); break;
     }
+    case 'st-filter':
+      plantSt = el.dataset.st;
+      el.parentElement.querySelectorAll('.st-chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
+      filterPlants();
+      track('plants_filtered', { status: plantSt || 'all' }); break;
     case 'room-pick':
       S.plants[id].room = el.dataset.room; save();
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
@@ -1639,10 +1690,9 @@ document.addEventListener('change', (e) => {
   const badges = sheet.open && (f === 'greenhouse' || f === 'lux') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
-    const [mi, mt, mc] = mood(p);
-    badges.innerHTML = `<span class="mood hero-mood ${mc}">${I(mi)}${esc(mt)}</span>${ghBadge(p)}`;
+    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}`;
     const pic = $('.hero-pic');
-    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mc);
+    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
   }
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
