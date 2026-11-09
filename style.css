@@ -305,7 +305,6 @@ button { cursor: pointer; }
 .st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
 .st-filter .st-chip { min-height: 44px; }
 .st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
-.st-filter .st-chip.greenhouse { color: var(--st-gh); }
 .st-filter .st-chip.on { border-color: currentColor; }
 /* Counts stay quiet: regular weight, smaller, grey */
 .st-filter .st-chip .n { font-size: 0.824rem; font-weight: 600; color: var(--muted); }
@@ -378,12 +377,10 @@ dialog { --card: var(--bubble); }
 .mood.watered { color: var(--st-watered); }
 .mood.dim { color: var(--st-dim); }
 .mood.hot { color: var(--st-hot); }
-.gh { color: var(--st-gh); }
+.gh, .mood.greenhouse { color: var(--st-gh); }
 /* Greenhouse badge: a round chip as tall as the status chip */
 .gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
 .gh .ic { width: 17px; height: 17px; stroke-width: 2.4; }
-.hero-badges .gh { font-size: 0.941rem; width: calc(1.5em + 14px); height: calc(1.5em + 14px); }
-.hero-badges .gh .ic { width: 19px; height: 19px; }
 .sheet-main {
   position: relative; z-index: 1; margin: -28px -16px 0; padding: 22px 16px 0;
   background: var(--sheet-solid); border-radius: 28px 28px 0 0; box-shadow: 0 -8px 24px rgba(42, 33, 24, .12);

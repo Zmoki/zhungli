@@ -375,7 +375,10 @@ function greeting() {
 }
 
 // Little greenhouse badge next to the status
-const ghBadge = (p) => (p.greenhouse ? `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>` : '');
+// Greenhouse badge: a round icon on grid cards, a worded chip like the status ones in the plant card.
+const ghBadge = (p, words) => (!p.greenhouse ? ''
+  : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
+    : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`);
 
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
@@ -665,7 +668,7 @@ function openPlant(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
       <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
-      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p)}</span></div>
+      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
@@ -1676,7 +1679,7 @@ document.addEventListener('change', (e) => {
   const badges = sheet.open && (f === 'greenhouse' || f === 'lux') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
-    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p)}`;
+    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}`;
     const pic = $('.hero-pic');
     if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
   }
