@@ -552,8 +552,10 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
 let installPrompt = null;
 // Other apps' built-in browsers (Facebook, Instagram, LinkedIn, Line, VK, OK; on Android any app's WebView, «; wv)»):
 // no «На экран Домой» or install, and their data can be lost like in Telegram's. Telegram has its own hint above.
+// A few Android browsers are built on the WebView too; they name themselves, so they're left out.
 const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
-  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent) || /Android.*; wv\)/.test(navigator.userAgent));
+  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent)
+    || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent)));
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
@@ -573,6 +575,12 @@ function currentHint() {
     const why = 'Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.';
     const where = IOS ? 'в Safari' : 'в браузере';
     const menu = IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»';
+    // Android apps' WebViews often can't share or download files, so a backup button there could do nothing.
+    if (hasPlants && !IOS) {
+      return hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} В меню приложения выберите ${menu}. Сохранить копию здесь обычно не получается, поэтому растения, скорее всего, придётся отметить там заново.`,
+        '<button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>');
+    }
     return hasPlants
       ? hintCard('triangle-alert', `Откройте Жунгли ${where}`,
         `${why} Сохраните копию, откройте Жунгли ${where} (в меню приложения — ${menu}) и восстановите её там.`,
