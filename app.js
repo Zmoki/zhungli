@@ -552,7 +552,7 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
 let installPrompt = null;
 // Other apps' built-in browsers on iPhone (Facebook, Instagram, LinkedIn, Line, VK, OK): no «На экран Домой»,
 // and their data can be lost like in Telegram's.
-const IN_APP = IOS && /FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|OKApp/.test(navigator.userAgent);
+const IN_APP = IOS && /FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|OKApp/i.test(navigator.userAgent);
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
@@ -572,10 +572,10 @@ function currentHint() {
     const why = 'Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.';
     return hasPlants
       ? hintCard('triangle-alert', 'Откройте Жунгли в Safari',
-        `${why} Сохраните копию, откройте Жунгли в Safari (меню «•••» → «Открыть в браузере») и восстановите её там.`,
+        `${why} Сохраните копию, откройте Жунгли в Safari (в меню приложения — «Открыть в Safari» или «в браузере») и восстановите её там.`,
         '<button class="btn ok" data-act="export" data-from="in_app_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>')
       : hintCard('triangle-alert', 'Откройте Жунгли в Safari',
-        `${why} Меню «•••» → «Открыть в браузере».`,
+        `${why} В меню приложения выберите «Открыть в Safari» или «в браузере».`,
         '<button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>');
   }
   // Stats run from the first screen, so their notice shows from the first screen too.
@@ -587,7 +587,9 @@ function currentHint() {
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
   const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !S.hideInstall;
   // Chrome, Firefox, Edge and others on iPhone add to the home screen through their own «Поделиться» too.
-  const share = /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(navigator.userAgent) ? '«Поделиться»' : 'Safari → «Поделиться»';
+  // Name Safari only when sure: iPad browsers send a Mac user agent that doesn't say which browser it is.
+  const ua = navigator.userAgent;
+  const share = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»';
   if (iosBrowser && !hasPlants) {
     return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
       `${share} → «На экран Домой», и отмечайте растения уже там. Так iPhone не сотрёт ваши отметки, если пару недель не заходить.`,
@@ -615,7 +617,7 @@ function currentHint() {
     if (S.movedHome) {
       return hintCard('smartphone', 'Открывайте Жунгли с иконки',
         'Здесь, в браузере, осталась старая копия: отметки отсюда не попадут в Жунгли на экране «Домой». Если ещё не перенесли растения, нажмите там «Восстановить копию».',
-        '<button class="btn" data-act="export" data-from="install_hint">Сохранить копию ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
+        '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
       `Так iPhone не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
@@ -652,7 +654,7 @@ function viewToday() {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
       ${quickStart()}
-      <p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в Safari или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
+      <p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
       ${currentHint()}`;
   }
 
