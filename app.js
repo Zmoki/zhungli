@@ -1287,25 +1287,35 @@ function copyText(text) {
   ta.className = 'copy-buffer';
   ($('#sheet[open]') || document.body).appendChild(ta);
   selectAll(ta);
+  // execCommand can report success with nothing selected (so nothing copied): trust it only for a full selection.
+  const selected = ta.selectionEnd - ta.selectionStart === text.length;
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { /* not supported */ }
   ta.remove();
-  if (ok) return Promise.resolve('exec');
+  if (ok && selected) return Promise.resolve('exec');
   if (!navigator.clipboard) return Promise.resolve('none');
   return navigator.clipboard.writeText(text).then(() => 'clipboard', () => 'failed');
 }
 // Copies the prompt with a visible «Копирую…» step: the result shows no sooner than a second after the tap,
 // so nobody rushes off to the AI app before a slow phone has finished. Taps meanwhile are ignored.
+// A copy that throws or hangs counts as 'failed'.
 const COPY_PAUSE = 1000;
+const COPY_TIMEOUT = 5000;
 function copyPrompt(el, done) {
   if (el.dataset.busy) return;
   el.dataset.busy = '1';
+  el.setAttribute('aria-busy', 'true');
   el.innerHTML = `${I('copy')}Копирую…`;
+  if ($('#imp-status')) $('#imp-status').textContent = 'Копирую запрос…';
   const t0 = Date.now();
-  copyText(IMPORT_PROMPT).then((how) => setTimeout(() => {
-    delete el.dataset.busy;
-    done(how);
-  }, Math.max(0, COPY_PAUSE - (Date.now() - t0))));
+  let copying;
+  try { copying = copyText(IMPORT_PROMPT); } catch (e) { copying = Promise.resolve('failed'); }
+  Promise.race([copying, new Promise((res) => setTimeout(res, COPY_TIMEOUT, 'failed'))])
+    .then((how) => setTimeout(() => {
+      delete el.dataset.busy;
+      el.removeAttribute('aria-busy');
+      done(how);
+    }, Math.max(0, COPY_PAUSE - (Date.now() - t0))));
 }
 // The prompt as text to copy by hand, when copying didn't work. An ordinary (editable) field on purpose:
 // iPhone offers «Выбрать все» only in fields you can type in, and a readonly one leaves only dragging
@@ -1968,7 +1978,7 @@ document.addEventListener('click', (e) => {
       if (addFlow) addFlow.promptCopied = true;
       copyPrompt(el, (how) => {
         track('import_prompt_copied', { how });
-        if (!$('#imp-status')) return; // the sheet was closed meanwhile
+        if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
         if (how === 'failed' || how === 'none') {
           showPrompt();
           el.textContent = 'Не скопировалось — текст ниже';
@@ -1987,7 +1997,7 @@ document.addEventListener('click', (e) => {
     case 'import-copy-again':
       copyPrompt(el, (how) => {
         track('import_prompt_copied', { how, from: 'again' });
-        if (!$('#imp-status')) return;
+        if (!el.isConnected) return;
         const ok = how === 'exec' || how === 'clipboard';
         el.innerHTML = ok ? `${I('check')}Скопировано` : 'Скопируйте из поля выше';
         $('#imp-status').textContent = ok ? 'Запрос скопирован' : 'Не скопировалось. Скопируйте текст из поля: «Выбрать все», затем «Скопировать».';
