@@ -541,7 +541,7 @@ function ava(p, cls = 'ava') {
 
 // Hint cards on «Сегодня»: same layout, at most one at a time.
 // Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
-// With no plants they show below the welcome, and «add to home screen» waits for the first plant.
+// With no plants they show below the welcome; Telegram's «add to home screen» waits for the first plant.
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
@@ -565,11 +565,11 @@ function currentHint() {
       'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
   }
-  // «Add to home screen» waits for the first plant: before that there's nothing to keep.
-  if (!Object.keys(S.plants).length) return '';
+  const hasPlants = Object.keys(S.plants).length > 0;
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
+  // It waits for the first plant: the mini app keeps its data in Telegram's cloud, so nothing is lost by waiting.
   if (MINI_APP) {
-    if (window.tgHome && !S.hideInstall) {
+    if (hasPlants && window.tgHome && !S.hideInstall) {
       return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
         'Иконка будет открывать приложение сразу, без поиска бота в Телеграме.',
         '<button class="btn" data-act="tg-home">Добавить</button><button class="btn ghost" data-act="hide-install">Не нужно</button>');
@@ -577,10 +577,17 @@ function currentHint() {
     return '';
   }
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  // iPhone keeps a home-screen app's data apart from Safari's: the icon opens an empty Жунгли.
+  // So the hint comes before the first plant, and with plants it explains moving them with a backup.
   if (isIOS && !navigator.standalone && !S.hideInstall) {
-    return hintCard('smartphone', 'Добавьте меня на экран «Домой»',
-      'Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт ваши отметки, если пару недель не заходить.',
-      '<button class="btn" data-act="hide-install">Уже на экране</button>');
+    if (!hasPlants) {
+      return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
+        'Safari → «Поделиться» → «На экран Домой», и отмечайте растения уже там. Так iPhone не сотрёт ваши отметки, если пару недель не заходить.',
+        '<button class="btn" data-act="hide-install">Уже на экране</button>');
+    }
+    return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
+      'Так iPhone не сотрёт ваши отметки. Safari → «Поделиться» → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».',
+      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install">Уже на экране</button>');
   }
   return '';
 }
@@ -613,7 +620,7 @@ function viewToday() {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
       ${quickStart()}
-      <p class="mt-12 small muted">Уже вели Жунгли на другом устройстве? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
+      <p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в Safari или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
       ${currentHint()}`;
   }
 
@@ -2122,7 +2129,7 @@ document.addEventListener('click', (e) => {
     case 'limit':
       S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
-    case 'export': doExport(); track('backup_exported'); break;
+    case 'export': doExport(); track('backup_exported', el.dataset.from ? { from: el.dataset.from } : {}); break;
     case 'import': $('#import-input').click(); break;
     case 'reset':
       if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {

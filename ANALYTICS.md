@@ -79,7 +79,7 @@ On every event:
 | `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
 | `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
 | `room_removed` | a room removed (no room name sent) | `rooms` |
-| `backup_exported` | backup downloaded | — |
+| `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app); absent from Settings |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
 | `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram`; `from`: `settings` / `news` / `import` |
