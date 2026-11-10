@@ -1117,7 +1117,7 @@ function openCustom(species = '', from = 'button') {
 }
 
 /* ---------- Import from an AI chat ---------- */
-// The user copies a prompt into ChatGPT/Claude, pastes the JSON answer back,
+// The user copies a prompt into ChatGPT/Claude, picks the plants.json file it sends,
 // and the plants become custom plants with their care tips.
 const IMPORT_PROMPT = `Сделай файл plants.json со списком моих растений для приложения «Жунгли» и пришли его мне для скачивания — файлом, не текстом в чате. Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
 
@@ -1252,19 +1252,22 @@ function openImport() {
 }
 // Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
 const IMPORT_MAX = 1e6;
-// Reads the file the AI sent and shows its plants. `ext` is only the file's extension, for stats.
+// Reads the file the AI sent and shows its plants. For stats only the kind of file goes out
+// (json / txt / other): what follows the dot can be part of a name («Растения.Коля»).
 async function importFile(f) {
-  const ext = (f.name.includes('.') ? f.name.split('.').pop() : '').toLowerCase().slice(0, 8);
+  const dot = f.name.lastIndexOf('.');
+  const ext = { json: 'json', txt: 'txt' }[dot < 0 ? '' : f.name.slice(dot + 1).toLowerCase()] || 'other';
+  if (f.size > IMPORT_MAX) { showImport(null, ext, 'too_big'); return; }
   let text = null;
-  try { if (f.size <= IMPORT_MAX) text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
+  try { text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
   showImport(text, ext);
 }
 // A backup picked here by mistake: it has no plant list for import, but can be restored in settings.
 function isBackup(text) {
   try { const d = JSON.parse(text); return !!d && d.app === 'zhungli' && !!d.state; } catch (e) { return false; }
 }
-function showImport(text, ext) {
-  const res = text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text);
+function showImport(text, ext, fail) {
+  const res = fail ? { error: fail } : text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text);
   const box = $('#imp-list');
   if (!box) return;
   $('#imp-file').innerHTML = `${I('file-up')}${res.error ? 'Выбрать файл' : 'Выбрать другой файл'}`;
@@ -1273,7 +1276,7 @@ function showImport(text, ext) {
     importPicked = new Set();
     box.innerHTML = res.error === 'backup'
       ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Восстановить копию».</p>'
-      : `<p class="error-note small">${res.error === 'unreadable' ? 'Не получилось открыть этот файл.' : 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ пришлёт по запросу из шага 1.</p>
+      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений — похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ пришлёт по запросу из шага 1.</p>
       <p class="small muted">Всё равно не выходит? Пришлите файл в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
     track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });
   } else {
@@ -1876,7 +1879,10 @@ document.addEventListener('click', (e) => {
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); break;
     case 'add-import': openImport(); break;
-    case 'import-file': $('#ai-file-input').click(); break;
+    case 'import-file':
+      // The file picker hides the app on phones: that's part of importing, not leaving (see visibilitychange).
+      if (addFlow) addFlow.picking = true;
+      $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
       const done = () => { el.innerHTML = `${I('check')}Скопировано`; track('import_prompt_copied'); };
@@ -2188,13 +2194,14 @@ async function checkUpdate() {
 let lastOpen = Date.now();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    // Leaving for the AI chat after copying the prompt is the expected path, not abandoning.
-    const toAiChat = addFlow && addFlow.sheet === 'import' && addFlow.promptCopied;
-    if (sheet.open && !toAiChat) endAddFlow(true);
+    // Leaving for the AI chat after copying the prompt, or opening the file picker, is the expected path, not abandoning.
+    const expected = addFlow && addFlow.sheet === 'import' && (addFlow.promptCopied || addFlow.picking);
+    if (sheet.open && !expected) endAddFlow(true);
     endQuick('left_app');
     flushStats();
     return;
   }
+  if (addFlow) addFlow.picking = false;
   if (Date.now() - lastOpen > 30 * 60 * 1000) track('app_opened', { how: 'resume' });
   lastOpen = Date.now();
   checkUpdate();
