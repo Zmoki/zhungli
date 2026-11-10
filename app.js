@@ -1252,7 +1252,7 @@ function openImport() {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
-      <p class="small copy-help" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
+      <p class="mt-12 small copy-help" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
       <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">${PROMPT_HINT}</p>
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
@@ -1274,7 +1274,9 @@ function selectAll(ta) {
 }
 // Copies text and resolves to how it went: 'exec', 'clipboard', 'failed' or 'none'.
 // Select-and-copy goes first, inside the tap: on iPhone, a home-screen app's navigator.clipboard.writeText
-// can report success without copying anything. The Clipboard API runs too, so either way can carry it.
+// can report success without copying anything. The Clipboard API runs only when that fails: a second write
+// right after the first can still be going when the person switches to the AI app on a slow iPhone,
+// and the app is suspended mid-write, leaving the clipboard empty.
 // The text goes into a hidden readonly field in the open sheet (a modal <dialog> makes the rest inert),
 // so no keyboard shows.
 function copyText(text) {
@@ -1285,11 +1287,35 @@ function copyText(text) {
   ta.className = 'copy-buffer';
   ($('#sheet[open]') || document.body).appendChild(ta);
   selectAll(ta);
+  // execCommand can report success with nothing selected (so nothing copied): trust it only for a full selection.
+  const selected = ta.selectionEnd - ta.selectionStart === text.length;
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { /* not supported */ }
   ta.remove();
-  const api = navigator.clipboard ? navigator.clipboard.writeText(text).then(() => true, () => false) : Promise.resolve(null);
-  return api.then((wrote) => (ok ? 'exec' : wrote ? 'clipboard' : wrote === false ? 'failed' : 'none'));
+  if (ok && selected) return Promise.resolve('exec');
+  if (!navigator.clipboard) return Promise.resolve('none');
+  return navigator.clipboard.writeText(text).then(() => 'clipboard', () => 'failed');
+}
+// Copies the prompt with a visible «Копирую…» step: the result shows no sooner than a second after the tap,
+// so nobody rushes off to the AI app before a slow phone has finished. Taps meanwhile are ignored.
+// A copy that throws or hangs counts as 'failed'.
+const COPY_PAUSE = 1000;
+const COPY_TIMEOUT = 5000;
+function copyPrompt(el, done) {
+  if (el.dataset.busy) return;
+  el.dataset.busy = '1';
+  el.setAttribute('aria-busy', 'true');
+  el.innerHTML = `${I('copy')}Копирую…`;
+  if ($('#imp-status')) $('#imp-status').textContent = 'Копирую запрос…';
+  const t0 = Date.now();
+  let copying;
+  try { copying = copyText(IMPORT_PROMPT); } catch (e) { copying = Promise.resolve('failed'); }
+  Promise.race([copying, new Promise((res) => setTimeout(res, COPY_TIMEOUT, 'failed'))])
+    .then((how) => setTimeout(() => {
+      delete el.dataset.busy;
+      el.removeAttribute('aria-busy');
+      done(how);
+    }, Math.max(0, COPY_PAUSE - (Date.now() - t0))));
 }
 // The prompt as text to copy by hand, when copying didn't work. An ordinary (editable) field on purpose:
 // iPhone offers «Выбрать все» only in fields you can type in, and a readonly one leaves only dragging
@@ -1950,9 +1976,9 @@ document.addEventListener('click', (e) => {
       $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
-      copyText(IMPORT_PROMPT).then((how) => {
+      copyPrompt(el, (how) => {
         track('import_prompt_copied', { how });
-        if (!$('#imp-status')) return;
+        if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
         if (how === 'failed' || how === 'none') {
           showPrompt();
           el.textContent = 'Не скопировалось — текст ниже';
@@ -1969,9 +1995,9 @@ document.addEventListener('click', (e) => {
     }
     case 'import-show': showPrompt(); track('import_prompt_shown'); break;
     case 'import-copy-again':
-      copyText(IMPORT_PROMPT).then((how) => {
+      copyPrompt(el, (how) => {
         track('import_prompt_copied', { how, from: 'again' });
-        if (!$('#imp-status')) return;
+        if (!el.isConnected) return;
         const ok = how === 'exec' || how === 'clipboard';
         el.innerHTML = ok ? `${I('check')}Скопировано` : 'Скопируйте из поля выше';
         $('#imp-status').textContent = ok ? 'Запрос скопирован' : 'Не скопировалось. Скопируйте текст из поля: «Выбрать все», затем «Скопировать».';
