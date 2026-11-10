@@ -402,6 +402,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .note-links .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
 .field { margin-bottom: 26px; }
+/* Hint under the «Как растёт» selects: as close to the last one as a field's own hint. */
+.way-note { margin: -20px 0 26px; }
 .field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
 .input {
   width: 100%; border: 2px solid var(--edge); border-radius: 16px; padding: 12px 14px; background: var(--field);

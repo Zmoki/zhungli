@@ -816,14 +816,16 @@ function waterBox(p) {
 }
 // «Как растёт» in the plant card: the medium, and for a pot how it's watered, with what that means.
 function wayBox(p, d) {
-  const sel = (field, label, list, value) => `<div class="field"><label for="f-${field}">${label}</label><select class="input" id="f-${field}" data-field="${field}" data-id="${esc(p.id)}" aria-describedby="way-hint">
+  const sel = (field, label, list, value) => `<label for="f-${field}">${label}</label><select class="input" id="f-${field}" data-field="${field}" data-id="${esc(p.id)}" aria-describedby="way-hint">
     ${Object.entries(list).map(([k, x]) => `<option value="${k}"${value === k ? ' selected' : ''}>${x.name}</option>`).join('')}</select>`;
-  // Succulents and cacti rot in steady moisture.
-  const risky = d.type === 'dry' && wayOf(p).wet;
-  return `${sel('medium', 'В чём растёт', MEDIA, p.type)}${MEDIA[p.type].pot ? `</div>${sel('watering', 'Как поливаю', WATERING, p.watering)}` : ''}
-    <p class="mt-6 small muted" id="way-hint">${esc(wayOf(p).hint)}</p>
-    ${risky ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}</div>`;
+  return `<div class="field">${sel('medium', 'В чём растёт', MEDIA, p.type)}</div>
+    <div class="field" id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}>${sel('watering', 'Как поливаю', WATERING, p.watering || 'top')}</div>
+    <div class="way-note" id="way-note">${wayNote(p, d)}</div>`;
 }
+// What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
+// Redrawn alone on a change: replacing the selects would reopen the picker on iPhone.
+const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
+  ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
 
 // The plant card's picture and its photo buttons; heroPhotoChanged() redraws them alone.
@@ -2083,9 +2085,10 @@ document.addEventListener('change', (e) => {
     const res = setWay(id, medium, watering);
     if (!res) return;
     const p = plant(id);
-    $('#way-box').innerHTML = wayBox(p, d);
-    const again = $(`#f-${f}`);
-    if (again) again.focus();
+    // The selects stay in place (a new one would reopen its picker on iPhone); only what's around them changes.
+    $('#watering-field').hidden = !MEDIA[p.type].pot;
+    if (p.watering) $('#f-watering').value = p.watering;
+    $('#way-note').innerHTML = wayNote(p, d);
     $('#water-box').innerHTML = waterBox(p);
     $('#int-field').hidden = !!wayOf(p).noChecks;
     $('#int-val').textContent = days(Math.round(r.interval));
