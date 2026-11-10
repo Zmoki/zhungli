@@ -4,6 +4,8 @@
 const KEY = 'zhungli.v1';
 // Opened inside Telegram's own browser: data there is separate from Safari/Chrome and can be lost.
 const IN_TELEGRAM = /Telegram/i.test(navigator.userAgent) || typeof window.TelegramWebviewProxy !== 'undefined';
+// iPhone or iPad (iPadOS Safari presents itself as a Mac, so touch points tell it apart).
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // Opened as the Telegram mini app (/tg). Remembered for the session, so pages like /privacy keep it.
 const MINI_APP_LINK = 'https://t.me/ZhungliPlantsBot?startapp';
 const MINI_APP = (() => {
@@ -539,18 +541,28 @@ function ava(p, cls = 'ava') {
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
 }
 
-// Hint cards on «Сегодня»: same layout, at most one at a time.
-// Priority: Telegram's browser, then the stats notice (opt-out), then «add to home screen».
-// With no plants they show below the welcome, and «add to home screen» waits for the first plant.
+// Hint cards on «Сегодня»: same layout, usually one at a time. Priority: Telegram's browser, another app's browser
+// on iPhone, the stats notice (opt-out), then «add to home screen». With no plants they show below the welcome.
+// On iPhone with no plants the home-screen hint comes first, next to the stats notice: plants added before
+// installing stay behind in the browser. Telegram's and Chrome's install hints wait for the first plant.
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
+// Android and computers (Chrome, Edge, Samsung Internet) offer installing through this event; Safari and Firefox don't.
+let installPrompt = null;
+// Other apps' built-in browsers (Facebook, Instagram, LinkedIn, Line, VK, OK; on Android any app's WebView, «; wv)»):
+// no «На экран Домой» or install, and their data can be lost like in Telegram's. Telegram has its own hint above.
+// A few Android browsers are built on the WebView too; they name themselves, so they're left out.
+const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
+  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent)
+    || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent)));
 function currentHint() {
+  const hasPlants = Object.keys(S.plants).length > 0;
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
     const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>`;
     // Nothing to lose yet: a friendly invite, not a warning.
-    if (!Object.keys(S.plants).length) {
+    if (!hasPlants) {
       return hintCard('sprout', 'Удобнее в приложении Телеграма',
         'Там растения хранятся в облаке Телеграма и появятся на любом устройстве.',
         `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
@@ -559,28 +571,69 @@ function currentHint() {
       'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить» там.',
       `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
-  // Stats run from the first screen, so their notice shows from the first screen too.
-  if (!S.statsNotice && S.settings.stats !== false) {
-    return hintCard('lightbulb', 'Анонимная статистика',
-      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
-      '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>');
+  if (IN_APP && !S.hideInstall) {
+    const why = 'Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.';
+    const where = IOS ? 'в Safari' : 'в браузере';
+    const menu = IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»';
+    // Android apps' WebViews often can't share or download files, so a backup button there could do nothing.
+    if (hasPlants && !IOS) {
+      return hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} В меню приложения выберите ${menu}. Сохранить копию здесь обычно не получается, поэтому растения, скорее всего, придётся отметить там заново.`,
+        '<button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>');
+    }
+    return hasPlants
+      ? hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} Сохраните копию, откройте Жунгли ${where} (в меню приложения — ${menu}) и восстановите её там.`,
+        '<button class="btn ok" data-act="export" data-from="in_app_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>')
+      : hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} В меню приложения выберите ${menu}.`,
+        '<button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>');
   }
-  // «Add to home screen» waits for the first plant: before that there's nothing to keep.
-  if (!Object.keys(S.plants).length) return '';
+  // Stats run from the first screen, so their notice shows from the first screen too.
+  const stats = !S.statsNotice && S.settings.stats !== false
+    ? hintCard('lightbulb', 'Анонимная статистика',
+      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
+      '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>')
+    : '';
+  // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
+  const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !S.hideInstall;
+  // Chrome, Firefox, Edge and others on iPhone add to the home screen through their own «Поделиться» too.
+  // Name Safari only when sure: iPad browsers send a Mac user agent that doesn't say which browser it is.
+  const ua = navigator.userAgent;
+  const share = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»';
+  const device = /iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad';
+  if (iosBrowser && !hasPlants) {
+    return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
+      `${share} → «На экран Домой», и отмечайте растения уже там. Так ${device} не сотрёт ваши отметки, если пару недель не заходить.`,
+      '<button class="btn" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>') + stats;
+  }
+  if (stats) return stats;
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
+  // It waits for the first plant: the mini app keeps its data in Telegram's cloud, so nothing is lost by waiting.
   if (MINI_APP) {
-    if (window.tgHome && !S.hideInstall) {
+    if (hasPlants && window.tgHome && !S.hideInstall) {
       return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
         'Иконка будет открывать приложение сразу, без поиска бота в Телеграме.',
-        '<button class="btn" data-act="tg-home">Добавить</button><button class="btn ghost" data-act="hide-install">Не нужно</button>');
+        '<button class="btn" data-act="tg-home">Добавить</button><button class="btn ghost" data-act="hide-install" data-kind="telegram">Не нужно</button>');
     }
     return '';
   }
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  if (isIOS && !navigator.standalone && !S.hideInstall) {
-    return hintCard('smartphone', 'Добавьте меня на экран «Домой»',
-      'Safari → кнопка «Поделиться» → «На экран Домой». Так iPhone не сотрёт ваши отметки, если пару недель не заходить.',
-      '<button class="btn" data-act="hide-install">Уже на экране</button>');
+  // The installed app shares the browser's data here, so it can wait for the first plant.
+  if (installPrompt && hasPlants && !S.hideInstall) {
+    return hintCard('smartphone', 'Установите Жунгли как приложение',
+      'Жунгли будут открываться с иконки, в своём окне. Растения останутся на месте.',
+      '<button class="btn ok" data-act="install">Установить</button><button class="btn ghost" data-act="hide-install" data-kind="install">Не нужно</button>');
+  }
+  if (iosBrowser) {
+    // After «Сохранить копию» here: the plants are (about to be) in the home-screen app, so this copy goes stale.
+    if (S.movedHome) {
+      return hintCard('smartphone', 'Открывайте Жунгли с иконки',
+        'Здесь, в браузере, осталась старая копия: отметки отсюда не попадут в Жунгли на экране «Домой». Если ещё не перенесли растения, нажмите там «Восстановить копию».',
+        '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
+    }
+    return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
+      `Так ${device} не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
+      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
   return '';
 }
@@ -613,7 +666,7 @@ function viewToday() {
     return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
       <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
       ${quickStart()}
-      <p class="mt-12 small muted">Уже вели Жунгли на другом устройстве? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
+      <p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
       ${currentHint()}`;
   }
 
@@ -1959,7 +2012,15 @@ document.addEventListener('click', (e) => {
       track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
       bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
-    case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
+    case 'hide-install': S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); break;
+    case 'install': {
+      const ask = installPrompt;
+      if (!ask) break;
+      installPrompt = null; // the browser's prompt works once
+      try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
+      ask.userChoice.then(({ outcome }) => { track('install_prompt', { outcome }); render(); }, () => render());
+      break;
+    }
     case 'tg-home': if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); break;
     case 'stats-ok': S.statsNotice = true; save(); render(); break;
     case 'stats-off':
@@ -2122,7 +2183,10 @@ document.addEventListener('click', (e) => {
     case 'limit':
       S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
-    case 'export': doExport(); track('backup_exported'); break;
+    case 'export':
+      doExport(); track('backup_exported', el.dataset.from ? { from: el.dataset.from } : {});
+      if (el.dataset.from === 'install_hint' && !S.movedHome) { S.movedHome = true; save(); render(); }
+      break;
     case 'import': $('#import-input').click(); break;
     case 'reset':
       if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
@@ -2327,7 +2391,6 @@ document.addEventListener('visibilitychange', () => {
 // the app is restarted. When the height is stuck, hiding and showing the whole page for one reflow
 // makes iOS measure it again. The tallest height seen per width tells "stuck" from a rotation.
 // Not in Safari: its toolbars change the height on their own.
-const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 if (IOS && (navigator.standalone || MINI_APP)) {
   const tallest = {};
   const remember = () => { tallest[innerWidth] = Math.max(tallest[innerWidth] || 0, innerHeight); };
@@ -2358,6 +2421,9 @@ if (IOS && (navigator.standalone || MINI_APP)) {
   let vvTimer;
   window.visualViewport?.addEventListener('resize', () => { clearTimeout(vvTimer); vvTimer = setTimeout(remeasure, 250); });
 }
+
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; if (!booting) render(); });
+addEventListener('appinstalled', () => { installPrompt = null; track('app_installed'); render(); });
 
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
