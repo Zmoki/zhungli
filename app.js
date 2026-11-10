@@ -1238,6 +1238,10 @@ let importItems = [];
 let importRepaired = false;
 let importExt = '';
 let importPicked = new Set();
+// How to copy the shown prompt by hand: the gesture that opens the system menu differs by platform.
+const PROMPT_HINT = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Нажмите на текст, затем ещё раз — в меню «Выбрать все», потом «Скопировать».'
+  : /Android/.test(navigator.userAgent) ? 'Подержите палец на тексте — в меню «Выбрать все», потом «Копировать».'
+    : 'Выделите весь текст (Ctrl+A или ⌘A) и скопируйте.';
 function openImport() {
   startAddFlow('import');
   track('import_opened');
@@ -1249,8 +1253,8 @@ function openImport() {
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <p class="small copy-help" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
-      <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">Нажмите на текст, затем ещё раз — в меню «Выбрать все», потом «Скопировать».</p>
-        <textarea class="mt-8 input" id="imp-prompt" rows="8" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+      <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">${PROMPT_HINT}</p>
+        <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
     <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
@@ -1289,7 +1293,7 @@ function copyText(text) {
 }
 // The prompt as text to copy by hand, when copying didn't work. An ordinary (editable) field on purpose:
 // iPhone offers «Выбрать все» only in fields you can type in, and a readonly one leaves only dragging
-// across 2,500 characters. It isn't focused, so the keyboard doesn't jump up over it.
+// across 2,500 characters. inputmode="none" keeps the on-screen keyboard down, even when it's tapped.
 function showPrompt() {
   const ta = $('#imp-prompt');
   if (!ta) return;
@@ -1300,7 +1304,11 @@ function showPrompt() {
   // Editable only so the system menu offers «Выбрать все»: typing is undone, so a stray key can't end up in the AI chat.
   if (!ta.dataset.locked) {
     ta.dataset.locked = '1';
-    ta.addEventListener('beforeinput', (e) => e.preventDefault());
+    // Paste, Cut and AutoFill still show in the system menu; when one is tried, say what the field is for.
+    ta.addEventListener('beforeinput', (e) => {
+      e.preventDefault();
+      $('#imp-prompt-hint').textContent = 'Текст менять не нужно — только «Выбрать все» и «Скопировать».';
+    });
     ta.addEventListener('input', () => { if (ta.value !== IMPORT_PROMPT) ta.value = IMPORT_PROMPT; });
   }
 }
