@@ -67,35 +67,92 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 
 /* ---------- State ---------- */
 const GENERIC_QUIPS = ['Я новенькая, приятно познакомиться!', 'Посмотрите на меня внимательно 👀', 'Я тут, я расту!'];
-const TYPE_LABELS = {
-  soil: ['Полито', 'Ещё влажно'],
-  sphagnum: ['Полито', 'Ещё влажно'],
-  dry: ['Полито', 'Ещё влажно'],
-  bark: ['Полито', 'Ещё рано'],
-  water: ['Вода сменена', 'Вода ещё чистая'],
+// How a plant grows. A card's `type` is its usual way; the plant card can pick another (see growIn).
+// Each way has its own check buttons and words:
+// - act: what a check records: 'pour' (watering, default), 'top' (topping up a reservoir), 'change' (fresh water);
+// - need: the status word when a check is due (default «суховато»);
+// - task: the check as a task when the card has no question of its own; verb: the task's verb before «если…»;
+// - noFeed: no «День подкормки» (fed with every watering, or not at all); noChecks: never checked;
+// - care: a recurring bonus task; hint: shown under the choice in the plant card;
+// - water, soil: tips for a card written for another way, or with no tips of its own.
+const GROW = {
+  soil: { name: 'Грунт', labels: ['Полито', 'Ещё влажно'],
+    hint: 'Позову, когда пора проверить, не подсох ли грунт.',
+    water: 'Когда подсохнет верхний слой, обильно; лишнюю воду из поддона слить.',
+    soil: 'Универсальный грунт, горшок с дренажным отверстием.' },
+  dry: { name: 'Грунт, сушить почти полностью', labels: ['Полито', 'Ещё влажно'], noFeed: true,
+    hint: 'Позову, когда грунт должен почти совсем просохнуть.',
+    water: 'Только когда грунт просох почти до дна, затем обильно; зимой совсем редко.',
+    soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
+  sphagnum: { name: 'Сфагнум', labels: ['Полито', 'Ещё влажно'],
+    hint: 'Позову проверить, подсох ли сфагнум внутри.',
+    water: 'Когда сфагнум внутри подсох; не давать пересохнуть совсем.',
+    soil: 'Живой или сухой сфагнум, не утрамбовывать.' },
+  bark: { name: 'Кора (орхидеи)', labels: ['Полито', 'Ещё рано'], noFeed: true,
+    hint: 'Позову проверить, высохла ли кора и посеребрели ли корни.',
+    water: 'Погружением на 15–20 минут, когда кора сухая и корни серебристые; воду из кашпо слить.',
+    soil: 'Крупная кора, прозрачный горшок с отверстиями.' },
+  mineral: { name: 'Минеральный субстрат', labels: ['Полито', 'Ещё влажно'], noFeed: true,
+    hint: 'Позову проверить, подсох ли субстрат. Удобрение — в каждый полив, отдельно на подкормку звать не буду.',
+    water: 'Когда подсох верхний слой: минеральный субстрат сохнет быстрее грунта. В каждый полив — удобрение в слабой дозе, своего питания в субстрате нет.',
+    soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона. Раз в месяц пролить обильно чистой водой, чтобы вымыть соли.' },
+  wick: { name: 'Фитильный полив', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато',
+    task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
+    hint: 'Не буду звать поливать — напомню заглянуть в бак, есть ли вода.',
+    water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли.' },
+  leca: { name: 'Керамзит или гидропоника', labels: ['Долито', 'Раствор есть'], act: 'top', need: 'пустовато', verb: 'Долейте раствор', noFeed: true,
+    task: 'Долейте раствор, если уровень на минимуме',
+    care: { kind: 'flush', every: 45, task: 'Промойте керамзит', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
+    hint: 'Напомню проверить уровень раствора и раз в полтора месяца промыть керамзит. Удобрение — в каждый долив.',
+    water: 'Доливать раствор, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух. Удобрение для гидропоники — в каждый долив.',
+    soil: 'Керамзит или другой наполнитель, горшок с запасом раствора и указателем уровня. Раз в 1–2 месяца промыть керамзит и сменить раствор целиком.' },
+  water: { name: 'В воде', labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато', verb: 'Смените воду', noFeed: true,
+    task: 'Смените воду в банке',
+    hint: 'Напомню сменить воду.',
+    water: 'Доливать до уровня, воду менять раз в 1–2 недели: отстоянную, комнатной температуры. Раз в месяц можно удобрение в четверть дозы; черенкам до корней не нужно.',
+    soil: 'Банка или ваза с водой, в воде только корни и низ стебля. Слизь или запах — промыть банку и корни.' },
+  aquarium: { name: 'В аквариуме', noChecks: true, noFeed: true,
+    care: { kind: 'roots', every: 30, task: 'Осмотрите корни в аквариуме', hint: 'Тёмные мягкие корни обрежьте. Листья и стебель должны быть над водой.' },
+    hint: 'Поливать не нужно. Раз в месяц напомню осмотреть корни.',
+    water: 'Поливать не нужно: корни в воде аквариума. Не удобрять — удобрения вредны рыбам.',
+    soil: 'В воде только корни, листья и стебель над водой: на держателе у стекла или в плавающей корзинке. Перед посадкой корни отмыть от грунта.' },
 };
-// Wick watering: the plant drinks from a reservoir, so the check is about the water in it.
-const WICK_LABELS = ['Долито', 'Вода есть'];
-const labelsOf = (p) => (p.wick ? WICK_LABELS : TYPE_LABELS[p.type] || TYPE_LABELS.soil);
+const growOf = (p) => GROW[p.type] || GROW.soil;
+const labelsOf = (p) => growOf(p).labels || GROW.soil.labels;
+// How a plant grows: picked in its card (r.grow, or r.wick for wick watering), else the card's way.
+const growIn = (r, d) => (r.wick ? 'wick' : r.grow || d.type || 'soil');
+// The card's care for how the plant grows. Grown another way than the card says, the card's check
+// question and its watering and substrate tips don't fit, so that way's own tips stand in.
+function careOf(d, r) {
+  const k = growIn(r, d), g = GROW[k] || GROW.soil;
+  if (k === d.type) return { ...d, water: d.water || g.water, soil: d.soil || g.soil };
+  return { ...d, check: '', water: g.water || d.water, soil: g.soil || d.soil };
+}
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
 // A check written as an instruction (imported from an AI chat) is shown as is.
 function waterTask(p) {
-  if (p.wick) return 'Загляните в бак фитильного полива и долейте воды, если её мало';
-  const water = p.type === 'water';
-  const own = p.check && !(water && p.check === CHECK_TEXT.water) ? p.check : '';
-  if (water && !own) return 'Смените воду в банке';
+  const g = growOf(p);
+  const own = p.check && p.check !== CHECK_TEXT[p.type] ? p.check : '';
+  if (!own && g.task) return g.task;
   const q = String(own || CHECK_TEXT[p.type] || CHECK_TEXT.soil).trim();
   const i = q.indexOf('?');
   if (i < 0) return q;
   const cond = q.slice(0, i).trim();
   const rest = q.slice(i + 1).trim();
   const tail = !rest ? '' : rest.startsWith('(') ? ` ${rest}` : `. ${rest}`;
-  const task = `${water ? 'Смените воду' : 'Полейте'}, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}${tail}`;
+  const task = `${g.verb || 'Полейте'}, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}${tail}`;
   // A word joiner after the dash keeps ranges like «2–3 см» on one line.
-  return task.replace(/(\d)–(\d)/g, '$1–\u2060$2');
+  return task.replace(/(\d)–(\d)/g, '$1–⁠$2');
 }
-const TYPE_NAMES = { soil: 'Грунт', sphagnum: 'Сфагнум', bark: 'Кора (орхидеи)', dry: 'Сушить почти полностью', water: 'Черенки в воде' };
+const TYPE_NAMES = Object.fromEntries(Object.entries(GROW).map(([k, g]) => [k, g.name]));
+// Words for what a check records: a watering, a top-up of a reservoir, or fresh water.
+const ACT_WORDS = {
+  pour: { title: 'Полив', last: 'Последний полив', none: 'Поливов ещё не было', due: 'Пора проверить сегодня', next: 'Следующая проверка', btn: 'Записать полив', done: 'Полив записан 💧', sub: 'полив' },
+  top: { last: 'Последний долив', none: 'Доливов ещё не было', due: 'Пора проверить уровень сегодня', next: 'Проверить уровень', btn: 'Записать долив', done: 'Долив записан 💧', sub: 'долив' },
+  change: { title: 'Вода', last: 'Последняя смена воды', none: 'Воду ещё не меняли', due: 'Пора проверить воду сегодня', next: 'Следующая проверка', btn: 'Записать смену воды', done: 'Смена воды записана 💧', sub: 'смена воды' },
+};
+const actWords = (p) => ACT_WORDS[growOf(p).act || 'pour'];
 
 let booting = true;
 let S = load();
@@ -164,6 +221,8 @@ function initBonus(s) {
     if (!d) return;
     if (d.big && !s.bonus['dust:' + id]) s.bonus['dust:' + id] = addDays(t, -19 + 2 * (i % 8));
     if (d.rotate && !s.bonus['rotate:' + id]) s.bonus['rotate:' + id] = addDays(t, -10);
+    const care = (GROW[growIn(s.plants[id], d)] || {}).care;
+    if (care && !s.bonus[`${care.kind}:${id}`]) s.bonus[`${care.kind}:${id}`] = t;
   });
   if (!s.bonus.feed) s.bonus.feed = addDays(t, -14);
 }
@@ -214,7 +273,8 @@ function plant(id) {
   // luxRange: catalog range; lux: light meter reading.
   // species: custom name if set, else the catalog one. own: personal notes over the catalog.
   const species = r.species || d.species;
-  return { ...d, ...(r.own || {}), ...r, id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
+  // type: how it grows now, which may differ from the card's (see growIn).
+  return { ...careOf(d, r), ...(r.own || {}), ...r, type: growIn(r, d), id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
 }
 const allPlants = () => Object.keys(S.plants).map(plant).filter(Boolean);
 
@@ -257,7 +317,7 @@ function states(p) {
   const t = today(), out = [];
   const known = (p.hist && p.hist.length) || p.lastWater || p.nextCheck < t;
   if (p.lastWater === t) out.push('watered');
-  else if (p.nextCheck <= t && known) out.push('need');
+  else if (p.nextCheck <= t && known && !growOf(p).noChecks) out.push('need');
   const ls = lightStatus(p);
   if (ls === 'low') out.push('dim');
   if (ls === 'high') out.push('hot');
@@ -268,8 +328,8 @@ function mood(p, st = states(p)) {
   const k = st.includes('need') ? 'need' : st.find((x) => x === 'dim' || x === 'hot') || st[0];
   return [...STATES[k], k];
 }
-// The word for a state on one plant: a wick reservoir is «пустовато», cuttings in water «мутновато».
-const stateWord = (k, p) => (k !== 'need' ? STATES[k][1] : p.wick ? 'пустовато' : p.type === 'water' ? 'мутновато' : STATES[k][1]);
+// The word for a state on one plant: a reservoir is «пустовато», a plant in water «мутновато».
+const stateWord = (k, p) => (k === 'need' && growOf(p).need) || STATES[k][1];
 // Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
 const stateChips = (p, words, st = states(p)) => st.map((k) => (words
   ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
@@ -292,7 +352,7 @@ function priority(p) {
 
 function dueChecks() {
   const t = today();
-  return allPlants().filter((p) => p.nextCheck <= t).sort((a, b) => priority(b) - priority(a));
+  return allPlants().filter((p) => p.nextCheck <= t && !growOf(p).noChecks).sort((a, b) => priority(b) - priority(a));
 }
 
 function ventDue() {
@@ -312,10 +372,15 @@ function bonusTasks() {
     if (p.rotate && S.bonus[rk] && diff(S.bonus[rk], t) >= 14 && !snoozed(rk)) {
       out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
     }
+    const care = growOf(p).care, ck = care && `${care.kind}:${p.id}`;
+    if (care && S.bonus[ck] && diff(S.bonus[ck], t) >= care.every && !snoozed(ck)) {
+      out.push({ key: ck, p, title: `${care.task}: ${p.title}`, task: care.task, hint: care.hint });
+    }
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
-    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (p.type !== 'dry' || p.feed) && p.type !== 'bark' && p.type !== 'water');
+    // Flowering succulents (dry with `feed`) still get fed; other ways without feeding are fed with every watering or never.
+    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (!growOf(p).noFeed || (p.type === 'dry' && p.feed)));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
         hint: `Кого: ${who.map((p) => p.title).join(', ')}. Не кормим недавно пересаженных и больных.` });
@@ -337,8 +402,9 @@ function actWater(id, silent) {
     // After "still wet" answers, the real interval is about the measured one.
     // If it was already dry, it dried out earlier, so the interval doesn't grow.
     const iv = r.wet > 0 ? (r.interval + measured) / 2 : Math.min(r.interval, (r.interval + measured) / 2) * 0.95;
-    // A wick reservoir lasts its own time, not the soil's: wider bounds.
-    r.interval = r.wick ? clamp(iv, 2, 45) : clamp(iv, Math.max(1, d.every * 0.4), d.every * 3);
+    // Grown another way than the card says (a wick reservoir, water…), the card's interval doesn't apply: wider bounds.
+    const g = growIn(r, d);
+    r.interval = g === d.type ? clamp(iv, Math.max(1, d.every * 0.4), d.every * 3) : clamp(iv, GROW[g].act === 'top' ? 2 : 1, 45);
   }
   r.lastWater = t;
   r.wet = 0;
@@ -491,10 +557,10 @@ function viewToday() {
   shown.forEach((p) => {
     const [yes, no] = labelsOf(p);
     html += taskCard({
-      p, sub: plantSub(p, p.lastWater ? `${p.wick ? 'долив' : 'полив'} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
+      p, sub: plantSub(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
       buttons: `<button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button>`,
-      hint: p.wick ? '' : p.water,
+      hint: p.water,
       after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button>`,
     });
   });
@@ -504,7 +570,7 @@ function viewToday() {
       html += `<div class="celebrate"><div class="big">🎉</div><h2>Джунгли довольны!</h2>
         <p class="muted">Вы сегодня молодец. Остальное — завтра.</p></div>`;
     } else {
-      const tom = allPlants().filter((p) => p.nextCheck === addDays(t, 1)).length;
+      const tom = allPlants().filter((p) => p.nextCheck === addDays(t, 1) && !growOf(p).noChecks).length;
       html += `<div class="celebrate"><div class="big">😴</div><h2>Сегодня отдыхаем</h2>
         <p class="muted">Все в порядке, никто не просит пить.${tom ? ` Завтра проверим ${plantsN(tom)}.` : ''}</p></div>`;
     }
@@ -568,7 +634,7 @@ function spotGroups(ps, room) {
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
       html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}</span></div>
-        <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span></small></button>`;
+        <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}${growOf(p).noChecks ? `<span class="next">${esc(growOf(p).name)}</span>` : `<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
   });
@@ -632,7 +698,7 @@ let noteEdit = null; // key of the note being edited: 'water' … 'tip', 'n0' �
 const isCustom = (id) => !!S.custom[(S.plants[id] && S.plants[id].def) || id];
 
 function cheatHtml(id) {
-  const p = plant(id), r = S.plants[id], d = def(id);
+  const p = plant(id), r = S.plants[id], d = careOf(def(id), S.plants[id]);
   const items = [
     ...NOTE_KEYS.filter(([k]) => p[k]).map(([k, label]) => ({ key: k, label, text: p[k] })),
     ...(r.notes || []).map((text, i) => ({ key: 'n' + i, label: 'Заметка', text })),
@@ -676,7 +742,7 @@ function setNote(id, key, text) {
     return text ? 'edit' : 'remove';
   }
   r.own = r.own || {};
-  const cat = def(id)[key] || '';
+  const cat = careOf(def(id), r)[key] || '';
   // '' hides a catalog tip; a personal tip with nothing behind it is simply dropped.
   if (text === cat || (!text && !cat)) delete r.own[key]; else r.own[key] = text;
   if (!Object.keys(r.own).length) delete r.own;
@@ -684,11 +750,12 @@ function setNote(id, key, text) {
 }
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
-// Watering block in the plant card: last watering, next check and the button; for a wick, the reservoir.
+// Watering block in the plant card: last watering, next check and the button; for a reservoir, the top-ups.
 function waterBox(p) {
-  const w = p.wick;
-  return `<div class="info water"><b>${w ? 'Фитильный полив' : 'Полив'}</b>${p.lastWater ? `${w ? 'Последний долив' : 'Последний полив'} ${esc(rel(p.lastWater))}` : w ? 'Доливов ещё не было' : 'Поливов ещё не было'}<br>${p.nextCheck <= today() ? (w ? 'Пора заглянуть в бак сегодня' : 'Пора проверить сегодня') : `${w ? 'Заглянуть в бак' : 'Следующая проверка'} ${esc(rel(p.nextCheck))}`}</div>
-    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(p.id)}">${I('droplet')}${w ? 'Записать долив' : 'Записать полив'}</button>`;
+  const g = growOf(p), w = actWords(p);
+  if (g.noChecks) return `<div class="info water"><b>${g.name}</b>Поливать не нужно, корни в воде аквариума.</div>`;
+  return `<div class="info water"><b>${w.title || g.name}</b>${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
+    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(p.id)}">${I('droplet')}${w.btn}</button>`;
 }
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
 
@@ -744,7 +811,10 @@ function openPlant(id) {
     <div class="field"><label for="f-lux">Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
       <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Замер люксметром, люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
       ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>
-    <div class="field" role="group" aria-labelledby="lbl-int"><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
+    <div class="field"><label for="f-grow">Как растёт</label><select class="input" id="f-grow" data-field="grow" data-id="${esc(id)}" aria-describedby="grow-hint">
+      ${Object.entries(GROW).map(([k, g]) => `<option value="${k}"${p.type === k ? ' selected' : ''}>${g.name}</option>`).join('')}</select>
+      <p class="mt-6 small muted" id="grow-hint">${growOf(p).hint}</p></div>
+    <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${growOf(p).noChecks ? ' hidden' : ''}><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
       <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
       <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
       <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
@@ -752,8 +822,6 @@ function openPlant(id) {
     <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
       <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
     <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div>
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="wick" data-id="${esc(id)}" aria-describedby="wick-hint" ${p.wick ? 'checked' : ''}> Фитильный полив</label>
-      <p class="mt-6 small muted" id="wick-hint">Не буду звать поливать — напомню заглянуть в бак, есть ли вода. Как часто, настраивается выше.</p></div>
 
     <h2>Шпаргалка</h2>
     <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
@@ -952,6 +1020,7 @@ function openCustom(species = '', from = 'button') {
     S.custom[id].tone = toneOf(S.custom[id]);
     S.plants[id] = runtime(S.custom[id], today());
     S.plants[id].name = String(f.get('name') || '').trim();
+    initBonus(S);
     save();
     closeSheet();
     track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type, like: base.id, tuned });
@@ -965,17 +1034,19 @@ function openCustom(species = '', from = 'button') {
 // and the plants become custom plants with their care tips.
 const IMPORT_PROMPT = `Сделай список моих растений для приложения «Жунгли». Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
 
+Если я говорила, как растёт растение (в воде, в керамзите, на гидропонике, в аквариуме, на фитиле, в минеральном субстрате), пиши проверку и уход именно для этого способа.
+
 Ответь только JSON-массивом, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species — вид или сорт по-русски
 - name — имя, если оно есть у растения, иначе ""
 - room — комната, где стоит, если я её называла (например "Кухня"), иначе ""
 - spot — место в комнате: подоконник, полка, стол и т. п., если я его называла, иначе ""
-- type — в чём растёт: "soil" (грунт), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "dry" (сушить почти полностью: суккуленты, кактусы), "water" (черенки в воде)
+- type — как растёт: "soil" (грунт), "dry" (грунт, сушить почти полностью: суккуленты, кактусы), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "mineral" (минеральный субстрат: пемза, цеолит, пон), "wick" (фитильный полив), "leca" (керамзит или гидропоника с запасом раствора), "water" (в воде: черенки, растения в банке), "aquarium" (корни в аквариуме)
 - lux — сколько света нужно, люксы: [от, до]
-- every — через сколько дней обычно проверять почву
-- check — вопрос при проверке, например "Верхние 2–3 см сухие?"
-- water — как поливать
-- soil — грунт и горшок
+- every — через сколько дней обычно проверять полив (для керамзита — уровень раствора, для воды — пора ли её менять)
+- check — вопрос при проверке, например "Верхние 2–3 см сухие?" или "Уровень раствора на минимуме?"
+- water — как поливать, доливать или менять воду и когда удобрять
+- soil — в чём растёт и какой горшок
 - cond — условия; начни с температуры так: "18–26 °C; ..."
 - tip — самое важное в уходе
 - toxic — true, если сок ядовит или раздражает кожу
@@ -1023,6 +1094,10 @@ function parseImport(text) {
 function importType(x) {
   const t = String(x || '').toLowerCase();
   if (TYPE_NAMES[t]) return t;
+  if (/aquar|аквар/.test(t)) return 'aquarium';
+  if (/leca|clay|hydro|semi|керамз|гидро/.test(t)) return 'leca';
+  if (/wick|фитил/.test(t)) return 'wick';
+  if (/mineral|pumice|zeolit|\bpon\b|минерал|пемз|цеолит|(^|[^а-я])пон([^а-я]|$)/.test(t)) return 'mineral';
   if (/succ|cact|dry|сух|сукк|какт/.test(t)) return 'dry';
   if (/bark|orchid|кор|орхид/.test(t)) return 'bark';
   if (/sphag|moss|сфаг|мох/.test(t)) return 'sphagnum';
@@ -1538,7 +1613,7 @@ function flushStats() {
   }).catch(() => {});
 }
 // Catalog ids aren't personal (custom plants are sent as 'custom').
-const kindOf = (id) => { const d = def(id); return { plant_kind: isCustom(id) ? 'custom' : d.id, plant_type: d.type, generic: !!d.generic }; };
+const kindOf = (id) => { const d = def(id); return { plant_kind: isCustom(id) ? 'custom' : d.id, plant_type: growIn(S.plants[id], d), generic: !!d.generic }; };
 
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
@@ -1749,7 +1824,7 @@ document.addEventListener('click', (e) => {
       }
       break;
     case 'water-now':
-      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(plant(id).wick ? 'Долив записан 💧' : 'Полив записан 💧', undo); break;
+      undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(actWords(plant(id)).done, undo); break;
     case 'spot':
       S.plants[id].spot = el.dataset.spot; save();
       el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); break;
@@ -1764,7 +1839,7 @@ document.addEventListener('click', (e) => {
     case 'note-del': {
       const key = el.dataset.key;
       const text = act === 'note-del' ? '' : $('#note-text').value.trim();
-      if (act === 'note-del' && (key[0] === 'n' || !def(id)[key]) && !confirm('Удалить заметку?')) break;
+      if (act === 'note-del' && (key[0] === 'n' || !careOf(def(id), S.plants[id])[key]) && !confirm('Удалить заметку?')) break;
       const action = setNote(id, key, text);
       if (action) track('note_changed', { action, note: noteKind(key) });
       noteEdit = null; save(); refreshCheat(id); break;
@@ -1798,7 +1873,7 @@ document.addEventListener('click', (e) => {
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
         dropPhoto(id);
-        for (const k of ['dust:' + id, 'rotate:' + id]) { delete S.bonus[k]; delete S.snooze[k]; }
+        for (const k of ['dust', 'rotate', 'flush', 'roots'].map((x) => `${x}:${id}`)) { delete S.bonus[k]; delete S.snooze[k]; }
         // A custom plant's card is no longer needed.
         if (S.custom[id]) delete S.custom[id];
         track('plant_deleted');
@@ -1890,17 +1965,32 @@ document.addEventListener('change', (e) => {
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').textContent = repotHint(r); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; track('greenhouse_toggled', { on: el.checked }); }
-  if (f === 'wick') {
-    // A reservoir lasts longer than soil: start with a weekly look, keep the soil interval to come back to.
-    if (el.checked) { r.wick = true; r.soilInterval = r.interval; r.interval = 7; }
-    else { delete r.wick; r.interval = r.soilInterval || def(id).every; delete r.soilInterval; }
+  if (f === 'grow') {
+    const d = def(id), from = growIn(r, d), to = el.value;
+    if (!GROW[to] || to === from) return;
+    // The card's interval is kept while the plant grows another way, to come back to.
+    if (from === d.type) r.soilInterval = r.interval;
+    // The old way's recurring task (rinsing clay pebbles, a look at aquarium roots) goes with it.
+    const oldCare = GROW[from] && GROW[from].care;
+    if (oldCare) { delete S.bonus[`${oldCare.kind}:${id}`]; delete S.snooze[`${oldCare.kind}:${id}`]; }
+    delete r.wick; delete r.grow;
+    if (to === 'wick') r.wick = true; else if (to !== d.type) r.grow = to;
+    const base = r.soilInterval || d.every;
+    // A reservoir or a jar of water starts with a weekly look; a mineral substrate dries faster than soil.
+    r.interval = to === d.type ? base : GROW[to].act ? 7 : to === 'mineral' ? Math.max(2, Math.round(base * 0.7)) : base;
+    if (to === d.type) delete r.soilInterval;
     r.wet = 0;
     r.nextCheck = addDays(today(), Math.round(r.interval));
+    initBonus(S);
     const p = plant(id);
     $('#water-box').innerHTML = waterBox(p);
+    $('#grow-hint').textContent = growOf(p).hint;
+    $('#int-field').hidden = !!growOf(p).noChecks;
     $('#int-val').textContent = days(Math.round(r.interval));
     $('#int-hint').textContent = intHint(p);
-    track('wick_toggled', { on: el.checked });
+    noteEdit = null;
+    refreshCheat(id);
+    track('grow_changed', { grow: to, from });
   }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
@@ -1909,7 +1999,7 @@ document.addEventListener('change', (e) => {
   }
   save();
   // The status and greenhouse badge on the card photo follow the toggle and the light reading right away.
-  const badges = sheet.open && (f === 'greenhouse' || f === 'lux' || f === 'wick') && $('.hero-badges');
+  const badges = sheet.open && (f === 'greenhouse' || f === 'lux' || f === 'grow') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
     badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}`;

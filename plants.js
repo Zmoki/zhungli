@@ -3,7 +3,8 @@
 // cat: the picker group (ordered by CAT_ORDER in app.js); ids never change, cats may.
 // Personal notes of the first collection live in LEGACY_NOTES and move into plant data on migration.
 // every: starting check interval in days; the app adjusts it from the answers.
-// type: soil | sphagnum | bark | dry (dries out almost fully) | water (cuttings in water)
+// type: how the plant usually grows, a key of GROW in app.js: soil | sphagnum | bark | dry (dries out almost fully) |
+//   mineral | wick | leca (clay pebbles or hydroponics) | water | aquarium. A plant's card can pick another.
 // feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 
@@ -12,6 +13,8 @@ const CHECK_TEXT = {
   sphagnum: 'Сфагнум внутри подсох?',
   bark: 'Кора сухая, корни посеребрели?',
   dry: 'Грунт сухой почти до дна? (палочка выходит сухой)',
+  mineral: 'Верхний слой субстрата сухой?',
+  leca: 'Уровень раствора на минимуме?',
   water: 'Пора сменить воду?',
 };
 

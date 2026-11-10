@@ -36,7 +36,7 @@ On every event:
 | --- | --- | --- |
 | `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
-| `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type`; `generic`; `from`: `card` (plant card only) |
+| `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (how it grows now, see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
 | `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `quick` (tiles on an empty screen) / `custom` / `import`; import: `repaired` (the answer needed fixing: quotes, spaced numbers, comments), `with_room` / `with_spot` (how many came with a room / place, no names sent), `rooms_created`; catalog and quick picks: `generic_count`, `catalog_ids`; custom: `plant_type`, `like` (the generic type it was based on), `tuned` (light, interval, type or tip changed by hand in «Тонкая настройка») |
 | `import_prompt_copied` | «Скопировать запрос» in AI import | — |
@@ -47,7 +47,7 @@ On every event:
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
 | `catalog_missed` | the add sheet closed after a search that found nothing: once, with the last such search (a fixed typo or a later hit clears it) | `query` (what was typed, up to 40 characters), `added` (whether plants were added in the end). To learn which plants the catalog lacks |
-| `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card | `on` |
+| `grow_changed` | «Как растёт» changed in the plant card | `grow`, `from`: `soil` / `dry` / `sphagnum` / `bark` / `mineral` / `wick` / `leca` / `water` / `aquarium` |
 | `plants_filtered` | a status chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied, since going to the AI chat is expected) |
@@ -69,7 +69,7 @@ On every event:
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
-| `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` |
+| `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `roots` (aquarium) |
 | `bonus_skipped` | bonus task snoozed | `kind` |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `show_all_clicked` | «show all» on Today | — |

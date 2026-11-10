@@ -23,27 +23,35 @@ Record fields:
 | `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' }`. |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
-| `wick`, `soilInterval` | Wick watering, and the soil interval to return to when it's off. |
+| `grow`, `wick` | How it grows when it's not the card's way: `grow` holds the way, `wick` is wick watering. |
+| `soilInterval` | The card's interval, kept while the plant grows another way. |
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
-## Growing medium
+## How it grows
 
-The card's `type` sets the check question (`CHECK_TEXT`), the answer buttons and a few rules:
+The card's `type` is how the plant usually grows. «Как растёт» in the plant card picks another way; `GROW` in `app.js` holds them all:
 
-| Type | Buttons | Also |
-|---|---|---|
-| `soil` | «Полито» / «Ещё влажно» | |
-| `sphagnum` | «Полито» / «Ещё влажно» | Comes first among checks due the same day. |
-| `bark` | «Полито» / «Ещё рано» | No feeding. |
-| `dry` | «Полито» / «Ещё влажно» | No feeding. |
-| `water` | «Вода сменена» / «Вода ещё чистая» | Comes first among checks due the same day. No feeding. Due status is «мутновато». |
+| Way | Check | Buttons | Also |
+|---|---|---|---|
+| `soil` грунт | top dried? | «Полито» / «Ещё влажно» | |
+| `dry` сушить почти полностью | dry almost to the bottom? | «Полито» / «Ещё влажно» | No feeding, unless the card has `feed`. |
+| `sphagnum` сфагнум | dried inside? | «Полито» / «Ещё влажно» | Comes first among checks due the same day. |
+| `bark` кора | bark dry, roots silvery? | «Полито» / «Ещё рано» | No feeding. |
+| `mineral` минеральный субстрат | top dried? | «Полито» / «Ещё влажно» | No feeding day: fertilizer goes in with every watering. |
+| `wick` фитильный полив | the reservoir | «Долито» / «Вода есть» | Due status «пустовато». |
+| `leca` керамзит или гидропоника | solution at the minimum? | «Долито» / «Раствор есть» | Due status «пустовато». No feeding day: fertilizer goes in with every top-up. «Промойте керамзит» every 45 days. |
+| `water` в воде | time to change the water? | «Вода сменена» / «Вода ещё чистая» | Comes first among checks due the same day. Due status «мутновато». No feeding. |
+| `aquarium` в аквариуме | none | — | Never due, no feeding. «Осмотрите корни в аквариуме» every 30 days. |
 
-With **wick watering** on, the check is about the reservoir whatever the type. The buttons are «Долито» / «Вода есть», and the due status is «пустовато». Turning it on sets a 7-day interval and keeps the soil one for when it's turned off.
+A card's own `check` replaces the way's question. A question becomes a task («Полейте, если …», «Долейте раствор, если …», «Смените воду, если …»). A check written as an instruction is shown as is.
 
-A card's own `check` replaces the type's question. A question becomes the task «Полейте, если …». A check written as an instruction is shown as is.
+Picking another way than the card's:
+- The card's `check` is dropped. Its «Как поливать» and «Субстрат» tips give way to the way's own; the rest of the card stays.
+- The card's interval is kept in `soilInterval` and comes back with the card's way. A reservoir or water starts at 7 days, a mineral substrate at ⅔ of the card's interval.
+- The old way's recurring task goes away.
 
 ## How the interval learns
 
@@ -51,7 +59,7 @@ A new plant starts with the card's `every`. Plants added together get their firs
 
 | Answer | What changes |
 |---|---|
-| «Полито» (or «Записать полив» in the card) | The interval moves toward the measured days since the last watering: halfway after «Ещё влажно» answers, and only down (×0.95) when the soil was already dry. Bounds: `every × 0.4`…`every × 3` (wick: 2…45 days). Next check: today + interval. |
+| «Полито» (or «Записать полив» in the card) | The interval moves toward the measured days since the last watering: halfway after «Ещё влажно» answers, and only down (×0.95) when the soil was already dry. Bounds: `every × 0.4`…`every × 3`; grown another way than the card's, 1…45 days (a reservoir: 2…45). Next check: today + interval. |
 | «Ещё влажно» | Next check in a quarter of the interval, at least 1 day. The interval itself waits for the next «Полито». |
 | «Не сейчас, завтра» | Next check tomorrow. Nothing is learned. |
 | Stepper in the card | ±1 day, 1…60. The next check moves to last watering + interval, but not before today. |
@@ -62,7 +70,7 @@ A new plant starts with the card's `every`. Plants added together get their firs
 
 | Key | Word | When |
 |---|---|---|
-| `need` | суховато (wick: пустовато, water: мутновато) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
+| `need` | суховато (a reservoir: пустовато, water: мутновато) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
 | `watered` | напоено | Watered today. |
 | `dim` | темновато | Lux reading under the card's minimum. |
 | `hot` | ярковато | Lux reading over the maximum × 1.25. |
