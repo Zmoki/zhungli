@@ -77,26 +77,26 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // - hint: shown under the choice in the plant card; water, soil: tips for a card written for another way.
 // Only MEDIA: pot (watered by a WATERING way); feed: 'day' (on «День подкормки»), 'each' (with every watering),
 // 'none'; feedTip: added to a reservoir's watering tip; care: a recurring bonus task, careHint: its line in the hint;
-// first: comes first among checks;
-// noChecks: never checked.
+// first: comes first among checks; noChecks: never checked;
+// organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents).
 const MEDIA = {
-  soil: { name: 'Грунт', pot: true, feed: 'day',
+  soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
     water: 'Когда подсохнет верхний слой, обильно; лишнюю воду из поддона слить.',
     soil: 'Универсальный грунт, горшок с дренажным отверстием.' },
-  dry: { name: 'Грунт для суккулентов', pot: true, feed: 'none',
+  dry: { name: 'Грунт для суккулентов', pot: true, feed: 'none', organic: true,
     hint: 'Позову, когда грунт должен почти совсем просохнуть.',
     water: 'Только когда грунт просох почти до дна, затем обильно; зимой совсем редко.',
     soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
-  sphagnum: { name: 'Сфагнум', pot: true, feed: 'day', first: true,
+  sphagnum: { name: 'Сфагнум', pot: true, feed: 'day', first: true, organic: true,
     hint: 'Позову проверить, подсох ли сфагнум внутри.',
     water: 'Когда сфагнум внутри подсох; не давать пересохнуть совсем.',
     soil: 'Живой или сухой сфагнум, не утрамбовывать.' },
-  bark: { name: 'Кора', pot: true, feed: 'none', labels: ['Полито', 'Ещё рано'],
+  bark: { name: 'Кора', pot: true, feed: 'none', organic: true, labels: ['Полито', 'Ещё рано'],
     hint: 'Позову проверить, высохла ли кора и посеребрели ли корни.',
     water: 'Погружением на 15–20 минут, когда кора сухая и корни серебристые; воду из кашпо слить.',
     soil: 'Крупная кора, прозрачный горшок с отверстиями.' },
-  coco: { name: 'Кокос', pot: true, feed: 'day',
+  coco: { name: 'Кокос', pot: true, feed: 'day', organic: true,
     hint: 'Позову проверить, подсох ли верхний слой.',
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый субстрат или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
@@ -106,13 +106,13 @@ const MEDIA = {
     water: 'Когда подсох верхний слой: минеральный субстрат сохнет быстрее грунта. В каждый полив — удобрение в слабой дозе, своего питания в субстрате нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе — в каждый долив.' },
-  leca: { name: 'Керамзит', pot: true, feed: 'each',
+  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true,
     care: { kind: 'flush', every: 45, task: 'Промойте керамзит', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
     hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в полтора месяца напомню промыть керамзит.',
     water: 'Поливать раствором, когда нижний слой подсох; лишнее сливать. Удобрение для гидропоники — в каждый полив.',
     soil: 'Керамзит или другой наполнитель. Раз в 1–2 месяца промыть и сменить раствор целиком.',
     feedTip: 'Удобрение для гидропоники — в каждый долив.' },
-  water: { name: 'Вода', feed: 'none', first: true, labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато',
+  water: { name: 'Вода', feed: 'none', first: true, wet: true, labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато',
     verb: 'Смените воду', task: 'Смените воду в банке', start: () => 7,
     hint: 'Напомню сменить воду.',
     water: 'Доливать до уровня, воду менять раз в 1–2 недели: отстоянную, комнатной температуры. Раз в месяц можно удобрение в четверть дозы; черенкам до корней не нужно.',
@@ -122,11 +122,11 @@ const MEDIA = {
     hint: 'Позову проверить корни: на воздухе они сохнут быстро.',
     water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели; летом бывает каждый день. Раз в месяц — удобрение в четверть дозы в воду.',
     soil: 'Блок из коры, коряги или пробки, корни открыты воздуху. Нужна высокая влажность воздуха.' },
-  terrarium: { name: 'Закрытый террариум', feed: 'none', labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
+  terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
     hint: 'Влага ходит по кругу, так что загляну раз в месяц.',
     water: 'Почти не поливать. Сбрызнуть, если стёкла сухие несколько дней подряд. Много капель на стёклах — приоткрыть на пару часов.',
     soil: 'Дренаж, сетка, грунт и мох в закрытой ёмкости. Протирать стёкла, подрезать разросшееся, убирать опавшие листья.' },
-  aquarium: { name: 'Аквариум', feed: 'none', noChecks: true,
+  aquarium: { name: 'Аквариум', feed: 'none', noChecks: true, wet: true,
     care: { kind: 'roots', every: 30, task: 'Осмотрите корни в аквариуме', hint: 'Тёмные мягкие корни обрежьте. Листья и стебель должны быть над водой.' },
     hint: 'Поливать не нужно. Раз в месяц напомню осмотреть корни.',
     water: 'Поливать не нужно: корни в воде аквариума. Не удобрять — удобрения вредны рыбам.',
@@ -134,17 +134,17 @@ const MEDIA = {
 };
 const WATERING = {
   top: { name: 'Сверху' },
-  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', start: () => 7, min: 2,
+  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, start: () => 7, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
     hint: 'Не буду звать поливать — напомню заглянуть в бак, есть ли вода.',
     water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли.' },
-  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', start: () => 7, min: 2,
+  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, start: () => 7, min: 2,
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать — напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
 };
-// Media where roots live in organic stuff; moving from them to a mineral or water one is a transplant.
-const ORGANIC = ['soil', 'dry', 'sphagnum', 'bark', 'coco'];
+// Kinds of per-plant bonus tasks, for cleaning up after a plant is removed.
+const BONUS_KINDS = ['dust', 'rotate', ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
 const mediumIn = (r, d) => (MEDIA[r.medium] ? r.medium : MEDIA[d.type] ? d.type : 'soil');
 // Watering of a potted plant (null when the medium isn't in a pot). Older plants keep wick watering in r.wick.
 const cardWatering = (d) => (MEDIA[d.type] && MEDIA[d.type].pot ? (WATERING[d.watering] ? d.watering : 'top') : null);
@@ -153,13 +153,19 @@ function wateringIn(r, d) {
   return r.wick ? 'wick' : WATERING[r.watering] ? r.watering : WATERING[d.watering] ? d.watering : 'top';
 }
 const isCardWay = (r, d) => mediumIn(r, d) === d.type && wateringIn(r, d) === cardWatering(d);
-// Everything about a way of growing at once: the watering's fields over the medium's.
+// Everything about a way of growing at once: the watering's fields over the medium's. Built once per pair.
+const WAYS = new Map();
 function wayOf(p) {
-  const m = MEDIA[p.type] || MEDIA.soil;
-  const w = m.pot && p.watering && p.watering !== 'top' ? WATERING[p.watering] : null;
-  return { ...m, ...(w || {}), task: (w || m).task, verb: w ? '' : m.verb, labels: (w || m).labels || ['Полито', 'Ещё влажно'],
-    hint: [(w || m).hint, m.careHint, m.feed === 'each' ? 'Удобрение — в каждый полив, на день подкормки звать не буду.' : ''].filter(Boolean).join(' '),
-    name: w ? `${m.name}, ${w.name.toLowerCase()}` : m.name };
+  const m = MEDIA[p.type] ? p.type : 'soil';
+  const w = MEDIA[m].pot && WATERING[p.watering] && p.watering !== 'top' ? p.watering : '';
+  const key = `${m}|${w}`;
+  if (!WAYS.has(key)) {
+    const M = MEDIA[m], W = WATERING[w];
+    WAYS.set(key, { ...M, ...(W || {}), task: (W || M).task, verb: (W || M).verb, labels: (W || M).labels || ['Полито', 'Ещё влажно'],
+      hint: [(W || M).hint, M.careHint, M.feed === 'each' ? 'Удобрение — в каждый полив, на день подкормки звать не буду.' : ''].filter(Boolean).join(' '),
+      name: W ? `${M.name}, ${W.name.toLowerCase()}` : M.name, wet: !!(M.wet || (W && W.wet)) });
+  }
+  return WAYS.get(key);
 }
 const labelsOf = (p) => wayOf(p).labels;
 // The card's care for how the plant grows. Grown another way than the card says, the card's check
@@ -168,7 +174,7 @@ function careOf(d, r) {
   const k = mediumIn(r, d), m = MEDIA[k], w = wateringIn(r, d);
   const own = isCardWay(r, d), sameMedium = k === d.type;
   const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : m.water;
-  return { ...d, check: own ? d.check : '', water: (own && d.water) || (sameMedium && w === 'top' && d.water) || waterTip, soil: (sameMedium && d.soil) || m.soil };
+  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || m.soil };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
@@ -316,7 +322,8 @@ function plant(id) {
   // species: custom name if set, else the catalog one. own: personal notes over the catalog.
   const species = r.species || d.species;
   // type, watering: how it grows now, which may differ from the card's (see mediumIn, wateringIn).
-  return { ...careOf(d, r), ...(r.own || {}), ...r, type: mediumIn(r, d), watering: wateringIn(r, d), id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
+  // cardType: the card's medium, which picks the drawing (shapes.js), so it doesn't change with the medium.
+  return { ...careOf(d, r), ...(r.own || {}), ...r, type: mediumIn(r, d), cardType: d.type, watering: wateringIn(r, d), id, species, title: r.name || species, luxRange: d.lux, lux: r.lux };
 }
 const allPlants = () => Object.keys(S.plants).map(plant).filter(Boolean);
 
@@ -405,6 +412,7 @@ function bonusTasks() {
   const t = today();
   const out = [];
   const snoozed = (k) => S.snooze[k] && S.snooze[k] > t;
+  const cares = {};
   allPlants().forEach((p) => {
     const dk = 'dust:' + p.id;
     if (p.big && S.bonus[dk] && diff(S.bonus[dk], t) >= 21 && !snoozed(dk)) {
@@ -415,9 +423,13 @@ function bonusTasks() {
       out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
     }
     const care = wayOf(p).care, ck = care && `${care.kind}:${p.id}`;
-    if (care && S.bonus[ck] && diff(S.bonus[ck], t) >= care.every && !snoozed(ck)) {
-      out.push({ key: ck, p, title: `${care.task}: ${p.title}`, task: care.task, hint: care.hint });
-    }
+    if (care && S.bonus[ck] && diff(S.bonus[ck], t) >= care.every && !snoozed(ck)) (cares[care.kind] ||= { care, ps: [] }).ps.push(p);
+  });
+  // One task per kind of care: all the aquarium's plants at once, not a card each.
+  Object.values(cares).forEach(({ care, ps }) => {
+    const key = `${care.kind}:${ps.map((p) => p.id).join(',')}`;
+    out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, hint: care.hint }
+      : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, hint: `Кого: ${ps.map((p) => p.title).join(', ')}. ${care.hint}` });
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
@@ -430,6 +442,9 @@ function bonusTasks() {
   }
   return out.slice(0, 2);
 }
+
+// A bonus task's key → the dates it stands for: «roots:a,b» is «roots:a» and «roots:b».
+const bonusKeys = (key) => { const [kind, ids] = key.split(':'); return ids ? ids.split(',').map((id) => `${kind}:${id}`) : [key]; };
 
 /* ---------- Actions ---------- */
 function snapshot() {
@@ -804,7 +819,7 @@ function wayBox(p, d) {
   const sel = (field, label, list, value) => `<div class="field"><label for="f-${field}">${label}</label><select class="input" id="f-${field}" data-field="${field}" data-id="${esc(p.id)}" aria-describedby="way-hint">
     ${Object.entries(list).map(([k, x]) => `<option value="${k}"${value === k ? ' selected' : ''}>${x.name}</option>`).join('')}</select>`;
   // Succulents and cacti rot in steady moisture.
-  const risky = d.type === 'dry' && (['water', 'aquarium', 'terrarium', 'leca'].includes(p.type) || ['wick', 'reservoir'].includes(p.watering));
+  const risky = d.type === 'dry' && wayOf(p).wet;
   return `${sel('medium', 'В чём растёт', MEDIA, p.type)}${MEDIA[p.type].pot ? `</div>${sel('watering', 'Как поливаю', WATERING, p.watering)}` : ''}
     <p class="mt-6 small muted" id="way-hint">${esc(wayOf(p).hint)}</p>
     ${risky ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}</div>`;
@@ -1148,9 +1163,10 @@ function importType(x) {
   if (/aquar|аквар/.test(t)) return 'aquarium';
   if (/terrar|террар|флорар|бутыл/.test(t)) return 'terrarium';
   if (/mount|блок|коряг|epiphyt/.test(t)) return 'mount';
-  if (/leca|clay|hydro|semi|керамз|гидро/.test(t)) return 'leca';
-  if (/coco|кокос/.test(t)) return 'coco';
+  // Specific substrates first: «пон, полугидропоника» is pon on a reservoir, not clay pebbles.
   if (/mineral|pumice|zeolit|\bpon\b|минерал|пемз|цеолит|(^|[^а-я])пон([^а-я]|$)/.test(t)) return 'mineral';
+  if (/coco|кокос/.test(t)) return 'coco';
+  if (/leca|clay|hydro|semi|керамз|гидро/.test(t)) return 'leca';
   if (/succ|cact|dry|сух|сукк|какт/.test(t)) return 'dry';
   if (/bark|orchid|кор|орхид/.test(t)) return 'bark';
   if (/sphag|moss|сфаг|мох/.test(t)) return 'sphagnum';
@@ -1800,14 +1816,14 @@ document.addEventListener('click', (e) => {
     case 'bonus-done': {
       undo = snapshot();
       const b = bonusTasks().find((x) => x.key === el.dataset.key);
-      S.bonus[el.dataset.key] = today();
+      bonusKeys(el.dataset.key).forEach((k) => { S.bonus[k] = today(); });
       track('bonus_done', { kind: el.dataset.key.split(':')[0] });
       logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
       afterTask('Бонус засчитан ✨', undo); break;
     }
     case 'bonus-skip':
       track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
-      S.snooze[el.dataset.key] = addDays(today(), 3); save(); render(); toast('Ок, через пару дней 🙂'); break;
+      bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
     case 'tg-home': if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); break;
@@ -1936,7 +1952,7 @@ document.addEventListener('click', (e) => {
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
         dropPhoto(id);
-        for (const k of ['dust', 'rotate', 'flush', 'leach', 'roots'].map((x) => `${x}:${id}`)) { delete S.bonus[k]; delete S.snooze[k]; }
+        for (const k of BONUS_KINDS.map((x) => `${x}:${id}`)) { delete S.bonus[k]; delete S.snooze[k]; }
         // A custom plant's card is no longer needed.
         if (S.custom[id]) delete S.custom[id];
         track('plant_deleted');
@@ -2013,6 +2029,10 @@ function setWay(id, medium, watering) {
   // The old medium's recurring task (rinsing clay pebbles, a look at aquarium roots) goes with it.
   const oldCare = MEDIA[from.medium].care;
   if (oldCare && oldCare !== MEDIA[medium].care) { delete S.bonus[`${oldCare.kind}:${id}`]; delete S.snooze[`${oldCare.kind}:${id}`]; }
+  // Own edits of tips written for the old way would hide the new way's: they become notes, so nothing typed is lost.
+  const stale = medium !== from.medium ? ['water', 'soil'] : ['water'];
+  if (r.own) stale.forEach((k) => { if (r.own[k] !== undefined) { if (r.own[k]) r.notes = [...(r.notes || []), r.own[k]]; delete r.own[k]; } });
+  if (r.own && !Object.keys(r.own).length) delete r.own;
   delete r.medium; delete r.watering; delete r.wick;
   if (medium !== d.type) r.medium = medium;
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
@@ -2021,7 +2041,7 @@ function setWay(id, medium, watering) {
   r.wet = 0;
   r.nextCheck = addDays(today(), Math.round(r.interval));
   // Roots moved out of soil into a mineral medium, water or air need time: like after repotting, no feeding meanwhile.
-  const settle = ORGANIC.includes(from.medium) && !ORGANIC.includes(medium) && medium !== 'terrarium';
+  const settle = !!MEDIA[from.medium].organic && !MEDIA[medium].organic;
   if (settle) r.repotted = today();
   initBonus(S);
   return { from, settle };

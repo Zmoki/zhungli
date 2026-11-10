@@ -63,7 +63,9 @@ Picking another way than the card's:
 - The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
 - Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 6 weeks.
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
-- The old medium's recurring task goes away.
+- Own edits of the tips that no longer fit («Как поливать», and «Субстрат» with another medium) become notes, so nothing typed is lost.
+- The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.
+- The drawing stays the card's: a dracaena moved into water is still drawn as a dracaena.
 
 ## How the interval learns
 

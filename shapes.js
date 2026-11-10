@@ -83,10 +83,12 @@ function shapeOf(d) {
   if (!d) return 'leafy';
   if (SHAPE_BY_ID[d.id]) return SHAPE_BY_ID[d.id];
   const s = String(d.species || '').toLowerCase();
-  if (d.type === 'water' || /черен/.test(s)) return 'cutting';
-  if (d.type === 'bark' || /орхид|фаленопс|дендроб/.test(s)) return 'orchid';
+  // A plant moved into water or bark keeps its drawing: the card's medium decides (cardType on plants).
+  const type = d.cardType || d.type;
+  if (type === 'water' || /черен/.test(s)) return 'cutting';
+  if (type === 'bark' || /орхид|фаленопс|дендроб/.test(s)) return 'orchid';
   if (/кактус|опунц|маммил|эхинок/.test(s)) return 'cactus';
-  if (d.type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев/.test(s)) return 'succulent';
+  if (type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев/.test(s)) return 'succulent';
   if (/пальм|стрелиц|драцен|юкк|банан|хамедор|рапис|бамбук/.test(s)) return 'palm';
   if (/алоказ|колоказ|ксантосом/.test(s)) return 'arrow';
   if (/монстер|ракафор/.test(s)) return 'split';
