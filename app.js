@@ -1034,7 +1034,9 @@ function setAddButton(b, n, emptyText) {
   b.innerHTML = n ? `${I('plus')}Добавить ${plantsN(n)}` : emptyText;
 }
 // The catalog's add bar appears only once something is ticked.
-const updatePickBar = () => { setAddButton($('#pick-add'), picked.size, 'Отметьте растения'); $('#pick-bar').hidden = !picked.size; };
+// The catalog's and the import list's add bars appear only once something is ticked.
+const showAddBar = (bar, btn, n) => { setAddButton(btn, n, ''); bar.hidden = !n; };
+const updatePickBar = () => showAddBar($('#pick-bar'), $('#pick-add'), picked.size);
 // Picker groups go by care, from the most common plants; generic types close the list.
 const CAT_ORDER = ['Лианы и ампельные', 'Декоративно-лиственные', 'Пальмы, драцены и деревья', 'Ароидные', 'Влаголюбивые',
   'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Общие типы'];
@@ -1289,7 +1291,10 @@ function showImport(text, ext, fail) {
     const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
     importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
     importExt = ext;
-    box.innerHTML = `<p class="found-note small muted">Найдено ${plantsN(importItems.length)}. Снимите галочку с лишних.</p>` +
+    // All of them already in the collection: nothing is ticked and the add bar stays hidden, so say how to add them anyway.
+    const note = importPicked.size ? `Найдено ${plantsN(importItems.length)}. Снимите галочку с лишних.`
+      : `${importItems.length === 1 ? 'Это растение уже' : `Все ${plantsN(importItems.length)} уже`} в коллекции. Отметьте, если нужны ещё раз.`;
+    box.innerHTML = `<p class="found-note small muted">${note}</p>` +
       importItems.map((it, i) => {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
@@ -1300,8 +1305,7 @@ function showImport(text, ext, fail) {
   }
   updateImportBar();
 }
-// Like the catalog's: the add bar appears only once there are plants ticked.
-const updateImportBar = () => { setAddButton($('#imp-add'), importPicked.size, 'Отметьте растения'); $('#imp-bar').hidden = !importPicked.size; };
+const updateImportBar = () => showAddBar($('#imp-bar'), $('#imp-add'), importPicked.size);
 function addImported() {
   if (addFlow) addFlow.done = true;
   const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
