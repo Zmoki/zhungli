@@ -78,7 +78,8 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // Only MEDIA: pot (watered by a WATERING way); feed: 'day' (on «День подкормки»), 'each' (with every watering),
 // 'none'; feedTip: added to a reservoir's watering tip; care: a recurring bonus task, careHint: its line in the hint;
 // first: comes first among checks; noChecks: never checked;
-// organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents).
+// organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents);
+// badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING).
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
@@ -100,33 +101,33 @@ const MEDIA = {
     hint: 'Позову проверить, подсох ли верхний слой.',
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый субстрат или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
-  mineral: { name: 'Минеральный: пон, пемза, цеолит', pot: true, feed: 'each', start: (b) => Math.max(2, Math.round(b * 0.7)),
+  mineral: { name: 'Минеральный: пон, пемза, цеолит', pot: true, feed: 'each', badge: ['mountain', 'на минералке'], start: (b) => Math.max(2, Math.round(b * 0.7)),
     care: { kind: 'leach', every: 30, task: 'Промойте субстрат', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
     hint: 'Позову проверить, подсох ли субстрат.', careHint: 'Раз в месяц напомню промыть субстрат от солей.',
     water: 'Когда подсох верхний слой: минеральный субстрат сохнет быстрее грунта. В каждый полив — удобрение в слабой дозе, своего питания в субстрате нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе — в каждый долив.' },
-  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true,
+  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true, badge: ['grip', 'в керамзите'],
     care: { kind: 'flush', every: 45, task: 'Промойте керамзит', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
     hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в полтора месяца напомню промыть керамзит.',
     water: 'Поливать раствором, когда нижний слой подсох; лишнее сливать. Удобрение для гидропоники — в каждый полив.',
     soil: 'Керамзит или другой наполнитель. Раз в 1–2 месяца промыть и сменить раствор целиком.',
     feedTip: 'Удобрение для гидропоники — в каждый долив.' },
-  water: { name: 'Вода', feed: 'none', first: true, wet: true, labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато',
+  water: { name: 'Вода', feed: 'none', first: true, wet: true, badge: ['glass-water', 'в воде'], labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато',
     verb: 'Смените воду', task: 'Смените воду в банке', start: () => 7,
     hint: 'Напомню сменить воду.',
     water: 'Доливать до уровня, воду менять раз в 1–2 недели: отстоянную, комнатной температуры. Раз в месяц можно удобрение в четверть дозы; черенкам до корней не нужно.',
     soil: 'Банка или ваза с водой, в воде только корни и низ стебля. Слизь или запах — промыть банку и корни.' },
-  mount: { name: 'На блоке, корни на воздухе', feed: 'none', first: true, labels: ['Полито', 'Ещё рано'],
+  mount: { name: 'На блоке, корни на воздухе', feed: 'none', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
     task: 'Замочите или сбрызните корни, если они посеребрели', start: () => 3, max: 14,
     hint: 'Позову проверить корни: на воздухе они сохнут быстро.',
     water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели; летом бывает каждый день. Раз в месяц — удобрение в четверть дозы в воду.',
     soil: 'Блок из коры, коряги или пробки, корни открыты воздуху. Нужна высокая влажность воздуха.' },
-  terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
+  terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, badge: ['flask-round', 'в террариуме'], labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
     hint: 'Влага ходит по кругу, так что загляну раз в месяц.',
     water: 'Почти не поливать. Сбрызнуть, если стёкла сухие несколько дней подряд. Много капель на стёклах — приоткрыть на пару часов.',
     soil: 'Дренаж, сетка, грунт и мох в закрытой ёмкости. Протирать стёкла, подрезать разросшееся, убирать опавшие листья.' },
-  aquarium: { name: 'Аквариум', feed: 'none', noChecks: true, wet: true,
+  aquarium: { name: 'Аквариум', feed: 'none', noChecks: true, wet: true, badge: ['fish', 'в аквариуме'],
     care: { kind: 'roots', every: 30, task: 'Осмотрите корни в аквариуме', hint: 'Тёмные мягкие корни обрежьте. Листья и стебель должны быть над водой.' },
     hint: 'Поливать не нужно. Раз в месяц напомню осмотреть корни.',
     water: 'Поливать не нужно: корни в воде аквариума. Не удобрять — удобрения вредны рыбам.',
@@ -134,11 +135,11 @@ const MEDIA = {
 };
 const WATERING = {
   top: { name: 'Сверху' },
-  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, start: () => 7, min: 2,
+  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: () => 7, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
     hint: 'Не буду звать поливать — напомню заглянуть в бак, есть ли вода.',
     water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли.' },
-  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, start: () => 7, min: 2,
+  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cylinder', 'с резервуаром'], start: () => 7, min: 2,
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать — напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
@@ -512,6 +513,16 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
     : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`);
 
+// Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: icons on grid cards,
+// worded chips in the plant card. Keys go to the status filter too.
+const growKeys = (p) => [p.type, p.watering].filter((k) => k && ((MEDIA[k] || WATERING[k] || {}).badge));
+const growBadge = (k) => (MEDIA[k] || WATERING[k]).badge;
+const growBadges = (p, words) => growKeys(p).map((k) => {
+  const [icon, word] = growBadge(k);
+  return words ? `<span class="mood hero-mood way">${I(icon)}${word}</span>`
+    : `<span class="gh way" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
+}).join('');
+
 function ava(p, cls = 'ava') {
   const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
@@ -690,7 +701,7 @@ function spotGroups(ps, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}${growBadges(p)}</span></div>
         <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
@@ -701,8 +712,8 @@ function spotGroups(ps, room) {
 // Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
 // The chips also teach which face means what.
 let plantSt = '';
-// Filter keys of a plant: its states, plus «greenhouse» when it lives in the теплица.
-const filterKeys = (p, st = states(p)) => (p.greenhouse ? [...st, 'greenhouse'] : st);
+// Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
+const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...growKeys(p)];
 function stateFilter(ps) {
   const n = {};
   const due = [];
@@ -710,12 +721,13 @@ function stateFilter(ps) {
   // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
   const sel = n[plantSt] ? plantSt : '';
   // Same chips as in the plant card; the chosen one gets a ring in its own color.
-  const chip = (k, label) => `<button class="mood hero-mood st-chip ${k || 'all'} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
+  const chip = (k, label, cls = k || 'all') => `<button class="mood hero-mood st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
-    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}</div>`;
+    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
+    ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
 
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.
@@ -861,7 +873,7 @@ function openPlant(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
       <div class="hero-acts">${heroActs(id)}</div>
-      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}</span></div>
+      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
@@ -2113,7 +2125,7 @@ document.addEventListener('change', (e) => {
   const badges = sheet.open && (f === 'greenhouse' || f === 'lux' || f === 'medium' || f === 'watering') && $('.hero-badges');
   if (badges) {
     const p = plant(id);
-    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}`;
+    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}`;
     const pic = $('.hero-pic');
     if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
   }

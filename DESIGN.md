@@ -39,6 +39,7 @@ Statuses have their own hues, the same in chips, filters and the Light tab tags:
 | напоено | blue (`--st-watered`) | laugh |
 | хорошо | green (`--st-fine`) | smile |
 | в теплице | pink (`--st-gh`) | house-heart |
+| how it grows, when not an ordinary pot | teal (`--st-grow`) | the way's icon: glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (на минералке), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром) |
 
 Status chips on pictures are white glass (`--glass-photo`) with the status color on the face and the word, so they keep 7:1 even over a black photo.
 
