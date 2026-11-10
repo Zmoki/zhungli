@@ -79,9 +79,9 @@ Telegram CloudStorage belongs to the Telegram account, so plants follow the pers
 - **«Начать с чистого листа»** clears the cloud copy too, or the plants would come back.
 
 **Photos:** a copy up to 400 px of each photo; the original stays on the device it was taken on.
-- **Index:** `m0`, `m1`, … and `mn`, with `{ plantId: { h, t, n } }`: hash, time and number of pieces.
+- **Index:** `m0`, `m1`, … and `mn`, with `{ plantId: { h, t, n } }`: hash, time and number of pieces. A removed photo stays as `{ h: '-', t, n: 0 }` so other devices remove it too.
 - **Pieces:** `f_<plantId>_<i>`, 4000 characters each, at most 800 pieces in all (the rest of the keys are for the plants).
-- Photos sync after the plants are reconciled. Newer photos replace older ones, and photos of removed plants are deleted.
+- Photos sync after the plants are reconciled. Newer photos and removals win over older ones, and photos of removed plants are deleted.
 
 Before changing sync, test it with a fake `Telegram.WebApp` and CloudStorage. Sync events (`cloud_checked`, `cloud_restored`, `cloud_error`, `photos_synced`) are in [ANALYTICS.md](ANALYTICS.md).
 

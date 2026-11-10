@@ -189,10 +189,12 @@
   // Each photo is synced as a small copy (up to 400 px, about 20–30 KB); the original stays on
   // the device it was added on. Base64 is plain ASCII, so photo pieces can hold 4000 characters.
   // Index: m0, m1, … + mn = JSON { plantId: { h: hash of the original, t: when it was set, n: pieces } }.
+  // A removed photo stays in the index as { h: '-', t, n: 0 } so other devices remove it too.
   // Pieces: f_<plantId>_<i>. Synced only after the plants are reconciled (end of a pull or push).
   const PIECE = 4000;
   const MAX_PHOTO_PIECES = 800; // Telegram allows 1024 keys per user; the rest is for the plants
   const META_KEY = 'zhungli.photoMeta'; // this device: { plantId: { h, t } } of its photos
+  const GONE = '-'; // h of a removed photo
   let manifest = {};
   let manifestChunks = 0;
   let photoTimer;
@@ -266,6 +268,7 @@
       const meta = loadMeta();
       const stats = { uploaded: 0, downloaded: 0, removed: 0, skipped: 0 };
       let changed = false;
+      let redraw = false;
       // Photos added before syncing existed count as old ones.
       for (const id of Object.keys(PHOTOS)) if (!meta[id]) meta[id] = { h: hashOf(PHOTOS[id]), t: 1 };
       // Plants that no longer exist: drop their photos in the cloud and here.
@@ -282,10 +285,31 @@
         delete meta[id];
         idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
       }
-      // Newer photos from other devices.
+      for (const id of Object.keys(meta)) if (!S.plants[id]) delete meta[id];
+      // Photos removed on this device: drop them in the cloud and leave a marker.
+      for (const [id, mine] of Object.entries(meta)) {
+        if (mine.h !== GONE || PHOTOS[id]) continue;
+        const m = manifest[id];
+        if (!m || m.h === GONE || m.t > mine.t) continue;
+        await cDel(pieceKeys(id, m.n));
+        manifest[id] = { h: GONE, t: mine.t, n: 0 };
+        changed = true;
+        stats.removed++;
+      }
+      // Newer photos (or removals) from other devices.
       for (const [id, m] of Object.entries(manifest)) {
         const mine = meta[id];
         if (mine && (mine.h === m.h || mine.t >= m.t)) continue;
+        if (m.h === GONE) {
+          if (PHOTOS[id]) {
+            delete PHOTOS[id];
+            idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+            stats.removed++;
+            redraw = true;
+          }
+          meta[id] = { h: GONE, t: m.t };
+          continue;
+        }
         const keys = pieceKeys(id, m.n);
         const vals = await cGet(keys);
         if (!vals) continue;
@@ -317,7 +341,7 @@
       }
       if (changed) await writeManifest();
       saveMeta(meta);
-      if (stats.downloaded && !sheet.open) render();
+      if ((stats.downloaded || redraw) && !sheet.open) render();
       if (stats.uploaded || stats.downloaded || stats.removed || stats.skipped) track('photos_synced', stats);
     } finally {
       photoBusy = false;
@@ -329,6 +353,13 @@
   window.photoChanged = (id, url) => {
     const meta = loadMeta();
     meta[id] = { h: hashOf(url), t: Date.now() };
+    saveMeta(meta);
+    if (cs) schedulePhotos();
+  };
+  // A photo was removed on this device (app.js calls this).
+  window.photoRemoved = (id) => {
+    const meta = loadMeta();
+    meta[id] = { h: GONE, t: Date.now() };
     saveMeta(meta);
     if (cs) schedulePhotos();
   };

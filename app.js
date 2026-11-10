@@ -706,7 +706,8 @@ function openPlant(id) {
   $('#sheet-body').innerHTML = `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${pic}</div>
-      <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
+      <div class="hero-acts"><button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
+        ${ph ? `<button class="icon-btn" data-act="photo-remove" data-id="${esc(id)}" aria-label="Убрать фото">${I('trash-2')}</button>` : ''}</div>
       <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
@@ -1712,6 +1713,17 @@ document.addEventListener('click', (e) => {
     }
     case 'close': closeSheet(); break;
     case 'photo': photoFor = id; $('#photo-input').click(); break;
+    case 'photo-remove':
+      if (confirm('Убрать фото? Вместо него будет рисунок.')) {
+        delete PHOTOS[id];
+        idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+        if (window.photoRemoved) window.photoRemoved(id);
+        openPlant(id);
+        render();
+        track('photo_removed');
+        toast('Фото убрано');
+      }
+      break;
     case 'water-now':
       undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(plant(id).wick ? 'Долив записан 💧' : 'Полив записан 💧', undo); break;
     case 'spot':
