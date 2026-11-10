@@ -956,7 +956,7 @@ function openAdd() {
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях — он пришлёт файл, который можно загрузить сюда вместе с советами по уходу.</small></span>
+      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях — он сделает файл, который можно загрузить сюда вместе с советами по уходу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
       <span class="pt"><b>Своё растение</b><small>Название и на что похоже — уход подставлю сам.</small></span>
@@ -1250,7 +1250,7 @@ function openImport() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('bot')}</div><h2 class="m-0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
+    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет делать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением — так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
@@ -1258,7 +1258,7 @@ function openImport() {
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
-    <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
+    <div class="info"><b>Шаг 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
     <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
@@ -1365,7 +1365,7 @@ function showImport(text, ext, fail) {
     importPicked = new Set();
     box.innerHTML = res.error === 'backup'
       ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Восстановить копию».</p>'
-      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений — похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ пришлёт по запросу из шага 1.</p>
+      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений — похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
       <p class="small muted">Всё равно не выходит? Пришлите файл в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
     track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });
   } else {
