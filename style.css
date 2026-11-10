@@ -401,7 +401,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .info .pen { margin-left: auto; display: inline-flex; }
 .note-form textarea { margin-top: 4px; resize: vertical; }
 .note-links { display: flex; gap: 16px; margin: 4px 0 0; }
-.note-links .linkish { min-height: 44px; }
+.note-links .linkish, .copy-help .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
 .field { margin-bottom: 26px; }
 .field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }

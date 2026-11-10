@@ -1248,43 +1248,54 @@ function openImport() {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
-      <p class="mt-8 small" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
-      <textarea class="mt-8 input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
+      <p class="small copy-help" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
+      <div id="imp-prompt-box" hidden><textarea class="mt-8 input" id="imp-prompt" rows="6" readonly aria-label="Запрос для ИИ"></textarea>
+        <button class="mt-8 btn wide" data-act="import-copy-field">${I('copy')}Скопировать из поля</button></div>
+      <p class="sr-only" id="imp-status" role="status"></p></div>
     <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
     <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
   openSheet();
 }
-// Copies text to the clipboard and says how: 'exec', 'clipboard' or 'none'. The old select-and-copy way
-// goes first: on iPhone, a home-screen app's navigator.clipboard.writeText can report success without
-// copying anything. The buffer goes into the open sheet, since a modal <dialog> makes the rest inert.
-function copyText(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.readOnly = true;
-  ta.tabIndex = -1;
-  ta.className = 'copy-buffer';
-  ta.setAttribute('aria-hidden', 'true');
-  ($('#sheet[open]') || document.body).appendChild(ta);
+// Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the
+// moment of selecting (as clipboard.js does); it's back before the next paint, so no keyboard shows.
+function selectAll(ta) {
+  const ro = ta.readOnly;
+  ta.readOnly = false;
   ta.select();
-  ta.setSelectionRange(0, text.length);
+  ta.setSelectionRange(0, ta.value.length);
+  ta.readOnly = ro;
+}
+// Copies text and resolves to how it went: 'exec', 'clipboard', 'failed' or 'none'.
+// Select-and-copy goes first, inside the tap: on iPhone, a home-screen app's navigator.clipboard.writeText
+// can report success without copying anything. The Clipboard API runs too, so either way can carry it.
+// Without a field to copy from, a hidden one goes into the open sheet: a modal <dialog> makes the rest inert.
+function copyText(text, field) {
+  const ta = field || document.createElement('textarea');
+  if (!field) {
+    ta.value = text;
+    ta.readOnly = true;
+    ta.tabIndex = -1;
+    ta.className = 'copy-buffer';
+    ($('#sheet[open]') || document.body).appendChild(ta);
+  }
+  selectAll(ta);
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { /* not supported */ }
-  ta.remove();
-  if (ok) return 'exec';
-  if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(() => {}); return 'clipboard'; }
-  return 'none';
+  if (!field) ta.remove();
+  const api = navigator.clipboard ? navigator.clipboard.writeText(text).then(() => true, () => false) : Promise.resolve(null);
+  return api.then((wrote) => (ok ? 'exec' : wrote ? 'clipboard' : wrote === false ? 'failed' : 'none'));
 }
-// The prompt as text to select by hand, when copying didn't work.
+// The prompt as text to copy by hand, when copying didn't work.
 function showPrompt() {
   const ta = $('#imp-prompt');
   if (!ta) return;
   ta.value = IMPORT_PROMPT;
-  ta.hidden = false;
+  $('#imp-prompt-box').hidden = false;
   $('#imp-manual').hidden = true;
   ta.focus();
-  ta.select();
+  selectAll(ta);
 }
 // Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
 const IMPORT_MAX = 1e6;
@@ -1924,16 +1935,33 @@ document.addEventListener('click', (e) => {
       $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
-      const how = copyText(IMPORT_PROMPT);
+      copyText(IMPORT_PROMPT).then((how) => {
+        track('import_prompt_copied', { how });
+        if (!$('#imp-status')) return;
+        if (how === 'failed' || how === 'none') {
+          showPrompt();
+          el.textContent = 'Не скопировалось — текст ниже';
+          $('#imp-status').textContent = 'Не скопировалось. Запрос показан ниже, скопируйте его вручную.';
+          return;
+        }
+        el.innerHTML = `${I('check')}Скопировано`;
+        $('#imp-status').textContent = 'Запрос скопирован';
+        // Copying can still fail without a word (iPhone): the prompt itself is one tap away.
+        $('#imp-manual').hidden = false;
+      });
       el.focus();
-      track('import_prompt_copied', { how });
-      if (how === 'none') { showPrompt(); el.textContent = 'Выделите и скопируйте текст ниже'; break; }
-      el.innerHTML = `${I('check')}Скопировано`;
-      // Copying can still fail without a word (iPhone): the prompt itself is one tap away.
-      $('#imp-manual').hidden = false;
       break;
     }
     case 'import-show': showPrompt(); track('import_prompt_shown'); break;
+    case 'import-copy-field':
+      copyText(IMPORT_PROMPT, $('#imp-prompt')).then((how) => {
+        track('import_prompt_copied', { how, from: 'field' });
+        if (!$('#imp-status')) return;
+        const ok = how === 'exec' || how === 'clipboard';
+        el.innerHTML = ok ? `${I('check')}Скопировано` : 'Выделите текст и скопируйте';
+        $('#imp-status').textContent = ok ? 'Запрос скопирован' : 'Не скопировалось. Выделите текст в поле и скопируйте.';
+      });
+      break;
     case 'import-pick': {
       const i = Number(el.dataset.i);
       if (importPicked.has(i)) importPicked.delete(i); else importPicked.add(i);
