@@ -1248,12 +1248,43 @@ function openImport() {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
-      <textarea class="input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
+      <p class="mt-8 small" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
+      <textarea class="mt-8 input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
     <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
     <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
   openSheet();
+}
+// Copies text to the clipboard and says how: 'exec', 'clipboard' or 'none'. The old select-and-copy way
+// goes first: on iPhone, a home-screen app's navigator.clipboard.writeText can report success without
+// copying anything. The buffer goes into the open sheet, since a modal <dialog> makes the rest inert.
+function copyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.readOnly = true;
+  ta.tabIndex = -1;
+  ta.className = 'copy-buffer';
+  ta.setAttribute('aria-hidden', 'true');
+  ($('#sheet[open]') || document.body).appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { /* not supported */ }
+  ta.remove();
+  if (ok) return 'exec';
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(() => {}); return 'clipboard'; }
+  return 'none';
+}
+// The prompt as text to select by hand, when copying didn't work.
+function showPrompt() {
+  const ta = $('#imp-prompt');
+  if (!ta) return;
+  ta.value = IMPORT_PROMPT;
+  ta.hidden = false;
+  $('#imp-manual').hidden = true;
+  ta.focus();
+  ta.select();
 }
 // Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
 const IMPORT_MAX = 1e6;
@@ -1893,11 +1924,16 @@ document.addEventListener('click', (e) => {
       $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
-      const done = () => { el.innerHTML = `${I('check')}Скопировано`; track('import_prompt_copied'); };
-      const show = () => { const ta = $('#imp-prompt'); ta.value = IMPORT_PROMPT; ta.hidden = false; ta.select(); el.textContent = 'Выделите и скопируйте текст ниже'; };
-      if (navigator.clipboard) navigator.clipboard.writeText(IMPORT_PROMPT).then(done, show); else show();
+      const how = copyText(IMPORT_PROMPT);
+      el.focus();
+      track('import_prompt_copied', { how });
+      if (how === 'none') { showPrompt(); el.textContent = 'Выделите и скопируйте текст ниже'; break; }
+      el.innerHTML = `${I('check')}Скопировано`;
+      // Copying can still fail without a word (iPhone): the prompt itself is one tap away.
+      $('#imp-manual').hidden = false;
       break;
     }
+    case 'import-show': showPrompt(); track('import_prompt_shown'); break;
     case 'import-pick': {
       const i = Number(el.dataset.i);
       if (importPicked.has(i)) importPicked.delete(i); else importPicked.add(i);
