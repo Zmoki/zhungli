@@ -30,7 +30,7 @@
   --blob-1: #ffe197; --blob-2: #aee0b3; --blob-3: #bcd8ef;
   /* Status chips over photos: white glass, the status color on the face and the word (7:1 even over black) */
   --glass-photo: rgba(255, 255, 255, .9);
-  --st-need: #7a3200; --st-fine: #1a522e; --st-watered: #00478f; --st-dim: #4a2fb0; --st-hot: #614600; --st-gh: #94003a;
+  --st-need: #7a3200; --st-fine: #1a522e; --st-watered: #00478f; --st-dim: #4a2fb0; --st-hot: #614600; --st-gh: #94003a; --st-grow: #004a4f;
   /* Plant drawings */
   --leaf: #33b067; --leaf-2: #1f8a4c; --leaf-3: #8ee3ae; --bloom: #ff7fb0; --glass: #d3e8ff; --coleus: #e2457e; --trunk: #8a5a3c;
   /* Text accents and soft fills (older names, still used across the app) */
@@ -94,7 +94,7 @@
     --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
     --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
     --glass-photo: rgba(34, 28, 46, .9);
-    --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0;
+    --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
     --surface: #2a2338;
   }
 }
@@ -131,7 +131,7 @@
   --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
   --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
   --glass-photo: rgba(34, 28, 46, .9);
-  --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0;
+  --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
   --surface: #2a2338;
 }
 
@@ -304,7 +304,7 @@ button { cursor: pointer; }
 [hidden] { display: none !important; }
 /* Status filter: the plant card's status chips as buttons, with a control edge; the chosen one gets a ring in its own color */
 .st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
-.st-filter .st-chip { min-height: 44px; border-color: var(--edge); } /* controls keep a 3:1 edge */
+.st-filter .st-chip { min-height: 44px; border-color: var(--edge); white-space: nowrap; } /* controls keep a 3:1 edge */
 .st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
 .st-filter .st-chip.on { border-color: currentColor; }
 /* Counts stay quiet: regular weight, smaller, grey */
@@ -383,6 +383,8 @@ dialog { --card: var(--bubble); }
 .mood.dim { color: var(--st-dim); }
 .mood.hot { color: var(--st-hot); }
 .gh, .mood.greenhouse { color: var(--st-gh); }
+/* How it grows when it's not an ordinary pot («в воде», «на фитиле»): teal, same shapes as the greenhouse badge */
+.gh.way, .mood.way { color: var(--st-grow); }
 /* Greenhouse badge: a round chip as tall as the status chip */
 .gh { flex: none; font-size: 0.824rem; width: calc(1.2em + 12px); height: calc(1.2em + 12px); display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
 .gh .ic { width: 17px; height: 17px; stroke-width: 2.4; }
