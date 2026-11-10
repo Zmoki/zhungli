@@ -953,7 +953,7 @@ function openAdd() {
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude, Gemini или другого ИИ-помощника о своих растениях и перенесите ответ сюда — вместе с советами по уходу.</small></span>
+      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях — он пришлёт файл, который можно загрузить сюда вместе с советами по уходу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
       <span class="pt"><b>Своё растение</b><small>Название и на что похоже — уход подставлю сам.</small></span>
@@ -1119,11 +1119,11 @@ function openCustom(species = '', from = 'button') {
 /* ---------- Import from an AI chat ---------- */
 // The user copies a prompt into ChatGPT/Claude, pastes the JSON answer back,
 // and the plants become custom plants with their care tips.
-const IMPORT_PROMPT = `Сделай список моих растений для приложения «Жунгли». Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
+const IMPORT_PROMPT = `Сделай файл plants.json со списком моих растений для приложения «Жунгли» и пришли его мне для скачивания — файлом, не текстом в чате. Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
 
 Если я говорила, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пиши проверку и уход именно для этого способа.
 
-Ответь только JSON-массивом, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
+В файле — только JSON-массив, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species — вид или сорт по-русски
 - name — имя, если оно есть у растения, иначе ""
 - room — комната, где стоит, если я её называла (например "Кухня"), иначе ""
@@ -1152,7 +1152,7 @@ function repairJson(src) {
     .replace(/(\d)[   ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
     .replace(/,\s*([\]}])/g, '$1'); // trailing commas
 }
-// Finds the plant list in a pasted answer: code fences, text around it (even with brackets),
+// Finds the plant list in the AI's file: code fences, text around it (even with brackets),
 // typographic quotes, spaced numbers, a single object or objects without [ ].
 function parseImport(text) {
   const t = String(text || '').trim();
@@ -1231,6 +1231,7 @@ function normImport(o) {
 
 let importItems = [];
 let importRepaired = false;
+let importExt = '';
 let importPicked = new Set();
 function openImport() {
   startAddFlow('import');
@@ -1240,37 +1241,48 @@ function openImport() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('bot')}</div><h2 class="m-0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude, Gemini или другой ИИ — в чат, где уже обсуждали растения, или вместе с их фото.
+    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <textarea class="input" id="imp-prompt" rows="6" readonly hidden aria-label="Запрос для ИИ"></textarea></div>
-    <div class="info"><b>Шаг 2</b>Вставьте сюда ответ целиком.
-      <textarea class="mt-8 input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ ИИ"></textarea></div>
+    <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
+      <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
-    <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Вставьте ответ</button></div>`;
-  let timer;
-  $('#imp-text').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(showImport, 300); });
+    <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Выберите файл</button></div>`;
   openSheet();
 }
-function showImport() {
-  const text = $('#imp-text').value;
-  const res = parseImport(text);
+// Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
+const IMPORT_MAX = 1e6;
+// Reads the file the AI sent and shows its plants. `ext` is only the file's extension, for stats.
+async function importFile(f) {
+  const ext = (f.name.includes('.') ? f.name.split('.').pop() : '').toLowerCase().slice(0, 8);
+  let text = null;
+  try { if (f.size <= IMPORT_MAX) text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
+  showImport(text, ext);
+}
+// A backup picked here by mistake: it has no plant list for import, but can be restored in settings.
+function isBackup(text) {
+  try { const d = JSON.parse(text); return !!d && d.app === 'zhungli' && !!d.state; } catch (e) { return false; }
+}
+function showImport(text, ext) {
+  const res = text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text);
   const box = $('#imp-list');
-  // A few characters are typing or a stray tap, not an answer: a nudge instead of an error.
-  const tooShort = res.error === 'no_list' && text.trim().length < 40;
+  if (!box) return;
+  $('#imp-file').innerHTML = `${I('file-up')}${res.error ? 'Выбрать файл' : 'Выбрать другой файл'}`;
   if (res.error) {
     importItems = [];
     importPicked = new Set();
-    box.innerHTML = res.error === 'empty' ? ''
-      : tooShort ? '<p class="small muted">Сюда — ответ ИИ целиком: длинный текст со списком растений в скобках [ ].</p>'
-        : `<p class="error-note small">Не получилось найти здесь список растений. Скопируйте ответ ИИ целиком — вместе со скобками [ ].</p>
-      <p class="small muted">Всё равно не выходит? Пришлите ответ ИИ в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
-    if (res.error !== 'empty' && !tooShort) track('import_failed', { length: text.length, reason: res.error, ...res.diag });
+    box.innerHTML = res.error === 'backup'
+      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Восстановить копию».</p>'
+      : `<p class="error-note small">${res.error === 'unreadable' ? 'Не получилось открыть этот файл.' : 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ пришлёт по запросу из шага 1.</p>
+      <p class="small muted">Всё равно не выходит? Пришлите файл в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
+    track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });
   } else {
     importItems = res.items;
     importRepaired = res.repaired;
     // Plants already in the collection start unticked.
     const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
     importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
+    importExt = ext;
     box.innerHTML = `<p class="found-note small muted">Найдено ${plantsN(importItems.length)}. Снимите галочку с лишних.</p>` +
       importItems.map((it, i) => {
         const dup = !importPicked.has(i);
@@ -1282,7 +1294,7 @@ function showImport() {
   }
   updateImportBar();
 }
-const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Вставьте ответ');
+const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Выберите файл');
 function addImported() {
   if (addFlow) addFlow.done = true;
   const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
@@ -1306,7 +1318,7 @@ function addImported() {
   save();
   const noSpot = list.filter((it) => !it.spot).length;
   track('plants_added', {
-    count: list.length, generic_count: 0, source: 'import', repaired: importRepaired,
+    count: list.length, generic_count: 0, source: 'import', repaired: importRepaired, file_ext: importExt,
     with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
   });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
@@ -1659,6 +1671,11 @@ $('#import-input').addEventListener('change', (e) => {
   e.target.value = '';
   if (f) doImport(f);
 });
+$('#ai-file-input').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (f) importFile(f);
+});
 
 /* ---------- Anonymous stats ---------- */
 // Only which buttons are tapped and how many plants: no plant names, nicknames, photos or spots.
@@ -1859,6 +1876,7 @@ document.addEventListener('click', (e) => {
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); break;
     case 'add-import': openImport(); break;
+    case 'import-file': $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
       const done = () => { el.innerHTML = `${I('check')}Скопировано`; track('import_prompt_copied'); };
