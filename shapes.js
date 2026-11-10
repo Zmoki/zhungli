@@ -78,6 +78,7 @@ const SHAPE_BY_ID = {
   // Where the name or growing medium would pick the wrong drawing.
   syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
   schlumbergera: 'trailing', kalanchoe: 'flowering',
+  tillandsia: 'succulent', 'g-mount': 'orchid', 'g-terrarium': 'prayer', 'g-aquarium': 'trailing',
 };
 function shapeOf(d) {
   if (!d) return 'leafy';

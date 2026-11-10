@@ -121,7 +121,7 @@ const MEDIA = {
     soil: 'Банка или ваза с водой, в воде только корни и низ стебля. Слизь или запах — промыть банку и корни.' },
   mount: { name: 'На блоке, корни на воздухе', feed: 'none', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
     task: 'Замочите или сбрызните корни, если они посеребрели', verb: 'Замочите или сбрызните', start: () => 3, max: 14,
-    hint: 'Позову проверить корни: на воздухе они сохнут быстро.',
+    hint: 'На блоке всё сохнет быстро — позову проверять часто.',
     water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели; летом бывает каждый день. Раз в месяц — удобрение в четверть дозы в воду.',
     soil: 'Блок из коры, коряги или пробки, корни открыты воздуху. Нужна высокая влажность воздуха.' },
   terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, badge: ['flask-round', 'в террариуме'], labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
@@ -463,7 +463,10 @@ function actWater(id, silent) {
     const iv = r.wet > 0 ? (r.interval + measured) / 2 : Math.min(r.interval, (r.interval + measured) / 2) * 0.95;
     // Grown another way than the card says (a wick reservoir, water…), the card's interval doesn't apply: wider bounds.
     const way = wayOf({ type: mediumIn(r, d), watering: wateringIn(r, d) });
-    r.interval = isCardWay(r, d) ? clamp(iv, Math.max(1, d.every * 0.4), d.every * 3) : clamp(iv, way.min || 1, way.max || 45);
+    // On the card's way: within the card's range, and never past the way's own limits (a terrarium: 60 days at most).
+    r.interval = isCardWay(r, d)
+      ? clamp(iv, Math.max(1, d.every * 0.4, way.min || 0), Math.min(d.every * 3, way.max || Infinity))
+      : clamp(iv, way.min || 1, way.max || 45);
   }
   r.lastWater = t;
   r.wet = 0;
