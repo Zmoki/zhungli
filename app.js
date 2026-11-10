@@ -1294,6 +1294,19 @@ function copyText(text) {
   if (!navigator.clipboard) return Promise.resolve('none');
   return navigator.clipboard.writeText(text).then(() => 'clipboard', () => 'failed');
 }
+// Copies the prompt with a visible «Копирую…» step: the result shows no sooner than a second after the tap,
+// so nobody rushes off to the AI app before a slow phone has finished. Taps meanwhile are ignored.
+const COPY_PAUSE = 1000;
+function copyPrompt(el, done) {
+  if (el.dataset.busy) return;
+  el.dataset.busy = '1';
+  el.innerHTML = `${I('copy')}Копирую…`;
+  const t0 = Date.now();
+  copyText(IMPORT_PROMPT).then((how) => setTimeout(() => {
+    delete el.dataset.busy;
+    done(how);
+  }, Math.max(0, COPY_PAUSE - (Date.now() - t0))));
+}
 // The prompt as text to copy by hand, when copying didn't work. An ordinary (editable) field on purpose:
 // iPhone offers «Выбрать все» only in fields you can type in, and a readonly one leaves only dragging
 // across 2,500 characters. inputmode="none" keeps the on-screen keyboard down, even when it's tapped.
@@ -1953,9 +1966,9 @@ document.addEventListener('click', (e) => {
       $('#ai-file-input').click(); break;
     case 'import-copy': {
       if (addFlow) addFlow.promptCopied = true;
-      copyText(IMPORT_PROMPT).then((how) => {
+      copyPrompt(el, (how) => {
         track('import_prompt_copied', { how });
-        if (!$('#imp-status')) return;
+        if (!$('#imp-status')) return; // the sheet was closed meanwhile
         if (how === 'failed' || how === 'none') {
           showPrompt();
           el.textContent = 'Не скопировалось — текст ниже';
@@ -1972,7 +1985,7 @@ document.addEventListener('click', (e) => {
     }
     case 'import-show': showPrompt(); track('import_prompt_shown'); break;
     case 'import-copy-again':
-      copyText(IMPORT_PROMPT).then((how) => {
+      copyPrompt(el, (how) => {
         track('import_prompt_copied', { how, from: 'again' });
         if (!$('#imp-status')) return;
         const ok = how === 'exec' || how === 'clipboard';
