@@ -1249,7 +1249,7 @@ function openImport() {
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте в ChatGPT, Claude или другой ИИ, который умеет присылать файлы, — в чат, где уже обсуждали растения, или вместе с их фото.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <p class="small copy-help" id="imp-manual" hidden><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p>
-      <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">Подержите палец на тексте → «Выбрать все» → «Скопировать».</p>
+      <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">Нажмите на текст, затем ещё раз — в меню «Выбрать все», потом «Скопировать».</p>
         <textarea class="mt-8 input" id="imp-prompt" rows="8" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
@@ -1297,6 +1297,12 @@ function showPrompt() {
   $('#imp-prompt-box').hidden = false;
   $('#imp-manual').hidden = true;
   $('#imp-prompt-box').scrollIntoView({ block: 'nearest' });
+  // Editable only so the system menu offers «Выбрать все»: typing is undone, so a stray key can't end up in the AI chat.
+  if (!ta.dataset.locked) {
+    ta.dataset.locked = '1';
+    ta.addEventListener('beforeinput', (e) => e.preventDefault());
+    ta.addEventListener('input', () => { if (ta.value !== IMPORT_PROMPT) ta.value = IMPORT_PROMPT; });
+  }
 }
 // Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
 const IMPORT_MAX = 1e6;
