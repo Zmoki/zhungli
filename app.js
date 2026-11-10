@@ -1274,7 +1274,9 @@ function selectAll(ta) {
 }
 // Copies text and resolves to how it went: 'exec', 'clipboard', 'failed' or 'none'.
 // Select-and-copy goes first, inside the tap: on iPhone, a home-screen app's navigator.clipboard.writeText
-// can report success without copying anything. The Clipboard API runs too, so either way can carry it.
+// can report success without copying anything. The Clipboard API runs only when that fails: a second write
+// right after the first can still be going when the person switches to the AI app on a slow iPhone,
+// and the app is suspended mid-write, leaving the clipboard empty.
 // The text goes into a hidden readonly field in the open sheet (a modal <dialog> makes the rest inert),
 // so no keyboard shows.
 function copyText(text) {
@@ -1288,8 +1290,9 @@ function copyText(text) {
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { /* not supported */ }
   ta.remove();
-  const api = navigator.clipboard ? navigator.clipboard.writeText(text).then(() => true, () => false) : Promise.resolve(null);
-  return api.then((wrote) => (ok ? 'exec' : wrote ? 'clipboard' : wrote === false ? 'failed' : 'none'));
+  if (ok) return Promise.resolve('exec');
+  if (!navigator.clipboard) return Promise.resolve('none');
+  return navigator.clipboard.writeText(text).then(() => 'clipboard', () => 'failed');
 }
 // The prompt as text to copy by hand, when copying didn't work. An ordinary (editable) field on purpose:
 // iPhone offers «Выбрать все» only in fields you can type in, and a readonly one leaves only dragging
