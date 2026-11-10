@@ -545,6 +545,8 @@ function ava(p, cls = 'ava') {
 const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I(icon)}${title}</b>
   <p class="mt-6 small muted">${text}</p>
   <div class="btns hint-btns">${buttons}</div></div>`;
+// Android and computers (Chrome, Edge, Samsung Internet) offer installing through this event; Safari and Firefox don't.
+let installPrompt = null;
 function currentHint() {
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram) {
@@ -576,17 +578,25 @@ function currentHint() {
     }
     return '';
   }
+  // The installed app shares the browser's data here, so it can wait for the first plant.
+  if (installPrompt && hasPlants && !S.hideInstall) {
+    return hintCard('smartphone', 'Установите Жунгли как приложение',
+      'Жунгли будут открываться с иконки, в своём окне. Растения останутся на месте.',
+      '<button class="btn ok" data-act="install">Установить</button><button class="btn ghost" data-act="hide-install">Не нужно</button>');
+  }
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  // Chrome, Firefox, Edge and others on iPhone add to the home screen through their own «Поделиться» too.
+  const share = /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(navigator.userAgent) ? '«Поделиться»' : 'Safari → «Поделиться»';
   // iPhone keeps a home-screen app's data apart from Safari's: the icon opens an empty Жунгли.
   // So the hint comes before the first plant, and with plants it explains moving them with a backup.
   if (isIOS && !navigator.standalone && !S.hideInstall) {
     if (!hasPlants) {
       return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-        'Safari → «Поделиться» → «На экран Домой», и отмечайте растения уже там. Так iPhone не сотрёт ваши отметки, если пару недель не заходить.',
+        `${share} → «На экран Домой», и отмечайте растения уже там. Так iPhone не сотрёт ваши отметки, если пару недель не заходить.`,
         '<button class="btn" data-act="hide-install">Уже на экране</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
-      'Так iPhone не сотрёт ваши отметки. Safari → «Поделиться» → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».',
+      `Так iPhone не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
       '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install">Уже на экране</button>');
   }
   return '';
@@ -1967,6 +1977,14 @@ document.addEventListener('click', (e) => {
       bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂'); break;
     case 'show-all': showAll = true; track('show_all_clicked'); render(); break;
     case 'hide-install': S.hideInstall = true; track('install_hint_hidden'); save(); render(); break;
+    case 'install': {
+      const ask = installPrompt;
+      if (!ask) break;
+      installPrompt = null; // the browser's prompt works once
+      ask.prompt();
+      ask.userChoice.then(({ outcome }) => { track('install_prompt', { outcome }); render(); }, () => render());
+      break;
+    }
     case 'tg-home': if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); break;
     case 'stats-ok': S.statsNotice = true; save(); render(); break;
     case 'stats-off':
@@ -2365,6 +2383,9 @@ if (IOS && (navigator.standalone || MINI_APP)) {
   let vvTimer;
   window.visualViewport?.addEventListener('resize', () => { clearTimeout(vvTimer); vvTimer = setTimeout(remeasure, 250); });
 }
+
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; if (!booting) render(); });
+addEventListener('appinstalled', () => { installPrompt = null; track('app_installed'); render(); });
 
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -75,6 +75,8 @@ On every event:
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | — |
+| `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
+| `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |
 | `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
 | `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
