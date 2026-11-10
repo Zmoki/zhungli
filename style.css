@@ -401,7 +401,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .info .pen { margin-left: auto; display: inline-flex; }
 .note-form textarea { margin-top: 4px; resize: vertical; }
 .note-links { display: flex; gap: 16px; margin: 4px 0 0; }
-.note-links .linkish { min-height: 44px; }
+.note-links .linkish, .copy-help .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
 .field { margin-bottom: 26px; }
 .field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
@@ -532,6 +532,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .input:focus-visible { outline-offset: 0; }
 summary.group-title { display: flex; align-items: center; min-height: 44px; margin: 8px 0; }
+/* Off-screen text for copyText(); 16px so iPhone doesn't zoom when it's selected. */
+.copy-buffer { position: fixed; top: 0; left: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; font-size: 16px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 abbr[title] { text-decoration: none; }
 .input::placeholder { color: var(--muted); opacity: 1; }
