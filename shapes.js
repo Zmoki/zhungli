@@ -81,7 +81,9 @@ const SHAPE_BY_ID = {
 };
 function shapeOf(d) {
   if (!d) return 'leafy';
-  if (SHAPE_BY_ID[d.id]) return SHAPE_BY_ID[d.id];
+  // A plant in the collection has its own id; its catalog card is `def` (older plants: the id is the card).
+  const card = d.def || d.id;
+  if (SHAPE_BY_ID[card]) return SHAPE_BY_ID[card];
   const s = String(d.species || '').toLowerCase();
   // A plant moved into water or bark keeps its drawing: the card's medium decides (cardType on plants).
   const type = d.cardType || d.type;
