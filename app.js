@@ -79,7 +79,8 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // 'none'; feedTip: added to a reservoir's watering tip; care: a recurring bonus task, careHint: its line in the hint;
 // first: comes first among checks; noChecks: never checked;
 // organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents);
-// badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING).
+// badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING);
+// watering: the medium's usual watering when it isn't from above (clay pebbles stand on a reservoir).
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
@@ -107,7 +108,7 @@ const MEDIA = {
     water: 'Когда подсох верхний слой: минеральный субстрат сохнет быстрее грунта. В каждый полив — удобрение в слабой дозе, своего питания в субстрате нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе — в каждый долив.' },
-  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true, badge: ['grip', 'в керамзите'],
+  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true, badge: ['grip', 'в керамзите'], watering: 'reservoir',
     care: { kind: 'flush', every: 45, task: 'Промойте керамзит', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
     hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в полтора месяца напомню промыть керамзит.',
     water: 'Поливать раствором, когда нижний слой подсох; лишнее сливать. Удобрение для гидропоники — в каждый полив.',
@@ -513,11 +514,18 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
     : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`);
 
-// Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: icons on grid cards,
-// worded chips in the plant card. Keys go to the status filter too.
-const growKeys = (p) => [p.type, p.watering].filter((k) => k && ((MEDIA[k] || WATERING[k] || {}).badge));
-const growBadge = (k) => (MEDIA[k] || WATERING[k]).badge;
-const growBadges = (p, words) => growKeys(p).map((k) => {
+// Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
+// plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
+// Keys go to the status filter too. Left out: a catalog card's own medium, which its name already says
+// (lucky bamboo, cuttings in water), and a watering that is the medium's usual one (clay pebbles on a reservoir).
+const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
+function growKeys(p) {
+  const keys = [];
+  if (growBadge(p.type) && !(p.type === p.cardType && !isCustom(p.id))) keys.push(p.type);
+  if (growBadge(p.watering) && p.watering !== MEDIA[p.type].watering) keys.push(p.watering);
+  return keys;
+}
+const growBadges = (p, words) => growKeys(p).slice(0, words ? 2 : 1).map((k) => {
   const [icon, word] = growBadge(k);
   return words ? `<span class="mood hero-mood way">${I(icon)}${word}</span>`
     : `<span class="gh way" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
@@ -830,9 +838,9 @@ function waterBox(p) {
 function wayBox(p, d) {
   const sel = (field, label, list, value) => `<label for="f-${field}">${label}</label><select class="input" id="f-${field}" data-field="${field}" data-id="${esc(p.id)}" aria-describedby="way-hint">
     ${Object.entries(list).map(([k, x]) => `<option value="${k}"${value === k ? ' selected' : ''}>${x.name}</option>`).join('')}</select>`;
-  return `<div class="field">${sel('medium', 'В чём растёт', MEDIA, p.type)}</div>
-    <div class="field" id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}>${sel('watering', 'Как поливаю', WATERING, p.watering || 'top')}</div>
-    <div class="way-note" id="way-note">${wayNote(p, d)}</div>`;
+  return `<div class="field">${sel('medium', 'В чём растёт', MEDIA, p.type)}
+    <div class="mt-20" id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}>${sel('watering', 'Как поливаю', WATERING, p.watering || 'top')}</div>
+    <div class="mt-6" id="way-note">${wayNote(p, d)}</div></div>`;
 }
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
 // Redrawn alone on a change: replacing the selects would reopen the picker on iPhone.
@@ -1209,7 +1217,7 @@ function normImport(o) {
   const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
   const type = importType(o.type);
   // Clay pebbles almost always stand in a pot with a reservoir.
-  const watering = !MEDIA[type].pot ? 'top' : type === 'leca' && !o.watering ? 'reservoir' : importWatering(o.watering, o.type);
+  const watering = !MEDIA[type].pot ? 'top' : MEDIA[type].watering && !o.watering ? MEDIA[type].watering : importWatering(o.watering, o.type);
   return {
     species, name: str(o.name, 40) === species ? '' : str(o.name, 40),
     room: cap(str(o.room, 40)), spot: cap(str(o.spot ?? o.place, 40)),
@@ -2092,8 +2100,9 @@ document.addEventListener('change', (e) => {
     const d = def(id);
     const medium = f === 'medium' ? el.value : mediumIn(r, d);
     let watering = f === 'watering' ? el.value : wateringIn(r, d);
-    // Clay pebbles almost always stand in a pot with a reservoir.
-    if (f === 'medium' && medium === 'leca' && watering === 'top') watering = 'reservoir';
+    // A medium with its own usual watering (clay pebbles on a reservoir) brings it along.
+    // A medium with no watering (water, an aquarium) counts as from above here.
+    if (f === 'medium' && MEDIA[medium].watering && (!watering || watering === 'top')) watering = MEDIA[medium].watering;
     const res = setWay(id, medium, watering);
     if (!res) return;
     const p = plant(id);

@@ -67,7 +67,7 @@ Picking another way than the card's:
 - The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.
 - The drawing stays the card's: a dracaena moved into water is still drawn as a dracaena.
 
-Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one: «в воде», «в аквариуме», «в керамзите», «на минералке», «на блоке», «в террариуме», «на фитиле», «с резервуаром» (an icon on grid cards, words in the plant card). The Plants filter has a chip for each way that has plants.
+Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one (`badge` in `MEDIA`, `WATERING`; looks in [DESIGN.md](DESIGN.md)): words in the plant card, one icon on grid cards. A catalog card's own medium («Счастливый бамбук» in water) and a medium's usual watering (clay pebbles on a reservoir) get none. The Plants filter has a chip for each way that has plants.
 
 ## How the interval learns
 
