@@ -1250,7 +1250,7 @@ function openImport() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('bot')}</div><h2 class="m-0">Импорт из чата с ИИ</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Можно приложить фото — так ИИ точнее узнает растения.
+    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения: в новом ИИ спросит, какие они у вас.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением — так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
