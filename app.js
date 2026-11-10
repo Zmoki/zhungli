@@ -692,6 +692,26 @@ function waterBox(p) {
 }
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
 
+// The plant card's picture and its photo buttons; heroPhotoChanged() redraws them alone.
+function heroPic(p, mc) {
+  const ph = photoOf(p.id);
+  return ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
+}
+function heroActs(id) {
+  const ph = photoOf(id);
+  return `<button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
+    ${ph ? `<button class="icon-btn" data-act="photo-remove" data-id="${esc(id)}" aria-label="Убрать фото">${I('trash-2')}</button>` : ''}`;
+}
+// A photo changed elsewhere (Telegram sync) while this plant's card may be open:
+// redraw only the picture, so fields being edited keep their text and focus.
+function heroPhotoChanged(id) {
+  const btn = sheet.open && $(`#sheet-body .hero-photo[data-id="${CSS.escape(id)}"]`);
+  const p = btn && plant(id);
+  if (!p) return;
+  $('#sheet-body .hero-pic').innerHTML = heroPic(p, mood(p)[2]);
+  btn.parentElement.innerHTML = heroActs(id);
+}
+
 function openPlant(id) {
   const p = plant(id);
   if (!p) return;
@@ -700,13 +720,11 @@ function openPlant(id) {
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
-  const ph = photoOf(p.id);
-  const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mc);
   const tr = tempRange(p);
   $('#sheet-body').innerHTML = `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="hero"><div class="hero-pic">${pic}</div>
-      <button class="hero-photo" data-act="photo" data-id="${esc(id)}">${I('camera')}${ph ? 'Другое фото' : 'Фото'}</button>
+    <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
+      <div class="hero-acts">${heroActs(id)}</div>
       <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
@@ -1387,9 +1405,12 @@ async function doImport(file) {
     await idbReq((st) => st.clear(), 'readwrite');
     const photos = Object.fromEntries(Object.entries(data.photos || {}).filter(([, url]) => isPhoto(url)));
     for (const [id, url] of Object.entries(photos)) await idbReq((st) => st.put(url, id), 'readwrite');
+    const gone = Object.keys(PHOTOS).filter((id) => !photos[id]);
     PHOTOS = photos;
-    // In the mini app, restored photos are the newest: they replace older ones in Telegram's cloud.
+    // In the mini app, restored photos are the newest: they replace older ones in Telegram's cloud,
+    // and photos the backup doesn't have are removed there too.
     if (window.photoChanged) Object.entries(photos).forEach(([id, url]) => window.photoChanged(id, url));
+    if (window.photoRemoved) gone.forEach((id) => window.photoRemoved(id));
     closeSheet();
     track('backup_imported');
     toast('Готово, всё вернулось 🌿');
@@ -1402,6 +1423,11 @@ async function doImport(file) {
 // Photos are JPEG data URLs made by resize(); anything else (e.g. from a crafted backup) is dropped.
 const isPhoto = (u) => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
 const photoOf = (id) => (isPhoto(PHOTOS[id]) ? PHOTOS[id] : null);
+// Forgets a plant's photo on this device (memory and IndexedDB).
+function dropPhoto(id) {
+  delete PHOTOS[id];
+  idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+}
 const dbp = new Promise((res, rej) => {
   if (!('indexedDB' in window)) return rej(new Error('no idb'));
   const r = indexedDB.open('zhungli', 1);
@@ -1712,6 +1738,16 @@ document.addEventListener('click', (e) => {
     }
     case 'close': closeSheet(); break;
     case 'photo': photoFor = id; $('#photo-input').click(); break;
+    case 'photo-remove':
+      if (confirm('Убрать фото? Вместо него будет рисунок.')) {
+        dropPhoto(id);
+        if (window.photoRemoved) window.photoRemoved(id);
+        openPlant(id);
+        render();
+        track('photo_removed');
+        toast('Фото убрано');
+      }
+      break;
     case 'water-now':
       undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(plant(id).wick ? 'Долив записан 💧' : 'Полив записан 💧', undo); break;
     case 'spot':
@@ -1761,11 +1797,10 @@ document.addEventListener('click', (e) => {
     case 'delete':
       if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
         delete S.plants[id];
-        delete PHOTOS[id];
+        dropPhoto(id);
         for (const k of ['dust:' + id, 'rotate:' + id]) { delete S.bonus[k]; delete S.snooze[k]; }
         // A custom plant's card is no longer needed.
         if (S.custom[id]) delete S.custom[id];
-        idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
         track('plant_deleted');
         save(); closeSheet(); toast('Убрано 🍂');
       }
