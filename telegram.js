@@ -123,13 +123,23 @@
     checked = true;
     track('cloud_checked', { result, cloud_plants: cloudPlants, local_plants: plantsIn(S) });
   };
+  // Photos sync only against reconciled plants: while a pull is running, S may lack plants
+  // added elsewhere, and syncPhotos would delete their photos in the cloud.
+  let pullingSince = 0;
+  let photosWaiting = false;
+  const pullDone = () => {
+    pullingSince = 0;
+    if (photosWaiting) { photosWaiting = false; schedulePhotos(); }
+  };
   function pull() {
+    pullingSince = Date.now();
     cs.getItem('sn', (err, n) => {
-      if (err) { cloudError('read', err); report('error', null); return; }
+      if (err) { pullDone(); cloudError('read', err); report('error', null); return; }
       const count = Number(n) || 0;
-      if (!count) { cloudHasPlants = false; report(plantsIn(S) ? 'uploaded' : 'both_empty', 0); if (plantsIn(S)) { dirty = true; push(); } else schedulePhotos(); return; }
+      if (!count) { pullDone(); cloudHasPlants = false; report(plantsIn(S) ? 'uploaded' : 'both_empty', 0); if (plantsIn(S)) { dirty = true; push(); } else schedulePhotos(); return; }
       const keys = Array.from({ length: count }, (_, i) => 's' + i);
       cs.getItems(keys, (err2, vals) => {
+        pullDone();
         if (err2 || !vals) { cloudError('read', err2 || 'no values'); report('error', null); return; }
         const chunks = keys.map((k) => vals[k] || '');
         let cloud = null;
@@ -200,6 +210,9 @@
   let photoTimer;
   let photoBusy = false;
   let photoAgain = false;
+  // The meta a running sync works on: photoChanged / photoRemoved write into it, so the sync
+  // sees their changes and doesn't save over them.
+  let syncMeta = null;
 
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } };
   const saveMeta = (m) => { try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) { /* storage full */ } };
@@ -260,15 +273,18 @@
   async function syncPhotos() {
     if (!cs) return;
     if (photoBusy) { photoAgain = true; return; }
+    // A pull that doesn't answer in 10 s no longer holds photos back.
+    if (pullingSince && Date.now() - pullingSince < 10000) { photosWaiting = true; return; }
     photoBusy = true;
     try {
       const cloud = await readManifest();
       if (cloud === null) return;
       manifest = cloud;
       const meta = loadMeta();
+      syncMeta = meta;
       const stats = { uploaded: 0, downloaded: 0, removed: 0, skipped: 0 };
       let changed = false;
-      let redraw = false;
+      const redrawn = []; // plants whose photo arrived or left
       // Photos added before syncing existed count as old ones.
       for (const id of Object.keys(PHOTOS)) if (!meta[id]) meta[id] = { h: hashOf(PHOTOS[id]), t: 1 };
       // Plants that no longer exist: drop their photos in the cloud and here.
@@ -281,9 +297,8 @@
       }
       for (const id of Object.keys(PHOTOS)) {
         if (S.plants[id]) continue;
-        delete PHOTOS[id];
+        dropPhoto(id);
         delete meta[id];
-        idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
       }
       for (const id of Object.keys(meta)) if (!S.plants[id]) delete meta[id];
       // Photos removed on this device: drop them in the cloud and leave a marker.
@@ -302,29 +317,30 @@
         if (mine && (mine.h === m.h || mine.t >= m.t)) continue;
         if (m.h === GONE) {
           if (PHOTOS[id]) {
-            delete PHOTOS[id];
-            idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
+            dropPhoto(id);
             stats.removed++;
-            redraw = true;
+            redrawn.push(id);
           }
           meta[id] = { h: GONE, t: m.t };
           continue;
         }
         const keys = pieceKeys(id, m.n);
         const vals = await cGet(keys);
-        if (!vals) continue;
+        if (!vals || meta[id] !== mine) continue; // changed here meanwhile: the next run decides
         const url = 'data:image/jpeg;base64,' + keys.map((k) => vals[k] || '').join('');
         if (!isPhoto(url) || keys.some((k) => !vals[k])) continue;
         PHOTOS[id] = url;
         meta[id] = { h: m.h, t: m.t };
         await idbReq((st) => st.put(url, id), 'readwrite').catch(() => {});
         stats.downloaded++;
+        redrawn.push(id);
       }
       // This device's photos the cloud doesn't have yet, or has older ones of.
       let used = Object.values(manifest).reduce((sum, m) => sum + m.n, 0);
       for (const id of Object.keys(PHOTOS)) {
         const mine = meta[id];
         const m = manifest[id];
+        if (!mine || !PHOTOS[id]) continue; // changed during this sync: another run follows
         if (m && (m.h === mine.h || m.t > mine.t)) continue;
         const data = await makeThumb(PHOTOS[id]).catch(() => null);
         if (!data) continue;
@@ -341,9 +357,10 @@
       }
       if (changed) await writeManifest();
       saveMeta(meta);
-      if ((stats.downloaded || redraw) && !sheet.open) render();
+      if (redrawn.length) { if (sheet.open) redrawn.forEach(heroPhotoChanged); else render(); }
       if (stats.uploaded || stats.downloaded || stats.removed || stats.skipped) track('photos_synced', stats);
     } finally {
+      syncMeta = null;
       photoBusy = false;
       if (photoAgain) { photoAgain = false; schedulePhotos(); }
     }
@@ -351,14 +368,14 @@
 
   // A photo was added or replaced on this device (app.js calls this).
   window.photoChanged = (id, url) => {
-    const meta = loadMeta();
+    const meta = syncMeta || loadMeta();
     meta[id] = { h: hashOf(url), t: Date.now() };
     saveMeta(meta);
     if (cs) schedulePhotos();
   };
   // A photo was removed on this device (app.js calls this).
   window.photoRemoved = (id) => {
-    const meta = loadMeta();
+    const meta = syncMeta || loadMeta();
     meta[id] = { h: GONE, t: Date.now() };
     saveMeta(meta);
     if (cs) schedulePhotos();
