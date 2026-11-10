@@ -78,26 +78,29 @@ const SHAPE_BY_ID = {
   // Where the name or growing medium would pick the wrong drawing.
   syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
   schlumbergera: 'trailing', kalanchoe: 'flowering',
+  tillandsia: 'succulent', 'g-mount': 'orchid', 'g-terrarium': 'prayer', 'g-aquarium': 'trailing',
 };
 function shapeOf(d) {
   if (!d) return 'leafy';
-  if (SHAPE_BY_ID[d.id]) return SHAPE_BY_ID[d.id];
+  // A plant in the collection has its own id; its catalog card is `def` (older plants: the id is the card).
+  const card = d.def || d.id;
+  if (SHAPE_BY_ID[card]) return SHAPE_BY_ID[card];
   const s = String(d.species || '').toLowerCase();
   // A plant moved into water or bark keeps its drawing: the card's medium decides (cardType on plants).
   const type = d.cardType || d.type;
   if (type === 'water' || /черен/.test(s)) return 'cutting';
-  if (type === 'bark' || /орхид|фаленопс|дендроб/.test(s)) return 'orchid';
+  if (type === 'bark' || /орхид|фаленопс|дендроб|эпифит/.test(s)) return 'orchid';
   if (/кактус|опунц|маммил|эхинок/.test(s)) return 'cactus';
-  if (type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев/.test(s)) return 'succulent';
+  if (type === 'dry' || /суккул|эхевер|хаворт|алоэ|толстян|каланхо|сансев|тилланд/.test(s)) return 'succulent';
   if (/пальм|стрелиц|драцен|юкк|банан|хамедор|рапис|бамбук/.test(s)) return 'palm';
   if (/алоказ|колоказ|ксантосом/.test(s)) return 'arrow';
   if (/монстер|ракафор/.test(s)) return 'split';
   if (/филодендр/.test(s)) return 'heart';
   if (/аглаонем|диффенбах|спатифил|замиокул|аспидистр/.test(s)) return 'upright';
   if (/фикус|радермах|дерев|лимон|цитрус|оливк|кофе|мирт|лавр|шеффлер|кротон/.test(s)) return 'tree';
-  if (/калате|строман|ктенант|марант|фиттон/.test(s)) return 'prayer';
+  if (/калате|строман|ктенант|марант|фиттон|террариум/.test(s)) return 'prayer';
   if (/колеус/.test(s)) return 'coleus';
-  if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|филодендрон скан/.test(s)) return 'trailing';
+  if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|филодендрон скан|аквариум/.test(s)) return 'trailing';
   if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';
