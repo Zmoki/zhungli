@@ -1250,7 +1250,7 @@ function openImport() {
     <div class="info"><b>Шаг 2</b>ИИ пришлёт файл plants.json. Сохраните его на телефон и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
-    <div class="pick-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Выберите файл</button></div>`;
+    <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
   openSheet();
 }
 // Plant lists are a few kilobytes; a much bigger file is something else (a photo, a document).
@@ -1300,7 +1300,8 @@ function showImport(text, ext, fail) {
   }
   updateImportBar();
 }
-const updateImportBar = () => setAddButton($('#imp-add'), importPicked.size, importItems.length ? 'Отметьте растения' : 'Выберите файл');
+// Like the catalog's: the add bar appears only once there are plants ticked.
+const updateImportBar = () => { setAddButton($('#imp-add'), importPicked.size, 'Отметьте растения'); $('#imp-bar').hidden = !importPicked.size; };
 function addImported() {
   if (addFlow) addFlow.done = true;
   const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
