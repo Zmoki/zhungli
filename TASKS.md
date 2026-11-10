@@ -8,7 +8,7 @@ With no plants yet, «Сегодня» shows the welcome card with quick picks (
 
 1. **Hint card**, usually one, in this order:
    - in Telegram's in-app browser: open the mini app;
-   - in another app's browser on iPhone (Facebook, Instagram, VK…): open Жунгли in Safari, with a backup if there are plants;
+   - in another app's browser (Facebook, Instagram, VK…; on Android any app's WebView): open Жунгли in Safari or the browser, with a backup if there are plants;
    - on iPhone or iPad in a browser with no plants yet: add to the home screen first, shown together with the stats notice (the home-screen app keeps its data apart from the browser, so plants added before stay behind);
    - the stats notice;
    - add to the home screen, after the first plant: Telegram's own in the mini app; «Установить» in Chrome, Edge and Samsung Internet when the browser offers installing; on iPhone and iPad, moving the plants with «Сохранить копию», then «Открывайте Жунгли с иконки» once the copy is saved.

@@ -74,14 +74,14 @@ On every event:
 | `bonus_skipped` | bonus task snoozed | `kind` |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `show_all_clicked` | «show all» on Today | — |
-| `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone) |
+| `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |
 | `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
 | `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
 | `room_removed` | a room removed (no room name sent) | `rooms` |
-| `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser on iPhone, to move plants to Safari); absent from Settings |
+| `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
 | `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram`; `from`: `settings` / `news` / `import` |

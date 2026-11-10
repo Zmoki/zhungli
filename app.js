@@ -550,9 +550,10 @@ const hintCard = (icon, title, text, buttons) => `<div class="task bonus"><b>${I
   <div class="btns hint-btns">${buttons}</div></div>`;
 // Android and computers (Chrome, Edge, Samsung Internet) offer installing through this event; Safari and Firefox don't.
 let installPrompt = null;
-// Other apps' built-in browsers on iPhone (Facebook, Instagram, LinkedIn, Line, VK, OK): no «На экран Домой»,
-// and their data can be lost like in Telegram's.
-const IN_APP = IOS && /FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|OKApp/i.test(navigator.userAgent);
+// Other apps' built-in browsers (Facebook, Instagram, LinkedIn, Line, VK, OK; on Android any app's WebView, «; wv)»):
+// no «На экран Домой» or install, and their data can be lost like in Telegram's. Telegram has its own hint above.
+const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
+  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent) || /Android.*; wv\)/.test(navigator.userAgent));
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
@@ -570,12 +571,14 @@ function currentHint() {
   }
   if (IN_APP && !S.hideInstall) {
     const why = 'Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.';
+    const where = IOS ? 'в Safari' : 'в браузере';
+    const menu = IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»';
     return hasPlants
-      ? hintCard('triangle-alert', 'Откройте Жунгли в Safari',
-        `${why} Сохраните копию, откройте Жунгли в Safari (в меню приложения — «Открыть в Safari» или «в браузере») и восстановите её там.`,
+      ? hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} Сохраните копию, откройте Жунгли ${where} (в меню приложения — ${menu}) и восстановите её там.`,
         '<button class="btn ok" data-act="export" data-from="in_app_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>')
-      : hintCard('triangle-alert', 'Откройте Жунгли в Safari',
-        `${why} В меню приложения выберите «Открыть в Safari» или «в браузере».`,
+      : hintCard('triangle-alert', `Откройте Жунгли ${where}`,
+        `${why} В меню приложения выберите ${menu}.`,
         '<button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>');
   }
   // Stats run from the first screen, so their notice shows from the first screen too.
@@ -590,9 +593,10 @@ function currentHint() {
   // Name Safari only when sure: iPad browsers send a Mac user agent that doesn't say which browser it is.
   const ua = navigator.userAgent;
   const share = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»';
+  const device = /iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad';
   if (iosBrowser && !hasPlants) {
     return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-      `${share} → «На экран Домой», и отмечайте растения уже там. Так iPhone не сотрёт ваши отметки, если пару недель не заходить.`,
+      `${share} → «На экран Домой», и отмечайте растения уже там. Так ${device} не сотрёт ваши отметки, если пару недель не заходить.`,
       '<button class="btn" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>') + stats;
   }
   if (stats) return stats;
@@ -620,7 +624,7 @@ function currentHint() {
         '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
-      `Так iPhone не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
+      `Так ${device} не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
       '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
   return '';
