@@ -592,7 +592,7 @@ function currentHint() {
   // Stats run from the first screen, so their notice shows from the first screen too.
   const stats = !S.statsNotice && S.settings.stats !== false
     ? hintCard('lightbulb', 'Анонимная статистика',
-      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
+      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy" data-from="stats_notice">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>')
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
@@ -1708,7 +1708,7 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy">Подробнее</a></p>
+      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
       ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
     <h2>Напоминание</h2>
     <p class="small muted">Поставьте ежедневное напоминание, например на 10 утра, в «Напоминаниях» или попросите об этом голосового помощника.</p>
@@ -2080,6 +2080,8 @@ function render() {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-out]');
   if (a) { track('author_link_clicked', { target: a.dataset.out, from: a.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
+  const pv = e.target.closest('a[href="privacy"]');
+  if (pv) { track('privacy_opened', { from: pv.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
 });
 
 document.addEventListener('click', (e) => {
@@ -2092,7 +2094,7 @@ document.addEventListener('click', (e) => {
     window.scrollTo(0, 0);
     return;
   }
-  if (el.dataset.open) { openPlant(el.dataset.open); return; }
+  if (el.dataset.open) { track('plant_opened', kindOf(el.dataset.open)); openPlant(el.dataset.open); return; }
   const id = el.dataset.id;
   const act = el.dataset.act;
   const otherWay = { 'add-plant': 'catalog', 'add-import': 'import', import: 'restore' }[act];
@@ -2142,7 +2144,7 @@ document.addEventListener('click', (e) => {
       statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); break;
     case 'open-mini-app': track('mini_app_link_clicked', { has_plants: Object.keys(S.plants).length > 0 }); flushStats(); break; // the link opens Telegram
     case 'hide-telegram': S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); break;
-    case 'settings': openSettings(); break;
+    case 'settings': track('settings_opened'); openSettings(); break;
     case 'news': openNews(); break;
     case 'add-plant': openAdd(); break;
     case 'add-custom': openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); break;
