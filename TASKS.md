@@ -6,10 +6,14 @@ What «Сегодня» shows and why. The idea: a few plants a day, no backlog,
 
 With no plants yet, «Сегодня» shows the welcome card with quick picks (see [PLANTS.md](PLANTS.md#adding-plants)) and the hint card below it.
 
+**Install first:** where plants added now wouldn't reach the installed app or could be lost, the quick picks on every empty screen are replaced by the way there, until the person gets there or taps «Остаться в браузере» / «Остаться здесь» (remembered; «Восстановить копию» waits too):
+- Telegram's in-app browser: open the mini app;
+- another app's browser (Facebook, Instagram, VK…; on Android any app's WebView): open Жунгли in Safari or the browser;
+- a browser on iPhone or iPad: add to the home screen (the home-screen app keeps its data apart from the browser).
+
 1. **Hint card**, usually one, in this order:
-   - in Telegram's in-app browser: open the mini app;
-   - in another app's browser (Facebook, Instagram, VK…; on Android any app's WebView): open Жунгли in Safari or the browser, with a backup if there are plants (on iPhone; Android WebViews usually can't save files, so there the plants are added again);
-   - on iPhone or iPad in a browser with no plants yet: add to the home screen first, shown together with the stats notice (the home-screen app keeps its data apart from the browser, so plants added before stay behind);
+   - in Telegram's in-app browser, once there are plants: move them to the mini app;
+   - in another app's browser, once there are plants: open Жунгли in Safari or the browser, with a backup (on iPhone; Android WebViews usually can't save files, so there the plants are added again);
    - the stats notice;
    - add to the home screen, after the first plant: Telegram's own in the mini app; «Установить» in Chrome, Edge and Samsung Internet when the browser offers installing; on iPhone and iPad, moving the plants with «Сохранить копию», then «Открывайте Жунгли с иконки» once the copy is saved.
 2. **Progress:** «Осталось N дел» and «X из Y».
