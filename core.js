@@ -29,11 +29,11 @@ window.addEventListener('error', (e) => reportError(e.message, e.filename, e.lin
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason && (e.reason.message || e.reason), 'promise', 0));
 // Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
-// A flaky network on the first launch of a new version can leave a script missing or from another
-// version: the app doesn't start, or some buttons do nothing. Then reload once, the files usually
-// come then. Other startup errors are bugs, and a reload wouldn't help.
+// A flaky network on the first launch of a new version can leave a file missing or a script from
+// another version: the app doesn't start, some buttons do nothing, or it has no styles. Then reload
+// once, the files usually come then. Other startup errors are bugs, and a reload wouldn't help.
 let appStarted = false; // set by app.js once the first screen is built
-let broken = null; // { reason, file } of the first sign of broken scripts
+let broken = null; // { reason, file } of the first sign of broken files
 addEventListener('error', (e) => {
   if (broken) return;
   // Our own scripts only: Telegram's may be blocked, and a reload doesn't fix that.
@@ -41,6 +41,9 @@ addEventListener('error', (e) => {
   else if (!appStarted && (e.error instanceof SyntaxError || e.error instanceof ReferenceError)) broken = { reason: e.error.name, file: fileOf(e.filename) };
 }, true);
 addEventListener('load', () => {
+  // The stylesheet failed before this script ran, so only its empty or missing sheet tells.
+  const css = document.querySelector('link[rel="stylesheet"]');
+  try { if (!broken && css && !css.sheet?.cssRules.length) broken = { reason: 'style_failed', file: fileOf(css.href) }; } catch (e) { /* unreadable: leave it */ }
   try {
     // A retry by the previous load: report it with whether it helped.
     const last = JSON.parse(sessionStorage.getItem('zhungli.retry') || 'null');
