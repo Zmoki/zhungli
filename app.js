@@ -1886,7 +1886,7 @@ const SLOW_TAP = 200; // ms: INP above this "needs improvement"
 const vitals = {}, vitalsSent = {};
 // A visit: from launch, or from a return after 30+ minutes away (app_opened resume). INP and the
 // slow tap cap count per visit, since a home-screen app or mini app can stay open for days.
-let visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slowSent: 0 };
+let visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slow: new Set() };
 let worstTaps = []; // the slowest interactions of this visit, for INP
 const taps = new Map(); // interactionId → timings merged from all its events, until settled
 let tapTimer = 0;
@@ -1900,28 +1900,33 @@ function tapTarget(el) {
   if (t.dataset.open) return 'open-plant'; // the id is a plant id, not sent
   return t.id;
 }
-// An interaction starts at its pointerdown or keydown, so only those need a name.
-['pointerdown', 'keydown'].forEach((type) => addEventListener(type, (e) => {
+// Every event of a tap: on a phone the pointerdown is often fast and not reported, only the click.
+['pointerdown', 'pointerup', 'click', 'keydown', 'keyup'].forEach((type) => addEventListener(type, (e) => {
   tapTargets.push({ t: e.timeStamp, name: tapTarget(e.target) });
-  if (tapTargets.length > 20) tapTargets.shift();
+  if (tapTargets.length > 30) tapTargets.shift();
 }, { capture: true, passive: true }));
 function watchTimings(type, cb, opts) {
   if (!window.PerformanceObserver || !(PerformanceObserver.supportedEntryTypes || []).includes(type)) return false;
   try { new PerformanceObserver((list) => cb(list.getEntries())).observe({ type, buffered: true, ...opts }); return true; } catch (e) { return false; }
 }
 function onInteractions(entries) {
-  // One tap fires several events (pointerdown, pointerup, click), sometimes in separate batches: merge them per interaction.
+  // One tap fires several events (pointerdown, pointerup, click), sometimes in separate batches. A tap's
+  // delay is its slowest frame; the breakdown comes from the events painted in that frame (end within 8 ms).
   entries.forEach((e) => {
     if (!e.interactionId) return;
-    const m = taps.get(e.interactionId), proc = e.processingEnd - e.processingStart;
-    if (!m) { taps.set(e.interactionId, { start: e.startTime, end: e.startTime + e.duration, procStart: e.processingStart, procEnd: e.processingEnd, duration: e.duration, target: e.target, event: e.name, longest: proc }); return; }
-    m.start = Math.min(m.start, e.startTime);
-    m.end = Math.max(m.end, e.startTime + e.duration);
-    m.procStart = Math.min(m.procStart, e.processingStart);
-    m.procEnd = Math.max(m.procEnd, e.processingEnd);
-    m.duration = Math.max(m.duration, e.duration);
-    m.target = m.target || e.target;
-    if (proc > m.longest) { m.longest = proc; m.event = e.name; } // name the event whose handlers ran longest
+    const m = taps.get(e.interactionId), end = e.startTime + e.duration, proc = e.processingEnd - e.processingStart;
+    const hit = tapTargets.find((x) => Math.abs(x.t - e.startTime) < 1);
+    const name = hit ? hit.name : e.target && tapTarget(e.target);
+    const own = { start: e.startTime, end, procStart: e.processingStart, procEnd: e.processingEnd, duration: e.duration, event: e.name, longest: proc };
+    if (!m) { taps.set(e.interactionId, { ...own, name }); return; }
+    m.name = m.name || name;
+    if (Math.abs(end - m.end) <= 8) {
+      m.start = Math.min(m.start, e.startTime);
+      m.procStart = Math.min(m.procStart, e.processingStart);
+      m.procEnd = Math.max(m.procEnd, e.processingEnd);
+      m.duration = Math.max(m.duration, e.duration);
+      if (proc > m.longest) { m.longest = proc; m.event = e.name; } // name the event whose handlers ran longest
+    } else if (e.duration > m.duration) Object.assign(m, own);
   });
   clearTimeout(tapTimer);
   tapTimer = setTimeout(settleTaps, 1000);
@@ -1933,11 +1938,11 @@ function settleTaps() {
     const known = worstTaps.find((w) => w.id === id);
     if (known) known.duration = Math.max(known.duration, e.duration);
     else worstTaps.push({ id, duration: e.duration });
-    if (known || e.duration < SLOW_TAP || visit.slowSent >= 10) return;
-    visit.slowSent++;
-    const hit = tapTargets.find((x) => Math.abs(x.t - e.start) < 1);
+    // Once per tap, even if it crossed the line with an entry that came late.
+    if (e.duration < SLOW_TAP || visit.slow.has(id) || visit.slow.size >= 10) return;
+    visit.slow.add(id);
     track('slow_tap', {
-      target: hit ? hit.name : tapTarget(e.target), event: e.event, duration: Math.round(e.duration),
+      target: e.name || 'none', event: e.event, duration: Math.round(e.duration),
       input_delay: Math.round(e.procStart - e.start),
       processing: Math.round(e.procEnd - e.procStart),
       presentation: Math.round(Math.max(0, e.end - e.procEnd)),
@@ -1982,7 +1987,7 @@ function reportVitals() {
 // A new visit: INP and the slow tap cap start over. Load metrics belong to the launch and aren't sent again.
 function newVisit() {
   settleTaps();
-  visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slowSent: 0 };
+  visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slow: new Set() };
   worstTaps = [];
   delete vitals.INP;
   delete vitalsSent.INP;
