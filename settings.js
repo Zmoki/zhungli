@@ -53,7 +53,7 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy">Подробнее</a></p>
+      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
       ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
     <h2>Напоминание</h2>
     <p class="small muted">Поставьте ежедневное напоминание, например на 10 утра, в «Напоминаниях» или попросите об этом голосового помощника.</p>
@@ -108,7 +108,7 @@ $('#import-input').addEventListener('change', (e) => {
 
 /* ---------- Taps in settings ---------- */
 Object.assign(ACTS, {
-  settings() { openSettings(); },
+  settings() { track('settings_opened'); openSettings(); },
   news() { openNews(); },
   limit(el) {
     S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });

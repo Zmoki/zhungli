@@ -90,7 +90,7 @@ function currentHint() {
   // Stats run from the first screen, so their notice shows from the first screen too.
   const stats = !S.statsNotice && S.settings.stats !== false
     ? hintCard('lightbulb', 'Анонимная статистика',
-      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy">Подробнее</a>',
+      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy" data-from="stats_notice">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>')
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.

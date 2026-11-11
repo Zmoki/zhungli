@@ -98,6 +98,13 @@ function render() {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-out]');
   if (a) { track('author_link_clicked', { target: a.dataset.out, from: a.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
+  const pv = e.target.closest('a[href="privacy"]');
+  if (pv) {
+    track('privacy_opened', { from: pv.closest('[data-from]')?.dataset.from || 'other' });
+    flushStats();
+    // The page opens in this window, so coming back reloads the app: that's not a new launch.
+    try { sessionStorage.setItem('zhungli.privacyAt', Date.now()); } catch (err) { /* private mode */ }
+  }
 });
 
 document.addEventListener('click', (e) => {
@@ -110,7 +117,7 @@ document.addEventListener('click', (e) => {
     window.scrollTo(0, 0);
     return;
   }
-  if (el.dataset.open) { openPlant(el.dataset.open); return; }
+  if (el.dataset.open) { if (plant(el.dataset.open)) track('plant_opened', kindOf(el.dataset.open)); openPlant(el.dataset.open); return; }
   const id = el.dataset.id;
   const act = el.dataset.act;
   if (ACTS[act]) ACTS[act](el, id, act);
@@ -198,6 +205,14 @@ loadPhotos();
 checkUpdate();
 // ready_ms: from navigation start until the first screen is built (painted right after). Not sent when
 // the app started in background, since that time includes waiting to be shown.
-track('app_opened', { how: 'start', ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined });
+let openHow = 'start';
+try {
+  const at = Number(sessionStorage.getItem('zhungli.privacyAt'));
+  sessionStorage.removeItem('zhungli.privacyAt');
+  if (at && Date.now() - at < 30 * 60 * 1000) openHow = 'privacy_return';
+} catch (e) { /* private mode */ }
+// Back from the back-forward cache: no reload, so the next real one is a launch again.
+addEventListener('pageshow', (e) => { if (e.persisted) try { sessionStorage.removeItem('zhungli.privacyAt'); } catch (err) { /* private mode */ } });
+track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined });
 // Closing the mini app or the tab may skip visibilitychange.
 addEventListener('pagehide', () => { reportVitals(); flushStats(); });
