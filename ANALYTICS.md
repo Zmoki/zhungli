@@ -79,8 +79,8 @@ On every event:
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
 | `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` |
-| `data_reset` | «Начать с чистого листа» confirmed in settings | `plants`: how many were erased |
-| `tab_synced` | another window (browser or installed app, which share storage on Android and computers) saved newer data, so this one took it | `dropped`: `true` when this window's last change wasn't saved because it was stale |
+| `data_reset` | «Начать с чистого листа» confirmed in settings | — (`plants_total` is how many were erased) |
+| `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | — |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |

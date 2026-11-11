@@ -176,15 +176,20 @@ function adoptStored(json, dropped) {
   let raw = null;
   try { raw = JSON.parse(json); } catch (e) { /* empty */ }
   S = prepare(raw);
-  track('tab_synced', { dropped });
+  if (dropped) track('tab_synced');
+  // An undo here would bring back this window's old data over the new one.
+  if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
   if (sheet.open) closeSheet(); else render();
   if (dropped) toast('Жунгли открыты ещё в одном окне — показываю свежие данные. Повторите последнее действие.');
   PHOTOS = {};
   loadPhotos();
 }
-addEventListener('storage', (e) => {
-  if ((e.key === KEY || e.key === null) && readStored() !== stored) adoptStored(readStored(), false);
-});
+// Thrown after a refused save, so the rest of that action doesn't run on the other window's data.
+const STALE = Object.assign(new Error('stale window'), { stale: true });
+// A hidden window catches up when it's shown, not on every save in the other one.
+const catchUp = () => { if (!document.hidden && readStored() !== stored) adoptStored(readStored(), false); };
+addEventListener('storage', (e) => { if (e.key === KEY || e.key === null) catchUp(); });
+document.addEventListener('visibilitychange', catchUp);
 
 // Brings saved data (or a backup) to the current format.
 function prepare(raw) {
@@ -270,7 +275,11 @@ function save() {
   // The save at startup only stores migrations, so it doesn't count as a change.
   if (!booting) S.savedAt = Date.now();
   const now = readStored();
-  if (now !== stored) { adoptStored(now, true); return; } // this window is stale
+  if (now !== stored) { // this window is stale
+    adoptStored(now, true);
+    if (booting) return;
+    throw STALE;
+  }
   try { store(); } catch (e) { toast('Не получилось сохранить 😢'); }
   if (window.cloudSave) window.cloudSave();
 }

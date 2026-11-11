@@ -25,8 +25,9 @@ function reportError(message, source, line) {
   errorsSent++;
   try { track('js_error', { message: String(message || '').slice(0, 150), source: fileOf(source), line: line || 0 }); } catch (e) { /* stats not ready yet */ }
 }
-window.addEventListener('error', (e) => reportError(e.message, e.filename, e.lineno));
-window.addEventListener('unhandledrejection', (e) => reportError(e.reason && (e.reason.message || e.reason), 'promise', 0));
+// A refused save from a stale window (see save()) stops its action on purpose: not an error.
+window.addEventListener('error', (e) => { if (e.error && e.error.stale) e.preventDefault(); else reportError(e.message, e.filename, e.lineno); });
+window.addEventListener('unhandledrejection', (e) => { if (e.reason && e.reason.stale) e.preventDefault(); else reportError(e.reason && (e.reason.message || e.reason), 'promise', 0); });
 // Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
 // A flaky network on the first launch of a new version can leave a file missing or a script from

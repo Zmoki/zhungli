@@ -82,6 +82,7 @@ async function doImport(file) {
     if (data.app !== 'zhungli' || !data.state) throw new Error('bad');
     if (!confirm('Заменить текущие данные копией от ' + new Date(data.at).toLocaleDateString('ru-RU') + '?')) return;
     S = prepare(data.state);
+    stored = readStored(); // a restore replaces data on purpose, even newer data from another window
     save();
     await idbReq((st) => st.clear(), 'readwrite');
     const photos = Object.fromEntries(Object.entries(data.photos || {}).filter(([, url]) => isPhoto(url)));
@@ -132,7 +133,7 @@ Object.assign(ACTS, {
   import() { endQuick('restore'); $('#import-input').click(); },
   reset() {
     if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
-      track('data_reset', { plants: Object.keys(S.plants).length });
+      track('data_reset');
       flushStats();
       localStorage.removeItem(KEY);
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
