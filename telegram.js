@@ -159,7 +159,7 @@
           if (cloudAt === localAt && plantsIn(S)) { report('same', plantsIn(cloud)); schedulePhotos(); return; } // already the same
           delete cloud.syncV;
           S = prepare(cloud);
-          try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full */ }
+          try { store(); } catch (e) { /* storage full */ }
           dirty = false;
           hadPlants = true;
           if (!sheet.open) render();

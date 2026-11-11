@@ -79,6 +79,8 @@ On every event:
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
 | `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` |
+| `data_reset` | «Начать с чистого листа» confirmed in settings | — (`plants_total` is how many were erased) |
+| `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | — |
 | `ui_clicked` | any tap on a button, link or other control (fields are `field_changed`) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>` |
 | `field_changed` | any input, select or textarea changed (text fields on leaving them) | `field`: static id or name; `type`; `checked` for checkboxes. Never the value |
 | `show_all_clicked` | «show all» on Today | — |
