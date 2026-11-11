@@ -17,30 +17,40 @@ const MINI_APP = (() => {
   } catch (e) { return location.pathname.startsWith('/tg'); }
 })();
 // Report script errors to stats (message and place only), at most 5 per page load.
+const fileOf = (url) => String(url || '').split('/').pop().split('?')[0];
 let errorsSent = 0;
 function reportError(message, source, line) {
   // «Script error.» comes from scripts of other sites (e.g. extensions) and has no details.
   if (errorsSent >= 5 || /^Script error\.?$/.test(String(message))) return;
   errorsSent++;
-  try { track('js_error', { message: String(message || '').slice(0, 150), source: String(source || '').split('/').pop().split('?')[0], line: line || 0 }); } catch (e) { /* stats not ready yet */ }
+  try { track('js_error', { message: String(message || '').slice(0, 150), source: fileOf(source), line: line || 0 }); } catch (e) { /* stats not ready yet */ }
 }
 window.addEventListener('error', (e) => reportError(e.message, e.filename, e.lineno));
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason && (e.reason.message || e.reason), 'promise', 0));
 // Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
-// Set by app.js once the first screen is built. When a script failed to load or didn't fit the
-// others (a flaky network on the first launch of a new version), the app never starts: reload once,
-// the files usually come then. Other startup errors are bugs, and a reload wouldn't help.
-let appStarted = false;
-let scriptsBroken = false;
+// A flaky network on the first launch of a new version can leave a script missing or from another
+// version: the app doesn't start, or some buttons do nothing. Then reload once, the files usually
+// come then. Other startup errors are bugs, and a reload wouldn't help.
+let appStarted = false; // set by app.js once the first screen is built
+let broken = null; // { reason, file } of the first sign of broken scripts
 addEventListener('error', (e) => {
-  if (e.target instanceof HTMLScriptElement || e.error instanceof SyntaxError || e.error instanceof ReferenceError) scriptsBroken = true;
+  if (broken) return;
+  // Our own scripts only: Telegram's may be blocked, and a reload doesn't fix that.
+  if (e.target instanceof HTMLScriptElement && e.target.src.startsWith(location.origin)) broken = { reason: 'script_failed', file: fileOf(e.target.src) };
+  else if (!appStarted && (e.error instanceof SyntaxError || e.error instanceof ReferenceError)) broken = { reason: e.error.name, file: fileOf(e.filename) };
 }, true);
 addEventListener('load', () => {
-  if (appStarted || !scriptsBroken) return;
   try {
-    if (sessionStorage.getItem('zhungli.retriedFor') === APP_VERSION) return;
+    // A retry by the previous load: report it with whether it helped.
+    const last = JSON.parse(sessionStorage.getItem('zhungli.retry') || 'null');
+    if (last) {
+      sessionStorage.removeItem('zhungli.retry');
+      try { track('start_retried', { ...last, ok: appStarted && !broken }); } catch (e) { /* stats didn't load */ }
+    }
+    if (!broken || sessionStorage.getItem('zhungli.retriedFor') === APP_VERSION) return;
     sessionStorage.setItem('zhungli.retriedFor', APP_VERSION);
+    sessionStorage.setItem('zhungli.retry', JSON.stringify({ ...broken, started: appStarted }));
   } catch (e) { return; }
   location.reload();
 });
