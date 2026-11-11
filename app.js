@@ -210,6 +210,8 @@ try {
   const at = Number(sessionStorage.getItem('zhungli.privacyAt'));
   sessionStorage.removeItem('zhungli.privacyAt');
   if (at && Date.now() - at < 30 * 60 * 1000) openHow = 'privacy_return';
+  // core.js reloaded a page that had started (and sent app_opened): not a new launch either.
+  if (JSON.parse(sessionStorage.getItem('zhungli.retry') || 'null')?.started) openHow = 'retry';
 } catch (e) { /* private mode */ }
 // Back from the back-forward cache: no reload, so the next real one is a launch again.
 addEventListener('pageshow', (e) => { if (e.persisted) try { sessionStorage.removeItem('zhungli.privacyAt'); } catch (err) { /* private mode */ } });
