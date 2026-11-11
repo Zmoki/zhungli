@@ -11,7 +11,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **Catalog:** don't rename or remove catalog ids; saved plants point at them via `def`. Hide entries with `hidden: true` instead.
 - **Accessibility:** WCAG AAA. Text 7:1 in both themes (use the color tokens; `--on-green` for text on `--green`), control borders 3:1 (`--edge`), tap targets ≥ 44×44, text sizes in `rem` (1rem = 17px or the iPhone text-size setting, nothing under 14px except tab labels), layouts reflow instead of scrolling sideways, button text stays on one line (button rows wrap instead; keep labels short), labels tied to fields, toasts go through `#live`.
 - **Look:** follow [DESIGN.md](DESIGN.md), including icons and emoji.
-- **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call, and update `privacy.html` if it sends a new kind of data. No plant names, nicknames, notes or photos in events.
+- **Analytics:** add a row to `ANALYTICS.md` for every new `track()` call, and update `privacy.html` if it sends a new kind of data. Any `privacy.html` change also gets a `changelog.js` entry. No plant names, nicknames, notes or photos in events.
 - **Security headers:** `_headers` sets a strict CSP (no inline scripts or `style=""` attributes; dynamic sizes go through `data-l`/`data-w` and `applySizes()`). Keep securityheaders.com at A+.
 - **Telegram mini app:** see [TELEGRAM.md](TELEGRAM.md). Test sync with a fake Telegram before changing it. When bot texts change in BotFather, update the snapshot there.
 - **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
