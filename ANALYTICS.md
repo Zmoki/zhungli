@@ -4,7 +4,7 @@ Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US clou
 
 ## How it works
 
-- `track(event, props)` in `app.js` queues events and flushes them 2 s after the last one (and when the app goes to background).
+- `track(event, props)` in `stats.js` queues events and flushes them 2 s after the last one (and when the app goes to background).
 - The batch goes to `/ingest/batch`, a Cloudflare Pages Function (`functions/ingest/batch.js`). It adds `$geoip_country_code` from Cloudflare, sets `$geoip_disable` and forwards nothing that identifies the visitor: no IP, no user agent. «Discard client IP data» is on in PostHog.
 - On localhost and `file:` events only go to `console.debug('[stats]', …)`.
 - On by default with a one-time notice (opt-out); off when `S.settings.stats === false` (checkbox «Статистика» in settings or «Выключить» on the notice).
@@ -19,7 +19,7 @@ On every event:
 | --- | --- |
 | `distinct_id` | random UUID in `localStorage['zhungli.anon']`, one per device; its first 8 characters are shown in settings so a user can ask to delete their data |
 | `$geoip_country_code` | country from Cloudflare, added by the proxy |
-| `app_version` | `?v=` of `app.js` |
+| `app_version` | `?v=` of the app scripts |
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |

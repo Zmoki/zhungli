@@ -215,13 +215,6 @@ function setWay(id, medium, watering) {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (el.id === 'stats-on') {
-    if (!el.checked) statsQueue = [];
-    S.settings.stats = el.checked;
-    save();
-    if (el.checked) track('stats_enabled');
-    return;
-  }
   const f = el.dataset && el.dataset.field;
   if (!f) return;
   const id = el.dataset.id;
@@ -296,3 +289,82 @@ document.addEventListener('change', (e) => {
     document.querySelector('.hello .date').textContent = `замерено ${allPlants().filter((p) => p.lux).length} из ${allPlants().length}`;
   }
 });
+
+/* ---------- Taps on the plant card ---------- */
+Object.assign(ACTS, {
+  photo(el, id) { photoFor = id; $('#photo-input').click(); },
+  'photo-remove'(el, id) {
+    if (confirm('Убрать фото? Вместо него будет рисунок.')) {
+      dropPhoto(id);
+      if (window.photoRemoved) window.photoRemoved(id);
+      openPlant(id);
+      render();
+      track('photo_removed');
+      toast('Фото убрано');
+    }
+  },
+  'water-now'(el, id) {
+    const undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(actWords(plant(id)).done, undo);
+  },
+  spot(el, id) {
+    S.plants[id].spot = el.dataset.spot; save();
+    el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
+  },
+  'spot-new'(el, id) {
+    const s = prompt('Как называется место?');
+    if (s && s.trim()) { S.plants[id].spot = s.trim(); if (!S.spots.includes(s.trim())) S.spots.push(s.trim()); save(); openPlant(id); }
+  },
+  'room-pick'(el, id) {
+    S.plants[id].room = el.dataset.room; save();
+    el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
+  },
+  'note-edit'(el, id) { noteEdit = el.dataset.key; refreshCheat(id); },
+  'note-cancel'(el, id) { noteEdit = null; refreshCheat(id); },
+  'note-save': saveNote,
+  'note-del': saveNote,
+  'note-reset'(el, id) {
+    const r = S.plants[id];
+    delete r.own[el.dataset.key];
+    if (!Object.keys(r.own).length) delete r.own;
+    track('note_changed', { action: 'reset', note: el.dataset.key });
+    noteEdit = null; save(); refreshCheat(id);
+  },
+  'note-restore'(el, id) {
+    const r = S.plants[id];
+    NOTE_KEYS.forEach(([k]) => { if (r.own && r.own[k] === '') delete r.own[k]; });
+    if (r.own && !Object.keys(r.own).length) delete r.own;
+    track('note_changed', { action: 'restore', note: 'catalog' });
+    save(); refreshCheat(id);
+  },
+  'int-minus': stepInterval,
+  'int-plus': stepInterval,
+  delete(el, id) {
+    if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
+      delete S.plants[id];
+      dropPhoto(id);
+      for (const k of BONUS_KINDS.map((x) => `${x}:${id}`)) { delete S.bonus[k]; delete S.snooze[k]; }
+      // A custom plant's card is no longer needed.
+      if (S.custom[id]) delete S.custom[id];
+      track('plant_deleted');
+      save(); closeSheet(); toast('Убрано 🍂');
+    }
+  },
+});
+function saveNote(el, id, act) {
+  const key = el.dataset.key;
+  const text = act === 'note-del' ? '' : $('#note-text').value.trim();
+  if (act === 'note-del' && (key[0] === 'n' || !careOf(def(id), S.plants[id])[key]) && !confirm('Удалить заметку?')) return;
+  const action = setNote(id, key, text);
+  if (action) track('note_changed', { action, note: noteKind(key) });
+  noteEdit = null; save(); refreshCheat(id);
+}
+function stepInterval(el, id, act) {
+  const r = S.plants[id];
+  r.interval = clamp(Math.round(r.interval) + (act === 'int-plus' ? 1 : -1), 1, 60);
+  if (r.lastWater) {
+    const next = addDays(r.lastWater, r.interval);
+    r.nextCheck = next < today() ? today() : next;
+  }
+  save();
+  $('#int-val').textContent = days(r.interval);
+}

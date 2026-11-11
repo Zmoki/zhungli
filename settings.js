@@ -105,3 +105,45 @@ $('#import-input').addEventListener('change', (e) => {
   e.target.value = '';
   if (f) doImport(f);
 });
+
+/* ---------- Taps in settings ---------- */
+Object.assign(ACTS, {
+  settings() { openSettings(); },
+  news() { openNews(); },
+  limit(el) {
+    S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
+    el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
+  },
+  'spot-del'(el) {
+    const sp = el.dataset.spot;
+    const there = Object.values(S.plants).filter((r) => r.spot === sp);
+    if (there.length && !confirm(`Здесь ${plantsN(there.length)}. Убрать место «${sp}»? Растения останутся без места.`)) return;
+    there.forEach((r) => { r.spot = ''; });
+    S.spots = S.spots.filter((x) => x !== sp); save(); openSettings();
+  },
+  'spot-add'() {
+    const sp = prompt('Как называется место?');
+    if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); }
+  },
+  export(el) {
+    doExport(); track('backup_exported', el.dataset.from ? { from: el.dataset.from } : {});
+    if (el.dataset.from === 'install_hint' && !S.movedHome) { S.movedHome = true; save(); render(); }
+  },
+  import() { $('#import-input').click(); },
+  reset() {
+    if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
+      localStorage.removeItem(KEY);
+      (window.cloudClear ? window.cloudClear() : Promise.resolve())
+        .then(() => idbReq((st) => st.clear(), 'readwrite'))
+        .finally(() => location.reload());
+    }
+  },
+});
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.id !== 'stats-on') return;
+  if (!el.checked) statsQueue = [];
+  S.settings.stats = el.checked;
+  save();
+  if (el.checked) track('stats_enabled');
+});

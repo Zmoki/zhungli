@@ -114,7 +114,7 @@ function toneOf(d) {
   for (const c of String(d.def || d.id || d.species || '')) h = (h * 31 + c.charCodeAt(0)) | 0;
   return Math.abs(h) % 6;
 }
-// Faces on the pot, one per mood (app.js mood()): eyes, extra strokes, mouth.
+// Faces on the pot, one per mood (mood() in state.js): eyes, extra strokes, mouth.
 const FACES = {
   fine: '<circle class="fe" cx="28" cy="50" r="1.5"/><circle class="fe" cx="36" cy="50" r="1.5"/><path class="fs" d="M29.4 53.2q2.6 2.4 5.2 0"/>',
   need: '<circle class="fe" cx="28" cy="50.4" r="1.5"/><circle class="fe" cx="36" cy="50.4" r="1.5"/><path class="fs" d="M25.6 48.3l3.2-1.1M38.4 48.3l-3.2-1.1M29.6 55q2.4-2.2 4.8 0"/>',

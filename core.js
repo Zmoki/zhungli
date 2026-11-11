@@ -68,3 +68,6 @@ const LK = '<abbr title="люкс">лк</abbr>';
 // No-break space: «20 тыс» never splits
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
 const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+
+// Tap actions by data-act: each file adds its own, app.js calls them as (el, el.dataset.id, act).
+const ACTS = Object.create(null);

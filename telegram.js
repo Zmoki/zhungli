@@ -366,14 +366,14 @@
     }
   }
 
-  // A photo was added or replaced on this device (app.js calls this).
+  // A photo was added or replaced on this device (plant.js and settings.js call this).
   window.photoChanged = (id, url) => {
     const meta = syncMeta || loadMeta();
     meta[id] = { h: hashOf(url), t: Date.now() };
     saveMeta(meta);
     if (cs) schedulePhotos();
   };
-  // A photo was removed on this device (app.js calls this).
+  // A photo was removed on this device (plant.js and settings.js call this).
   window.photoRemoved = (id) => {
     const meta = syncMeta || loadMeta();
     meta[id] = { h: GONE, t: Date.now() };

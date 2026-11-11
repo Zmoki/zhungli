@@ -489,3 +489,106 @@ function viewRoom() {
     <div class="scenario"><span>${I('snowflake')}</span><div><b>Температура выше 25 °C</b> → выключить обогреватель</div></div>
     <div class="scenario"><span>${I('lamp')}</span><div><b>Фитолампы через умную розетку, если есть:</b> включать в 8:00, выключать в 21:00 — 12–14 часов света в день, без ночного досвета.</div></div>`;
 }
+
+/* ---------- Taps on the tabs ---------- */
+const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
+Object.assign(ACTS, {
+  water(el, id) {
+    const undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', ...kindOf(id) });
+    afterTask(WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo);
+  },
+  wet(el, id) {
+    const undo = snapshot(); actWet(id); track('plant_checked', { answer: 'wet', ...kindOf(id) });
+    afterTask(`Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo);
+  },
+  later(el, id) {
+    const undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭︎', undo);
+  },
+  'vent-done'(el, id) {
+    const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
+    afterTask('Свежий воздух! 🌬️', undo);
+  },
+  'vent-off'(el, id) {
+    if (confirm('Теплица больше не нужна? Больше не буду напоминать проветривать.')) {
+      const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
+    }
+  },
+  'bonus-done'(el) {
+    const undo = snapshot();
+    const b = bonusTasks().find((x) => x.key === el.dataset.key);
+    bonusKeys(el.dataset.key).forEach((k) => { S.bonus[k] = today(); });
+    track('bonus_done', { kind: el.dataset.key.split(':')[0] });
+    logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
+    afterTask('Бонус засчитан ✨', undo);
+  },
+  'bonus-skip'(el) {
+    track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
+    bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂');
+  },
+  'show-all'() { showAll = true; track('show_all_clicked'); render(); },
+  'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); },
+  install() {
+    const ask = installPrompt;
+    if (!ask) return;
+    installPrompt = null; // the browser's prompt works once
+    try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
+    ask.userChoice.then(({ outcome }) => { track('install_prompt', { outcome }); render(); }, () => render());
+  },
+  'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); },
+  'stats-ok'() { S.statsNotice = true; save(); render(); },
+  'stats-off'() { statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); },
+  'open-mini-app'() { track('mini_app_link_clicked', { has_plants: Object.keys(S.plants).length > 0 }); flushStats(); }, // the link opens Telegram
+  'hide-telegram'() { S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); },
+  'qs-pick'(el) {
+    const k = el.dataset.key;
+    if (qsPicked.has(k)) qsPicked.delete(k); else qsPicked.add(k);
+    qsReported = false;
+    el.classList.toggle('on', qsPicked.has(k));
+    el.setAttribute('aria-pressed', qsPicked.has(k));
+    setAddButton($('#qs-add'), qsPicked.size, 'Отметьте, что есть');
+  },
+  'qs-add'() {
+    const keys = [...qsPicked];
+    qsPicked = new Set();
+    addFromCatalog(keys, 'quick');
+  },
+  'st-filter'(el) {
+    plantSt = el.dataset.st;
+    el.parentElement.querySelectorAll('.st-chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
+    filterPlants();
+    track('plants_filtered', { status: plantSt || 'all' });
+  },
+  'room-save'(el) {
+    const rm = S.rooms.find((x) => x.id === el.dataset.room);
+    if (!rm) return;
+    const t = parseFloat(String($(`#in-t-${rm.id}`).value).replace(',', '.'));
+    const h = parseFloat(String($(`#in-h-${rm.id}`).value).replace(',', '.'));
+    if (Number.isNaN(t) || Number.isNaN(h)) { toast('Впишите обе цифры 🙂'); return; }
+    Object.assign(rm, { t, h, d: today() }); save(); render(); toast('Записано 🌡️');
+    track('room_saved', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
+  },
+  // Rooms are also added, renamed and removed from settings (data-from="settings").
+  'room-add'(el) {
+    const name = (prompt('Как называется комната? Например, «Спальня» или «Кухня»') || '').trim();
+    if (!name) return;
+    S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
+    if (el.dataset.from === 'settings') openSettings();
+    toast('Комната добавлена. Выберите её в карточках растений 🪴');
+    track('room_added', { rooms: S.rooms.length });
+  },
+  'room-rename'(el) {
+    const rm = S.rooms.find((x) => x.id === el.dataset.room);
+    const name = rm && (prompt('Новое название комнаты', rm.name) || '').trim();
+    if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
+  },
+  'room-del'(el) {
+    const rm = S.rooms.find((x) => x.id === el.dataset.room);
+    if (!rm || S.rooms.length < 2) return;
+    const rest = S.rooms.filter((x) => x !== rm);
+    if (!confirm(`Убрать комнату «${rm.name}»? Её растения перейдут в «${rest[0].name}».`)) return;
+    Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
+    S.rooms = rest; save(); render();
+    if (el.dataset.from === 'settings') openSettings();
+    track('room_removed', { rooms: S.rooms.length });
+  },
+});

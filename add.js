@@ -521,3 +521,64 @@ $('#ai-file-input').addEventListener('change', (e) => {
   e.target.value = '';
   if (f) importFile(f);
 });
+
+/* ---------- Taps while adding ---------- */
+Object.assign(ACTS, {
+  'add-plant'() { openAdd(); },
+  'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); },
+  'add-import'() { openImport(); },
+  pick(el) {
+    const k = el.dataset.key;
+    if (picked.has(k)) picked.delete(k); else picked.add(k);
+    if (addFlow) addFlow.picked = picked.size;
+    el.classList.toggle('on', picked.has(k));
+    el.querySelector('.pc').innerHTML = I(picked.has(k) ? 'check' : 'plus');
+    updatePickBar();
+  },
+  'pick-add'() {
+    if (addFlow) addFlow.done = true;
+    addFromCatalog([...picked], 'catalog');
+  },
+  'import-file'() {
+    // The file picker hides the app on phones: that's part of importing, not leaving (see visibilitychange).
+    if (addFlow) addFlow.picking = true;
+    $('#ai-file-input').click();
+  },
+  'import-copy'(el) {
+    if (addFlow) addFlow.promptCopied = true;
+    copyPrompt(el, (how) => {
+      track('import_prompt_copied', { how });
+      if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
+      if (how === 'failed' || how === 'none') {
+        showPrompt();
+        el.textContent = 'Не скопировалось — текст ниже';
+        $('#imp-status').textContent = 'Не скопировалось. Запрос показан ниже, скопируйте его вручную.';
+        return;
+      }
+      el.innerHTML = `${I('check')}Скопировано`;
+      $('#imp-status').textContent = 'Запрос скопирован';
+      // Copying can still fail without a word (iPhone): the prompt itself is one tap away.
+      $('#imp-manual').hidden = false;
+    });
+    el.focus();
+  },
+  'import-show'() { showPrompt(); track('import_prompt_shown'); },
+  'import-copy-again'(el) {
+    copyPrompt(el, (how) => {
+      track('import_prompt_copied', { how, from: 'again' });
+      if (!el.isConnected) return;
+      const ok = how === 'exec' || how === 'clipboard';
+      el.innerHTML = ok ? `${I('check')}Скопировано` : 'Скопируйте из поля выше';
+      $('#imp-status').textContent = ok ? 'Запрос скопирован' : 'Не скопировалось. Скопируйте текст из поля: «Выбрать все», затем «Скопировать».';
+    });
+  },
+  'import-pick'(el) {
+    const i = Number(el.dataset.i);
+    if (importPicked.has(i)) importPicked.delete(i); else importPicked.add(i);
+    if (addFlow) addFlow.picked = importPicked.size;
+    el.classList.toggle('on', importPicked.has(i));
+    el.querySelector('.pc').innerHTML = I(importPicked.has(i) ? 'check' : 'plus');
+    updateImportBar();
+  },
+  'import-add'() { addImported(); },
+});
