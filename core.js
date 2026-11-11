@@ -28,11 +28,16 @@ window.addEventListener('error', (e) => reportError(e.message, e.filename, e.lin
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason && (e.reason.message || e.reason), 'promise', 0));
 // Version comes from ?v= in index.html and is compared with version.txt on the server.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '0';
-// Set by app.js once the first screen is built. If a script failed to load (a flaky network on the
-// first launch of a new version), the app never starts: reload once, the files usually come then.
+// Set by app.js once the first screen is built. When a script failed to load or didn't fit the
+// others (a flaky network on the first launch of a new version), the app never starts: reload once,
+// the files usually come then. Other startup errors are bugs, and a reload wouldn't help.
 let appStarted = false;
+let scriptsBroken = false;
+addEventListener('error', (e) => {
+  if (e.target instanceof HTMLScriptElement || e.error instanceof SyntaxError || e.error instanceof ReferenceError) scriptsBroken = true;
+}, true);
 addEventListener('load', () => {
-  if (appStarted) return;
+  if (appStarted || !scriptsBroken) return;
   try {
     if (sessionStorage.getItem('zhungli.retriedFor') === APP_VERSION) return;
     sessionStorage.setItem('zhungli.retriedFor', APP_VERSION);

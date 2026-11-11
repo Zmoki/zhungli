@@ -2,6 +2,12 @@
 'use strict';
 // UI shell (sheet, toasts, render), tap handling, update check and startup.
 
+// core.js didn't load, so its retry isn't there either: reload once here.
+try { void appStarted; } catch (e) {
+  const v = new URL(document.currentScript.src).searchParams.get('v');
+  try { if (sessionStorage.getItem('zhungli.retriedFor') !== v) { sessionStorage.setItem('zhungli.retriedFor', v); location.reload(); } } catch (e2) { /* stay */ }
+}
+
 /* ---------- UI ---------- */
 const sheet = $('#sheet');
 function openSheet() {
