@@ -33,7 +33,7 @@ function toast(msg, undo) {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
   el.className = 'toast';
-  el.innerHTML = esc(msg) + (undo ? ' <button class="undo">Отменить</button>' : '');
+  el.innerHTML = esc(msg) + (undo ? ' <button class="undo" id="undo">Отменить</button>' : '');
   document.body.append(el);
   $('#live').textContent = msg;
   clearTimeout(toastTimer);
