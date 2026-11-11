@@ -1880,12 +1880,16 @@ function flushStats() {
 }
 /* ---------- Speed (web vitals) ---------- */
 // Load and tap timings from the browser itself, no extra script. Sent as PostHog's $web_vitals when the
-// app goes to background. Chrome/Android report all four; Safari 26.2+ reports FCP, LCP and INP; older
-// browsers whatever they support. Slow taps also go out one by one with the button's data-act.
+// app goes to background or closes. FCP everywhere; LCP, INP and CLS where the browser supports them.
+// Slow taps also go out one by one with the button's data-act.
 const SLOW_TAP = 200; // ms: INP above this "needs improvement"
 const vitals = {}, vitalsSent = {};
-const worstTaps = []; // the 10 slowest interactions, for INP
-let slowTapsSent = 0;
+// A visit: from launch, or from a return after 30+ minutes away (app_opened resume). INP and the
+// slow tap cap count per visit, since a home-screen app or mini app can stay open for days.
+let visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slowSent: 0 };
+let worstTaps = []; // the slowest interactions of this visit, for INP
+const taps = new Map(); // interactionId → timings merged from all its events, until settled
+let tapTimer = 0;
 // Which control an input hit, noted at input time: a re-render often removes the node before the timing arrives.
 const tapTargets = [];
 function tapTarget(el) {
@@ -1896,7 +1900,8 @@ function tapTarget(el) {
   if (t.dataset.open) return 'open-plant'; // the id is a plant id, not sent
   return t.id;
 }
-['pointerdown', 'pointerup', 'click', 'keydown', 'keyup'].forEach((type) => addEventListener(type, (e) => {
+// An interaction starts at its pointerdown or keydown, so only those need a name.
+['pointerdown', 'keydown'].forEach((type) => addEventListener(type, (e) => {
   tapTargets.push({ t: e.timeStamp, name: tapTarget(e.target) });
   if (tapTargets.length > 20) tapTargets.shift();
 }, { capture: true, passive: true }));
@@ -1905,31 +1910,31 @@ function watchTimings(type, cb, opts) {
   try { new PerformanceObserver((list) => cb(list.getEntries())).observe({ type, buffered: true, ...opts }); return true; } catch (e) { return false; }
 }
 function onInteractions(entries) {
-  // One tap fires several events (pointerdown, pointerup, click); merge them per interaction.
-  const fresh = new Map();
+  // One tap fires several events (pointerdown, pointerup, click), sometimes in separate batches: merge them per interaction.
   entries.forEach((e) => {
     if (!e.interactionId) return;
-    const m = fresh.get(e.interactionId);
-    if (!m) { fresh.set(e.interactionId, { start: e.startTime, end: e.startTime + e.duration, procStart: e.processingStart, procEnd: e.processingEnd, duration: e.duration, target: e.target, event: e.name, longest: e.processingEnd - e.processingStart }); return; }
+    const m = taps.get(e.interactionId), proc = e.processingEnd - e.processingStart;
+    if (!m) { taps.set(e.interactionId, { start: e.startTime, end: e.startTime + e.duration, procStart: e.processingStart, procEnd: e.processingEnd, duration: e.duration, target: e.target, event: e.name, longest: proc }); return; }
     m.start = Math.min(m.start, e.startTime);
     m.end = Math.max(m.end, e.startTime + e.duration);
     m.procStart = Math.min(m.procStart, e.processingStart);
     m.procEnd = Math.max(m.procEnd, e.processingEnd);
     m.duration = Math.max(m.duration, e.duration);
     m.target = m.target || e.target;
-    // Name the event whose handlers ran longest.
-    if (e.processingEnd - e.processingStart > m.longest) { m.longest = e.processingEnd - e.processingStart; m.event = e.name; }
+    if (proc > m.longest) { m.longest = proc; m.event = e.name; } // name the event whose handlers ran longest
   });
-  fresh.forEach((e, id) => {
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(settleTaps, 1000);
+}
+// Once a tap's events have all arrived: update INP and report it if slow.
+function settleTaps() {
+  clearTimeout(tapTimer);
+  taps.forEach((e, id) => {
     const known = worstTaps.find((w) => w.id === id);
-    if (known) { if (e.duration <= known.duration) return; known.duration = e.duration; }
-    else worstTaps.push({ id, duration: e.duration, slowSent: false });
-    worstTaps.sort((a, b) => b.duration - a.duration);
-    worstTaps.length = Math.min(worstTaps.length, 10);
-    const w = worstTaps.find((x) => x.id === id);
-    if (!w || w.slowSent || e.duration < SLOW_TAP || slowTapsSent >= 10) return;
-    w.slowSent = true;
-    slowTapsSent++;
+    if (known) known.duration = Math.max(known.duration, e.duration);
+    else worstTaps.push({ id, duration: e.duration });
+    if (known || e.duration < SLOW_TAP || visit.slowSent >= 10) return;
+    visit.slowSent++;
     const hit = tapTargets.find((x) => Math.abs(x.t - e.start) < 1);
     track('slow_tap', {
       target: hit ? hit.name : tapTarget(e.target), event: e.event, duration: Math.round(e.duration),
@@ -1938,9 +1943,14 @@ function onInteractions(entries) {
       presentation: Math.round(Math.max(0, e.end - e.procEnd)),
     });
   });
-  // INP: the slowest interaction, skipping one for every 50 (the 98th percentile).
-  const count = performance.interactionCount || worstTaps.length;
-  if (worstTaps.length) vitals.INP = worstTaps[Math.min(worstTaps.length - 1, Math.floor(count / 50))].duration;
+  taps.clear();
+  if (!worstTaps.length) return;
+  // INP: the slowest interaction, skipping one for every 50 (the 98th percentile). Keep just enough to find it.
+  const count = performance.interactionCount != null ? performance.interactionCount - visit.base : worstTaps.length;
+  const skip = Math.floor(count / 50);
+  worstTaps.sort((a, b) => b.duration - a.duration);
+  worstTaps.length = Math.min(worstTaps.length, Math.max(10, skip + 1));
+  vitals.INP = worstTaps[Math.min(worstTaps.length - 1, skip)].duration;
 }
 // Paints after the page was first hidden (opened in background, app switched) don't count as load time.
 let firstHidden = document.visibilityState === 'hidden' ? 0 : Infinity;
@@ -1958,14 +1968,24 @@ if (watchTimings('layout-shift', (es) => es.forEach((e) => {
   clsLast = e.startTime;
   vitals.CLS = Math.max(vitals.CLS || 0, clsWindow);
 }))) vitals.CLS = vitals.CLS || 0;
-// Called when the app goes to background: sends only values that changed since the last report.
+// Called when the app goes to background or closes: sends only values that changed since the last report.
+// A visit can report several times; `visit` lets the dashboard keep its last values.
 function reportVitals() {
+  settleTaps();
   const props = {};
   Object.keys(vitals).forEach((k) => {
     const v = k === 'CLS' ? Math.round(vitals[k] * 1e4) / 1e4 : Math.round(vitals[k]);
     if (vitalsSent[k] !== v) props[`$web_vitals_${k}_value`] = vitalsSent[k] = v;
   });
-  if (Object.keys(props).length) track('$web_vitals', { ...props, $pathname: location.pathname });
+  if (Object.keys(props).length) track('$web_vitals', { ...props, $pathname: location.pathname, visit: visit.id });
+}
+// A new visit: INP and the slow tap cap start over. Load metrics belong to the launch and aren't sent again.
+function newVisit() {
+  settleTaps();
+  visit = { id: Math.random().toString(36).slice(2, 10), base: performance.interactionCount || 0, slowSent: 0 };
+  worstTaps = [];
+  delete vitals.INP;
+  delete vitalsSent.INP;
 }
 
 // Catalog ids aren't personal (custom plants are sent as 'custom').
@@ -2471,7 +2491,7 @@ document.addEventListener('visibilitychange', () => {
     return;
   }
   if (addFlow) addFlow.picking = false;
-  if (Date.now() - lastOpen > 30 * 60 * 1000) track('app_opened', { how: 'resume' });
+  if (Date.now() - lastOpen > 30 * 60 * 1000) { newVisit(); track('app_opened', { how: 'resume' }); }
   lastOpen = Date.now();
   checkUpdate();
   if (!sheet.open) render();
@@ -2524,5 +2544,8 @@ booting = false;
 render();
 loadPhotos();
 checkUpdate();
-// ready_ms: from navigation start until the first screen is built (painted right after).
-track('app_opened', { how: 'start', ready_ms: Math.round(performance.now()) });
+// ready_ms: from navigation start until the first screen is built (painted right after). Not sent when
+// the app started in background, since that time includes waiting to be shown.
+track('app_opened', { how: 'start', ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined });
+// Closing the mini app or the tab may skip visibilitychange.
+addEventListener('pagehide', () => { reportVitals(); flushStats(); });
