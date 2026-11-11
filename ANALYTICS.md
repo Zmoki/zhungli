@@ -4,7 +4,7 @@ Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US clou
 
 ## How it works
 
-- `track(event, props)` in `app.js` queues events and flushes them 2 s after the last one (and when the app goes to background).
+- `track(event, props)` in `stats.js` queues events and flushes them 2 s after the last one (and when the app goes to background).
 - The batch goes to `/ingest/batch`, a Cloudflare Pages Function (`functions/ingest/batch.js`). It adds `$geoip_country_code` from Cloudflare, sets `$geoip_disable` and forwards nothing that identifies the visitor: no IP, no user agent. «Discard client IP data» is on in PostHog.
 - On localhost and `file:` events only go to `console.debug('[stats]', …)`.
 - On by default with a one-time notice (opt-out); off when `S.settings.stats === false` (checkbox «Статистика» in settings or «Выключить» on the notice).
@@ -19,7 +19,7 @@ On every event:
 | --- | --- |
 | `distinct_id` | random UUID in `localStorage['zhungli.anon']`, one per device; its first 8 characters are shown in settings so a user can ask to delete their data |
 | `$geoip_country_code` | country from Cloudflare, added by the proxy |
-| `app_version` | `?v=` of `app.js` |
+| `app_version` | `?v=` of the app scripts |
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
@@ -34,7 +34,7 @@ On every event:
 
 | Event | When | Properties |
 | --- | --- | --- |
-| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch); `ready_ms` (`start` and `privacy_return`, not when started in background): ms from navigation start until the first screen is built |
+| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
@@ -52,7 +52,8 @@ On every event:
 | `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse`, or a way of growing: `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied or the file picker is open, since going to the AI chat or to Files is expected) |
-| `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
+| `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` (one file per part of the app since v89; before that, mostly `app.js`) |
+| `start_retried` | the page reloaded itself once because a script or the stylesheet failed to load, or a script didn't fit the others (usually a flaky network on the first launch of a new version); sent after the reload | `reason`: `script_failed` / `style_failed` / `SyntaxError` / `ReferenceError`; `file` (the app script or stylesheet); `started` (the first screen was built anyway, but some buttons would do nothing or it had no styles); `ok` (the reload fixed it) |
 | `$web_vitals` | app goes to background or closes, with the values that changed since the last report | `$web_vitals_FCP_value`, `$web_vitals_LCP_value`, `$web_vitals_INP_value` (ms), `$web_vitals_CLS_value`; `$pathname`; `visit` (random id; a visit starts at launch or with `app_opened` `resume`, and INP starts over with it; a visit can report several times, so take its last values). From the browser's own timings: FCP everywhere; LCP, INP and CLS where supported |
 | `slow_tap` | a tap or key press took 200+ ms until the next frame, at most 10 per visit | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id; `event` (the one whose handlers ran longest: `pointerup`, `click`, `keydown`…); `duration`, `input_delay`, `processing`, `presentation` (ms) |
 | `viewport_stuck` | iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch | `before` (height when stuck), `full` (tallest height seen at this width), `after` (height 0.3 s after the re-measure), in CSS pixels |

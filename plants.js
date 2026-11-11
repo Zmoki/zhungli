@@ -1,9 +1,9 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Catalog for the add-plants picker: a personal catalog of 28 plants, the most common houseplants, and generic types.
-// cat: the picker group (ordered by CAT_ORDER in app.js); ids never change, cats may.
+// cat: the picker group (ordered by CAT_ORDER in add.js); ids never change, cats may.
 // Personal notes of the first collection live in LEGACY_NOTES and move into plant data on migration.
 // every: starting check interval in days; the app adjusts it from the answers.
-// type: what the roots are usually in, a key of MEDIA in app.js: soil | dry (dries out almost fully) | sphagnum | bark |
+// type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
 // feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
 // aka: extra search words only (folk and Latin names, close relatives); never shown.

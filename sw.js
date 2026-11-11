@@ -1,10 +1,21 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Network first so updates arrive right away; cache when offline.
-const CACHE = 'zhungli-v88';
-const ASSETS = ['./', 'style.css', 'app.js', 'plants.js', 'shapes.js', 'changelog.js', 'telegram.js', 'privacy', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'fonts/nunito-cyrillic.woff2', 'fonts/nunito-latin.woff2'];
+const CACHE = 'zhungli-v89';
+// Scripts and styles are read from index.html with their ?v=, so they're listed only there.
+const STATIC = ['privacy', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'fonts/nunito-cyrillic.woff2', 'fonts/nunito-latin.woff2'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    const page = await fetch('./', { cache: 'no-cache' });
+    if (!page.ok) throw new Error('index ' + page.status);
+    const html = await page.clone().text();
+    const versioned = [...html.matchAll(/["']([^"'\s:]+\?v=[^"'\s]+)["']/g)].map((m) => m[1]);
+    // No scripts found means index.html changed shape: keep the old worker rather than cache too little.
+    if (!versioned.some((u) => /\.js\?/.test(u))) throw new Error('no ?v= scripts in index.html');
+    await c.addAll([...versioned, ...STATIC]);
+    await c.put(keyOf(new URL('./', self.location)), page);
+  })());
   self.skipWaiting();
 });
 
@@ -13,13 +24,16 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// One cache entry per file, and per version for ?v= files: offline, a file never comes from
+// another version, whose scripts may not fit together with this one's.
+const keyOf = (url) => url.origin + url.pathname + (url.searchParams.has('v') ? '?v=' + url.searchParams.get('v') : '');
+
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   // The update check must always ask the server and is never worth caching.
   if (url.pathname.endsWith('/version.txt')) return;
-  // One cache entry per file: ?v= only busts the browser cache.
-  const key = url.origin + url.pathname;
+  const key = keyOf(url);
   // cache: 'no-cache' revalidates with the server instead of the browser HTTP cache.
   e.respondWith(
     fetch(e.request.url, { cache: 'no-cache' })
