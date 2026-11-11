@@ -142,6 +142,9 @@ const ACT_WORDS = {
 const actWords = (p) => ACT_WORDS[wayOf(p).act || 'pour'];
 
 let booting = true;
+// On Android and computers the browser and the installed app share storage, so another window can
+// save newer data. `stored` is what this window last read or wrote: anything else came from there.
+let stored = null;
 let S = load();
 let tab = 'today';
 let showAll = false;
@@ -155,10 +158,38 @@ function blank() {
 }
 
 function load() {
+  stored = readStored();
   let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* empty */ }
+  try { raw = JSON.parse(stored); } catch (e) { /* empty */ }
   return prepare(raw);
 }
+
+function readStored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+function store() {
+  const json = JSON.stringify(S);
+  localStorage.setItem(KEY, json);
+  stored = json;
+}
+// Takes the other window's data instead of saving over it.
+function adoptStored(json, dropped) {
+  stored = json;
+  let raw = null;
+  try { raw = JSON.parse(json); } catch (e) { /* empty */ }
+  S = prepare(raw);
+  if (dropped) track('tab_synced');
+  // An undo here would bring back this window's old data over the new one.
+  if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
+  if (sheet.open) closeSheet(); else render();
+  if (dropped) toast('Жунгли открыты ещё в одном окне — показываю свежие данные. Повторите последнее действие.');
+  PHOTOS = {};
+  loadPhotos();
+}
+// Thrown after a refused save, so the rest of that action doesn't run on the other window's data.
+const STALE = Object.assign(new Error('stale window'), { stale: true });
+// A hidden window catches up when it's shown, not on every save in the other one.
+const catchUp = () => { if (!document.hidden && readStored() !== stored) adoptStored(readStored(), false); };
+addEventListener('storage', (e) => { if (e.key === KEY || e.key === null) catchUp(); });
+document.addEventListener('visibilitychange', catchUp);
 
 // Brings saved data (or a backup) to the current format.
 function prepare(raw) {
@@ -243,7 +274,13 @@ function save() {
   // When the data last changed: the newer copy wins when syncing with Telegram.
   // The save at startup only stores migrations, so it doesn't count as a change.
   if (!booting) S.savedAt = Date.now();
-  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не получилось сохранить 😢'); }
+  const now = readStored();
+  if (now !== stored) { // this window is stale
+    adoptStored(now, true);
+    if (booting) return;
+    throw STALE;
+  }
+  try { store(); } catch (e) { toast('Не получилось сохранить 😢'); }
   if (window.cloudSave) window.cloudSave();
 }
 
