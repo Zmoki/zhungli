@@ -53,11 +53,14 @@ let installPrompt = null;
 // A few Android browsers are built on the WebView too; they name themselves, so they're left out.
 const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
   && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent)
-    || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent)));
+    || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent))
+    // iPhone apps' own browsers (Telegram's too, which often can't be told apart) leave «Safari/» out of the
+    // user agent; Safari and other browsers keep it. Home-screen apps leave it out as well.
+    || (IOS && !navigator.standalone && !/Safari\//.test(navigator.userAgent)));
 // Words for the iPhone and in-app hints. Name Safari only when sure: iPad browsers send a Mac user agent
 // that doesn't say which browser it is. Chrome, Firefox, Edge and others add to the home screen through
 // their own «Поделиться» too.
-function placeWords() {
+const PLACE = (() => {
   const ua = navigator.userAgent;
   return {
     share: /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»',
@@ -65,7 +68,10 @@ function placeWords() {
     where: IOS ? 'в Safari' : 'в браузере',
     menu: IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»',
   };
-}
+})();
+// «Остаться в браузере» holds back the reminders to move plants for a few days.
+const STAY_DAYS = 3;
+const stayingNow = () => typeof S.stayBrowser === 'string' && today() < addDays(S.stayBrowser, STAY_DAYS);
 // Where plants added now wouldn't reach the installed app or could be lost: a browser on iPhone and iPad,
 // another app's browser, Telegram's browser. With no plants yet, the plant picker waits behind the way
 // to install until the person does it or chooses to stay (S.stayBrowser).
@@ -73,7 +79,7 @@ function installWhere() {
   if (MINI_APP || S.stayBrowser || Object.keys(S.plants).length) return null;
   if (IN_TELEGRAM && !S.hideTelegram) return 'telegram_browser';
   if (IN_APP && !S.hideInstall) return 'in_app';
-  if (IOS && !navigator.standalone && !S.hideInstall) return 'ios';
+  if (IOS && !IN_TELEGRAM && !navigator.standalone && !S.hideInstall) return 'ios';
   return null;
 }
 let installFirstShown = false;
@@ -81,7 +87,7 @@ function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
   if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
-  const { share, device, where, menu } = placeWords();
+  const { share, device, where, menu } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
     return hintCard('sprout', 'Сначала откройте Жунгли в Телеграме',
@@ -95,12 +101,13 @@ function installFirst() {
   }
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
     `${share} → «На экран Домой», затем откройте Жунгли с иконки и отмечайте растения там. ${device} хранит их отдельно от браузера: отмеченное здесь туда не перейдёт, а браузер может его стереть, если пару недель не заходить.`,
-    stay('Остаться в браузере'));
+    `${stay('Остаться в браузере')}<button class="btn ghost" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>`);
 }
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
   // With no plants the way to install is on the main card (installFirst) or was turned down: no hint about it.
-  const gated = !hasPlants && (installWhere() || S.stayBrowser);
+  // After «Остаться в браузере» the reminders to move plants wait a few days too.
+  const gated = (!hasPlants && (installWhere() || S.stayBrowser)) || stayingNow();
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram && !gated) {
     const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>`;
@@ -116,7 +123,7 @@ function currentHint() {
   }
   if (IN_APP && !S.hideInstall && !gated) {
     const why = 'Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.';
-    const { where, menu } = placeWords();
+    const { where, menu } = PLACE;
     // Android apps' WebViews often can't share or download files, so a backup button there could do nothing.
     if (hasPlants && !IOS) {
       return hintCard('triangle-alert', `Откройте Жунгли ${where}`,
@@ -138,8 +145,8 @@ function currentHint() {
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>')
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
-  const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !S.hideInstall;
-  const { share, device } = placeWords();
+  const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !IN_APP && !S.hideInstall && !gated;
+  const { share, device } = PLACE;
   if (stats) return stats;
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
   // It waits for the first plant: the mini app keeps its data in Telegram's cloud, so nothing is lost by waiting.
@@ -563,7 +570,7 @@ Object.assign(ACTS, {
     bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂');
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
-  'stay-browser'(el) { S.stayBrowser = true; track('install_declined', { where: el.dataset.kind }); save(); render(); },
+  'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
   'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;
