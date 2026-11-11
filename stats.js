@@ -82,6 +82,21 @@ function tapTarget(el) {
   tapTargets.push({ t: e.timeStamp, name: tapTarget(e.target) });
   if (tapTargets.length > 30) tapTargets.shift();
 }, { capture: true, passive: true }));
+// Every tap on a control and every changed field, by name only: never what's typed or chosen.
+document.addEventListener('click', (e) => {
+  if (!e.isTrusted || e.target.closest('label,input,select,textarea')) return; // fields: see field_changed
+  const el = e.target.closest('button,a[href],[data-act],[data-tab],[data-open]');
+  if (!el) return;
+  const target = el.tagName === 'A' && !el.dataset.act ? 'link-' + (el.dataset.out || el.getAttribute('href')) : tapTarget(el);
+  track('ui_clicked', { target });
+}, true);
+document.addEventListener('change', (e) => {
+  const f = e.target;
+  if (!e.isTrusted || !f.matches || !f.matches('input,select,textarea')) return;
+  const props = { field: f.id || f.name || tapTarget(f), type: f.type };
+  if (f.type === 'checkbox') props.checked = f.checked;
+  track('field_changed', props);
+}, true);
 function watchTimings(type, cb, opts) {
   if (!window.PerformanceObserver || !(PerformanceObserver.supportedEntryTypes || []).includes(type)) return false;
   try { new PerformanceObserver((list) => cb(list.getEntries())).observe({ type, buffered: true, ...opts }); return true; } catch (e) { return false; }

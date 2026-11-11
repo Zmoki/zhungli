@@ -79,6 +79,8 @@ On every event:
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
 | `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` |
+| `ui_clicked` | any tap on a button, link or other control (fields are `field_changed`) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>` |
+| `field_changed` | any input, select or textarea changed (text fields on leaving them) | `field`: static id or name; `type`; `checked` for checkboxes. Never the value |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
