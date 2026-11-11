@@ -129,7 +129,7 @@ Object.assign(ACTS, {
     doExport(); track('backup_exported', el.dataset.from ? { from: el.dataset.from } : {});
     if (el.dataset.from === 'install_hint' && !S.movedHome) { S.movedHome = true; save(); render(); }
   },
-  import() { $('#import-input').click(); },
+  import() { endQuick('restore'); $('#import-input').click(); },
   reset() {
     if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
       localStorage.removeItem(KEY);

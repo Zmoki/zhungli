@@ -524,9 +524,10 @@ $('#ai-file-input').addEventListener('change', (e) => {
 
 /* ---------- Taps while adding ---------- */
 Object.assign(ACTS, {
-  'add-plant'() { openAdd(); },
+  // Choosing another way to add ends the quick picks (see endQuick).
+  'add-plant'() { endQuick('catalog'); openAdd(); },
   'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button'); },
-  'add-import'() { openImport(); },
+  'add-import'() { endQuick('import'); openImport(); },
   pick(el) {
     const k = el.dataset.key;
     if (picked.has(k)) picked.delete(k); else picked.add(k);

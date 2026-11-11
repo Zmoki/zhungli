@@ -101,8 +101,6 @@ document.addEventListener('click', (e) => {
   if (el.dataset.open) { openPlant(el.dataset.open); return; }
   const id = el.dataset.id;
   const act = el.dataset.act;
-  const otherWay = { 'add-plant': 'catalog', 'add-import': 'import', import: 'restore' }[act];
-  if (otherWay) endQuick(otherWay);
   if (ACTS[act]) ACTS[act](el, id, act);
 });
 
@@ -183,6 +181,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.ser
 save();
 booting = false;
 render();
+appStarted = true;
 loadPhotos();
 checkUpdate();
 // ready_ms: from navigation start until the first screen is built (painted right after). Not sent when
