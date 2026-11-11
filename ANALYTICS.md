@@ -34,7 +34,7 @@ On every event:
 
 | Event | When | Properties |
 | --- | --- | --- |
-| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` |
+| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume`; `ready_ms` (`start` only): ms from navigation start until the first screen is built |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
@@ -53,6 +53,8 @@ On every event:
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied or the file picker is open, since going to the AI chat or to Files is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` |
+| `$web_vitals` | app goes to background, with the values that changed since the last report | `$web_vitals_FCP_value`, `$web_vitals_LCP_value`, `$web_vitals_INP_value` (ms), `$web_vitals_CLS_value`; `$pathname`. From the browser's own timings: Chrome and Android report all four, Safari 26.2+ FCP, LCP and INP |
+| `slow_tap` | a tap or key press took 200+ ms until the next frame, at most 10 per page load | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id; `event` (`pointerup`, `click`, `keydown`…); `duration`, `input_delay`, `processing`, `presentation` (ms) |
 | `viewport_stuck` | iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch | `before` (height when stuck), `full` (tallest height seen at this width), `after` (height 0.3 s after the re-measure), in CSS pixels |
 | `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | — |
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
