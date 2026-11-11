@@ -34,7 +34,7 @@ On every event:
 
 | Event | When | Properties |
 | --- | --- | --- |
-| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume`; `ready_ms` (`start` only, not when started in background): ms from navigation start until the first screen is built |
+| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch); `ready_ms` (`start` and `privacy_return`, not when started in background): ms from navigation start until the first screen is built |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
@@ -77,7 +77,7 @@ On every event:
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
-| `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` / `other` |
+| `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
