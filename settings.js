@@ -132,6 +132,8 @@ Object.assign(ACTS, {
   import() { endQuick('restore'); $('#import-input').click(); },
   reset() {
     if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
+      track('data_reset', { plants: Object.keys(S.plants).length });
+      flushStats();
       localStorage.removeItem(KEY);
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
         .then(() => idbReq((st) => st.clear(), 'readwrite'))
