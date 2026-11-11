@@ -84,7 +84,9 @@ On every event:
 | `ui_clicked` | any tap on a button, link or other control (fields are `field_changed`) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>` |
 | `field_changed` | any input, select or textarea changed (text fields on leaving them) | `field`: static id or name; `type`; `checked` for checkboxes. Never the value |
 | `show_all_clicked` | «show all» on Today | — |
-| `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
+| `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet: «Уже на экране» on the install-first card) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
+| `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch) | `where`: `ios` (browser on iPhone or iPad) / `in_app` (another app's browser) / `telegram_browser` On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. |
+| `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where` |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | — |
 | `limit_changed` | plants-per-day limit changed | `limit` |
