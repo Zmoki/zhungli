@@ -490,7 +490,7 @@ function roomCard(rm, ps, many) {
   }
   const ago = has ? (rm.d === today() ? 'сегодня' : rel(rm.d)) : '';
   const name = esc(rm.name);
-  const head = many ? `<div class="room-head"><div><h2>${name}</h2>
+  const head = many ? `<div class="room-head"><div><h2>${typedHtml(rm.name)}</h2>
       <div class="small muted">${plantsN(ps.length)} · ${has ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></div>
       <button class="icon-btn" data-act="room-rename" data-room="${esc(rm.id)}" aria-label="Переименовать комнату ${name}">${I('pencil')}</button>
       <button class="icon-btn" data-act="room-del" data-room="${esc(rm.id)}" aria-label="Убрать комнату ${name}">${I('x')}</button></div>` : '';

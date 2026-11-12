@@ -463,8 +463,8 @@ function showImport(text, ext, fail) {
       importItems.map((it, i) => {
         const dup = !importPicked.has(i);
         return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
-        <span class="pe" aria-hidden="true">${plantSvg(it, 'fine')}</span><span class="pt"><b>${esc(it.name ? `${it.name} · ${it.species}` : it.species)}</b>
-        <small>${dup ? 'уже есть в коллекции · ' : ''}${it.room || it.spot ? esc([it.room, it.spot].filter(Boolean).join(' · ')) + ' · ' : ''}${esc(TYPE_NAMES[it.type])}${it.watering ? `, ${esc(WATERING[it.watering].name.toLowerCase())}` : ''} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
+        <span class="pe" aria-hidden="true">${plantSvg(it, 'fine')}</span><span class="pt"><b>${[it.name, it.species].filter(Boolean).map(typedHtml).join(' · ')}</b>
+        <small>${dup ? 'уже есть в коллекции · ' : ''}${it.room || it.spot ? [it.room, it.spot].filter(Boolean).map(typedHtml).join(' · ') + ' · ' : ''}${esc(TYPE_NAMES[it.type])}${it.watering ? `, ${esc(WATERING[it.watering].name.toLowerCase())}` : ''} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
         <span class="pc" aria-hidden="true">${I(dup ? 'plus' : 'check')}</span></button>`;
       }).join('');
   }
