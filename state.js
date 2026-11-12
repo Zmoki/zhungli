@@ -479,10 +479,25 @@ const pendingCount = () => todayPlan().pending;
 /* ---------- Photos (IndexedDB) ---------- */
 // Photos are JPEG data URLs made by resize(); anything else (e.g. from a crafted backup) is dropped.
 const isPhoto = (u) => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
-const photoOf = (id) => (isPhoto(PHOTOS[id]) ? PHOTOS[id] : null);
+// Pages show photos by short blob: links, made once per photo: putting ~100 KB data URLs into the HTML
+// made every render of a photo-heavy list parse megabytes of text and decode each image again.
+const photoUrls = {}; // id → { src (the data URL), url }
+function photoOf(id) {
+  const src = PHOTOS[id], c = photoUrls[id];
+  if (c && c.src === src) return c.url;
+  if (c) { URL.revokeObjectURL(c.url); delete photoUrls[id]; }
+  if (!isPhoto(src)) return null;
+  try {
+    const comma = src.indexOf(','), bin = atob(src.slice(comma + 1)), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    photoUrls[id] = { src, url: URL.createObjectURL(new Blob([bytes], { type: src.slice(5, src.indexOf(';')) })) };
+    return photoUrls[id].url;
+  } catch (e) { return src; }
+}
 // Forgets a plant's photo on this device (memory and IndexedDB).
 function dropPhoto(id) {
   delete PHOTOS[id];
+  photoOf(id); // revokes its blob: link
   idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
 }
 const dbp = new Promise((res, rej) => {

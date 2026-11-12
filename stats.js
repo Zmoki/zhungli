@@ -77,6 +77,18 @@ function tapTarget(el) {
   if (t.dataset.open) return 'open-plant'; // the id is a plant id, not sent
   return t.id;
 }
+// A native prompt or confirm holds the page while it's open: that's the user reading or typing, not a
+// slow tap. Taps that opened one are left out of INP and slow_tap.
+const dialogsAt = [];
+['alert', 'confirm', 'prompt'].forEach((k) => {
+  const native = window[k];
+  if (typeof native !== 'function') return;
+  window[k] = function (...args) {
+    dialogsAt.push(performance.now());
+    if (dialogsAt.length > 10) dialogsAt.shift();
+    return native.apply(this, args);
+  };
+});
 // Every event of a tap: on a phone the pointerdown is often fast and not reported, only the click.
 ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup'].forEach((type) => addEventListener(type, (e) => {
   tapTargets.push({ t: e.timeStamp, name: tapTarget(e.target) });
@@ -127,6 +139,7 @@ function onInteractions(entries) {
 function settleTaps() {
   clearTimeout(tapTimer);
   taps.forEach((e, id) => {
+    if (dialogsAt.some((t) => t >= e.start && t <= e.end)) return;
     const known = worstTaps.find((w) => w.id === id);
     if (known) known.duration = Math.max(known.duration, e.duration);
     else worstTaps.push({ id, duration: e.duration });

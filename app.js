@@ -19,13 +19,19 @@ const sheet = $('#sheet');
 function openSheet() {
   const h = $('#sheet-body h2');
   if (h) sheet.setAttribute('aria-label', h.textContent); else sheet.removeAttribute('aria-label');
+  closedByUs = false; // in case a browser never sent the close event
   if (!sheet.open) sheet.showModal();
   sheet.scrollTop = 0;
 }
-// Re-render here: the close event doesn't fire in every browser.
-function closeSheet() { endAddFlow(); if (sheet.open) sheet.close(); render(); }
+// Re-render here: the close event doesn't fire in every browser. Where it does, it comes a moment
+// later and skips its own render, so the list isn't built twice.
+let closedByUs = false;
+function closeSheet() { endAddFlow(); if (sheet.open) { closedByUs = true; sheet.close(); } render(); }
 ACTS.close = () => closeSheet();
-sheet.addEventListener('close', () => { endAddFlow(); render(); }); // closed by swipe, Esc or the close button
+sheet.addEventListener('close', () => { // closed by swipe, Esc or the close button
+  if (closedByUs) { closedByUs = false; return; }
+  endAddFlow(); render();
+});
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
 let toastTimer;
