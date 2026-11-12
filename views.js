@@ -439,7 +439,7 @@ function addFromCatalog(keys, source) {
   if (!ids.length) return;
   track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source });
   save();
-  if (ids.length === 1) { openPlant(ids[0]); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); return; }
+  if (ids.length === 1) { openPlant(ids[0], 'settings'); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); return; }
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
   toast(`Добавлено ${plantsN(ids.length)} 🌱 Откройте каждое, чтобы выбрать место`);
 }

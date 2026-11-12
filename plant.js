@@ -103,15 +103,58 @@ function heroPhotoChanged(id) {
   btn.parentElement.innerHTML = heroActs(id);
 }
 
-function openPlant(id) {
+// Short facts under the name: how often it's checked, light, temperature and what the roots are in.
+function glanceHtml(p) {
+  const tr = tempRange(p), g = wayOf(p);
+  return `<ul class="glance" aria-label="Коротко">
+    ${g.noChecks ? '' : `<li>${I('droplet')}<span>раз в ~${days(Math.round(p.interval))}</span></li>`}
+    <li>${I('sun')}<span>${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</span></li>
+    ${tr ? `<li>${I('thermometer')}<span>${tr[0]}–${tr[1]} °C</span></li>` : ''}
+    <li>${I('shovel')}<span>${esc(MEDIA[p.type].name.toLowerCase())}</span></li></ul>`;
+}
+// The last 4 weeks as dots: watered, still moist, nothing. Today has a ring.
+function rhythmHtml(p) {
+  const byDay = {};
+  p.hist.forEach((h) => { if (byDay[h.d] !== 'water') byDay[h.d] = h.a; });
+  const cells = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = addDays(today(), -i), a = byDay[d];
+    cells.push(`<li class="${a === 'water' ? 'w' : a === 'wet' ? 'd' : ''}${i ? '' : ' now'}"><span class="sr-only">${shortDate(d)}: ${a === 'water' ? 'полив' : a === 'wet' ? 'ещё влажно' : 'нет отметок'}</span></li>`);
+  }
+  const waters = [...new Set(p.hist.filter((h) => h.a === 'water').map((h) => h.d))].sort();
+  const gaps = waters.slice(1).map((d, i) => (new Date(d) - new Date(waters[i])) / 864e5);
+  const avg = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 0;
+  return `<ol class="rhythm">${cells.join('')}</ol>
+    <p class="small legend"><span><i class="w" aria-hidden="true"></i>${esc(labelsOf(p)[0].toLowerCase())}</span><span><i class="d" aria-hidden="true"></i>${esc(labelsOf(p)[1].toLowerCase())}</span></p>
+    ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}. Проверка сейчас — раз в ${days(Math.round(p.interval))}.</p>` : ''}`;
+}
+
+// Tabs of the plant card. The card opens on «Уход»; a redraw of the same open card keeps the tab.
+const CARD_TABS = [['care', 'Уход'], ['settings', 'Настройки'], ['history', 'История']];
+let cardTab = 'care', cardFor = null;
+function showCardTab(k, focus) {
+  cardTab = k;
+  CARD_TABS.forEach(([t]) => {
+    const b = $('#ct-' + t), on = t === k;
+    b.setAttribute('aria-selected', on);
+    b.tabIndex = on ? 0 : -1;
+    $('#cp-' + t).hidden = !on;
+  });
+  if (focus) $('#ct-' + k).focus();
+}
+
+function openPlant(id, tabKey) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
+  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'care';
+  cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
-  const tr = tempRange(p);
+  const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
+  const panel = (k, html) => `<div role="tabpanel" class="card-panel" id="cp-${k}" aria-labelledby="ct-${k}"${k === cardTab ? '' : ' hidden'}>${html}</div>`;
   $('#sheet-body').innerHTML = `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
@@ -120,36 +163,43 @@ function openPlant(id) {
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
+    <div id="glance">${glanceHtml(p)}</div>
     <div id="water-box">${waterBox(p)}</div>
 
-    <div class="field"><label for="f-name">Имя</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Придумайте имя, например Коля" maxlength="40"></div>
-    <div class="field"><label for="f-species">Название (вид, сорт)</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
-      ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
+    <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
+    ${panel('care', `<p class="small muted mt-0">Нажмите на совет, чтобы поправить или удалить.</p><div id="cheat">${cheatHtml(id)}</div>`)}
+    ${panel('settings', `
+      <section class="group" aria-labelledby="g-name"><h3 id="g-name">Имя</h3>
+        <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
+        <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
+          ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div></section>
 
-    ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
-      ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
-    <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips">
-      ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}
-      <button class="chip" data-act="spot-new" data-id="${esc(id)}">${I('plus')}место</button></div></div>
+      <section class="group" aria-labelledby="g-place"><h3 id="g-place">Где стоит</h3>
+        ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
+          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips">
+          ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+          <form class="new-spot" data-id="${esc(id)}"><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
+            <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div></section>
 
-    <div class="field"><label for="f-lux">Свет: нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}${tr ? ` · ${tr[0]}–${tr[1]} °C` : ''}</label>
-      <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Замер люксметром, люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
-      ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>
-    <div id="way-box">${wayBox(p, def(id))}</div>
-    <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
-      <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
-      <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
-      <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
+      <section class="group" aria-labelledby="g-light"><h3 id="g-light">Свет</h3>
+        <div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
+          <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
+          ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
 
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
-      <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
-    <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div>
-
-    <h2>Шпаргалка</h2>
-    <p class="mt-n4 small muted">Нажмите на совет, чтобы поправить или удалить.</p>
-    <div id="cheat">${cheatHtml(id)}</div>
-    ${histHtml ? `<h2>История</h2><p class="history">${histHtml}</p>` : ''}
-    <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button></div>`;
+      <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
+        <div id="way-box">${wayBox(p, def(id))}</div>
+        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
+          <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
+          <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
+          <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
+        <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
+          <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
+        <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
+      <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
+    ${panel('history', histHtml ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>
+      <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Отметки появятся, когда вы ответите на проверку.</p>')}
+    </div>`;
   openSheet();
 }
 
@@ -251,6 +301,7 @@ document.addEventListener('change', (e) => {
     $('#int-field').hidden = !!wayOf(p).noChecks;
     $('#int-val').textContent = days(Math.round(r.interval));
     $('#int-hint').textContent = intHint(p);
+    $('#glance').innerHTML = glanceHtml(p);
     if (res.settle) {
       const box = $('[data-field="repotted"]');
       if (box) box.checked = true;
@@ -310,10 +361,10 @@ Object.assign(ACTS, {
     S.plants[id].spot = el.dataset.spot; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
-  'spot-new'(el, id) {
-    const s = prompt('Как называется место?');
-    if (s && s.trim()) { S.plants[id].spot = s.trim(); if (!S.spots.includes(s.trim())) S.spots.push(s.trim()); save(); openPlant(id); }
-  },
+  'spot-new'(el, id) { addSpot(id); },
+  'card-care'() { showCardTab('care'); },
+  'card-settings'() { showCardTab('settings'); },
+  'card-history'() { showCardTab('history'); },
   'room-pick'(el, id) {
     S.plants[id].room = el.dataset.room; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
@@ -350,6 +401,32 @@ Object.assign(ACTS, {
     }
   },
 });
+// A new spot from the field under the chips: picked for this plant and kept in the list.
+function addSpot(id) {
+  const f = $('#f-new-spot'), s = f && f.value.trim();
+  if (!s) { if (f) f.focus(); return; }
+  S.plants[id].spot = s;
+  if (!S.spots.includes(s)) S.spots.push(s);
+  save();
+  const y = sheet.scrollTop;
+  openPlant(id);
+  sheet.scrollTop = y;
+}
+document.addEventListener('submit', (e) => {
+  const form = e.target.closest('.new-spot');
+  if (form) { e.preventDefault(); addSpot(form.dataset.id); }
+});
+// Tabs: arrows, Home and End move between them, as in any tab list.
+document.addEventListener('keydown', (e) => {
+  const t = e.target.closest && e.target.closest('.seg-tab');
+  if (!t) return;
+  const keys = CARD_TABS.map(([k]) => k), i = keys.indexOf(cardTab);
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: keys.length - 1 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  showCardTab(keys[(next + keys.length) % keys.length], true);
+});
+
 function saveNote(el, id, act) {
   const key = el.dataset.key;
   const text = act === 'note-del' ? '' : $('#note-text').value.trim();
@@ -367,4 +444,5 @@ function stepInterval(el, id, act) {
   }
   save();
   $('#int-val').textContent = days(r.interval);
+  $('#glance').innerHTML = glanceHtml(plant(id));
 }

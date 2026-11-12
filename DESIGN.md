@@ -47,6 +47,10 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead.
 
+## Plant card
+
+Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium), then watering. Below them three tabs: «Уход» (tips and notes, where the card always opens), «Настройки» (name, place, light, how it grows) and «История» (the last 4 weeks as dots, then the list). A card opened right after adding one plant starts on «Настройки».
+
 ## Plant pictures
 
 A photo, or a drawn silhouette from `plantSvg(plant, mood)` in `shapes.js`:

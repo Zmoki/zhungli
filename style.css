@@ -422,6 +422,33 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .toggle input { width: 22px; height: 22px; accent-color: var(--leafy-d); }
 .history { font-size: 0.882rem; color: var(--muted); }
 
+/* Plant card: short facts, tabs, setting groups, the 4-week rhythm */
+.glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
+.glance li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: var(--card); font-size: 0.882rem; font-weight: 800; }
+.glance .ic { width: 18px; height: 18px; flex: none; }
+/* Tabs share the row by their label; with large text they wrap instead of cutting a label */
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 24px 0 16px; border-radius: var(--radius); background: var(--card); }
+.seg-tab {
+  flex: 1 1 auto; min-height: 44px; padding: 0 14px; border: 0; border-radius: 99px; background: none;
+  color: var(--ink); font: inherit; font-size: 0.941rem; font-weight: 800; white-space: nowrap;
+}
+.seg-tab[aria-selected="true"] { background: var(--ink); color: var(--bg); font-weight: 900; }
+.card-panel { padding-bottom: 8px; }
+.group { margin: 0 0 10px; padding: 16px; border-radius: 20px; background: var(--card); }
+.group h3 { margin: 0 0 14px; font-size: 1rem; font-weight: 900; }
+.group > .field:last-child, .group > div:last-child > .field:last-child { margin-bottom: 0; }
+.new-spot { display: flex; gap: 6px; margin-top: 10px; }
+.new-spot .input { flex: 1; min-width: 0; }
+.new-spot .btn { flex: none; width: 52px; padding: 0; }
+.rhythm { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.rhythm li { aspect-ratio: 1; border-radius: 50%; background: var(--line); }
+.rhythm .w, .legend .w { background: var(--sky); box-shadow: inset 0 0 0 2px var(--blue); }
+.rhythm .d, .legend .d { background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue); }
+.rhythm .now { outline: 2px solid var(--ink); outline-offset: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 50%; }
+
 /* Light */
 .lux-row {
   border: 1px solid var(--glass-rim); border-radius: 22px; padding: 12px 14px 14px 12px; margin-bottom: 10px;
