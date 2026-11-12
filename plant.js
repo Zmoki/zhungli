@@ -163,9 +163,9 @@ function plannedHtml(p) {
     <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше примерно раз в ${days(Math.round(p.interval))}. Ваши ответы появятся здесь.</p></section>`;
 }
 
-// Tabs of the plant card. The card opens on «Уход»; a redraw of the same open card keeps the tab.
-const CARD_TABS = [['care', 'Уход'], ['settings', 'Настройки'], ['history', 'История']];
-let cardTab = 'care', cardFor = null;
+// Tabs of the plant card. The card opens on «Заметки»; a redraw of the same open card keeps the tab.
+const CARD_TABS = [['notes', 'Заметки'], ['settings', 'Настройки'], ['history', 'История']];
+let cardTab = 'notes', cardFor = null;
 function showCardTab(k, focus) {
   cardTab = k;
   CARD_TABS.forEach(([t]) => {
@@ -181,7 +181,7 @@ function openPlant(id, tabKey) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
-  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'care';
+  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
   cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
@@ -202,7 +202,7 @@ function openPlant(id, tabKey) {
     <div id="water-box">${waterBox(p)}</div>
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
-    ${panel('care', `<p class="small muted mt-0">Нажмите на совет, чтобы поправить или удалить.</p><div id="cheat">${cheatHtml(id)}</div>`)}
+    ${panel('notes', `<p class="small muted mt-0">Нажмите на совет, чтобы поправить или удалить.</p><div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('settings', `
       <section class="group" aria-labelledby="g-name"><h3 id="g-name">Имя</h3>
         <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
@@ -413,7 +413,7 @@ Object.assign(ACTS, {
   'spot-new'(el, id) { addSpot(id, 'button'); },
   'way-medium'(el, id) { changeWay(id, 'medium', el.dataset.way); },
   'way-watering'(el, id) { changeWay(id, 'watering', el.dataset.way); },
-  'card-care'() { showCardTab('care'); },
+  'card-notes'() { showCardTab('notes'); },
   'card-settings'() { showCardTab('settings'); },
   'card-history'() { showCardTab('history'); },
   'room-pick'(el, id) {
