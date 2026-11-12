@@ -285,6 +285,7 @@ button { cursor: pointer; }
 .task .btns + .hint { margin-top: 16px; }
 
 .task.bonus { border: 2px dashed var(--edge); }
+.task.done-row .grow { min-width: 0; } /* stored titles hold a plant name: let long words break */
 .task.done-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 8px; border-radius: 22px; }
 .done-row .ava { width: 48px; height: 48px; font-size: 22px; border-radius: 15px; }
 

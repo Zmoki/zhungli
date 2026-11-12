@@ -211,7 +211,7 @@ function openPlant(id, tabKey) {
 
       <section class="group" aria-labelledby="g-place"><h3 id="g-place">Где стоит</h3>
         ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
-          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
+          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
         <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
           ${spots.map((s) => spotChip(id, s, p.spot === s)).join('')}
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
@@ -454,7 +454,7 @@ Object.assign(ACTS, {
     }
   },
 });
-const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`;
+const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${typedHtml(s)}</button>`;
 // «+ место» opens a field under the chips. It closes again once a spot is added, on Esc, or when it's
 // left empty. focusEl: where focus goes after (false: leave it where the person tapped).
 function spotForm(open, focusEl) {

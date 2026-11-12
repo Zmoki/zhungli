@@ -178,15 +178,16 @@ function currentHint() {
   return '';
 }
 
-// «Species · place» under a plant's name on task cards; `extra` adds e.g. the last watering.
-const plantSub = (p, ...extra) => [p.name ? p.species : '', p.spot, ...extra].filter(Boolean).join(' · ');
+// «Species · place» under a plant's name on task cards, as HTML; `extra` adds app text, e.g. the last watering.
+const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filter(Boolean).map(typedHtml), ...extra.filter(Boolean).map(esc)].join(' · ');
 // Every task card on «Сегодня» has one layout: picture and name, the plant's words, the task,
 // the buttons, then how to do it. `p` is the plant (or `icon` and `name` for tasks without one).
-function taskCard({ cls = '', p, icon, name, sub, quip, task, buttons, who, hint, after = '' }) {
+// `sub` is app text; `subHtml` is a ready line from plantSubHtml().
+function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, buttons, who, hint, after = '' }) {
   const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
-  const line = p && sub === undefined ? plantSub(p) : sub;
+  const line = subHtml ?? (p && sub === undefined ? plantSubHtml(p) : esc(sub ?? ''));
   return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${p ? typedHtml(p.title) : esc(name)}</div>
-    ${line ? `<div class="task-sub">${typedHtml(line)}</div>` : ''}</div></div>
+    ${line ? `<div class="task-sub">${line}</div>` : ''}</div></div>
     ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
     <div class="question">${esc(task)}</div>
     <div class="btns">${buttons}</div>
@@ -229,7 +230,7 @@ function viewToday() {
   shown.forEach((p) => {
     const [yes, no] = labelsOf(p);
     html += taskCard({
-      p, sub: plantSub(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
+      p, subHtml: plantSubHtml(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
       buttons: `<button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button>`,
       hint: p.water,
@@ -271,7 +272,7 @@ function viewToday() {
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
       const what = e.title || (p ? p.title : '');
-      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${typedHtml(what)}</div>
+      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${p && !e.title ? typedHtml(p.title) : esc(what)}</div>
         <span class="muted small">${label[String(e.a).split(':')[0]] || ''}</span></div>`;
     });
     html += `</details>`;
@@ -300,7 +301,7 @@ function spotGroups(ps, room) {
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
-    html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
+    html += `<section class="pgroup"><div class="group-title">${room || spot ? [room, spot].filter(Boolean).map(typedHtml).join(' · ') : 'Место не выбрано'}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const ph = photoOf(p.id);
       const st = states(p);
@@ -376,7 +377,7 @@ function lightRow(p) {
   return `<div class="lux-row" id="lux-${esc(p.id)}"><span class="nm-pl lux-pic">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2])}</span>
     <div class="nm">${typedHtml(p.title)}</div><div class="lux-state">${state}</div>
     <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
-    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
+    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + typedHtml(p.spot) : ''}</div>
     <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
 }
 

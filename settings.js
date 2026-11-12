@@ -41,12 +41,12 @@ function openSettings() {
     <h2>Комнаты</h2>
     <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
     <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
-    ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${esc(rm.name)}${I('x')}</button>`
-    : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${esc(rm.name)}${I('pencil')}</button>`)).join('')}
+    ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('x')}</button>`
+    : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('pencil')}</button>`)).join('')}
       <button class="chip" data-act="room-add" data-from="settings">${I('plus')}комната</button></div>
     <h2>Места</h2>
     <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
-    <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${esc(sp)}${I('x')}</button>`).join('')}
+    <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${typedHtml(sp)}${I('x')}</button>`).join('')}
       <button class="chip" data-act="spot-add">${I('plus')}место</button></div>
     <h2>Резервная копия</h2>
     <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
