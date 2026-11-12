@@ -90,6 +90,7 @@ async function doImport(file) {
     for (const [id, url] of Object.entries(photos)) await idbReq((st) => st.put(url, id), 'readwrite');
     const gone = Object.keys(PHOTOS).filter((id) => !photos[id]);
     PHOTOS = photos;
+    preparePhotos();
     // In the mini app, restored photos are the newest: they replace older ones in Telegram's cloud,
     // and photos the backup doesn't have are removed there too.
     if (window.photoChanged) Object.entries(photos).forEach(([id, url]) => window.photoChanged(id, url));

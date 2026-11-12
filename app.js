@@ -96,6 +96,7 @@ function render() {
   if (Object.keys(S.plants).length) { qsPicked.clear(); qsReported = false; }
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   applySizes(view);
+  revokeOldPhotos();
   if (tab === 'plants') filterPlants();
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }

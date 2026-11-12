@@ -78,17 +78,21 @@ function tapTarget(el) {
   return t.id;
 }
 // A native prompt or confirm holds the page while it's open: that's the user reading or typing, not a
-// slow tap. Taps that opened one are left out of INP and slow_tap.
-const dialogsAt = [];
+// slow tap. The time it was open is taken out of the tap's timings; the work after the answer still counts.
+const dialogs = []; // { from, to }
 ['alert', 'confirm', 'prompt'].forEach((k) => {
   const native = window[k];
   if (typeof native !== 'function') return;
   window[k] = function (...args) {
-    dialogsAt.push(performance.now());
-    if (dialogsAt.length > 10) dialogsAt.shift();
-    return native.apply(this, args);
+    const from = performance.now();
+    try { return native.apply(this, args); } finally {
+      dialogs.push({ from, to: performance.now() });
+      if (dialogs.length > 10) dialogs.shift();
+    }
   };
 });
+// How long native dialogs were open between two moments.
+const dialogTime = (start, end) => dialogs.reduce((sum, d) => sum + Math.max(0, Math.min(d.to, end) - Math.max(d.from, start)), 0);
 // Every event of a tap: on a phone the pointerdown is often fast and not reported, only the click.
 ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup'].forEach((type) => addEventListener(type, (e) => {
   tapTargets.push({ t: e.timeStamp, name: tapTarget(e.target) });
@@ -139,17 +143,18 @@ function onInteractions(entries) {
 function settleTaps() {
   clearTimeout(tapTimer);
   taps.forEach((e, id) => {
-    if (dialogsAt.some((t) => t >= e.start && t <= e.end)) return;
+    // A dialog opens from a handler, so its time sits in processing.
+    const held = dialogTime(e.procStart, e.procEnd), duration = e.duration - held;
     const known = worstTaps.find((w) => w.id === id);
-    if (known) known.duration = Math.max(known.duration, e.duration);
-    else worstTaps.push({ id, duration: e.duration });
+    if (known) known.duration = Math.max(known.duration, duration);
+    else worstTaps.push({ id, duration });
     // Once per tap, even if it crossed the line with an entry that came late.
-    if (e.duration < SLOW_TAP || visit.slow.has(id) || visit.slow.size >= 10) return;
+    if (duration < SLOW_TAP || visit.slow.has(id) || visit.slow.size >= 10) return;
     visit.slow.add(id);
     track('slow_tap', {
-      target: e.name || 'none', event: e.event, duration: Math.round(e.duration),
+      target: e.name || 'none', event: e.event, duration: Math.round(duration),
       input_delay: Math.round(e.procStart - e.start),
-      processing: Math.round(e.procEnd - e.procStart),
+      processing: Math.round(e.procEnd - e.procStart - held),
       presentation: Math.round(Math.max(0, e.end - e.procEnd)),
     });
   });

@@ -482,10 +482,11 @@ const isPhoto = (u) => typeof u === 'string' && /^data:image\/(jpeg|png|webp);ba
 // Pages show photos by short blob: links, made once per photo: putting ~100 KB data URLs into the HTML
 // made every render of a photo-heavy list parse megabytes of text and decode each image again.
 const photoUrls = {}; // id → { src (the data URL), url }
+let oldPhotoUrls = []; // links of changed or removed photos, revoked once render() has redrawn the page
 function photoOf(id) {
   const src = PHOTOS[id], c = photoUrls[id];
-  if (c && c.src === src) return c.url;
-  if (c) { URL.revokeObjectURL(c.url); delete photoUrls[id]; }
+  if (c && c.src === src) { c.src = src; return c.url; } // same photo read again: keep one copy of its text
+  if (c) { oldPhotoUrls.push(c.url); delete photoUrls[id]; }
   if (!isPhoto(src)) return null;
   try {
     const comma = src.indexOf(','), bin = atob(src.slice(comma + 1)), bytes = new Uint8Array(bin.length);
@@ -494,10 +495,22 @@ function photoOf(id) {
     return photoUrls[id].url;
   } catch (e) { return src; }
 }
+// Called by render() after it replaced the page: images there use the current links.
+// The plant card redraws its own picture when a photo changes (heroPhotoChanged).
+function revokeOldPhotos() {
+  oldPhotoUrls.forEach((u) => URL.revokeObjectURL(u));
+  oldPhotoUrls = [];
+}
+// After PHOTOS is filled or replaced: makes the links now, not in the first tap that shows them,
+// and retires those of photos that are gone.
+function preparePhotos() {
+  Object.keys(photoUrls).forEach((id) => { if (!PHOTOS[id]) photoOf(id); });
+  Object.keys(PHOTOS).forEach(photoOf);
+}
 // Forgets a plant's photo on this device (memory and IndexedDB).
 function dropPhoto(id) {
   delete PHOTOS[id];
-  photoOf(id); // revokes its blob: link
+  photoOf(id); // retires its blob: link
   idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
 }
 const dbp = new Promise((res, rej) => {
@@ -518,6 +531,7 @@ async function loadPhotos() {
   try {
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
     keys.forEach((k, i) => { if (isPhoto(vals[i])) PHOTOS[k] = vals[i]; });
+    preparePhotos();
     render();
   } catch (e) { /* works without photos too */ }
 }
