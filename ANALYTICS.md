@@ -70,6 +70,7 @@ On every event:
 | `photo_removed` | photo removed from a plant (back to the drawing) | — |
 | `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back); `note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` |
 | `lux_entered` | lux reading saved | `from`: `light_tab` / `card` |
+| `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing) | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone); `new_spot`: not in the spot list before. Never the spot's name |
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
@@ -81,7 +82,7 @@ On every event:
 | `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` |
 | `data_reset` | «Начать с чистого листа» confirmed in settings | — (`plants_total` is how many were erased) |
 | `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | — |
-| `ui_clicked` | any tap on a button, link or other control (fields are `field_changed`); also Enter in the plant card's new spot field (`spot-new`) and arrow keys on its tabs (`card-<tab>`) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>` |
+| `ui_clicked` | any tap on a button, link or other control (fields are `field_changed`); also arrow keys on the plant card's tabs (`card-<tab>`) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>` |
 | `field_changed` | any input, select or textarea changed (text fields on leaving them) | `field`: static id or name; `type`; `checked` for checkboxes. Never the value |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | `kind`: `ios_empty` (iPhone, no plants yet: «Уже на экране» on the install-first card) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |

@@ -369,7 +369,7 @@ Object.assign(ACTS, {
     S.plants[id].spot = el.dataset.spot; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
-  'spot-new'(el, id) { addSpot(id); },
+  'spot-new'(el, id) { addSpot(id, 'button'); },
   'card-care'() { showCardTab('care'); },
   'card-settings'() { showCardTab('settings'); },
   'card-history'() { showCardTab('history'); },
@@ -412,12 +412,14 @@ Object.assign(ACTS, {
 const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`;
 // A new spot from the field under the chips: picked for this plant and kept in the list.
 // Only the chip row changes, so the field keeps focus (and the keyboard on a phone).
-function addSpot(id) {
+function addSpot(id, how) {
   const f = $('#f-new-spot'), s = f && f.value.trim();
   if (!s) { if (f) f.focus(); return; }
   S.plants[id].spot = s;
-  if (!S.spots.includes(s)) S.spots.push(s);
+  const fresh = !S.spots.includes(s);
+  if (fresh) S.spots.push(s);
   save();
+  track('spot_added', { how, new_spot: fresh });
   const box = $('#spot-chips');
   let chip = [...box.children].find((c) => c.dataset.spot === s);
   if (!chip) { box.insertAdjacentHTML('beforeend', spotChip(id, s, false)); chip = box.lastElementChild; }
@@ -427,8 +429,7 @@ function addSpot(id) {
 }
 document.addEventListener('submit', (e) => {
   const form = e.target.closest('.new-spot');
-  // Enter («Готово» on a phone) adds the spot like the + button, so it's counted the same way.
-  if (form) { e.preventDefault(); track('ui_clicked', { target: 'spot-new' }); addSpot(form.dataset.id); }
+  if (form) { e.preventDefault(); addSpot(form.dataset.id, 'enter'); } // Enter, «Готово» on a phone
 });
 // Tabs: arrows, Home and End move between them, as in any tab list.
 document.addEventListener('keydown', (e) => {
