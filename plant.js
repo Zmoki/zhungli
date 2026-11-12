@@ -113,10 +113,11 @@ function glanceHtml(p) {
     <li>${I('shovel')}<span>${esc(MEDIA[p.type].name.toLowerCase())}</span></li>
     ${WATERING[p.watering]?.badge ? `<li>${I(WATERING[p.watering].badge[0])}<span>${WATERING[p.watering].badge[1]}</span></li>` : ''}</ul>`;
 }
-// An answer in the plant's own words: «полито», «вода сменена», «долито»…
-const histWord = (p, a) => labelsOf(p)[a === 'water' ? 0 : 1].toLowerCase();
+// Answers in history. Neutral words: an entry doesn't say which way the plant grew then.
+const HIST_WORDS = { water: 'полив', wet: 'ещё влажно' };
 // The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
 // legend are hidden from screen readers: the average and the list below say the same.
+// The average counts only waterings in these 4 weeks.
 function rhythmHtml(p) {
   const byDay = {};
   p.hist.forEach((h) => { if (byDay[h.d] !== 'water') byDay[h.d] = h.a; });
@@ -125,12 +126,13 @@ function rhythmHtml(p) {
     const d = addDays(today(), -i), a = byDay[d];
     cells.push(`<li class="${a === 'water' ? 'w' : a === 'wet' ? 'd' : ''}${i ? '' : ' now'}"></li>`);
   }
-  const waters = [...new Set(p.hist.filter((h) => h.a === 'water').map((h) => h.d))].sort();
+  const from = addDays(today(), -27);
+  const waters = [...new Set(p.hist.filter((h) => h.a === 'water' && h.d >= from).map((h) => h.d))].sort();
   const gaps = waters.slice(1).map((d, i) => diff(waters[i], d));
   const avg = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 0;
   return `<ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
-    <p class="small legend" aria-hidden="true"><span><i class="w"></i>${esc(histWord(p, 'water'))}</span><span><i class="d"></i>${esc(histWord(p, 'wet'))}</span></p>
-    ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}. Проверка сейчас — раз в ${days(Math.round(p.interval))}.</p>` : ''}`;
+    <p class="small legend" aria-hidden="true"><span><i class="w"></i>${HIST_WORDS.water}</span><span><i class="d"></i>${HIST_WORDS.wet}</span></p>
+    ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}.${wayOf(p).noChecks ? '' : ` Проверка сейчас — раз в ${days(Math.round(p.interval))}.`}</p>` : ''}`;
 }
 
 // Tabs of the plant card. The card opens on «Уход»; a redraw of the same open card keeps the tab.
@@ -155,7 +157,7 @@ function openPlant(id, tabKey) {
   cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
-  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${esc(histWord(p, h.a))}`).join('<br>');
+  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${HIST_WORDS[h.a]}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
   // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
