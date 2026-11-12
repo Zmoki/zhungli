@@ -181,8 +181,7 @@ function adoptStored(json, dropped) {
   if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
   if (sheet.open) closeSheet(); else render();
   if (dropped) toast('Жунгли открыты ещё в одном окне — показываю свежие данные. Повторите последнее действие.');
-  PHOTOS = {};
-  loadPhotos();
+  loadPhotos(true);
 }
 // Thrown after a refused save, so the rest of that action doesn't run on the other window's data.
 const STALE = Object.assign(new Error('stale window'), { stale: true });
@@ -501,11 +500,16 @@ function revokeOldPhotos() {
   oldPhotoUrls.forEach((u) => URL.revokeObjectURL(u));
   oldPhotoUrls = [];
 }
-// After PHOTOS is filled or replaced: makes the links now, not in the first tap that shows them,
-// and retires those of photos that are gone.
+// After PHOTOS is filled or replaced: retires the links of photos that are gone, and makes the missing
+// ones one per task, so the first tap that shows them doesn't wait and no single task gets long.
+// The next render() makes the ones it shows right away.
+let prepTimer = 0;
 function preparePhotos() {
   Object.keys(photoUrls).forEach((id) => { if (!PHOTOS[id]) photoOf(id); });
-  Object.keys(PHOTOS).forEach(photoOf);
+  const ids = Object.keys(PHOTOS);
+  clearTimeout(prepTimer);
+  const next = () => { if (ids.length) { photoOf(ids.shift()); prepTimer = setTimeout(next, 0); } };
+  prepTimer = setTimeout(next, 0);
 }
 // Forgets a plant's photo on this device (memory and IndexedDB).
 function dropPhoto(id) {
@@ -527,10 +531,15 @@ function idbReq(fn, mode = 'readonly') {
     req.onerror = () => rej(req.error);
   }));
 }
-async function loadPhotos() {
+// `replace`: another window changed the data, so photos it removed go too. At launch, a photo that
+// arrived meanwhile (Telegram sync) is newer than the stored one and stays.
+async function loadPhotos(replace) {
   try {
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
-    keys.forEach((k, i) => { if (isPhoto(vals[i])) PHOTOS[k] = vals[i]; });
+    const fresh = {};
+    keys.forEach((k, i) => { if (isPhoto(vals[i])) fresh[k] = vals[i]; });
+    // Swapped in at once: a render in between still has every photo.
+    PHOTOS = replace ? fresh : { ...fresh, ...PHOTOS };
     preparePhotos();
     render();
   } catch (e) { /* works without photos too */ }
