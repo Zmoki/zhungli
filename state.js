@@ -181,7 +181,7 @@ function adoptStored(json, dropped) {
   if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
   if (sheet.open) closeSheet(); else render();
   if (dropped) toast('Жунгли открыты ещё в одном окне — показываю свежие данные. Повторите последнее действие.');
-  loadPhotos(true);
+  loadPhotos();
 }
 // Thrown after a refused save, so the rest of that action doesn't run on the other window's data.
 const STALE = Object.assign(new Error('stale window'), { stale: true });
@@ -531,15 +531,20 @@ function idbReq(fn, mode = 'readonly') {
     req.onerror = () => rej(req.error);
   }));
 }
-// `replace`: another window changed the data, so photos it removed go too. At launch, a photo that
-// arrived meanwhile (Telegram sync) is newer than the stored one and stays.
-async function loadPhotos(replace) {
+// Reads all photos from IndexedDB and swaps them in at once, so a render in between still has every photo.
+// Photos changed here while it reads (photo picker, Telegram sync) are newer than what it read and stay;
+// the rest follows IndexedDB, so photos another window removed go too.
+async function loadPhotos() {
   try {
+    const before = { ...PHOTOS };
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
     const fresh = {};
     keys.forEach((k, i) => { if (isPhoto(vals[i])) fresh[k] = vals[i]; });
-    // Swapped in at once: a render in between still has every photo.
-    PHOTOS = replace ? fresh : { ...fresh, ...PHOTOS };
+    Object.keys({ ...before, ...PHOTOS }).forEach((id) => {
+      if (PHOTOS[id] === before[id]) return;
+      if (PHOTOS[id]) fresh[id] = PHOTOS[id]; else delete fresh[id];
+    });
+    PHOTOS = fresh;
     preparePhotos();
     render();
   } catch (e) { /* works without photos too */ }
