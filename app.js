@@ -222,14 +222,39 @@ try {
 } catch (e) { /* private mode */ }
 // Back from the back-forward cache: no reload, so the next real one is a launch again.
 addEventListener('pageshow', (e) => { if (e.persisted) try { sessionStorage.removeItem('zhungli.privacyAt'); } catch (err) { /* private mode */ } });
-// Where a launch came from: the referring site's domain only (google.com, t.me), never the page address.
-// No referrer, or our own site (a reload): $direct, as PostHog names it.
-function refDomain() {
+// Where a launch came from, as a known source only: a company wiki or a webmail host could say who someone
+// is, so any other site is just 'other'. No referrer, or our own site: $direct, as PostHog names it.
+// Android apps send android-app://<package>, matched like hosts.
+const REF_SOURCES = [
+  ['google.com', /(^|\.)google\.[a-z.]+$|^com\.google\.android\.googlequicksearchbox$/],
+  ['yandex.ru', /(^|\.)(yandex\.[a-z.]+|ya\.ru)$|^ru\.yandex\./],
+  ['bing.com', /(^|\.)bing\.com$/], ['duckduckgo.com', /(^|\.)duckduckgo\.com$/],
+  ['t.me', /(^|\.)(t\.me|telegram\.org|telegram\.me)$|^org\.telegram\./],
+  ['vk.com', /(^|\.)(vk\.com|vk\.ru)$|^com\.vkontakte\./], ['ok.ru', /(^|\.)ok\.ru$/],
+  ['instagram.com', /(^|\.)instagram\.com$|^com\.instagram\./], ['facebook.com', /(^|\.)facebook\.com$|^com\.facebook\./],
+  ['threads.net', /(^|\.)threads\.(net|com)$/], ['x.com', /(^|\.)(x\.com|twitter\.com|t\.co)$/],
+  ['reddit.com', /(^|\.)reddit\.com$/], ['youtube.com', /(^|\.)youtube\.com$/], ['pinterest.com', /(^|\.)pinterest\.[a-z.]+$/],
+  ['linkedin.com', /(^|\.)(linkedin\.com|lnkd\.in)$/], ['tiktok.com', /(^|\.)tiktok\.com$/], ['whatsapp.com', /(^|\.)whatsapp\.(com|net)$/],
+  ['dzen.ru', /(^|\.)dzen\.ru$/], ['habr.com', /(^|\.)habr\.com$/], ['github.com', /(^|\.)github\.com$/],
+  ['producthunt.com', /(^|\.)producthunt\.com$/], ['chatgpt.com', /(^|\.)(chatgpt\.com|openai\.com)$/],
+  ['claude.ai', /(^|\.)claude\.ai$/], ['perplexity.ai', /(^|\.)perplexity\.ai$/], ['zmoki.xyz', /(^|\.)zmoki\.xyz$/],
+];
+function refSource(ref) {
   try {
-    const h = document.referrer && new URL(document.referrer).hostname.replace(/^www\./, '');
-    return h && h !== location.hostname ? h : '$direct';
+    const h = ref && new URL(ref).hostname.toLowerCase();
+    if (!h || h === location.hostname) return '$direct';
+    const hit = REF_SOURCES.find(([, re]) => re.test(h));
+    return hit ? hit[0] : 'other';
   } catch (e) { return '$direct'; }
 }
-track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? refDomain() : undefined });
+// Sent once per tab: an update or settings reload keeps document.referrer, but it isn't a new arrival.
+function arrivalSource() {
+  try {
+    if (sessionStorage.getItem('zhungli.refSent')) return undefined;
+    sessionStorage.setItem('zhungli.refSent', '1');
+  } catch (e) { /* private mode: send it */ }
+  return refSource(document.referrer);
+}
+track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? arrivalSource() : undefined });
 // Closing the mini app or the tab may skip visibilitychange.
 addEventListener('pagehide', () => { reportVitals(); flushStats(); });
