@@ -77,7 +77,7 @@ function wayBox(p, d) {
     ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}">${x.name}</button>`).join('')}</div></div>`;
   return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
     <div class="field" id="repot-field"${feedsOnDay(p) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
-      <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
+      <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>
     ${chips('watering', 'Как поливаю', WATERING, p.watering || 'top', ` id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}`)}
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
@@ -85,14 +85,15 @@ function wayBox(p, d) {
 // Redrawn alone on a change, so the tapped chip keeps focus.
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
   ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
-// Under each checkbox: what it means now and, while it's unticked, what ticking it would do.
+// Under each checkbox: ticked, what it does; unticked, what ticking would do, then what happens now.
 // Repotting only matters for plants called on «День подкормки»; for the rest it's hidden.
+const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
-  if (repotted(p)) return `Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`;
-  return 'Сейчас подкормка как обычно: с марта по сентябрь, раз в 2 недели.<br>Если отметить: 6 недель не позову на подкормку, пока приживаются корни.';
+  if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
+  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
 }
-const ghHint = (on) => (on ? 'Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.'
-  : 'Сейчас проветривать не напоминаю.<br>Если отметить: каждый день напомню проветрить. Для колпака или мини-теплицы.');
+const ghHint = (on) => (on ? hintLines('Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.')
+  : hintLines('<b>Если отметить:</b> каждый день напомню проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не напоминаю.'));
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
 
 // The plant card's picture and its photo buttons; heroPhotoChanged() redraws them alone.
@@ -223,7 +224,7 @@ function openPlant(id, tabKey) {
 
       <section class="group" aria-labelledby="g-gh"><h3 id="g-gh">Теплица</h3>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
-          <p class="mt-6 small muted" id="gh-hint">${ghHint(p.greenhouse)}</p></div></section>
+          <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div></section>
 
       <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
         <div id="way-box">${wayBox(p, def(id))}</div>

@@ -431,6 +431,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
   background-color: var(--leafy);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a2118' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
+.hint p { margin: 0; } .hint p + p { margin-top: 8px; } /* a checkbox's hint: one idea per line */
 .toggle input:active { transform: translateY(3px); box-shadow: none; }
 @media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 .history { font-size: 0.882rem; color: var(--muted); }
