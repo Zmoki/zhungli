@@ -196,7 +196,7 @@ function openPlant(id, tabKey) {
       <div class="hero-acts">${heroActs(id)}</div>
       <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}</span></div>
     <div class="sheet-main">
-    <div class="hero-text"><h2 class="m-0" id="sh-title">${esc(p.title)}</h2><div class="muted small" id="sh-species">${esc(p.species)}</div></div>
+    <div class="hero-text"><h2 class="m-0" id="sh-title">${nameHtml(p.title)}</h2><div class="muted small" id="sh-species">${nameHtml(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
     <div id="glance">${glanceHtml(p)}</div>
     <div id="water-box">${waterBox(p)}</div>
@@ -364,8 +364,8 @@ document.addEventListener('change', (e) => {
   }
   if (f === 'name' || f === 'species') {
     const p = plant(id);
-    $('#sh-title').textContent = p.title;
-    $('#sh-species').textContent = p.species;
+    $('#sh-title').innerHTML = nameHtml(p.title);
+    $('#sh-species').innerHTML = nameHtml(p.species);
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; $('#gh-hint').innerHTML = ghHint(el.checked); track('greenhouse_toggled', { on: el.checked }); }

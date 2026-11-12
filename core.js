@@ -62,6 +62,8 @@ const $ = (s, el = document) => el.querySelector(s);
 // Icon from the Lucide sprite in index.html; takes the text color.
 const I = (n) => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Escaped plant name with Latin runs marked lang="en": browsers have no Latin hyphenation on a lang="ru" page.
+const nameHtml = (s) => String(s ?? '').split(/(\(?[A-Za-z](?:[A-Za-z'. -]*[A-Za-z])?\)?)/).map((t, i) => (i % 2 ? `<span lang="en">${esc(t)}</span>` : esc(t))).join('');
 
 /* ---------- Dates ---------- */
 const pad = (n) => String(n).padStart(2, '0');

@@ -65,7 +65,7 @@ A photo, or a drawn silhouette from `plantSvg(plant, mood)` in `shapes.js`:
 
 ## Type
 
-Nunito (`fonts/`), weights 500–900. Headings and buttons are the heaviest (900). Sizes are in `rem`, so the iPhone text-size setting scales the whole app.
+Nunito (`fonts/`), weights 500–900. Headings and buttons are the heaviest (900). Sizes are in `rem`, so the iPhone text-size setting scales the whole app. Plant names hyphenate instead of overflowing; render them with `nameHtml()` so Latin words hyphenate too.
 
 ## Dark theme
 

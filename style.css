@@ -312,7 +312,7 @@ button { cursor: pointer; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 12px; }
 .pcard {
   border: 1px solid var(--line); border-radius: 28px; color: var(--ink);
-  padding: 9px 9px 12px; text-align: left; display: flex; flex-direction: column; gap: 6px;
+  padding: 9px 9px 12px; text-align: left; display: flex; flex-direction: column; gap: 6px; min-width: 0;
 }
 .pcard .pic {
   aspect-ratio: 3 / 4; border-radius: 21px; background: var(--green-soft);
@@ -326,6 +326,7 @@ button { cursor: pointer; }
 .pcard .badges { position: absolute; left: 7px; right: 7px; bottom: 7px; display: flex; flex-wrap: wrap-reverse; gap: 4px; }
 .pcard :is(.mood, .gh) { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring); }
 .pcard :is(.mood, .gh) .ic { width: 20px; height: 20px; stroke-width: 2.4; }
+.pcard :is(b, small), .hero-text :is(h2, div) { overflow-wrap: anywhere; hyphens: auto; }
 .pcard b { font-size: 1rem; font-weight: 900; line-height: 1.2; padding: 0 4px; }
 .pcard small { color: var(--muted); font-size: 0.824rem; font-weight: 700; line-height: 1.5; padding: 0 4px; }
 /* Next watering check: a drop and the day («сегодня», «через 4 дня») in watering blue */
