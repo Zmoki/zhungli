@@ -307,6 +307,9 @@ function logToday(entry) {
   (S.log[t] ||= []).push(entry);
 }
 
+// Called on «День подкормки»: soil-like media, plus flowering succulents (dry with `feed`), unless the card says no.
+const feedsOnDay = (p) => !p.noFeed && (wayOf(p).feed === 'day' || (p.type === 'dry' && !!p.feed));
+
 function hist(p, a) {
   p.hist.unshift({ d: today(), a });
   p.hist.length = Math.min(p.hist.length, 20);
@@ -409,7 +412,7 @@ function bonusTasks() {
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     // Fed on the day: soil-like media, plus flowering succulents (dry with `feed`). The rest get fertilizer with every watering, or none.
-    const who = allPlants().filter((p) => !p.noFeed && !repotted(p) && (wayOf(p).feed === 'day' || (p.type === 'dry' && p.feed)));
+    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
         hint: `Кого: ${who.map((p) => p.title).join(', ')}. Недавно пересаженных и больных не кормите.` });

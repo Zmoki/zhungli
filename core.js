@@ -73,9 +73,6 @@ const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
 // «Недавно пересажено» holds the date it was ticked and lapses after 6 weeks.
 const REPOT_DAYS = 42;
 const repotted = (p) => !!p.repotted && diff(p.repotted, today()) < REPOT_DAYS;
-const repotHint = (p) => (repotted(p)
-  ? `Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`
-  : '6 недель не буду звать на подкормку, пока приживаются корни. Потом галочка снимется сама.');
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 function plural(n, one, few, many) {
