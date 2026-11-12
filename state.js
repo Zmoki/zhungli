@@ -407,7 +407,7 @@ function bonusTasks() {
   Object.values(cares).forEach(({ care, ps }) => {
     const key = `${care.kind}:${ps.map((p) => p.id).join(',')}`;
     out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, hint: care.hint }
-      : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, hint: `Кого: ${ps.map((p) => p.title).join(', ')}. ${care.hint}` });
+      : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, who: ps.map((p) => p.title), hint: care.hint });
   });
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
@@ -415,7 +415,7 @@ function bonusTasks() {
     const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-        hint: `Кого: ${who.map((p) => p.title).join(', ')}. Недавно пересаженных и больных не кормите.` });
+        who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите.' });
     }
   }
   return out.slice(0, 2);

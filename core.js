@@ -62,6 +62,13 @@ const $ = (s, el = document) => el.querySelector(s);
 // Icon from the Lucide sprite in index.html; takes the text color.
 const I = (n) => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Escaped text people typed (plant names, species, places, rooms), in a .pname span that hyphenates instead of
+// overflowing. Browsers have no Latin hyphenation on a lang="ru" page, so Latin runs with a word too long for
+// a tile (10+ letters) are marked lang="en", quotes and brackets included. Short ones stay unmarked, so screen
+// readers don't switch voices for «Ficus» or «Bob». App text around it stays plain esc().
+const LATIN_RUN = /([(«"'„“‘]*\p{Script=Latin}(?:[\p{Script=Latin}'’. -]*\p{Script=Latin})?[)»"'”’,.]*)/u;
+const typedHtml = (s) => `<span class="pname">${String(s ?? '').split(LATIN_RUN)
+  .map((t, i) => (i % 2 && /\p{Script=Latin}{10}/u.test(t) ? `<span lang="en">${esc(t)}</span>` : esc(t))).join('')}</span>`;
 
 /* ---------- Dates ---------- */
 const pad = (n) => String(n).padStart(2, '0');

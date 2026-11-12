@@ -178,19 +178,20 @@ function currentHint() {
   return '';
 }
 
-// «Species · place» under a plant's name on task cards; `extra` adds e.g. the last watering.
-const plantSub = (p, ...extra) => [p.name ? p.species : '', p.spot, ...extra].filter(Boolean).join(' · ');
+// «Species · place» under a plant's name on task cards, as HTML; `extra` adds app text, e.g. the last watering.
+const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filter(Boolean).map(typedHtml), ...extra.filter(Boolean).map(esc)].join(' · ');
 // Every task card on «Сегодня» has one layout: picture and name, the plant's words, the task,
 // the buttons, then how to do it. `p` is the plant (or `icon` and `name` for tasks without one).
-function taskCard({ cls = '', p, icon, name, sub, quip, task, buttons, hint, after = '' }) {
+// `sub` is app text; `subHtml` is a ready line from plantSubHtml().
+function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, buttons, who, hint, after = '' }) {
   const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
-  const line = p && sub === undefined ? plantSub(p) : sub;
-  return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${esc(p ? p.title : name)}</div>
-    ${line ? `<div class="task-sub">${esc(line)}</div>` : ''}</div></div>
+  const line = subHtml ?? (p && sub === undefined ? plantSubHtml(p) : esc(sub ?? ''));
+  return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${p ? typedHtml(p.title) : esc(name)}</div>
+    ${line ? `<div class="task-sub">${line}</div>` : ''}</div></div>
     ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
     <div class="question">${esc(task)}</div>
     <div class="btns">${buttons}</div>
-    ${hint ? `<div class="hint">${esc(hint)}</div>` : ''}${after}</div>`;
+    ${who || hint ? `<div class="hint">${who ? `Кого: ${who.map(typedHtml).join(', ')}. ` : ''}${esc(hint)}</div>` : ''}${after}</div>`;
 }
 
 function viewToday() {
@@ -229,7 +230,7 @@ function viewToday() {
   shown.forEach((p) => {
     const [yes, no] = labelsOf(p);
     html += taskCard({
-      p, sub: plantSub(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
+      p, subHtml: plantSubHtml(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
       buttons: `<button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button>`,
       hint: p.water,
@@ -257,7 +258,7 @@ function viewToday() {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>`;
     bonus.forEach((b) => {
       html += taskCard({
-        cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, hint: b.hint,
+        cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
         buttons: `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
           <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button>`,
       });
@@ -271,7 +272,7 @@ function viewToday() {
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
       const what = e.title || (p ? p.title : '');
-      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${esc(what)}</div>
+      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${p && !e.title ? typedHtml(p.title) : esc(what)}</div>
         <span class="muted small">${label[String(e.a).split(':')[0]] || ''}</span></div>`;
     });
     html += `</details>`;
@@ -300,13 +301,13 @@ function spotGroups(ps, room) {
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
   Object.keys(groups).sort((a, b) => spotIdx(a) - spotIdx(b)).forEach((spot) => {
-    html += `<section class="pgroup"><div class="group-title">${esc(room ? [room, spot].filter(Boolean).join(' · ') : spot || 'Место не выбрано')}</div><div class="grid">`;
+    html += `<section class="pgroup"><div class="group-title">${room || spot ? [room, spot].filter(Boolean).map(typedHtml).join(' · ') : 'Место не выбрано'}</div><div class="grid">`;
     groups[spot].forEach((p) => {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
       html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}${growBadges(p)}</span></div>
-        <b>${esc(p.title)}</b><small>${p.name ? esc(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
+        <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
   });
@@ -374,9 +375,9 @@ function lightRow(p) {
   const dot = p.lux ? `<i class="dot ${ls}" data-l="${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}"></i>` : '';
   const state = ls ? `<span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '<span class="small muted">ещё не замерено</span>';
   return `<div class="lux-row" id="lux-${esc(p.id)}"><span class="nm-pl lux-pic">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2])}</span>
-    <div class="nm">${esc(p.title)}</div><div class="lux-state">${state}</div>
+    <div class="nm">${typedHtml(p.title)}</div><div class="lux-state">${state}</div>
     <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
-    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
+    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + typedHtml(p.spot) : ''}</div>
     <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
 }
 
@@ -392,15 +393,15 @@ function lightIdeas() {
       .sort((x, y) => (y.lux - y.luxRange[0]) - (x.lux - x.luxRange[0]))[0];
     if (H) {
       used.add(H.id); used.add(L.id);
-      out.push(['swap', `${I('arrow-left-right')}<b>Поменяйте местами: ${esc(L.title)} ⇄ ${esc(H.title)}</b><br>
-        ${esc(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
-        ${esc(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
+      out.push(['swap', `${I('arrow-left-right')}<b>Поменяйте местами: ${typedHtml(L.title)} ⇄ ${typedHtml(H.title)}</b><br>
+        ${typedHtml(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
+        ${typedHtml(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
     } else {
-      out.push(['low', `${I('sun-dim')}<b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
+      out.push(['low', `${I('sun-dim')}<b>${typedHtml(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
     }
   });
   highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
+    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${typedHtml(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
   });
   if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
   return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
@@ -477,19 +478,19 @@ function roomCard(rm, ps, many) {
     const notes = [];
     const cold = ranges.filter(([, t]) => rm.t < t[0]).map(([p]) => p.title);
     const hot = ranges.filter(([, t]) => rm.t > t[1]).map(([p]) => p.title);
-    if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
-    if (hot.length) notes.push(['flame', `Жарковато для: ${hot.join(', ')}. Проветрите или отодвиньте от батареи.`]);
+    if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.map(typedHtml).join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
+    if (hot.length) notes.push(['flame', `Жарковато для: ${hot.map(typedHtml).join(', ')}. Проветрите или отодвиньте от батареи.`]);
     if (rm.h < 50) {
-      notes.push(['droplet-off', `Сухо (${rm.h}%). Включите увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.join(', ')}` : ''}.`]);
+      notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Включите увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
     }
-    if (rm.h > 75) notes.push(['droplets', `Очень влажно (${rm.h}%). Проветрите: сырость и застой воздуха — путь к грибкам, следите за сфагнумом.`]);
+    if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха — путь к грибкам, следите за сфагнумом.`]);
     status = notes.length
-      ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${esc(n)}</span></div>`).join('')
+      ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
       : ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '';
   }
   const ago = has ? (rm.d === today() ? 'сегодня' : rel(rm.d)) : '';
   const name = esc(rm.name);
-  const head = many ? `<div class="room-head"><div><h2>${name}</h2>
+  const head = many ? `<div class="room-head"><div><h2>${typedHtml(rm.name)}</h2>
       <div class="small muted">${plantsN(ps.length)} · ${has ? 'замер: ' + esc(ago) : 'замеров пока нет'}</div></div>
       <button class="icon-btn" data-act="room-rename" data-room="${esc(rm.id)}" aria-label="Переименовать комнату ${name}">${I('pencil')}</button>
       <button class="icon-btn" data-act="room-del" data-room="${esc(rm.id)}" aria-label="Убрать комнату ${name}">${I('x')}</button></div>` : '';
