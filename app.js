@@ -222,6 +222,42 @@ try {
 } catch (e) { /* private mode */ }
 // Back from the back-forward cache: no reload, so the next real one is a launch again.
 addEventListener('pageshow', (e) => { if (e.persisted) try { sessionStorage.removeItem('zhungli.privacyAt'); } catch (err) { /* private mode */ } });
-track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined });
+// Where a launch came from, as a known source only: a company wiki or a webmail host could say who someone
+// is, so any other site is just 'other'. No referrer, or our own site: $direct, as PostHog names it.
+// Android apps send android-app://<package>, matched like hosts.
+const REF_SOURCES = [
+  // Google search on its country domains (google.de, google.co.uk, google.com.br); Sites, Docs and Gmail are 'other'.
+  ['google.com', /^(www\.)?google\.(com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$|^com\.google\.android\.googlequicksearchbox$/],
+  ['yandex.ru', /(^|\.)(yandex\.(ru|com|by|kz|uz|com\.tr)|ya\.ru)$|^ru\.yandex\./],
+  ['bing.com', /(^|\.)bing\.com$/], ['duckduckgo.com', /(^|\.)duckduckgo\.com$/],
+  ['t.me', /(^|\.)(t\.me|telegram\.org|telegram\.me)$|^org\.telegram\./],
+  ['vk.com', /(^|\.)(vk\.com|vk\.ru)$|^com\.vkontakte\./], ['ok.ru', /(^|\.)ok\.ru$/],
+  ['instagram.com', /(^|\.)instagram\.com$|^com\.instagram\./], ['facebook.com', /(^|\.)facebook\.com$|^com\.facebook\./],
+  ['threads.net', /(^|\.)threads\.(net|com)$/], ['x.com', /(^|\.)(x\.com|twitter\.com|t\.co)$/],
+  ['reddit.com', /(^|\.)reddit\.com$/], ['youtube.com', /(^|\.)youtube\.com$/], ['pinterest.com', /(^|\.)pinterest\.(com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/],
+  ['linkedin.com', /(^|\.)(linkedin\.com|lnkd\.in)$/], ['tiktok.com', /(^|\.)tiktok\.com$/], ['whatsapp.com', /(^|\.)whatsapp\.(com|net)$/],
+  ['dzen.ru', /(^|\.)dzen\.ru$/], ['habr.com', /(^|\.)habr\.com$/], ['github.com', /(^|\.)github\.com$/],
+  ['producthunt.com', /(^|\.)producthunt\.com$/], ['chatgpt.com', /(^|\.)(chatgpt\.com|openai\.com)$/],
+  ['claude.ai', /(^|\.)claude\.ai$/], ['perplexity.ai', /(^|\.)perplexity\.ai$/], ['zmoki.xyz', /(^|\.)zmoki\.xyz$/],
+];
+function refSource(ref) {
+  try {
+    const h = ref && new URL(ref).hostname.toLowerCase();
+    if (!h || h === location.hostname) return '$direct';
+    const hit = REF_SOURCES.find(([, re]) => re.test(h));
+    return hit ? hit[0] : 'other';
+  } catch (e) { return '$direct'; }
+}
+// Sent once per arrival: an update or settings reload keeps the same document.referrer, so it isn't sent
+// again; coming back in the same tab through another link changes it, and that counts.
+function arrivalSource() {
+  const ref = document.referrer || '';
+  try {
+    if (sessionStorage.getItem('zhungli.refSent') === ref) return undefined;
+    sessionStorage.setItem('zhungli.refSent', ref);
+  } catch (e) { /* private mode: send it */ }
+  return refSource(ref);
+}
+track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? arrivalSource() : undefined });
 // Closing the mini app or the tab may skip visibilitychange.
 addEventListener('pagehide', () => { reportVitals(); flushStats(); });
