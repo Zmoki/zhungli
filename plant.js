@@ -153,7 +153,7 @@ function rhythmHtml(p) {
 // shows what's coming and how it will look. Plants without checks (an aquarium) get a line instead.
 function plannedHtml(p) {
   if (wayOf(p).noChecks) return '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>';
-  const first = p.nextCheck < today() ? today() : p.nextCheck, last = addDays(today(), 27), plan = new Set();
+  const first = !p.nextCheck || p.nextCheck < today() ? today() : p.nextCheck, last = addDays(today(), 27), plan = new Set();
   for (let d = first; d <= last; d = addDays(d, Math.max(1, Math.round(p.interval)))) plan.add(d);
   const cells = [];
   for (let i = 0; i < 28; i++) cells.push(`<li class="${plan.has(addDays(today(), i)) ? 'plan' : ''}${i ? '' : ' now'}"></li>`);
@@ -455,15 +455,28 @@ Object.assign(ACTS, {
   },
 });
 const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`;
-// «+ место» opens a field under the chips; it closes again once a spot is added or nothing was typed.
+// «+ место» opens a field under the chips. It closes again once a spot is added, on Esc, or when it's
+// left empty. focusEl: where focus goes after (false: leave it where the person tapped).
 function spotForm(open, focusEl) {
   const btn = $('[data-act="spot-form"]'), form = $('#new-spot-form');
+  if (!btn || !form) return;
   btn.hidden = open;
   btn.setAttribute('aria-expanded', open);
   form.hidden = !open;
   if (!open) $('#f-new-spot').value = '';
-  (focusEl || (open ? $('#f-new-spot') : btn)).focus();
+  if (focusEl !== false) (focusEl || (open ? $('#f-new-spot') : btn)).focus();
 }
+document.addEventListener('focusout', (e) => {
+  if (e.target.id !== 'f-new-spot' || e.target.value.trim()) return;
+  if (e.relatedTarget && e.relatedTarget.closest('#new-spot-form')) return; // moving to its + button
+  spotForm(false, false);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || e.target.id !== 'f-new-spot') return;
+  e.preventDefault(); // Esc closes the field, not the whole card
+  e.stopPropagation();
+  spotForm(false);
+}, true);
 // A new spot from that field: picked for this plant and kept in the list. Only the chip row changes.
 function addSpot(id, how) {
   const s = $('#f-new-spot').value.trim();
