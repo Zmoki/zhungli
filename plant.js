@@ -110,22 +110,26 @@ function glanceHtml(p) {
     ${g.noChecks ? '' : `<li>${I('droplet')}<span>раз в ~${days(Math.round(p.interval))}</span></li>`}
     <li>${I('sun')}<span>${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</span></li>
     ${tr ? `<li>${I('thermometer')}<span>${tr[0]}–${tr[1]} °C</span></li>` : ''}
-    <li>${I('shovel')}<span>${esc(MEDIA[p.type].name.toLowerCase())}</span></li></ul>`;
+    <li>${I('shovel')}<span>${esc(MEDIA[p.type].name.toLowerCase())}</span></li>
+    ${WATERING[p.watering]?.badge ? `<li>${I(WATERING[p.watering].badge[0])}<span>${WATERING[p.watering].badge[1]}</span></li>` : ''}</ul>`;
 }
-// The last 4 weeks as dots: watered, still moist, nothing. Today has a ring.
+// An answer in the plant's own words: «полито», «вода сменена», «долито»…
+const histWord = (p, a) => labelsOf(p)[a === 'water' ? 0 : 1].toLowerCase();
+// The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
+// legend are hidden from screen readers: the average and the list below say the same.
 function rhythmHtml(p) {
   const byDay = {};
   p.hist.forEach((h) => { if (byDay[h.d] !== 'water') byDay[h.d] = h.a; });
   const cells = [];
   for (let i = 27; i >= 0; i--) {
     const d = addDays(today(), -i), a = byDay[d];
-    cells.push(`<li class="${a === 'water' ? 'w' : a === 'wet' ? 'd' : ''}${i ? '' : ' now'}"><span class="sr-only">${shortDate(d)}: ${a === 'water' ? 'полив' : a === 'wet' ? 'ещё влажно' : 'нет отметок'}</span></li>`);
+    cells.push(`<li class="${a === 'water' ? 'w' : a === 'wet' ? 'd' : ''}${i ? '' : ' now'}"></li>`);
   }
   const waters = [...new Set(p.hist.filter((h) => h.a === 'water').map((h) => h.d))].sort();
-  const gaps = waters.slice(1).map((d, i) => (new Date(d) - new Date(waters[i])) / 864e5);
+  const gaps = waters.slice(1).map((d, i) => diff(waters[i], d));
   const avg = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 0;
-  return `<ol class="rhythm">${cells.join('')}</ol>
-    <p class="small legend"><span><i class="w" aria-hidden="true"></i>${esc(labelsOf(p)[0].toLowerCase())}</span><span><i class="d" aria-hidden="true"></i>${esc(labelsOf(p)[1].toLowerCase())}</span></p>
+  return `<ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
+    <p class="small legend" aria-hidden="true"><span><i class="w"></i>${esc(histWord(p, 'water'))}</span><span><i class="d"></i>${esc(histWord(p, 'wet'))}</span></p>
     ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}. Проверка сейчас — раз в ${days(Math.round(p.interval))}.</p>` : ''}`;
 }
 
@@ -151,10 +155,11 @@ function openPlant(id, tabKey) {
   cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
-  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${h.a === 'water' ? 'полив' : 'ещё влажно'}`).join('<br>');
+  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${esc(histWord(p, h.a))}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
-  const panel = (k, html) => `<div role="tabpanel" class="card-panel" id="cp-${k}" aria-labelledby="ct-${k}"${k === cardTab ? '' : ' hidden'}>${html}</div>`;
+  // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
+  const panel = (k, html) => `<div role="tabpanel" class="card-panel" id="cp-${k}" aria-labelledby="ct-${k}"${k === 'history' ? ' tabindex="0"' : ''}${k === cardTab ? '' : ' hidden'}>${html}</div>`;
   $('#sheet-body').innerHTML = `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
@@ -177,8 +182,8 @@ function openPlant(id, tabKey) {
       <section class="group" aria-labelledby="g-place"><h3 id="g-place">Где стоит</h3>
         ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
           ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
-        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips">
-          ${spots.map((s) => `<button class="chip ${p.spot === s ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
+          ${spots.map((s) => spotChip(id, s, p.spot === s)).join('')}</div>
           <form class="new-spot" data-id="${esc(id)}"><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div></section>
 
@@ -198,7 +203,7 @@ function openPlant(id, tabKey) {
         <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>
-      <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Отметки появятся, когда вы ответите на проверку.</p>')}
+      <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>')}
     </div>`;
   openSheet();
 }
@@ -401,16 +406,21 @@ Object.assign(ACTS, {
     }
   },
 });
+const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`;
 // A new spot from the field under the chips: picked for this plant and kept in the list.
+// Only the chip row changes, so the field keeps focus (and the keyboard on a phone).
 function addSpot(id) {
   const f = $('#f-new-spot'), s = f && f.value.trim();
   if (!s) { if (f) f.focus(); return; }
   S.plants[id].spot = s;
   if (!S.spots.includes(s)) S.spots.push(s);
   save();
-  const y = sheet.scrollTop;
-  openPlant(id);
-  sheet.scrollTop = y;
+  const box = $('#spot-chips');
+  let chip = [...box.children].find((c) => c.dataset.spot === s);
+  if (!chip) { box.insertAdjacentHTML('beforeend', spotChip(id, s, false)); chip = box.lastElementChild; }
+  box.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === chip));
+  f.value = '';
+  $('#live').textContent = `Место: ${s}`;
 }
 document.addEventListener('submit', (e) => {
   const form = e.target.closest('.new-spot');
