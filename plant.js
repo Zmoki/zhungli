@@ -202,7 +202,7 @@ function openPlant(id, tabKey) {
     <div id="water-box">${waterBox(p)}</div>
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
-    ${panel('notes', `<p class="small muted mt-0">Нажмите на совет, чтобы поправить или удалить.</p><div id="cheat">${cheatHtml(id)}</div>`)}
+    ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('settings', `
       <section class="group" aria-labelledby="g-name"><h3 id="g-name">Имя</h3>
         <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
@@ -213,8 +213,9 @@ function openPlant(id, tabKey) {
         ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
           ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${esc(rm.name)}</button>`).join('')}</div></div>` : ''}
         <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
-          ${spots.map((s) => spotChip(id, s, p.spot === s)).join('')}</div>
-          <form class="new-spot" data-id="${esc(id)}"><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
+          ${spots.map((s) => spotChip(id, s, p.spot === s)).join('')}
+          <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
+          <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div></section>
 
       <section class="group" aria-labelledby="g-light"><h3 id="g-light">Свет</h3>
@@ -410,6 +411,7 @@ Object.assign(ACTS, {
     S.plants[id].spot = el.dataset.spot; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
+  'spot-form'() { spotForm(true); },
   'spot-new'(el, id) { addSpot(id, 'button'); },
   'way-medium'(el, id) { changeWay(id, 'medium', el.dataset.way); },
   'way-watering'(el, id) { changeWay(id, 'watering', el.dataset.way); },
@@ -453,21 +455,29 @@ Object.assign(ACTS, {
   },
 });
 const spotChip = (id, s, on) => `<button class="chip ${on ? 'on' : ''}" data-act="spot" data-id="${esc(id)}" data-spot="${esc(s)}">${esc(s)}</button>`;
-// A new spot from the field under the chips: picked for this plant and kept in the list.
-// Only the chip row changes, so the field keeps focus (and the keyboard on a phone).
+// «+ место» opens a field under the chips; it closes again once a spot is added or nothing was typed.
+function spotForm(open, focusEl) {
+  const btn = $('[data-act="spot-form"]'), form = $('#new-spot-form');
+  btn.hidden = open;
+  btn.setAttribute('aria-expanded', open);
+  form.hidden = !open;
+  if (!open) $('#f-new-spot').value = '';
+  (focusEl || (open ? $('#f-new-spot') : btn)).focus();
+}
+// A new spot from that field: picked for this plant and kept in the list. Only the chip row changes.
 function addSpot(id, how) {
-  const f = $('#f-new-spot'), s = f && f.value.trim();
-  if (!s) { if (f) f.focus(); return; }
+  const s = $('#f-new-spot').value.trim();
+  if (!s) { spotForm(false); return; }
   S.plants[id].spot = s;
   const fresh = !S.spots.includes(s);
   if (fresh) S.spots.push(s);
   save();
   track('spot_added', { how, new_spot: fresh });
   const box = $('#spot-chips');
-  let chip = [...box.children].find((c) => c.dataset.spot === s);
-  if (!chip) { box.insertAdjacentHTML('beforeend', spotChip(id, s, false)); chip = box.lastElementChild; }
-  box.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === chip));
-  f.value = '';
+  let chip = [...box.querySelectorAll('[data-act="spot"]')].find((c) => c.dataset.spot === s);
+  if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }
+  box.querySelectorAll('[data-act="spot"]').forEach((c) => c.classList.toggle('on', c === chip));
+  spotForm(false, chip);
   $('#live').textContent = `Место: ${s}`;
 }
 document.addEventListener('submit', (e) => {
