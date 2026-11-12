@@ -69,16 +69,20 @@ function waterBox(p) {
   return `<div class="info water"><b>${w.title || g.name}</b>${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
     <button class="water-now btn water wide" data-act="water-now" data-id="${esc(p.id)}">${I('droplet')}${w.btn}</button>`;
 }
-// «Как растёт» in the plant card: the medium, and for a pot how it's watered, with what that means.
+// «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
+// watered, and what that means. All options are chips, nothing hidden in a dropdown.
 function wayBox(p, d) {
-  const sel = (field, label, list, value) => `<label for="f-${field}">${label}</label><select class="input" id="f-${field}" data-field="${field}" data-id="${esc(p.id)}" aria-describedby="way-hint">
-    ${Object.entries(list).map(([k, x]) => `<option value="${k}"${value === k ? ' selected' : ''}>${x.name}</option>`).join('')}</select>`;
-  return `<div class="field">${sel('medium', 'В чём растёт', MEDIA, p.type)}
-    <div class="mt-20" id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}>${sel('watering', 'Как поливаю', WATERING, p.watering || 'top')}</div>
-    <div class="mt-6" id="way-note">${wayNote(p, d)}</div></div>`;
+  const chips = (field, label, list, value, attrs = '') => `<div class="field" role="group" aria-labelledby="lbl-${field}" aria-describedby="way-hint"${attrs}>
+    <label id="lbl-${field}">${label}</label><div class="chips">
+    ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}">${x.name}</button>`).join('')}</div></div>`;
+  return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
+    <div class="field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
+      <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
+    ${chips('watering', 'Как поливаю', WATERING, p.watering || 'top', ` id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}`)}
+    <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
-// Redrawn alone on a change: replacing the selects would reopen the picker on iPhone.
+// Redrawn alone on a change, so the tapped chip keeps focus.
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
   ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
@@ -201,8 +205,6 @@ function openPlant(id, tabKey) {
           <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
           <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
           <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
-        <div class="field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
-          <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
@@ -271,6 +273,52 @@ function setWay(id, medium, watering) {
   return { from, settle };
 }
 
+// The status, greenhouse and way badges on the card photo (and its drawing) follow a change right away.
+function heroChanged(id) {
+  const badges = $('.hero-badges');
+  if (!badges) return;
+  const p = plant(id);
+  badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}`;
+  const pic = $('.hero-pic');
+  if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
+}
+// A chip in «В чём растёт» or «Как поливаю» tapped.
+function changeWay(id, f, value) {
+  const r = S.plants[id], d = def(id);
+  if (!r) return;
+  const medium = f === 'medium' ? value : mediumIn(r, d);
+  let watering = f === 'watering' ? value : wateringIn(r, d);
+  // A medium with its own usual watering (clay pebbles on a reservoir) brings it along.
+  // A medium with no watering (water, an aquarium) counts as from above here.
+  if (f === 'medium' && MEDIA[medium].watering && (!watering || watering === 'top')) watering = MEDIA[medium].watering;
+  const res = setWay(id, medium, watering);
+  if (!res) return;
+  save();
+  const p = plant(id);
+  // The chips stay in place, so the tapped one keeps focus; only their state and what's around them change.
+  [['medium', p.type], ['watering', p.watering || 'top']].forEach(([k, v]) => document.querySelectorAll(`[data-act="way-${k}"]`).forEach((c) => {
+    c.classList.toggle('on', c.dataset.way === v);
+    c.setAttribute('aria-pressed', c.dataset.way === v);
+  }));
+  $('#watering-field').hidden = !MEDIA[p.type].pot;
+  $('#way-note').innerHTML = wayNote(p, d);
+  $('#water-box').innerHTML = waterBox(p);
+  $('#int-field').hidden = !!wayOf(p).noChecks;
+  $('#int-val').textContent = days(Math.round(r.interval));
+  $('#int-hint').textContent = intHint(p);
+  $('#glance').innerHTML = glanceHtml(p);
+  if (res.settle) {
+    const box = $('[data-field="repotted"]');
+    if (box) box.checked = true;
+    $('#repot-hint').textContent = repotHint(r);
+    toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
+  }
+  noteEdit = null;
+  refreshCheat(id);
+  heroChanged(id);
+  track('grow_changed', { medium: p.type, watering: p.watering || 'none', from_medium: res.from.medium, from_watering: res.from.watering || 'none', settle: res.settle });
+}
+
 document.addEventListener('change', (e) => {
   const el = e.target;
   const f = el.dataset && el.dataset.field;
@@ -291,49 +339,13 @@ document.addEventListener('change', (e) => {
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').textContent = repotHint(r); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; track('greenhouse_toggled', { on: el.checked }); }
-  if (f === 'medium' || f === 'watering') {
-    const d = def(id);
-    const medium = f === 'medium' ? el.value : mediumIn(r, d);
-    let watering = f === 'watering' ? el.value : wateringIn(r, d);
-    // A medium with its own usual watering (clay pebbles on a reservoir) brings it along.
-    // A medium with no watering (water, an aquarium) counts as from above here.
-    if (f === 'medium' && MEDIA[medium].watering && (!watering || watering === 'top')) watering = MEDIA[medium].watering;
-    const res = setWay(id, medium, watering);
-    if (!res) return;
-    const p = plant(id);
-    // The selects stay in place (a new one would reopen its picker on iPhone); only what's around them changes.
-    $('#watering-field').hidden = !MEDIA[p.type].pot;
-    if (p.watering) $('#f-watering').value = p.watering;
-    $('#way-note').innerHTML = wayNote(p, d);
-    $('#water-box').innerHTML = waterBox(p);
-    $('#int-field').hidden = !!wayOf(p).noChecks;
-    $('#int-val').textContent = days(Math.round(r.interval));
-    $('#int-hint').textContent = intHint(p);
-    $('#glance').innerHTML = glanceHtml(p);
-    if (res.settle) {
-      const box = $('[data-field="repotted"]');
-      if (box) box.checked = true;
-      $('#repot-hint').textContent = repotHint(r);
-      toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
-    }
-    noteEdit = null;
-    refreshCheat(id);
-    track('grow_changed', { medium: p.type, watering: p.watering || 'none', from_medium: res.from.medium, from_watering: res.from.watering || 'none', settle: res.settle });
-  }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
-  // The status and greenhouse badge on the card photo follow the toggle and the light reading right away.
-  const badges = sheet.open && (f === 'greenhouse' || f === 'lux' || f === 'medium' || f === 'watering') && $('.hero-badges');
-  if (badges) {
-    const p = plant(id);
-    badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}`;
-    const pic = $('.hero-pic');
-    if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
-  }
+  if (sheet.open && (f === 'greenhouse' || f === 'lux')) heroChanged(id);
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
@@ -370,6 +382,8 @@ Object.assign(ACTS, {
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
   'spot-new'(el, id) { addSpot(id, 'button'); },
+  'way-medium'(el, id) { changeWay(id, 'medium', el.dataset.way); },
+  'way-watering'(el, id) { changeWay(id, 'watering', el.dataset.way); },
   'card-care'() { showCardTab('care'); },
   'card-settings'() { showCardTab('settings'); },
   'card-history'() { showCardTab('history'); },
