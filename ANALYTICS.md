@@ -34,7 +34,7 @@ On every event:
 
 | Event | When | Properties |
 | --- | --- | --- |
-| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built |
+| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built; `$referring_domain` (`start` only): the site the app was opened from, domain only (`google.com`, `t.me`), or `$direct` (none, or a reload of the app itself) |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |

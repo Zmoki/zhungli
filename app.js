@@ -222,6 +222,14 @@ try {
 } catch (e) { /* private mode */ }
 // Back from the back-forward cache: no reload, so the next real one is a launch again.
 addEventListener('pageshow', (e) => { if (e.persisted) try { sessionStorage.removeItem('zhungli.privacyAt'); } catch (err) { /* private mode */ } });
-track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined });
+// Where a launch came from: the referring site's domain only (google.com, t.me), never the page address.
+// No referrer, or our own site (a reload): $direct, as PostHog names it.
+function refDomain() {
+  try {
+    const h = document.referrer && new URL(document.referrer).hostname.replace(/^www\./, '');
+    return h && h !== location.hostname ? h : '$direct';
+  } catch (e) { return '$direct'; }
+}
+track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? refDomain() : undefined });
 // Closing the mini app or the tab may skip visibilitychange.
 addEventListener('pagehide', () => { reportVitals(); flushStats(); });
