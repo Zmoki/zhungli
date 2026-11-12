@@ -49,7 +49,7 @@ Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim colo
 
 ## Plant card
 
-Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick or reservoir if any), then watering. Below them three tabs: «Уход» (tips and notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows) and «История» (the last 4 weeks as dots, then the list). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown.
+Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick or reservoir if any), then watering. Below them three tabs: «Уход» (tips and notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows) and «История» (the last 4 weeks as dots, then the list; with no answers yet, the next 4 weeks with the planned checks dashed). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown.
 
 ## Plant pictures
 

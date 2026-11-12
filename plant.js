@@ -140,6 +140,20 @@ function rhythmHtml(p) {
     ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}.${wayOf(p).noChecks ? '' : ` Проверка сейчас — раз в ${days(Math.round(p.interval))}.`}</p>` : ''}`;
 }
 
+// No answers yet: the next 4 weeks in the same dots, with the planned checks dashed, so the tab
+// shows what's coming and how it will look. Plants without checks (an aquarium) get a line instead.
+function plannedHtml(p) {
+  if (wayOf(p).noChecks) return '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>';
+  const first = p.nextCheck < today() ? today() : p.nextCheck, last = addDays(today(), 27), plan = new Set();
+  for (let d = first; d <= last; d = addDays(d, Math.max(1, Math.round(p.interval)))) plan.add(d);
+  const cells = [];
+  for (let i = 0; i < 28; i++) cells.push(`<li class="${plan.has(addDays(today(), i)) ? 'plan' : ''}${i ? '' : ' now'}"></li>`);
+  return `<section class="group" aria-labelledby="g-soon"><h3 id="g-soon">Ближайшие 4 недели</h3>
+    <ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
+    <p class="small legend" aria-hidden="true"><span><i class="plan"></i>проверка</span><span><i class="w"></i>${HIST_WORDS.water}</span><span><i class="d"></i>${HIST_WORDS.wet}</span></p>
+    <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше примерно раз в ${days(Math.round(p.interval))}. Ваши ответы появятся здесь.</p></section>`;
+}
+
 // Tabs of the plant card. The card opens on «Уход»; a redraw of the same open card keeps the tab.
 const CARD_TABS = [['care', 'Уход'], ['settings', 'Настройки'], ['history', 'История']];
 let cardTab = 'care', cardFor = null;
@@ -212,7 +226,7 @@ function openPlant(id, tabKey) {
 </section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
-      <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>')}
+      <p class="history">${histHtml}</p>` : plannedHtml(p))}
     </div>`;
   openSheet();
 }

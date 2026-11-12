@@ -458,6 +458,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .rhythm .w, .legend .w { background: var(--sky); box-shadow: inset 0 0 0 2px var(--blue); }
 .rhythm .d, .legend .d { background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue); }
 .rhythm .now { outline: 2px solid var(--ink); outline-offset: 1px; }
+.rhythm .plan, .legend .plan { background: none; border: 2px dashed var(--blue); } /* a planned check */
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 6px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 14px; height: 14px; border-radius: 50%; }
