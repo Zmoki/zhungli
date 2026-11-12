@@ -4,8 +4,12 @@
 // Privacy: the visitor's IP never reaches PostHog. The country comes from Cloudflare
 // and is added to each event; PostHog's own IP lookup is switched off per event.
 const POSTHOG = 'https://us.i.posthog.com/batch/';
+// Bots get a 204 and nothing is forwarded, also for old app versions they cached.
+// Same pattern as STATS_BOT in stats.js: keep the two in sync.
+const BOT = /(^|[^u])bot|crawler|spider|crawling|Google-InspectionTool|HeadlessChrome|Lighthouse|PTST|bingpreview|facebookexternalhit|WhatsApp|vkShare/i;
 
 export async function onRequestPost({ request }) {
+  if (BOT.test(request.headers.get('User-Agent') || '')) return new Response(null, { status: 204 });
   const text = await request.text();
   if (text.length > 200_000) return new Response('Too large', { status: 413 });
   let data;
