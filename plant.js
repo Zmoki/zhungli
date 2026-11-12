@@ -201,9 +201,9 @@ function openPlant(id, tabKey) {
           <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
           <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
           <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
-        <div class="field"><label class="toggle"><input type="checkbox" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
+        <div class="field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
           <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
-        <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
+        <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
       <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>')}
@@ -427,7 +427,8 @@ function addSpot(id) {
 }
 document.addEventListener('submit', (e) => {
   const form = e.target.closest('.new-spot');
-  if (form) { e.preventDefault(); addSpot(form.dataset.id); }
+  // Enter («Готово» on a phone) adds the spot like the + button, so it's counted the same way.
+  if (form) { e.preventDefault(); track('ui_clicked', { target: 'spot-new' }); addSpot(form.dataset.id); }
 });
 // Tabs: arrows, Home and End move between them, as in any tab list.
 document.addEventListener('keydown', (e) => {
@@ -437,7 +438,9 @@ document.addEventListener('keydown', (e) => {
   const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: keys.length - 1 }[e.key];
   if (next === undefined) return;
   e.preventDefault();
-  showCardTab(keys[(next + keys.length) % keys.length], true);
+  const k = keys[(next + keys.length) % keys.length];
+  track('ui_clicked', { target: 'card-' + k }); // counted like a tap on the tab
+  showCardTab(k, true);
 });
 
 function saveNote(el, id, act) {
