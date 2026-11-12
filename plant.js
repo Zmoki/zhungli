@@ -199,13 +199,17 @@ function openPlant(id, tabKey) {
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
 
+      <section class="group" aria-labelledby="g-gh"><h3 id="g-gh">Теплица</h3>
+        <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
+          <p class="mt-6 small muted" id="gh-hint">Под колпаком или в мини-теплице. Каждый день напомню проветрить.</p></div></section>
+
       <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
         <div id="way-box">${wayBox(p, def(id))}</div>
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
           <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
           <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
           <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
-        <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
+</section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
       <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>')}

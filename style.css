@@ -418,7 +418,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 900; }
 .stepper { display: flex; align-items: center; gap: 10px; }
 .stepper button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--edge); background: var(--field); color: var(--ink); font-size: 20px; }
-.toggle { display: flex; align-items: center; gap: 10px; font-size: 0.941rem; min-height: 44px; }
+/* A checkbox's text reads like a chip's: the ink color and weight, not a muted field label */
+.toggle, .field label.toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; margin: 0; font-size: 0.941rem; font-weight: 700; color: var(--ink); }
 /* Checkboxes: chunky like the buttons. Ticked is green («done») with a dark check (--on-color, same in both themes). */
 .toggle input {
   appearance: none; -webkit-appearance: none; flex: none; width: 30px; height: 30px; margin: 0; border-radius: 10px;
