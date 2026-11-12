@@ -7,7 +7,7 @@ Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US clou
 - `track(event, props)` in `stats.js` queues events and flushes them 2 s after the last one (and when the app goes to background).
 - The batch goes to `/ingest/batch`, a Cloudflare Pages Function (`functions/ingest/batch.js`). It adds `$geoip_country_code` from Cloudflare, sets `$geoip_disable` and forwards nothing that identifies the visitor: no IP, no user agent. «Discard client IP data» is on in PostHog.
 - On localhost and `file:` events only go to `console.debug('[stats]', …)`.
-- Bots that run JS (Googlebot, Lighthouse, headless Chrome, `navigator.webdriver`) send nothing, so they don't count as devices. Data before v95 still has some.
+- Bots that run JS (Googlebot, Lighthouse, headless Chrome, `navigator.webdriver`) send nothing, so they don't count as devices. Data before v96 still has some.
 - On by default with a one-time notice (opt-out); off when `S.settings.stats === false` (checkbox «Статистика» in settings or «Выключить» on the notice).
 - What is sent is explained to users in `privacy.html`. Keep it in sync when adding a new kind of data.
 - No plant names, nicknames, notes or photos. Custom plants are sent as `custom`.
