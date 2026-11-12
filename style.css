@@ -418,9 +418,51 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 900; }
 .stepper { display: flex; align-items: center; gap: 10px; }
 .stepper button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--edge); background: var(--field); color: var(--ink); font-size: 20px; }
-.toggle { display: flex; align-items: center; gap: 10px; font-size: 0.941rem; min-height: 44px; }
-.toggle input { width: 22px; height: 22px; accent-color: var(--leafy-d); }
+/* A checkbox's text reads like a chip's: the ink color and weight, not a muted field label */
+.toggle, .field label.toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; margin: 0; font-size: 0.941rem; font-weight: 700; color: var(--ink); }
+/* Checkboxes: chunky like the buttons. Ticked is green («done») with a dark check (--on-color, same in both themes). */
+.toggle input {
+  appearance: none; -webkit-appearance: none; flex: none; width: 30px; height: 30px; margin: 0; border-radius: 10px;
+  border: 2px solid var(--edge); background: var(--field) center / 20px no-repeat; box-shadow: 0 3px 0 var(--edge);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.toggle input:checked {
+  border-color: var(--leafy-d); box-shadow: 0 3px 0 var(--leafy-d);
+  background-color: var(--leafy);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a2118' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+.hint p { margin: 0; } .hint p + p { margin-top: 8px; } /* a checkbox's hint: one idea per line */
+.toggle input:active { transform: translateY(3px); box-shadow: none; }
+@media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 .history { font-size: 0.882rem; color: var(--muted); }
+
+/* Plant card: short facts, tabs, setting groups, the 4-week rhythm */
+.glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
+.glance li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: var(--card); font-size: 0.882rem; font-weight: 800; }
+.glance .ic { width: 18px; height: 18px; flex: none; }
+/* Tabs share the row by their label; with large text they wrap instead of cutting a label */
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 24px 0 16px; border-radius: var(--radius); background: var(--card); }
+.seg-tab {
+  flex: 1 1 auto; min-height: 44px; padding: 0 14px; border: 0; border-radius: 99px; background: none;
+  color: var(--ink); font: inherit; font-size: 0.941rem; font-weight: 800; white-space: nowrap;
+}
+.seg-tab[aria-selected="true"] { background: var(--ink); color: var(--bg); font-weight: 900; }
+.card-panel { padding-bottom: 8px; }
+.group { margin: 0 0 10px; padding: 16px; border-radius: 20px; background: var(--card); }
+.group h3 { margin: 0 0 14px; font-size: 1rem; font-weight: 900; }
+.group > .field:last-child, .group > div:last-child > .field:last-child { margin-bottom: 0; }
+.new-spot { display: flex; gap: 6px; margin-top: 10px; }
+.new-spot .input { flex: 1; min-width: 0; }
+.new-spot .btn { flex: none; width: 52px; padding: 0; }
+.rhythm { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.rhythm li { aspect-ratio: 1; border-radius: 50%; background: var(--line); }
+.rhythm .w, .legend .w { background: var(--sky); box-shadow: inset 0 0 0 2px var(--blue); }
+.rhythm .d, .legend .d { background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue); }
+.rhythm .now { outline: 2px solid var(--ink); outline-offset: 1px; }
+.rhythm .plan, .legend .plan { background: none; border: 2px dashed var(--blue); } /* a planned check */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 50%; }
 
 /* Light */
 .lux-row {
@@ -589,7 +631,7 @@ svg.pl.v5 { --pot: #4cc77a; --pot-2: #34ad62; }
 .hint-btns > .btn:only-child { flex: 0 1 calc(50% - 4px); }
 
 /* Spacing helpers (no inline style attributes: the CSP forbids them) */
-.m-0 { margin: 0; } .mt-0 { margin-top: 0; } .mt-n4 { margin-top: -4px; }
+.m-0 { margin: 0; } .mt-0 { margin-top: 0; }
 .mt-6 { margin-top: 6px; } .mt-8 { margin-top: 8px; } .mt-10 { margin-top: 10px; } .mt-12 { margin-top: 12px; }
 .mt-14 { margin-top: 14px; } .mt-20 { margin-top: 20px; } .mt-24 { margin-top: 24px; }
 .grow { flex: 1; }

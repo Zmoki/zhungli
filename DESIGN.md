@@ -45,7 +45,11 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 ## Buttons
 
-Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead.
+Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked; their text reads like a chip's.
+
+## Plant card
+
+Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick or reservoir if any), then watering. Below them three tabs: «Заметки» (tips and own notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows) and «История» (the last 4 weeks as dots, then the list; with no answers yet, the next 4 weeks with the planned checks dashed). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown. A checkbox's hint, ticked, says what it does; unticked, it says what ticking would do («**Если отметить:**»), then on its own line what happens now («**Сейчас**»), with only those lead words bold. «Недавно пересажено» shows only for plants called on «День подкормки», the only thing it changes.
 
 ## Plant pictures
 
