@@ -181,7 +181,6 @@ function adoptStored(json, dropped) {
   if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
   if (sheet.open) closeSheet(); else render();
   if (dropped) toast('Жунгли открыты ещё в одном окне — показываю свежие данные. Повторите последнее действие.');
-  PHOTOS = {};
   loadPhotos();
 }
 // Thrown after a refused save, so the rest of that action doesn't run on the other window's data.
@@ -479,10 +478,43 @@ const pendingCount = () => todayPlan().pending;
 /* ---------- Photos (IndexedDB) ---------- */
 // Photos are JPEG data URLs made by resize(); anything else (e.g. from a crafted backup) is dropped.
 const isPhoto = (u) => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
-const photoOf = (id) => (isPhoto(PHOTOS[id]) ? PHOTOS[id] : null);
+// Pages show photos by short blob: links, made once per photo: putting ~100 KB data URLs into the HTML
+// made every render of a photo-heavy list parse megabytes of text and decode each image again.
+const photoUrls = {}; // id → { src (the data URL), url }
+let oldPhotoUrls = []; // links of changed or removed photos, revoked once render() has redrawn the page
+function photoOf(id) {
+  const src = PHOTOS[id], c = photoUrls[id];
+  if (c && c.src === src) { c.src = src; return c.url; } // same photo read again: keep one copy of its text
+  if (c) { oldPhotoUrls.push(c.url); delete photoUrls[id]; }
+  if (!isPhoto(src)) return null;
+  try {
+    const comma = src.indexOf(','), bin = atob(src.slice(comma + 1)), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    photoUrls[id] = { src, url: URL.createObjectURL(new Blob([bytes], { type: src.slice(5, src.indexOf(';')) })) };
+    return photoUrls[id].url;
+  } catch (e) { return src; }
+}
+// Called by render() after it replaced the page: images there use the current links.
+// The plant card redraws its own picture when a photo changes (heroPhotoChanged).
+function revokeOldPhotos() {
+  oldPhotoUrls.forEach((u) => URL.revokeObjectURL(u));
+  oldPhotoUrls = [];
+}
+// After PHOTOS is filled or replaced: retires the links of photos that are gone, and makes the missing
+// ones one per task, so the first tap that shows them doesn't wait and no single task gets long.
+// The next render() makes the ones it shows right away.
+let prepTimer = 0;
+function preparePhotos() {
+  Object.keys(photoUrls).forEach((id) => { if (!PHOTOS[id]) photoOf(id); });
+  const ids = Object.keys(PHOTOS);
+  clearTimeout(prepTimer);
+  const next = () => { if (ids.length) { photoOf(ids.shift()); prepTimer = setTimeout(next, 0); } };
+  prepTimer = setTimeout(next, 0);
+}
 // Forgets a plant's photo on this device (memory and IndexedDB).
 function dropPhoto(id) {
   delete PHOTOS[id];
+  photoOf(id); // retires its blob: link
   idbReq((st) => st.delete(id), 'readwrite').catch(() => {});
 }
 const dbp = new Promise((res, rej) => {
@@ -499,10 +531,21 @@ function idbReq(fn, mode = 'readonly') {
     req.onerror = () => rej(req.error);
   }));
 }
+// Reads all photos from IndexedDB and swaps them in at once, so a render in between still has every photo.
+// Photos changed here while it reads (photo picker, Telegram sync) are newer than what it read and stay;
+// the rest follows IndexedDB, so photos another window removed go too.
 async function loadPhotos() {
   try {
+    const before = { ...PHOTOS };
     const [keys, vals] = await Promise.all([idbReq((s) => s.getAllKeys()), idbReq((s) => s.getAll())]);
-    keys.forEach((k, i) => { if (isPhoto(vals[i])) PHOTOS[k] = vals[i]; });
+    const fresh = {};
+    keys.forEach((k, i) => { if (isPhoto(vals[i])) fresh[k] = vals[i]; });
+    Object.keys({ ...before, ...PHOTOS }).forEach((id) => {
+      if (PHOTOS[id] === before[id]) return;
+      if (PHOTOS[id]) fresh[id] = PHOTOS[id]; else delete fresh[id];
+    });
+    PHOTOS = fresh;
+    preparePhotos();
     render();
   } catch (e) { /* works without photos too */ }
 }
