@@ -7,6 +7,11 @@
 // Sent to PostHog via /ingest (a Cloudflare function). Can be turned off in settings.
 const PH_KEY = 'phc_wbQKWDjgettNukrqC7etDr8NZjucbJ9mKz7cfB3ziEAz';
 const STATS_LOCAL = location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname);
+// Crawlers and automated browsers that run JS (Googlebot, Lighthouse, headless Chrome) send nothing.
+// Not on localhost, so local puppeteer runs still log stats. `[^u]bot` keeps Cubot phones.
+// Same pattern as BOT in functions/ingest/batch.js: keep the two in sync.
+const STATS_BOT = !STATS_LOCAL && (navigator.webdriver === true
+  || /(^|[^u])bot|crawler|spider|crawling|Google-InspectionTool|HeadlessChrome|Lighthouse|PTST|bingpreview|facebookexternalhit|WhatsApp|vkShare/i.test(navigator.userAgent));
 let statsQueue = [];
 let statsTimer;
 let anonId = null;
@@ -37,7 +42,7 @@ function deviceProps() {
   };
 }
 function track(event, props = {}) {
-  if (S.settings.stats === false) return;
+  if (STATS_BOT || S.settings.stats === false) return;
   statsQueue.push({
     event, distinct_id: getAnonId(), timestamp: new Date().toISOString(),
     properties: { ...deviceProps(), ...props, app_version: APP_VERSION, plants_total: Object.keys(S.plants).length, $lib: 'zhungli', $process_person_profile: false },
