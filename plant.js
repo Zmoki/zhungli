@@ -115,6 +115,7 @@ function glanceHtml(p) {
 }
 // Answers in history. Neutral words: an entry doesn't say which way the plant grew then.
 const HIST_WORDS = { water: 'полив', wet: 'ещё влажно' };
+const histWord = (a) => HIST_WORDS[a] || HIST_WORDS.wet; // anything but a watering reads as «ещё влажно», as before
 // The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
 // legend are hidden from screen readers: the average and the list below say the same.
 // The average counts only waterings in these 4 weeks.
@@ -157,7 +158,7 @@ function openPlant(id, tabKey) {
   cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
-  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${HIST_WORDS[h.a]}`).join('<br>');
+  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${histWord(h.a)}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
   // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
@@ -204,7 +205,7 @@ function openPlant(id, tabKey) {
           <p class="mt-6 small muted" id="repot-hint">${repotHint(p)}</p></div>
         <div class="field"><label class="toggle"><input type="checkbox" data-field="greenhouse" data-id="${esc(id)}" ${p.greenhouse ? 'checked' : ''}> В теплице — напоминать проветривать</label></div></section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
-    ${panel('history', histHtml ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>
+    ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
       <p class="history">${histHtml}</p>` : '<p class="muted">Пока пусто. Здесь будут ваши отметки.</p>')}
     </div>`;
   openSheet();
