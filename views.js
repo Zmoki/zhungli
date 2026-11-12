@@ -185,8 +185,8 @@ const plantSub = (p, ...extra) => [p.name ? p.species : '', p.spot, ...extra].fi
 function taskCard({ cls = '', p, icon, name, sub, quip, task, buttons, hint, after = '' }) {
   const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
   const line = p && sub === undefined ? plantSub(p) : sub;
-  return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${esc(p ? p.title : name)}</div>
-    ${line ? `<div class="task-sub">${esc(line)}</div>` : ''}</div></div>
+  return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${nameHtml(p ? p.title : name)}</div>
+    ${line ? `<div class="task-sub">${nameHtml(line)}</div>` : ''}</div></div>
     ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
     <div class="question">${esc(task)}</div>
     <div class="btns">${buttons}</div>
@@ -271,7 +271,7 @@ function viewToday() {
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
       const what = e.title || (p ? p.title : '');
-      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${esc(what)}</div>
+      html += `<div class="task done-row">${p ? ava(p) : `<div class="ava" aria-hidden="true">${I('check')}</div>`}<div class="grow">${nameHtml(what)}</div>
         <span class="muted small">${label[String(e.a).split(':')[0]] || ''}</span></div>`;
     });
     html += `</details>`;
@@ -374,7 +374,7 @@ function lightRow(p) {
   const dot = p.lux ? `<i class="dot ${ls}" data-l="${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}"></i>` : '';
   const state = ls ? `<span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '<span class="small muted">ещё не замерено</span>';
   return `<div class="lux-row" id="lux-${esc(p.id)}"><span class="nm-pl lux-pic">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2])}</span>
-    <div class="nm">${esc(p.title)}</div><div class="lux-state">${state}</div>
+    <div class="nm">${nameHtml(p.title)}</div><div class="lux-state">${state}</div>
     <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
     <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + esc(p.spot) : ''}</div>
     <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
@@ -392,15 +392,15 @@ function lightIdeas() {
       .sort((x, y) => (y.lux - y.luxRange[0]) - (x.lux - x.luxRange[0]))[0];
     if (H) {
       used.add(H.id); used.add(L.id);
-      out.push(['swap', `${I('arrow-left-right')}<b>Поменяйте местами: ${esc(L.title)} ⇄ ${esc(H.title)}</b><br>
-        ${esc(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
-        ${esc(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
+      out.push(['swap', `${I('arrow-left-right')}<b>Поменяйте местами: ${nameHtml(L.title)} ⇄ ${nameHtml(H.title)}</b><br>
+        ${nameHtml(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
+        ${nameHtml(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
     } else {
-      out.push(['low', `${I('sun-dim')}<b>${esc(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
+      out.push(['low', `${I('sun-dim')}<b>${nameHtml(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
     }
   });
   highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${esc(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
+    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${nameHtml(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
   });
   if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
   return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
