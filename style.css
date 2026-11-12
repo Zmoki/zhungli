@@ -419,7 +419,19 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .stepper { display: flex; align-items: center; gap: 10px; }
 .stepper button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--edge); background: var(--field); color: var(--ink); font-size: 20px; }
 .toggle { display: flex; align-items: center; gap: 10px; font-size: 0.941rem; min-height: 44px; }
-.toggle input { width: 22px; height: 22px; accent-color: var(--leafy-d); }
+/* Checkboxes: chunky like the buttons. Ticked is green («done») with a dark check (--on-color, same in both themes). */
+.toggle input {
+  appearance: none; -webkit-appearance: none; flex: none; width: 30px; height: 30px; margin: 0; border-radius: 10px;
+  border: 2px solid var(--edge); background: var(--field) center / 20px no-repeat; box-shadow: 0 3px 0 var(--edge);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.toggle input:checked {
+  border-color: var(--leafy-d); box-shadow: 0 3px 0 var(--leafy-d);
+  background-color: var(--leafy);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a2118' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+.toggle input:active { transform: translateY(3px); box-shadow: none; }
+@media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 .history { font-size: 0.882rem; color: var(--muted); }
 
 /* Plant card: short facts, tabs, setting groups, the 4-week rhythm */

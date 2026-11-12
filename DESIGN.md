@@ -45,7 +45,7 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 ## Buttons
 
-Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead.
+Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked.
 
 ## Plant card
 
