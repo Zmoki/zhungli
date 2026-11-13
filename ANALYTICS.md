@@ -62,7 +62,7 @@ On every event:
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
 | `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`; `error` (Telegram's error text) |
 | `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`, `downloaded`, `removed` (of removed plants or removed photos), `skipped` (didn't fit the 1024-key limit) |
-| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
+| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants`; `tasks_due` (as in `app_opened`: the launch event went out before the restore) |
 | `mini_app_link_clicked` | «Открыть» on the Telegram-browser hint (opens the mini app) | `has_plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |
 | `plant_deleted` | plant deleted | — |
