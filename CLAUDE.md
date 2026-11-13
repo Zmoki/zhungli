@@ -4,7 +4,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 
 ## Rules
 
-- **Language:** UI and catalog texts (`plants.js`) in Russian. Code, comments, commits, docs, issues and PostHog in English.
+- **Language:** UI and catalog texts (`plants.js`) in Russian. Code, comments, commits, docs, issues and PostHog in English. No long dashes «—» in UI or catalog texts: they read as book typography in an app. Rephrase with a colon, comma, period, parentheses or two sentences instead of swapping in another dash. A lone «—» for an empty value (no reading yet) is fine.
 - **Tone:** the app and plant quips address the user with «вы», no gendered forms for the user. Catalog tips use infinitives («Поливать после…»).
 - **Code:** scripts load in order from `index.html`: data (`plants`, `shapes`, `changelog`), then `core` → `stats` → `state` → `views` → `plant` → `add` → `settings` → `app`, then `telegram`. Code that runs at load may only use what earlier files define. Taps go through `ACTS` (by `data-act`): add a handler in the file that owns the screen. A new script only needs a `<script>` in `index.html`: `sw.js` reads the `?v=` files from it.
 - **Release:** on any change to app files, bump the version in `index.html` (`?v=` on every asset), `version.txt` and `CACHE` in `sw.js`. Phones compare `version.txt` and reload. Docs-only changes need no bump. Add user-facing changes to `changelog.js` (Russian, short); that lights the ✨ dot for existing users.

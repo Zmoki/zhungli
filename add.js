@@ -6,6 +6,8 @@
 let picked = new Set();
 // Crude Russian stem for catalog search: longer words drop their ending, so «лиана» finds «лианы»,
 // «трава» finds «травы», «черенок» finds «черенки».
+// Title of the generic group in the full list; during a search it's just «Общие типы».
+const GENERIC_TITLE = 'Общие типы (если нет в списке)';
 const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
@@ -37,16 +39,16 @@ function openAdd() {
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Сразу много — из чата с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях — он сделает файл со списком и советами по уходу, а вы загрузите его сюда.</small></span>
+      <span class="pt"><b>Сразу много через чат с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях. Он сделает файл со списком и советами по уходу, а вы загрузите его сюда.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
-      <span class="pt"><b>Своё растение</b><small>Название и на что похоже — уход подберу.</small></span>
+      <span class="pt"><b>Своё растение</b><small>Напишите название и на что похоже, а уход я подберу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
     <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
-    <p class="pick-help small muted">Отметьте все свои растения. Нет вашего — добавьте его как своё или выберите похожий общий тип.</p>
+    <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>
     <div id="pick-none" class="pick-none" hidden></div>
-    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? 'Общие типы — если нет в списке' : esc(c)}</div>
+    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
@@ -83,15 +85,15 @@ function openAdd() {
     // «орхидея» shows «Фаленопсис» before «Орхидея на коре». Without a search, the usual order.
     const order = words.length ? [...pickGroups].sort((a, b) => score.get(b) - score.get(a) || pickGroups.indexOf(a) - pickGroups.indexOf(b)) : pickGroups;
     if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
-    // «— если нет в списке» only reads right at the end of the full list.
-    genericTitle.textContent = words.length ? 'Общие типы' : 'Общие типы — если нет в списке';
+    // «(если нет в списке)» only reads right at the end of the full list.
+    genericTitle.textContent = words.length ? 'Общие типы' : GENERIC_TITLE;
     // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
     const none = $('#pick-none');
     none.hidden = any;
     if (!any) {
       none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
         <button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>
-        <p class="mt-12 small muted">Или выберите похожий общий тип — уход у них почти одинаковый:</p>`;
+        <p class="mt-12 small muted">Или выберите похожий общий тип, уход у них почти одинаковый:</p>`;
       const g = document.querySelector('.pick-group[data-generic]');
       g.hidden = false;
       g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
@@ -205,30 +207,32 @@ function openCustom(species = '', from = 'button') {
 /* ---------- Import from an AI chat ---------- */
 // The user copies a prompt into ChatGPT/Claude, picks the plants.json file it sends,
 // and the plants become custom plants with their care tips.
-const IMPORT_PROMPT = `Сделай файл plants.json со списком моих растений для приложения «Жунгли» и пришли его мне для скачивания — файлом, не текстом в чате. Возьми растения, о которых мы говорили в этом чате (если непонятно, какие, — спроси меня).
+const IMPORT_PROMPT = `Сделайте файл plants.json со списком моих растений для приложения «Жунгли» и пришлите его мне для скачивания: файлом, не текстом в чате. Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня).
 
-Если я говорила, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пиши проверку и уход именно для этого способа.
+Если в чате сказано, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пишите проверку и уход именно для этого способа.
 
-В файле — только JSON-массив, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
-- species — вид или сорт по-русски
-- name — имя, если оно есть у растения, иначе ""
-- room — комната, где стоит, если я её называла (например "Кухня"), иначе ""
-- spot — место в комнате: подоконник, полка, стол и т. п., если я его называла, иначе ""
-- type — в чём растёт: "soil" (грунт), "dry" (грунт для суккулентов и кактусов, сушить почти полностью), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде: черенки, растения в банке), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
-- watering — как поливать растение в горшке: "top" (сверху), "wick" (фитиль), "reservoir" (резервуар в горшке: кашпо с автополивом, керамзит с запасом раствора); для воды, блока, террариума и аквариума — "top"
-- lux — сколько света нужно, люксы: [от, до]
-- every — через сколько дней обычно проверять полив (для керамзита — уровень раствора, для воды — пора ли её менять)
-- check — вопрос при проверке, например "Верхние 2–3 см сухие?" или "Уровень раствора на минимуме?"
-- water — как поливать, доливать или менять воду и когда удобрять
-- soil — в чём растёт и какой горшок
-- cond — условия; начни с температуры так: "18–26 °C; ..."
-- tip — самое важное в уходе
-- toxic — true, если сок ядовит или раздражает кожу
-- big — true, если крупные листья, которые надо протирать от пыли
-- quips — 3 коротких смешных фразы от лица растения, на «вы» ко мне
+В текстах не используйте длинные тире «—»: вместо них ставьте двоеточие, запятую или точку.
+
+В файле должен быть только JSON-массив, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
+- species: вид или сорт по-русски
+- name: имя, если оно есть у растения, иначе ""
+- room: комната, где стоит, если она упоминалась (например "Кухня"), иначе ""
+- spot: место в комнате: подоконник, полка, стол и т. п., если оно упоминалось, иначе ""
+- type: в чём растёт. Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов, сушить почти полностью), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде: черенки, растения в банке), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
+- watering: как поливать растение в горшке. Варианты: "top" (сверху), "wick" (фитиль), "reservoir" (резервуар в горшке: кашпо с автополивом, керамзит с запасом раствора); для воды, блока, террариума и аквариума ставьте "top"
+- lux: сколько света нужно, в люксах, [от, до]
+- every: через сколько дней обычно проверять полив (для керамзита проверять уровень раствора, для воды смотреть, пора ли её менять)
+- check: вопрос при проверке, например "Верхние 2–3 см сухие?" или "Уровень раствора на минимуме?"
+- water: как поливать, доливать или менять воду и когда удобрять
+- soil: в чём растёт и какой горшок
+- cond: условия, начните с температуры так: "18–26 °C; ..."
+- tip: самое важное в уходе
+- toxic: true, если сок ядовит или раздражает кожу
+- big: true, если крупные листья, которые надо протирать от пыли
+- quips: 3 коротких смешных фразы от лица растения, на «вы» ко мне
 
 Пример:
-[{"species":"Пеперомия туполистная","name":"","room":"Кухня","spot":"Подоконник","type":"soil","watering":"top","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду — перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
+[{"species":"Пеперомия туполистная","name":"","room":"Кухня","spot":"Подоконник","type":"soil","watering":"top","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду, поэтому перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
 
 // Cleans formatting chat apps add, so JSON.parse can read the answer.
 function repairJson(src) {
@@ -320,8 +324,8 @@ let importRepaired = false;
 let importExt = '';
 let importPicked = new Set();
 // How to copy the shown prompt by hand: the gesture that opens the system menu differs by platform.
-const PROMPT_HINT = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Нажмите на текст, затем ещё раз — в меню «Выбрать все», потом «Скопировать».'
-  : /Android/.test(navigator.userAgent) ? 'Подержите палец на тексте — в меню «Выбрать все», потом «Копировать».'
+const PROMPT_HINT = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Нажмите на текст, затем ещё раз. В меню выберите «Выбрать все», потом «Скопировать».'
+  : /Android/.test(navigator.userAgent) ? 'Подержите палец на тексте. В меню выберите «Выбрать все», потом «Копировать».'
     : 'Выделите весь текст (Ctrl+A или ⌘A) и скопируйте.';
 function openImport() {
   startAddFlow('import');
@@ -333,7 +337,7 @@ function openImport() {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
-      <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением — так и должно быть, просто отправьте.</p>
+      <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
       <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">${PROMPT_HINT}</p>
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
@@ -415,7 +419,7 @@ function showPrompt() {
     // Paste, Cut and AutoFill still show in the system menu; when one is tried, say what the field is for.
     ta.addEventListener('beforeinput', (e) => {
       e.preventDefault();
-      $('#imp-prompt-hint').textContent = 'Текст менять не нужно — только «Выбрать все» и «Скопировать».';
+      $('#imp-prompt-hint').textContent = 'Текст менять не нужно: только «Выбрать все» и «Скопировать».';
     });
     ta.addEventListener('input', () => { if (ta.value !== IMPORT_PROMPT) ta.value = IMPORT_PROMPT; });
   }
@@ -446,8 +450,8 @@ function showImport(text, ext, fail) {
     importPicked = new Set();
     box.innerHTML = res.error === 'backup'
       ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
-      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений — похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
-      <p class="small muted">Всё равно не выходит? Пришлите файл в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a> — разберусь и починю.</p>`;
+      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений. Похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
+      <p class="small muted">Всё равно не выходит? Пришлите файл в Телеграм <a class="linkish" href="https://t.me/zmoki" data-out="telegram" data-from="import" target="_blank" rel="noopener">@zmoki</a>, разберусь и починю.</p>`;
     track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });
   } else {
     importItems = res.items;
@@ -552,7 +556,7 @@ Object.assign(ACTS, {
       if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
       if (how === 'failed' || how === 'none') {
         showPrompt();
-        el.textContent = 'Не скопировалось — текст ниже';
+        el.textContent = 'Не скопировалось, текст ниже';
         $('#imp-status').textContent = 'Не скопировалось. Запрос показан ниже, скопируйте его вручную.';
         return;
       }

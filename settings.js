@@ -5,7 +5,7 @@
 /* ---------- Settings and backup ---------- */
 // Author line at the bottom of settings and «Что нового».
 const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy">Конфиденциальность</a><br>
-      Идеи и баги — в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
+      Идеи и баги присылайте в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
 const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
@@ -19,7 +19,7 @@ function openNews() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sparkles')}</div><h2 class="m-0">Что нового</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="info"><b>Ваша версия</b>${esc(APP_VERSION)}${fresh ? ' — самая свежая' : ''}</div>
+    <div class="info"><b>Ваша версия</b>${esc(APP_VERSION)}${fresh ? ', самая свежая' : ''}</div>
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
       <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
@@ -37,9 +37,9 @@ function openSettings() {
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
-      <p class="mt-6 small muted">Остальные спокойно подождут до завтра — первыми покажу тех, кому нужнее.</p></div>
+      <p class="mt-6 small muted">Остальные спокойно подождут до завтра, а первыми покажу тех, кому нужнее.</p></div>
     <h2>Комнаты</h2>
-    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её — растения перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
+    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её. Растения из неё перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
     <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
     ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('x')}</button>`
     : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('pencil')}</button>`)).join('')}
@@ -54,8 +54,8 @@ function openSettings() {
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
     <h2>Статистика</h2>
     <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений — без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
-      ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b> — пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
+      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений, но без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
+      ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b>. Пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
     <h2>Напоминание</h2>
     <p class="small muted">Поставьте ежедневное напоминание, например на 10 утра, в «Напоминаниях» или попросите об этом голосового помощника.</p>
     <button class="mt-24 btn danger wide" data-act="reset">Начать с чистого листа</button>
@@ -68,7 +68,7 @@ async function doExport() {
   const name = `zhungli-${today()}.json`;
   const file = new File([data], name, { type: 'application/json' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Жунгли — копия' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    try { await navigator.share({ files: [file], title: 'Копия Жунглей' }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(file);

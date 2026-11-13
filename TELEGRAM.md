@@ -17,22 +17,22 @@ BotFather settings:
 
 ### What people see in Telegram
 
-Snapshot of 2026-11-09. Only Name and About can be checked from outside (on the bot's t.me page); the rest is what was given to BotFather.
+Snapshot of 2026-11-14. Only Name and About can be checked from outside (on the bot's t.me page); the rest is what was given to BotFather.
 
 **Name:** Жунгли
 
 **About** (profile, and the description on the t.me page):
 
 ```
-Подсказываю, какие растения проверить и полить сегодня. Растения и фото — в облаке Телеграма.
+Подсказываю, какие растения проверить и полить сегодня. Растения и фото хранятся в облаке Телеграма.
 ```
 
 **Description** («Что умеет этот бот?» in an empty chat, under the welcome picture):
 
 ```
-Жунгли — помощник для комнатных растений.
+Жунгли помогают ухаживать за комнатными растениями.
 
-🌱 Каждый день подскажу, кого проверить и полить, — без долгов и красных просрочек.
+🌱 Каждый день подскажу, кого проверить и полить. Без долгов и красных просрочек.
 💧 Запомню, как быстро сохнет каждое растение.
 ☀️ Подскажу, кому темно, а кому слишком ярко.
 ☁️ Растения, фото и заметки хранятся в облаке Телеграма и есть на всех ваших устройствах.
