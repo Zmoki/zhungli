@@ -498,7 +498,7 @@ function roomCard(rm, ps, many) {
     ? `<p class="small muted mt-10">Удобно всем здесь: ${lo <= hi ? `${lo}–${hi} °C` : 'общего диапазона нет, смотрите карточки'}, влажность 50–70%.</p>`
     : `<h2>Чтобы было удобно всем</h2>
     <div class="info"><b>Температура</b>${lo <= hi ? `При ${lo}–${hi} °C комфортно всем вашим растениям.` : 'Общего диапазона нет, смотрите условия в карточках.'}</div>
-    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Если ниже, сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания есть риск грибков.</div>`;
+    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Если ниже, сохнут кончики листьев у этих растений: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания есть риск грибков.</div>`;
   return `<section class="${many ? 'room' : ''}">${head}
     <div class="room-cards">
       <div class="metric"><div class="lbl">Температура</div><div class="val">${has ? esc(rm.t) + '°' : '—'}</div>
