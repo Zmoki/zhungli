@@ -156,7 +156,7 @@ document.addEventListener('visibilitychange', () => {
     return;
   }
   if (addFlow) addFlow.picking = false;
-  if (Date.now() - lastOpen > 30 * 60 * 1000) { newVisit(); track('app_opened', { how: 'resume' }); }
+  if (Date.now() - lastOpen > 30 * 60 * 1000) { newVisit(); track('app_opened', { how: 'resume', tasks_due: pendingCount() }); }
   lastOpen = Date.now();
   checkUpdate();
   if (!sheet.open) render();
@@ -258,6 +258,6 @@ function arrivalSource() {
   } catch (e) { /* private mode: send it */ }
   return refSource(ref);
 }
-track('app_opened', { how: openHow, ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? arrivalSource() : undefined });
+track('app_opened', { how: openHow, tasks_due: pendingCount(), ready_ms: firstHidden === Infinity ? Math.round(performance.now()) : undefined, $referring_domain: openHow === 'start' ? arrivalSource() : undefined });
 // Closing the mini app or the tab may skip visibilitychange.
 addEventListener('pagehide', () => { reportVitals(); flushStats(); });

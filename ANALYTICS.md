@@ -35,7 +35,7 @@ On every event:
 
 | Event | When | Properties |
 | --- | --- | --- |
-| `app_opened` | app starts, or returns after 30+ min in background | `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built; `$referring_domain` (`start` only, once per arrival: a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself) |
+| `app_opened` | app starts, or returns after 30+ min in background | `tasks_due`: tasks waiting on Today at that moment (watering checks shown and greenhouse vents, not «Если есть силы»); `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built; `$referring_domain` (`start` only, once per arrival: a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself) |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
 | `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later`; `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
@@ -62,7 +62,7 @@ On every event:
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`; `cloud_plants`, `local_plants` |
 | `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`; `error` (Telegram's error text) |
 | `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`, `downloaded`, `removed` (of removed plants or removed photos), `skipped` (didn't fit the 1024-key limit) |
-| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants` |
+| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants`; `tasks_due` (as in `app_opened`: the launch event went out before the restore) |
 | `mini_app_link_clicked` | «Открыть» on the Telegram-browser hint (opens the mini app) | `has_plants` |
 | `telegram_hint_hidden` | «Понятно» on the Telegram hint | — |
 | `plant_deleted` | plant deleted | — |

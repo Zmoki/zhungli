@@ -165,7 +165,7 @@
           if (!sheet.open) render();
           toast('Растения загружены из Телеграма 🌿');
           report('restored', plantsIn(cloud));
-          track('cloud_restored', { plants: plantsIn(S) });
+          track('cloud_restored', { plants: plantsIn(S), tasks_due: pendingCount() });
           schedulePhotos();
         } else if (plantsIn(S) && ((!cloudHasPlants && !cloud.syncV) || localAt > cloudAt)) {
           // An empty copy left by an older version never beats real plants;
