@@ -146,7 +146,7 @@ function rhythmHtml(p) {
   const avg = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 0;
   return `<ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
     <p class="small legend" aria-hidden="true"><span><i class="w"></i>${HIST_WORDS.water}</span><span><i class="d"></i>${HIST_WORDS.wet}</span></p>
-    ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}.${wayOf(p).noChecks ? '' : ` Проверка сейчас — раз в ${days(Math.round(p.interval))}.`}</p>` : ''}`;
+    ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}.${wayOf(p).noChecks ? '' : ` Проверка сейчас: раз в ${days(Math.round(p.interval))}.`}</p>` : ''}`;
 }
 
 // No answers yet: the next 4 weeks in the same dots, with the planned checks dashed, so the tab
@@ -185,7 +185,7 @@ function openPlant(id, tabKey) {
   cardFor = id;
   const mc = mood(p)[2];
   const ls = lightStatus(p);
-  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)} — ${histWord(h.a)}`).join('<br>');
+  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)}: ${histWord(h.a)}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
   // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.

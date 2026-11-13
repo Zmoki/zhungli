@@ -132,7 +132,7 @@ function currentHint() {
     }
     return hasPlants
       ? hintCard('triangle-alert', `Откройте Жунгли ${where}`,
-        `${why} Сохраните копию, откройте Жунгли ${where} (в меню приложения — ${menu}) и восстановите её там.`,
+        `${why} Сохраните копию, откройте Жунгли ${where} (в меню приложения выберите ${menu}) и восстановите её там.`,
         '<button class="btn ok" data-act="export" data-from="in_app_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="in_app">Понятно</button>')
       : hintCard('triangle-alert', `Откройте Жунгли ${where}`,
         `${why} В меню приложения выберите ${menu}.`,
@@ -141,7 +141,7 @@ function currentHint() {
   // Stats run from the first screen, so their notice shows from the first screen too.
   const stats = !S.statsNotice && S.settings.stats !== false
     ? hintCard('lightbulb', 'Анонимная статистика',
-      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, — без названий, заметок и фото. <a class="linkish" href="privacy" data-from="stats_notice">Подробнее</a>',
+      'Чтобы понять, что улучшить, Жунгли отправляют, какие кнопки нажимают, но без названий, заметок и фото. <a class="linkish" href="privacy" data-from="stats_notice">Подробнее</a>',
       '<button class="btn" data-act="stats-ok">Понятно</button><button class="btn ghost" data-act="stats-off">Выключить</button>')
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
@@ -241,7 +241,7 @@ function viewToday() {
   if (!pending) {
     if (doneMain) {
       html += `<div class="celebrate"><div class="big">🎉</div><h2>Джунгли довольны!</h2>
-        <p class="muted">Вы сегодня молодец. Остальное — завтра.</p></div>`;
+        <p class="muted">Вы сегодня молодец. Остальное завтра.</p></div>`;
     } else {
       const tom = allPlants().filter((p) => p.nextCheck === addDays(t, 1) && !wayOf(p).noChecks).length;
       html += `<div class="celebrate"><div class="big">😴</div><h2>Сегодня отдыхаем</h2>
@@ -286,7 +286,7 @@ function viewPlants() {
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${plantsN(ps.length)}</div></div>
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
-  if (!ps.length) html += `<div class="celebrate"><h2>Пока пусто</h2><p class="muted">Добавьте первое растение — и джунгли начнутся 🌱</p>${quickStart()}</div>`;
+  if (!ps.length) html += `<div class="celebrate"><h2>Пока пусто</h2><p class="muted">Добавьте первое растение, и джунгли начнутся 🌱</p>${quickStart()}</div>`;
   if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
@@ -397,11 +397,11 @@ function lightIdeas() {
         ${typedHtml(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
         ${typedHtml(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
     } else {
-      out.push(['low', `${I('sun-dim')}<b>${typedHtml(L.title)}</b>: темновато — ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
+      out.push(['low', `${I('sun-dim')}<b>${typedHtml(L.title)}</b>: темновато, ${kLux(L.lux)} ${LK}, а нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
     }
   });
   highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${typedHtml(H.title)}</b>: очень ярко — ${kLux(H.lux)} ${LK}, нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
+    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${typedHtml(H.title)}</b>: очень ярко, ${kLux(H.lux)} ${LK}, а нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
   });
   if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
   return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
@@ -428,7 +428,7 @@ function quickStart() {
       <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`;
   }).join('');
   const n = qsPicked.size;
-  return `<p class="mt-14 qs-title"><b>Что у вас растёт?</b> Отметьте — остальное найдём в каталоге.</p>
+  return `<p class="mt-14 qs-title"><b>Что у вас растёт?</b> Отметьте, а остальное найдём в каталоге.</p>
     <div class="qs-grid">${tiles}</div>
     <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
     <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
@@ -453,10 +453,10 @@ function viewLight() {
   const measured = ps.filter((p) => p.lux).length;
   if (!ps.length) {
     return `<header class="hello head-row"><div><h1>Свет</h1></div>${headButtons()}</header>
-      ${emptyCard('Свет для каждого растения', 'Добавьте растения — покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.')}`;
+      ${emptyCard('Свет для каждого растения', 'Добавьте растения, и я покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.')}`;
   }
   return `<header class="hello head-row"><div><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></div>${headButtons()}</header>
-    <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру — подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
+    <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру, и я подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
     <div id="ideas">${lightIdeas()}</div>
     <h2>От самых светолюбивых</h2>
     ${ps.map(lightRow).join('')}`;
@@ -481,9 +481,9 @@ function roomCard(rm, ps, many) {
     if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.map(typedHtml).join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
     if (hot.length) notes.push(['flame', `Жарковато для: ${hot.map(typedHtml).join(', ')}. Проветрите или отодвиньте от батареи.`]);
     if (rm.h < 50) {
-      notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Включите увлажнитель${humidOnes.length ? ` — особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
+      notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Включите увлажнитель${humidOnes.length ? `: особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
     }
-    if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха — путь к грибкам, следите за сфагнумом.`]);
+    if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха ведут к грибкам. Следите за сфагнумом.`]);
     status = notes.length
       ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
       : ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '';
@@ -497,8 +497,8 @@ function roomCard(rm, ps, many) {
   const comfort = !ranges.length ? '' : many
     ? `<p class="small muted mt-10">Удобно всем здесь: ${lo <= hi ? `${lo}–${hi} °C` : 'общего диапазона нет, смотрите карточки'}, влажность 50–70%.</p>`
     : `<h2>Чтобы было удобно всем</h2>
-    <div class="info"><b>Температура</b>${lo <= hi ? `${lo}–${hi} °C — так комфортно всем вашим растениям.` : 'Общего диапазона нет — смотрите условия в карточках.'}</div>
-    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Ниже — сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания — риск грибков.</div>`;
+    <div class="info"><b>Температура</b>${lo <= hi ? `При ${lo}–${hi} °C комфортно всем вашим растениям.` : 'Общего диапазона нет, смотрите условия в карточках.'}</div>
+    <div class="info"><b>Влажность</b>50–70%.${humidOnes.length ? ` Если ниже, сохнут кончики листьев у: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания есть риск грибков.</div>`;
   return `<section class="${many ? 'room' : ''}">${head}
     <div class="room-cards">
       <div class="metric"><div class="lbl">Температура</div><div class="val">${has ? esc(rm.t) + '°' : '—'}</div>
@@ -519,11 +519,11 @@ function viewRoom() {
   const date = many ? roomsN(S.rooms.length)
     : one.t != null ? 'замер: ' + (one.d === today() ? 'сегодня' : rel(one.d)) : 'замеров пока нет';
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
-    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения — подскажу, какая температура и влажность удобны именно им.')}
-    <p class="small muted">Впишите, что показывает датчик — скажу, кому некомфортно.</p>
+    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.')}
+    <p class="small muted">Впишите, что показывает датчик, и я скажу, кому некомфортно.</p>
     ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
-    ${many ? '' : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату — у каждой будет свой замер.</p>'}
+    ${many ? '' : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату, у каждой будет свой замер.</p>'}
 
     <h2>Если есть умный дом</h2>
     <p class="small muted">Например, в «Доме с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к умному дому.</p>
@@ -532,7 +532,7 @@ function viewRoom() {
     <div class="scenario"><span>${I('droplet-off')}</span><div><b>Влажность выше 70%</b> → выключить увлажнитель</div></div>
     <div class="scenario"><span>${I('flame')}</span><div><b>Температура ниже 21 °C</b> → включить обогреватель</div></div>
     <div class="scenario"><span>${I('snowflake')}</span><div><b>Температура выше 25 °C</b> → выключить обогреватель</div></div>
-    <div class="scenario"><span>${I('lamp')}</span><div><b>Фитолампы через умную розетку, если есть:</b> включать в 8:00, выключать в 21:00 — 12–14 часов света в день, без ночного досвета.</div></div>`;
+    <div class="scenario"><span>${I('lamp')}</span><div><b>Фитолампы через умную розетку, если есть:</b> включать в 8:00, выключать в 21:00. Это 12–14 часов света в день, без ночного досвета.</div></div>`;
 }
 
 /* ---------- Taps on the tabs ---------- */
