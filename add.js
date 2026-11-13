@@ -6,6 +6,8 @@
 let picked = new Set();
 // Crude Russian stem for catalog search: longer words drop their ending, so «лиана» finds «лианы»,
 // «трава» finds «травы», «черенок» finds «черенки».
+// Title of the generic group in the full list; during a search it's just «Общие типы».
+const GENERIC_TITLE = 'Общие типы (если нет в списке)';
 const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
 function pickRow(d) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
@@ -37,16 +39,16 @@ function openAdd() {
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Сразу много из чата с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях. Он сделает файл со списком и советами по уходу, а вы загрузите его сюда.</small></span>
+      <span class="pt"><b>Сразу много через чат с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях. Он сделает файл со списком и советами по уходу, а вы загрузите его сюда.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
-      <span class="pt"><b>Своё растение</b><small>Напишите название и на что похоже, а уход подберу.</small></span>
+      <span class="pt"><b>Своё растение</b><small>Напишите название и на что похоже, а уход я подберу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
     <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>
     <div id="pick-none" class="pick-none" hidden></div>
-    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? 'Общие типы (если нет в списке)' : esc(c)}</div>
+    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
       ${groups[c].map(pickRow).join('')}</div>`).join('')}
     <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
@@ -84,7 +86,7 @@ function openAdd() {
     const order = words.length ? [...pickGroups].sort((a, b) => score.get(b) - score.get(a) || pickGroups.indexOf(a) - pickGroups.indexOf(b)) : pickGroups;
     if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
     // «(если нет в списке)» only reads right at the end of the full list.
-    genericTitle.textContent = words.length ? 'Общие типы' : 'Общие типы (если нет в списке)';
+    genericTitle.textContent = words.length ? 'Общие типы' : GENERIC_TITLE;
     // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
     const none = $('#pick-none');
     none.hidden = any;
@@ -208,6 +210,8 @@ function openCustom(species = '', from = 'button') {
 const IMPORT_PROMPT = `Сделайте файл plants.json со списком моих растений для приложения «Жунгли» и пришлите его мне для скачивания: файлом, не текстом в чате. Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня).
 
 Если в чате сказано, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пишите проверку и уход именно для этого способа.
+
+В текстах не используйте длинные тире «—»: вместо них ставьте двоеточие, запятую или точку.
 
 В файле должен быть только JSON-массив, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
 - species: вид или сорт по-русски
