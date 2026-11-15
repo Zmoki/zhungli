@@ -28,12 +28,12 @@ const MEDIA = {
     water: 'Только когда грунт просох почти до дна, затем обильно; зимой совсем редко.',
     soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
   sphagnum: { name: 'Сфагнум', pot: true, feed: 'day', first: true, organic: true,
-    hint: 'Позову проверить, подсох ли сфагнум внутри.',
+    hint: 'Позову проверить, подсох ли сфагнум.',
     water: 'Когда сфагнум внутри подсох; не давать пересохнуть совсем.',
     soil: 'Живой или сухой сфагнум, не утрамбовывать.' },
   bark: { name: 'Кора', pot: true, feed: 'none', organic: true, labels: ['Полито', 'Ещё рано'],
-    hint: 'Позову проверить, высохла ли кора и посеребрели ли корни.',
-    water: 'Погружением на 15–20 минут, когда кора сухая и корни серебристые; воду из кашпо слить.',
+    hint: 'Позову проверить, подсохла ли кора и посеребрели ли корни.',
+    water: 'Когда кора почти сухая и корни серебристые: пролить насквозь или погрузить в воду, потом дать стечь. Воду из кашпо слить.',
     soil: 'Крупная кора, прозрачный горшок с отверстиями.' },
   coco: { name: 'Кокос', pot: true, feed: 'day', organic: true,
     hint: 'Позову проверить, подсох ли верхний слой.',
@@ -111,11 +111,13 @@ const labelsOf = (p) => wayOf(p).labels;
 // question and its watering tip don't fit, nor its substrate tip with another medium: that way's own tips stand in.
 function careOf(d, r) {
   const k = mediumIn(r, d), m = MEDIA[k], w = wateringIn(r, d);
-  const own = isCardWay(r, d), sameMedium = k === d.type;
+  const own = isCardWay(r, d), sameMedium = k === d.type, fromAbove = !w || w === 'top';
   // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
+  // Its check question and watering tip are for watering from above; a wick or reservoir has its own.
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
-  const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : alt.water || m.water;
-  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil };
+  const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, m.feedTip].filter(Boolean).join(' ');
+  const check = own ? d.check : (fromAbove && alt.check) || '';
+  return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").

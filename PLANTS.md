@@ -33,7 +33,7 @@ Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on
 
 ## How it grows
 
-Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own watering and substrate tips for another medium (alocasias in sphagnum); otherwise the medium's general ones stand in.
+Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own check question, watering and substrate tips for another medium (alocasias and phalaenopsis in sphagnum); otherwise the medium's general ones stand in. The check and watering tip only apply to watering from above.
 
 | Medium | Check (watered from above) | Buttons | Feeding |
 |---|---|---|---|
