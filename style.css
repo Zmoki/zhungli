@@ -300,6 +300,7 @@ button { cursor: pointer; }
 }
 .celebrate .big { font-size: 56px; line-height: 1; margin-bottom: 8px; }
 .celebrate h2 { font-size: 1.412rem; }
+.celebrate.compact { padding-block: 16px; } /* above the way to install, whose buttons should fit the first screen */
 
 /* Plants grid */
 /* Hidden means hidden: many components set their own display, which would otherwise override the attribute */
