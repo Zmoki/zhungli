@@ -117,7 +117,7 @@ function careOf(d, r) {
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
   const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, m.feedTip].filter(Boolean).join(' ');
   const check = own ? d.check : (fromAbove && alt.check) || '';
-  return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil };
+  return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").

@@ -380,11 +380,12 @@ const PLANTS = [
     id: 'phal', species: 'Фаленопсис', cat: 'Цветущие и орхидеи', emoji: '🦋',
     aka: 'орхидея, phalaenopsis, orchid',
     lux: [5000, 15000], every: 7, type: 'bark',
-    // Often sold in moss, which holds water much longer than bark.
+    // Often sold in sphagnum, which holds water much longer than bark. No feeding day there either, like on bark.
     ways: { sphagnum: {
-      check: 'Мох сверху подсох?',
-      water: 'Поливать, когда мох подсох сверху. Во мху вода держится дольше, чем в коре.',
+      check: 'Сфагнум сверху подсох?',
+      water: 'Поливать, когда сфагнум подсох сверху. В нём вода держится дольше, чем в коре.',
       soil: 'Сфагнум. После цветения пересадить в кору.',
+      noFeed: true,
     } },
     water: 'Поливать утром тёплой водой, когда кора почти просохла и корни посеребрели. Воду из кашпо сливать.',
     soil: 'Кора; прозрачный горшок помогает наблюдать за корнями.',

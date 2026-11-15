@@ -33,14 +33,14 @@ Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on
 
 ## How it grows
 
-Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own check question, watering and substrate tips for another medium (alocasias and phalaenopsis in sphagnum); otherwise the medium's general ones stand in. The check and watering tip only apply to watering from above.
+Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own check question, watering and substrate tips for another medium (alocasias and phalaenopsis in sphagnum); otherwise the medium's general ones stand in. The check and watering tip only apply to watering from above. `noFeed` there keeps the plant off feeding days in that medium (phalaenopsis in sphagnum, like orchids on bark).
 
 | Medium | Check (watered from above) | Buttons | Feeding |
 |---|---|---|---|
 | `soil` грунт | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
 | `dry` грунт для суккулентов | dry almost to the bottom? | «Полито» / «Ещё влажно» | none, unless the card has `feed` |
-| `sphagnum` сфагнум | dried inside? | «Полито» / «Ещё влажно» | «День подкормки» |
-| `bark` кора | bark dry, roots silvery? | «Полито» / «Ещё рано» | none |
+| `sphagnum` сфагнум | dried inside? (phalaenopsis: on top) | «Полито» / «Ещё влажно» | «День подкормки» |
+| `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | none |
 | `coco` кокос | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
 | `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте субстрат» every 30 days |
 | `leca` керамзит | bottom dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте керамзит» every 45 days |
