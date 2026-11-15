@@ -8,6 +8,7 @@
 // feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
+// toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
 
 const CHECK_TEXT = {
   soil: 'Верхние 2–3 см сухие?',
@@ -31,7 +32,7 @@ const PLANTS = [
   // Generic types for plants not in the list. The interval adjusts from the answers anyway.
   {
     id: 'g-easy', species: 'Неприхотливое лиственное', cat: 'Общие типы', emoji: '🍀', generic: true,
-    aka: 'кордилина, циссус, полисциас, гинура, кофе, кофейное дерево, мирт, фатсия, cordyline, cissus',
+    aka: 'кордилина, циссус, полисциас, гинура, кофе, кофейное дерево, мирт, фатсия, каллизия, cordyline, cissus, callisia',
     hint: 'циссус, кордилина, полисциас, гинура',
     lux: [3000, 12000], every: 7, type: 'soil',
     water: 'Когда подсохнут верхние 2–3 см. Лишнюю воду из поддона слить.',
@@ -426,13 +427,13 @@ const PLANTS = [
   },
   {
     id: 'scindapsus', species: 'Сциндапсус пиктус', cat: 'Лианы и ампельные', emoji: '🩶', toxic: true,
-    aka: 'сциндапсус, scindapsus pictus, пиктус, расписной, argyraeus, экзотика, серебристый, треби, сильвер',
+    aka: 'сциндапсус, scindapsus pictus, расписной, argyraeus, экзотика, серебристый, треби, сильвер',
     lux: [3000, 10000], every: 8, type: 'soil',
     water: 'Когда верхние 3–4 см сухие. Если листья скручиваются в трубочку, растение просит воды.',
     soil: 'Рыхлый грунт с корой и перлитом.',
     cond: '18–28 °C.',
     tip: 'Серебристый рисунок ярче при рассеянном свете. Не переливать: корни легко загнивают.',
-    quips: ['Я скрутил листья, это намёк.', 'Я серебристый, мне идёт рассеянный свет.', 'Немного влажности, и я счастлив.'],
+    quips: ['Я скрутил листья, это намёк.', 'Я серебристый, мне идёт рассеянный свет.', 'Пожелтел лист? Значит, воды многовато.'],
   },
   {
     id: 'syngonium', species: 'Сингониум', cat: 'Лианы и ампельные', emoji: '🏹', toxic: true,
@@ -465,7 +466,7 @@ const PLANTS = [
     quips: ['В жару у меня буреют края листьев.', 'Мне бы на полку, чтобы свисать.', 'Сухой воздух не для меня.'],
   },
   {
-    id: 'tradescantia', species: 'Традесканция', cat: 'Лианы и ампельные', emoji: '💜', toxic: true,
+    id: 'tradescantia', species: 'Традесканция', cat: 'Лианы и ампельные', emoji: '💜', toxic: 'skin',
     aka: 'традесканция, tradescantia, зебрина, бабье сплетни, сеткреазия, рео, висячая, приречная',
     lux: [6000, 20000], every: 5, type: 'soil',
     water: 'Поливать, когда подсох верх; зимой реже. В мокром грунте гниют корни и стебли.',
