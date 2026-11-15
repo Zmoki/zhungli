@@ -444,8 +444,7 @@ function addFromCatalog(keys, source) {
   toast(`Добавлено ${plantsN(ids.length)} 🌱 Откройте каждое, чтобы выбрать место`);
 }
 
-// Shown on tabs that need plants when there are none yet.
-// An empty screen's card with the quick picks. Where installing comes first (installFirst), the card gets short
+// The card on an empty screen with the quick picks. Where installing comes first (installFirst), the card gets short
 // (no big picture, `short` text) and the way to install goes under it at full width, so its buttons fit the first screen.
 function emptyCard(title, text, { big = '', short = text, after = '' } = {}) {
   const gate = installFirst();
@@ -526,7 +525,7 @@ function viewRoom() {
   const date = many ? roomsN(S.rooms.length)
     : one.t != null ? 'замер: ' + (one.d === today() ? 'сегодня' : rel(one.d)) : 'замеров пока нет';
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
-    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.', { short: 'Добавьте растения, и я подскажу, что им удобно.' })}
+    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.', { short: 'Добавьте растения, и я подскажу, какой климат им нужен.' })}
     <p class="small muted">Впишите, что показывает датчик, и я скажу, кому некомфортно.</p>
     ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
