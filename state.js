@@ -112,8 +112,10 @@ const labelsOf = (p) => wayOf(p).labels;
 function careOf(d, r) {
   const k = mediumIn(r, d), m = MEDIA[k], w = wateringIn(r, d);
   const own = isCardWay(r, d), sameMedium = k === d.type;
-  const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : m.water;
-  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || m.soil };
+  // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
+  const alt = (!sameMedium && d.ways && d.ways[k]) || {};
+  const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : alt.water || m.water;
+  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
@@ -152,7 +154,7 @@ let PHOTOS = {};
 
 function blank() {
   return {
-    v: 3, plants: {}, custom: {}, bonus: {}, snooze: {}, rooms: [newRoom('home', 'Комната')], log: {},
+    v: 4, plants: {}, custom: {}, bonus: {}, snooze: {}, rooms: [newRoom('home', 'Комната')], log: {},
     spots: [...SPOTS], settings: { limit: 7 }, hideInstall: false, created: today(),
   };
 }
@@ -195,8 +197,9 @@ function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
   if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
-  if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
-  s.v = 3;
+  if (raw && (raw.v || 1) < 4) migrateV3(s);
+  if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
+  s.v = 4;
   initBonus(s);
   return s;
 }
@@ -231,6 +234,23 @@ function migrateV2(s, raw) {
   s.rooms = [{ ...newRoom('home', 'Комната'), ...(r ? { t: r.t, h: r.h, d: r.d } : {}) }];
 }
 
+// v3: catalog plants stored their medium only when it wasn't the card's, so a card's new `type` moved
+// them all. Now each keeps the medium it grows in. The alocasia cards moved from sphagnum to soil
+// in v100: alocasias added before that stay in sphagnum.
+// An older app saves this data back as v3, so this can run again: `aloSoil` (older apps keep it)
+// makes the alocasia interval reset happen once.
+function migrateV3(s) {
+  const wasSphagnum = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
+  Object.entries(s.plants).forEach(([id, p]) => {
+    const k = p.def || id, d = PLANTS.find((c) => c.id === k);
+    if (!d) return;
+    // The interval kept for the old card way (sphagnum) isn't the soil card's: soil starts from `every`.
+    if (!s.aloSoil && wasSphagnum.includes(k)) delete p.soilInterval;
+    if (!MEDIA[p.medium]) p.medium = wasSphagnum.includes(k) ? 'sphagnum' : mediumIn(p, d);
+  });
+  s.aloSoil = true;
+}
+
 function initBonus(s) {
   const t = today();
   Object.keys(s.plants).forEach((id, i) => {
@@ -259,7 +279,7 @@ function addPlants(keys) {
     .sort((a, b) => a.every - b.every)
     .forEach((d, i) => {
       const id = newId('p', i);
-      S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id };
+      S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id, medium: mediumIn({}, d) };
       ids.push(id);
     });
   initBonus(S);
@@ -362,9 +382,12 @@ const stateChips = (p, words, st = states(p)) => st.map((k) => (words
   ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
   : `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
 
+// The first «20–25 °C» in the card's conditions, plus its floor: «не ниже 16 °C» if given, else the range's low end.
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
-  return m ? [Number(m[1]), Number(m[2])] : null;
+  if (!m) return null;
+  const floor = /не ниже\s*(\d+)\s*°C/.exec(p.cond);
+  return [Number(m[1]), Number(m[2]), floor ? Number(floor[1]) : Number(m[1])];
 }
 
 const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.spots.length : 99) : i; };

@@ -23,7 +23,8 @@ Record fields:
 | `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' }`. |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
-| `medium`, `watering`, `wick` | How it grows when it's not the card's way: what the roots are in, and how it's watered (`wick: true` for a wick). |
+| `medium` | What the roots are in. Catalog plants keep it from the day they're added, so a card's new `type` doesn't move them. |
+| `watering`, `wick` | How it's watered when it's not the card's way (`wick: true` for a wick). |
 | `soilInterval` | The card's interval, kept while the plant grows another way. |
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
@@ -32,7 +33,7 @@ Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on
 
 ## How it grows
 
-Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others.
+Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own watering and substrate tips for another medium (alocasias in sphagnum); otherwise the medium's general ones stand in.
 
 | Medium | Check (watered from above) | Buttons | Feeding |
 |---|---|---|---|
@@ -113,7 +114,7 @@ Light status needs a reading in the card or on the Light tab. The tab sorts plan
 
 `S.rooms` holds `{ id, name, t, h, d }`: name, temperature, humidity and the reading's date. Spots are `S.spots` plus any spot a plant uses; their order sorts the checks on «Сегодня».
 
-With several rooms, the plant grid groups plants by room and spot («Кухня · Подоконник»). The Room tab compares each room's reading with the temperatures in its plants' cards: the first «18–26 °C» in `cond`. The humidity target is 50–70% for everyone.
+With several rooms, the plant grid groups plants by room and spot («Кухня · Подоконник»). The Room tab compares each room's reading with the temperatures in its plants' cards: the first «18–26 °C» in `cond`. «Прохладно» starts below «не ниже 16 °C» when the card gives one, else below the range. The humidity target is 50–70% for everyone.
 
 ## Cheat sheet
 

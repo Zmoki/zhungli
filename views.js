@@ -476,7 +476,7 @@ function roomCard(rm, ps, many) {
   let status = '';
   if (has) {
     const notes = [];
-    const cold = ranges.filter(([, t]) => rm.t < t[0]).map(([p]) => p.title);
+    const cold = ranges.filter(([, t]) => rm.t < t[2]).map(([p]) => p.title);
     const hot = ranges.filter(([, t]) => rm.t > t[1]).map(([p]) => p.title);
     if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.map(typedHtml).join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
     if (hot.length) notes.push(['flame', `Жарковато для: ${hot.map(typedHtml).join(', ')}. Проветрите или отодвиньте от батареи.`]);
@@ -484,9 +484,11 @@ function roomCard(rm, ps, many) {
       notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Включите увлажнитель${humidOnes.length ? `: особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
     }
     if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха ведут к грибкам. Следите за сфагнумом.`]);
-    status = notes.length
-      ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
-      : ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '';
+    // Above every card's floor («не ниже 16 °C») but below the range they all like: fine, not ideal.
+    const mild = !cold.length && ranges.length && lo <= hi && rm.t < lo;
+    status = notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
+      + (mild ? `<div class="status ok">${I('smile')}<span>Терпимо для всех. Удобнее всего при ${lo}–${hi} °C.</span></div>`
+        : !notes.length && ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '');
   }
   const ago = has ? (rm.d === today() ? 'сегодня' : rel(rm.d)) : '';
   const name = esc(rm.name);
