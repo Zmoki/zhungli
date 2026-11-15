@@ -96,11 +96,11 @@ function installFirst() {
   }
   if (kind === 'in_app') {
     return hintCard('triangle-alert', `Сначала откройте Жунгли ${where}`,
-      `Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения могут потеряться. В меню выберите ${menu}.`,
+      `Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения могут потеряться. В меню приложения выберите ${menu}.`,
       stay('Остаться здесь'));
   }
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-    `${share} → «На экран Домой», затем откройте Жунгли с иконки. Растения из браузера туда не перейдут, а браузер может их стереть, если пару недель не заходить.`,
+    `${share} → «На экран Домой», затем откройте Жунгли с иконки. Отмеченное в браузере туда не перейдёт, а браузер может его стереть, если пару недель не заходить.`,
     `${stay('Остаться в браузере')}<button class="btn ghost" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>`);
 }
 function currentHint() {
@@ -204,16 +204,12 @@ function viewToday() {
     ${headButtons()}</header>`;
 
   if (!allPlants().length) {
-    const hi = '<h2>Привет! Это Жунгли</h2>';
-    // The way to install goes under a short welcome, full width and without the big sprout, so its buttons
-    // fit on the first screen. The full welcome shows where Жунгли get installed.
-    const gate = installFirst();
-    if (gate) return html + `<div class="celebrate compact">${hi}<p class="muted">Каждый день покажу, что пора проверить. Без долгов и красных просрочек.</p></div>${gate}${currentHint()}`;
-    return html + `<div class="celebrate"><div class="big">🌱</div>${hi}
-      <p class="muted">Каждый день покажу, что пора проверить, и запомню, как быстро сохнет каждое растение. Без долгов и красных просрочек.</p>
-      ${quickStart()}
-      <p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p></div>
-      ${currentHint()}`;
+    const daily = 'Каждый день покажу, что пора проверить', calm = 'Без долгов и красных просрочек.';
+    return html + emptyCard('Привет! Это Жунгли', `${daily}, и запомню, как быстро сохнет каждое растение. ${calm}`, {
+      big: '<div class="big">🌱</div>',
+      short: `${daily}. ${calm}`,
+      after: `<p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p>`,
+    }) + currentHint();
   }
 
   html += currentHint();
@@ -291,7 +287,7 @@ function viewPlants() {
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${plantsN(ps.length)}</div></div>
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
-  if (!ps.length) html += `<div class="celebrate"><h2>Пока пусто</h2><p class="muted">Добавьте первое растение, и джунгли начнутся 🌱</p>${quickStart()}</div>`;
+  if (!ps.length) html += emptyCard('Пока пусто', 'Добавьте первое растение, и джунгли начнутся 🌱');
   if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
@@ -425,8 +421,6 @@ function endQuick(then) {
   qsReported = true;
 }
 function quickStart() {
-  const gate = installFirst();
-  if (gate) return gate;
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);
     return `<button class="qs${on ? ' on' : ''}" data-act="qs-pick" data-key="${k}" aria-pressed="${on}">
@@ -451,14 +445,20 @@ function addFromCatalog(keys, source) {
 }
 
 // Shown on tabs that need plants when there are none yet.
-const emptyCard = (title, text) => `<div class="celebrate"><h2>${title}</h2><p class="muted">${text}</p>${quickStart()}</div>`;
+// An empty screen's card with the quick picks. Where installing comes first (installFirst), the card gets short
+// (no big picture, `short` text) and the way to install goes under it at full width, so its buttons fit the first screen.
+function emptyCard(title, text, { big = '', short = text, after = '' } = {}) {
+  const gate = installFirst();
+  if (gate) return `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p></div>${gate}`;
+  return `<div class="celebrate">${big}<h2>${title}</h2><p class="muted">${text}</p>${quickStart()}${after}</div>`;
+}
 
 function viewLight() {
   const ps = allPlants().sort((a, b) => b.luxRange[0] - a.luxRange[0] || b.luxRange[1] - a.luxRange[1]);
   const measured = ps.filter((p) => p.lux).length;
   if (!ps.length) {
     return `<header class="hello head-row"><div><h1>Свет</h1></div>${headButtons()}</header>
-      ${emptyCard('Свет для каждого растения', 'Добавьте растения, и я покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.')}`;
+      ${emptyCard('Свет для каждого растения', 'Добавьте растения, и я покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.', { short: 'Добавьте растения, и я покажу, кому сколько света нужно.' })}`;
   }
   return `<header class="hello head-row"><div><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></div>${headButtons()}</header>
     <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру, и я подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
@@ -526,7 +526,7 @@ function viewRoom() {
   const date = many ? roomsN(S.rooms.length)
     : one.t != null ? 'замер: ' + (one.d === today() ? 'сегодня' : rel(one.d)) : 'замеров пока нет';
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
-    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.')}
+    ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.', { short: 'Добавьте растения, и я подскажу, что им удобно.' })}
     <p class="small muted">Впишите, что показывает датчик, и я скажу, кому некомфортно.</p>
     ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
