@@ -87,20 +87,20 @@ function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
   if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
-  const { share, device, where, menu } = PLACE;
+  const { share, where, menu } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
     return hintCard('sprout', 'Сначала откройте Жунгли в Телеграме',
-      'Это встроенный браузер Телеграма: отмеченное здесь может потеряться. В приложении Телеграма растения хранятся в облаке и появятся на любом устройстве.',
+      'Здесь растения могут потеряться. В приложении Телеграма они хранятся в облаке.',
       `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>${stay('Остаться здесь')}`);
   }
   if (kind === 'in_app') {
     return hintCard('triangle-alert', `Сначала откройте Жунгли ${where}`,
-      `Это встроенный браузер приложения: отсюда Жунгли не добавить на экран «Домой», а отмеченное здесь может потеряться. В меню приложения выберите ${menu}.`,
+      `Здесь растения могут потеряться. В меню приложения выберите ${menu}.`,
       stay('Остаться здесь'));
   }
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-    `${share} → «На экран Домой», затем откройте Жунгли с иконки и отмечайте растения там. ${device} хранит их отдельно от браузера: отмеченное здесь туда не перейдёт, а браузер может его стереть, если пару недель не заходить.`,
+    `${share} → «На экран Домой», затем откройте Жунгли с иконки. Растения из браузера туда не перейдут.`,
     `${stay('Остаться в браузере')}<button class="btn ghost" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>`);
 }
 function currentHint() {
@@ -204,8 +204,9 @@ function viewToday() {
     ${headButtons()}</header>`;
 
   if (!allPlants().length) {
-    return html + `<div class="celebrate"><div class="big">🌱</div><h2>Привет! Это Жунгли</h2>
-      <p class="muted">Каждый день покажу пару растений, которые пора проверить, и запомню, как быстро сохнет каждое. Без долгов и красных просрочек.</p>
+    // With the way to install first, its buttons should fit on the first screen: no big sprout then.
+    return html + `<div class="celebrate">${installWhere() ? '' : '<div class="big">🌱</div>'}<h2>Привет! Это Жунгли</h2>
+      <p class="muted">Покажу, что пора проверить, и запомню, как быстро сохнет каждое растение.</p>
       ${quickStart()}
       ${installWhere() ? '' : `<p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p>`}</div>
       ${currentHint()}`;
