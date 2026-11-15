@@ -198,7 +198,7 @@ function prepare(raw) {
   if (raw && !raw.v) migrateV1(s);
   if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
   if (raw && (raw.v || 1) < 4) migrateV3(s);
-  if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
+  if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
   s.v = 4;
   initBonus(s);
   return s;
@@ -237,15 +237,18 @@ function migrateV2(s, raw) {
 // v3: catalog plants stored their medium only when it wasn't the card's, so a card's new `type` moved
 // them all. Now each keeps the medium it grows in. The alocasia cards moved from sphagnum to soil
 // in v100: alocasias added before that stay in sphagnum.
+// An older app saves this data back as v3, so this can run again: `aloSoil` (older apps keep it)
+// makes the alocasia interval reset happen once.
 function migrateV3(s) {
   const wasSphagnum = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
   Object.entries(s.plants).forEach(([id, p]) => {
     const k = p.def || id, d = PLANTS.find((c) => c.id === k);
     if (!d) return;
     // The interval kept for the old card way (sphagnum) isn't the soil card's: soil starts from `every`.
-    if (wasSphagnum.includes(k)) delete p.soilInterval;
+    if (!s.aloSoil && wasSphagnum.includes(k)) delete p.soilInterval;
     if (!MEDIA[p.medium]) p.medium = wasSphagnum.includes(k) ? 'sphagnum' : mediumIn(p, d);
   });
+  s.aloSoil = true;
 }
 
 function initBonus(s) {
