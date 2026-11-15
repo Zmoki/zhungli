@@ -241,8 +241,10 @@ function migrateV3(s) {
   const wasSphagnum = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
   Object.entries(s.plants).forEach(([id, p]) => {
     const k = p.def || id, d = PLANTS.find((c) => c.id === k);
-    if (!d || MEDIA[p.medium]) return;
-    p.medium = wasSphagnum.includes(k) ? 'sphagnum' : mediumIn(p, d);
+    if (!d) return;
+    // The interval kept for the old card way (sphagnum) isn't the soil card's: soil starts from `every`.
+    if (wasSphagnum.includes(k)) delete p.soilInterval;
+    if (!MEDIA[p.medium]) p.medium = wasSphagnum.includes(k) ? 'sphagnum' : mediumIn(p, d);
   });
 }
 

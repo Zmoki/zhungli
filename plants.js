@@ -6,6 +6,7 @@
 // type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
 // feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
+// ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 
 const CHECK_TEXT = {
