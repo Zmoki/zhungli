@@ -152,7 +152,7 @@ let PHOTOS = {};
 
 function blank() {
   return {
-    v: 3, plants: {}, custom: {}, bonus: {}, snooze: {}, rooms: [newRoom('home', 'Комната')], log: {},
+    v: 4, plants: {}, custom: {}, bonus: {}, snooze: {}, rooms: [newRoom('home', 'Комната')], log: {},
     spots: [...SPOTS], settings: { limit: 7 }, hideInstall: false, created: today(),
   };
 }
@@ -195,8 +195,9 @@ function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
   if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
+  if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) s.seen = APP_VERSION; // new users have nothing to catch up on
-  s.v = 3;
+  s.v = 4;
   initBonus(s);
   return s;
 }
@@ -229,6 +230,13 @@ function migrateV2(s, raw) {
   // An older app on another device (Telegram sync) may have saved over a state that already has rooms.
   if (Array.isArray(raw.rooms) && raw.rooms.length) return;
   s.rooms = [{ ...newRoom('home', 'Комната'), ...(r ? { t: r.t, h: r.h, d: r.d } : {}) }];
+}
+
+// v3: the alocasia cards were in sphagnum, now in soil. Alocasias added before stay in sphagnum,
+// so their checks and tips don't change under them.
+function migrateV3(s) {
+  const was = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
+  Object.entries(s.plants).forEach(([id, p]) => { if (!p.medium && was.includes(p.def || id)) p.medium = 'sphagnum'; });
 }
 
 function initBonus(s) {
@@ -362,9 +370,12 @@ const stateChips = (p, words, st = states(p)) => st.map((k) => (words
   ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
   : `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
 
+// The first «20–25 °C» in the card's conditions, plus its floor: «не ниже 16 °C» if given, else the range's low end.
 function tempRange(p) {
   const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
-  return m ? [Number(m[1]), Number(m[2])] : null;
+  if (!m) return null;
+  const floor = /не ниже\s*(\d+)\s*°C/.exec(p.cond);
+  return [Number(m[1]), Number(m[2]), floor ? Number(floor[1]) : Number(m[1])];
 }
 
 const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.spots.length : 99) : i; };
