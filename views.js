@@ -484,12 +484,11 @@ function roomCard(rm, ps, many) {
       notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Включите увлажнитель${humidOnes.length ? `: особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
     }
     if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха ведут к грибкам. Следите за сфагнумом.`]);
-    status = notes.length
-      ? notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
-      : !ps.length ? ''
-      // Above every card's floor («не ниже 16 °C») but below the range they all like: fine, not ideal.
-      : ranges.length && lo <= hi && rm.t < lo ? `<div class="status ok">${I('smile')}<span>Терпимо для всех. Удобнее всего при ${lo}–${hi} °C.</span></div>`
-      : `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>`;
+    // Above every card's floor («не ниже 16 °C») but below the range they all like: fine, not ideal.
+    const mild = !cold.length && ranges.length && lo <= hi && rm.t < lo;
+    status = notes.map(([i, n]) => `<div class="status warn">${I(i)}<span>${n}</span></div>`).join('')
+      + (mild ? `<div class="status ok">${I('smile')}<span>Терпимо для всех. Удобнее всего при ${lo}–${hi} °C.</span></div>`
+        : !notes.length && ps.length ? `<div class="status ok">${I('smile')}<span>Всем комфортно. Так держать!</span></div>` : '');
   }
   const ago = has ? (rm.d === today() ? 'сегодня' : rel(rm.d)) : '';
   const name = esc(rm.name);

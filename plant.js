@@ -287,8 +287,8 @@ function setWay(id, medium, watering) {
   const stale = medium !== from.medium ? ['water', 'soil'] : ['water'];
   if (r.own) stale.forEach((k) => { if (r.own[k] !== undefined) { if (r.own[k]) r.notes = [...(r.notes || []), r.own[k]]; delete r.own[k]; } });
   if (r.own && !Object.keys(r.own).length) delete r.own;
-  delete r.medium; delete r.watering; delete r.wick;
-  if (medium !== d.type) r.medium = medium;
+  delete r.watering; delete r.wick;
+  r.medium = medium; // kept even when it's the card's, so a later change of the card doesn't move the plant
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
   const base = r.soilInterval || d.every;
   if (isCardWay(r, d)) { r.interval = base; delete r.soilInterval; } else r.interval = (wayOf({ type: medium, watering }).start || ((b) => b))(base);

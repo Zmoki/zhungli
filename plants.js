@@ -20,6 +20,12 @@ const CHECK_TEXT = {
   water: 'Пора сменить воду?',
 };
 
+// Alocasias in sphagnum (our experience, no source says so): tips for plants grown that way instead of the cards' soil.
+const ALO_SPHAGNUM = { sphagnum: {
+  water: 'Поливать, когда сфагнум внутри подсох. Воду в кашпо не оставлять.',
+  soil: 'Сфагнум, не утрамбовывать. Корням нужны тепло и воздух.',
+} };
+
 const PLANTS = [
   // Generic types for plants not in the list. The interval adjusts from the answers anyway.
   {
@@ -100,17 +106,17 @@ const PLANTS = [
   },
   {
     id: 'alo-regal', species: 'Алоказия Regal Shields', cat: 'Ароидные', humid: true, emoji: '🛡️', toxic: true,
-    lux: [10000, 20000], every: 4, type: 'soil', big: true,
+    lux: [10000, 20000], every: 7, type: 'soil', ways: ALO_SPHAGNUM, big: true,
     check: 'Верхние 5 см сухие?',
     water: 'Поливать после подсыхания верхних 5 см. Лишнюю воду из поддона слить.',
     soil: 'Рыхлая смесь с дренажом: торф, перлит и кора. Не держать постоянно мокрой, корням нужны тепло и воздух.',
-    cond: '20–25 °C днём, не ниже 16 °C; влажность воздуха желательно 50–70%.',
+    cond: '20–25 °C днём, не ниже 16 °C; влажность воздуха средняя или высокая.',
     tip: 'Крупные листья любят стабильное тепло и яркий рассеянный свет. Беречь от холода.',
     quips: ['Я щит. Щиты не любят холод.', 'Каждый новый лист для меня событие. Вы же следите?', 'Тепло, свет и чтобы не мокро. Я простая.'],
   },
   {
     id: 'alo-black', species: 'Алоказия Black Stem', cat: 'Ароидные', humid: true, emoji: '🖤', toxic: true,
-    lux: [10000, 20000], every: 4, type: 'soil',
+    lux: [10000, 20000], every: 7, type: 'soil', ways: ALO_SPHAGNUM,
     check: 'Верхние 5 см сухие?',
     water: 'Поливать после подсыхания верхних 5 см. Воду в кашпо не оставлять.',
     soil: 'Рыхлая смесь с дренажом: торф, перлит и кора.',
@@ -120,7 +126,7 @@ const PLANTS = [
   },
   {
     id: 'alo-cuc', species: 'Алоказия Cucullata', cat: 'Ароидные', humid: true, emoji: '💚', toxic: true,
-    lux: [8000, 18000], every: 5, type: 'soil',
+    lux: [8000, 18000], every: 7, type: 'soil', ways: ALO_SPHAGNUM,
     check: 'Верхние 5 см сухие?',
     water: 'Поливать после подсыхания верхних 5 см.',
     soil: 'Рыхлая смесь с дренажом: торф, перлит и кора.',
@@ -130,7 +136,7 @@ const PLANTS = [
   },
   {
     id: 'alo-polly', species: 'Алоказия Polly', cat: 'Ароидные', humid: true, emoji: '🗿', toxic: true,
-    lux: [10000, 20000], every: 4, type: 'soil',
+    lux: [10000, 20000], every: 7, type: 'soil', ways: ALO_SPHAGNUM,
     check: 'Верхние 5 см сухие?',
     water: 'Поливать, как только подсохнут верхние 5 см. Воду в поддоне не оставлять.',
     soil: 'Рыхлая смесь с дренажом: торф, перлит и кора. Корням нужен воздух.',
@@ -140,7 +146,7 @@ const PLANTS = [
   },
   {
     id: 'alo-silver', species: 'Алоказия Silver Dragon', cat: 'Ароидные', humid: true, emoji: '🐉', toxic: true,
-    lux: [8000, 16000], every: 5, type: 'soil',
+    lux: [8000, 16000], every: 7, type: 'soil', ways: ALO_SPHAGNUM,
     check: 'Верхние 5 см сухие?',
     water: 'Поливать после подсыхания верхних 5 см. Лишнюю воду из поддона слить.',
     soil: 'Рыхлая смесь с дренажом: торф, перлит и кора. Не уплотнять и не держать мокрой.',

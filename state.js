@@ -112,8 +112,10 @@ const labelsOf = (p) => wayOf(p).labels;
 function careOf(d, r) {
   const k = mediumIn(r, d), m = MEDIA[k], w = wateringIn(r, d);
   const own = isCardWay(r, d), sameMedium = k === d.type;
-  const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : m.water;
-  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || m.soil };
+  // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
+  const alt = (!sameMedium && d.ways && d.ways[k]) || {};
+  const waterTip = w && w !== 'top' ? [WATERING[w].water, m.feedTip].filter(Boolean).join(' ') : alt.water || m.water;
+  return { ...d, check: own ? d.check : '', water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
@@ -232,11 +234,16 @@ function migrateV2(s, raw) {
   s.rooms = [{ ...newRoom('home', 'Комната'), ...(r ? { t: r.t, h: r.h, d: r.d } : {}) }];
 }
 
-// v3: the alocasia cards were in sphagnum, now in soil. Alocasias added before stay in sphagnum,
-// so their checks and tips don't change under them.
+// v3: catalog plants stored their medium only when it wasn't the card's, so a card's new `type` moved
+// them all. Now each keeps the medium it grows in. The alocasia cards moved from sphagnum to soil
+// in v100: alocasias added before that stay in sphagnum.
 function migrateV3(s) {
-  const was = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
-  Object.entries(s.plants).forEach(([id, p]) => { if (!p.medium && was.includes(p.def || id)) p.medium = 'sphagnum'; });
+  const wasSphagnum = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
+  Object.entries(s.plants).forEach(([id, p]) => {
+    const k = p.def || id, d = PLANTS.find((c) => c.id === k);
+    if (!d || MEDIA[p.medium]) return;
+    p.medium = wasSphagnum.includes(k) ? 'sphagnum' : mediumIn(p, d);
+  });
 }
 
 function initBonus(s) {
@@ -267,7 +274,7 @@ function addPlants(keys) {
     .sort((a, b) => a.every - b.every)
     .forEach((d, i) => {
       const id = newId('p', i);
-      S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id };
+      S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id, medium: mediumIn({}, d) };
       ids.push(id);
     });
   initBonus(S);
