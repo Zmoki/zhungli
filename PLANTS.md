@@ -31,6 +31,15 @@ Record fields:
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
+### Changing the card
+
+«Сменить карточку» in the plant card's «Настройки» opens the catalog with its search and moves the plant to the picked card (`setCard` in `plant.js`): someone who picked «Орхидея на коре» for a phalaenopsis doesn't have to remove it and lose its history. Only `def` points elsewhere; the rest of the record stays.
+- **Medium and watering** stay: the roots don't move with the card. If they differ from the new card's way, that way's tips stand in (see [How it grows](#how-it-grows)), and the toast says the way was kept.
+- **`own`:** edits of the old card's tips become notes (unless they match the new card's tip), and hidden tips show again: they were written against the old card.
+- **Interval:** a plant never watered starts from the new card's `every` (or its way's start). A learned one is kept, within the new card's bounds on its way. `soilInterval` is dropped, so going back to the card's way starts from the new `every`.
+- `species` is dropped when it equals the new card's name. Dusting and turning follow the new card's `big` and `rotate`.
+- Own and imported plants (`S.custom`) have no catalog card: the control isn't shown for them.
+
 ## How it grows
 
 Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a pot, how water gets to them (`WATERING`). The same pon can be watered from above, by a wick or from a reservoir. A card's `type` is its usual medium and `watering` its usual watering (default `top`). «В чём растёт» and «Как поливаю» in the plant card pick others. A card's `ways` can give its own check question, watering and substrate tips for another medium (alocasias and phalaenopsis in sphagnum); otherwise the medium's general ones stand in. The check and watering tip only apply to watering from above. `noFeed` there keeps the plant off feeding days in that medium (phalaenopsis in sphagnum, like orchids on bark).
