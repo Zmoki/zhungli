@@ -6,6 +6,8 @@
 // type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
 // feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
+// noBadge: no badge or filter chip for the card's own type, when it doesn't say where the plant really is
+//   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 // toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
@@ -771,7 +773,7 @@ const PLANTS = [
     quips: ['Мои листья не мочите, пожалуйста.', 'Чуть влажно, и я цвету.', 'Проветривайте, но без сквозняков.'],
   },
   {
-    id: 'tillandsia', species: 'Тилландсия', cat: 'Цветущие и орхидеи', emoji: '🌾',
+    id: 'tillandsia', species: 'Тилландсия', cat: 'Цветущие и орхидеи', emoji: '🌾', noBadge: true,
     aka: 'тилландсия, воздушное растение, атмосферная, air plant, tillandsia, ионанта, ксерографика, усния, испанский мох',
     hint: 'атмосферная, без грунта',
     lux: [8000, 20000], every: 4, type: 'mount', check: 'Листья посветлели и стали мягче?',
