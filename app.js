@@ -95,7 +95,8 @@ function announce(msg) {
   const r = $(sheet.open ? '#sheet-live' : '#live');
   if (r.textContent !== msg) { r.textContent = msg; return; }
   r.textContent = '';
-  setTimeout(() => { r.textContent = msg; }, 100);
+  const open = sheet.open;
+  setTimeout(() => { if (sheet.open === open) r.textContent = msg; }, 100); // not into a sheet closed meanwhile
 }
 
 function confetti() {
