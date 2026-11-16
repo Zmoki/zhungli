@@ -321,7 +321,7 @@ function setCard(id, key) {
   const way = { medium, watering }, newCare = careOf(d, way);
   // What undo puts back: only what this change touched, so edits made since stay.
   const prev = Object.fromEntries(CARD_FIELDS.map((k) => [k, k === 'own' && r.own ? { ...r.own } : r[k]]));
-  const prevBonus = ['dust', 'rotate'].flatMap((k) => [[S.bonus, `${k}:${id}`], [S.snooze, `${k}:${id}`]]).map(([o, k]) => [o, k, o[k]]);
+  const prevBonus = ['dust', 'rotate'].map((k) => `${k}:${id}`).map((k) => [k, S.bonus[k], S.snooze[k]]);
   const moved = [];
   if (r.own) {
     NOTE_KEYS.forEach(([k]) => {
@@ -352,11 +352,12 @@ function setCard(id, key) {
   const restore = () => {
     const x = S.plants[id];
     if (!x) return false;
-    Object.entries(prev).forEach(([k, v]) => { if (v === undefined) delete x[k]; else x[k] = v; });
+    const put = (o, k, v) => { if (v === undefined) delete o[k]; else o[k] = v; };
+    Object.entries(prev).forEach(([k, v]) => put(x, k, v));
     // Only the notes this change made go.
     moved.forEach((t) => { const i = (x.notes || []).lastIndexOf(t); if (i >= 0) x.notes.splice(i, 1); });
     if (x.notes && !x.notes.length) delete x.notes;
-    prevBonus.forEach(([o, k, v]) => { if (v === undefined) delete o[k]; else o[k] = v; });
+    prevBonus.forEach(([k, b, z]) => { put(S.bonus, k, b); put(S.snooze, k, z); });
     initBonus(S);
     return true;
   };
@@ -589,7 +590,7 @@ function addSpot(id, how) {
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }
   box.querySelectorAll('[data-act="spot"]').forEach((c) => c.classList.toggle('on', c === chip));
   spotForm(false, chip);
-  $('#live').textContent = `Место: ${s}`;
+  announce(`Место: ${s}`);
 }
 document.addEventListener('submit', (e) => {
   const form = e.target.closest('.new-spot');

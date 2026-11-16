@@ -26,11 +26,11 @@ function openSheet() {
 // Re-render here: the close event doesn't fire in every browser. Where it does, it comes a moment
 // later and skips its own render, so the list isn't built twice.
 let closedByUs = false;
-function closeSheet() { endAddFlow(); if (sheet.open) { closedByUs = true; sheet.close(); } render(); }
+function closeSheet() { endAddFlow(); toastToPage(); if (sheet.open) { closedByUs = true; sheet.close(); } render(); }
 ACTS.close = () => closeSheet();
 sheet.addEventListener('close', () => { // closed by swipe, Esc or the close button
   if (closedByUs) { closedByUs = false; return; }
-  endAddFlow(); render();
+  toastToPage(); endAddFlow(); render();
 });
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
@@ -41,28 +41,42 @@ function toast(msg, undo) {
   el.className = 'toast';
   el.innerHTML = esc(msg) + (undo ? ' <button class="undo" id="undo">Отменить</button>' : '');
   // An open sheet is a modal <dialog>: it covers the page and makes the rest of it inert, so a toast in
-  // the page can't be seen or tapped. There the toast goes into the sheet and shows above it as a popover.
+  // the page can't be seen or tapped. There the toast goes into the sheet and shows above it as a popover;
+  // without popovers (iOS 16) it sticks to the sheet's bottom edge instead.
   if (sheet.open) {
     sheet.append(el);
-    if (el.showPopover) { el.popover = 'manual'; el.showPopover(); }
+    if (el.showPopover) { el.popover = 'manual'; el.showPopover(); } else el.classList.add('in-sheet');
   } else document.body.append(el);
-  $('#live').textContent = msg;
+  announce(msg);
   clearTimeout(toastTimer);
-  document.removeEventListener('pointerdown', toastAway, true);
+  TOAST_AWAY.forEach((t) => document.removeEventListener(t, toastAway, true));
   if (undo) {
-    // No time limit while undo is offered: it stays until the next tap elsewhere.
+    // No time limit while undo is offered: it stays until anything else is tapped or changed,
+    // so undo never takes back more than the action it was offered for.
     el.querySelector('.undo').onclick = () => { undo(); el.remove(); };
-    setTimeout(() => document.addEventListener('pointerdown', toastAway, true), 0);
+    setTimeout(() => TOAST_AWAY.forEach((t) => document.addEventListener(t, toastAway, true)), 0);
   } else {
     toastTimer = setTimeout(() => el.remove(), 4500);
   }
 }
+// Taps (also from the keyboard: click) and field changes elsewhere close an undo toast.
+const TOAST_AWAY = ['pointerdown', 'click', 'change'];
 function toastAway(e) {
   const el = document.querySelector('.toast');
   if (el && el.contains(e.target)) return;
-  document.removeEventListener('pointerdown', toastAway, true);
+  TOAST_AWAY.forEach((t) => document.removeEventListener(t, toastAway, true));
   el?.remove();
 }
+// When the sheet closes, a toast shown over it moves back to the page, so it's still there to read.
+function toastToPage() {
+  const el = $('#sheet > .toast');
+  if (!el) return;
+  try { el.removeAttribute('popover'); } catch (e) { /* hides it, if it was shown */ }
+  el.classList.remove('in-sheet');
+  document.body.append(el);
+}
+// Screen readers: the page's live region is inert under an open sheet, which has its own.
+function announce(msg) { $(sheet.open ? '#sheet-live' : '#live').textContent = msg; }
 
 function confetti() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
