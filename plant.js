@@ -447,6 +447,7 @@ document.addEventListener('change', (e) => {
     const p = plant(id);
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
+    if (f === 'species') heroChanged(id); // an own species brings back the «в воде» badge of a water card
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; $('#gh-hint').innerHTML = ghHint(el.checked); track('greenhouse_toggled', { on: el.checked }); }
