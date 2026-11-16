@@ -26,37 +26,77 @@ function openSheet() {
 // Re-render here: the close event doesn't fire in every browser. Where it does, it comes a moment
 // later and skips its own render, so the list isn't built twice.
 let closedByUs = false;
-function closeSheet() { endAddFlow(); if (sheet.open) { closedByUs = true; sheet.close(); } render(); }
+function closeSheet() { endAddFlow(); sheetClosed(); if (sheet.open) { closedByUs = true; sheet.close(); } render(); }
 ACTS.close = () => closeSheet();
 sheet.addEventListener('close', () => { // closed by swipe, Esc or the close button
   if (closedByUs) { closedByUs = false; return; }
-  endAddFlow(); render();
+  if (sheet.open) return; // opened again before this event came
+  sheetClosed(); endAddFlow(); render();
 });
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
 let toastTimer;
 function toast(msg, undo) {
   document.querySelector('.toast')?.remove();
+  document.querySelector('.toast-dock')?.remove();
   const el = document.createElement('div');
   el.className = 'toast';
   el.innerHTML = esc(msg) + (undo ? ' <button class="undo" id="undo">Отменить</button>' : '');
-  document.body.append(el);
-  $('#live').textContent = msg;
+  // An open sheet is a modal <dialog>: it covers the page and makes the rest of it inert, so a toast in
+  // the page can't be seen or tapped. There the toast goes into the sheet and shows above it as a popover,
+  // placed right after the focused control so «Отменить» is the next Tab stop. Without popovers (iOS 16)
+  // it sits in a zero-height dock stuck to the sheet's bottom edge, so the sheet's layout doesn't move.
+  if (sheet.open && el.showPopover) {
+    const at = document.activeElement;
+    // Not inside a label: a tap on the toast would toggle its checkbox.
+    if (at && at !== sheet && $('#sheet-body').contains(at)) (at.closest('label') || at).after(el); else sheet.append(el);
+    el.popover = 'manual';
+    el.showPopover();
+  } else if (sheet.open) {
+    const dock = document.createElement('div');
+    dock.className = 'toast-dock';
+    dock.append(el);
+    sheet.append(dock);
+  } else document.body.append(el);
+  announce(msg);
   clearTimeout(toastTimer);
-  document.removeEventListener('pointerdown', toastAway, true);
+  TOAST_AWAY.forEach((t) => document.removeEventListener(t, toastAway, true));
   if (undo) {
-    // No time limit while undo is offered: it stays until the next tap elsewhere.
+    // No time limit while undo is offered: it stays until anything else is tapped or changed,
+    // so undo never takes back more than the action it was offered for.
     el.querySelector('.undo').onclick = () => { undo(); el.remove(); };
-    setTimeout(() => document.addEventListener('pointerdown', toastAway, true), 0);
+    setTimeout(() => TOAST_AWAY.forEach((t) => document.addEventListener(t, toastAway, true)), 0);
   } else {
     toastTimer = setTimeout(() => el.remove(), 4500);
   }
 }
+// Taps (also from the keyboard: click) and field changes elsewhere close an undo toast.
+const TOAST_AWAY = ['pointerdown', 'click', 'change'];
 function toastAway(e) {
   const el = document.querySelector('.toast');
   if (el && el.contains(e.target)) return;
-  document.removeEventListener('pointerdown', toastAway, true);
+  TOAST_AWAY.forEach((t) => document.removeEventListener(t, toastAway, true));
   el?.remove();
+}
+// When the sheet closes, a toast shown over it moves back to the page, so it's still there to read,
+// and the sheet's live region is emptied, so the next sheet doesn't carry an old message.
+function sheetClosed() {
+  $('#sheet-live').textContent = '';
+  const el = sheet.querySelector('.toast');
+  if (el) {
+    try { el.removeAttribute('popover'); } catch (e) { /* hides it, if it was shown */ }
+    document.body.append(el);
+  }
+  sheet.querySelector('.toast-dock')?.remove();
+}
+// Screen readers: the page's live region is inert under an open sheet, which has its own.
+// The same message again is set after a pause: an unchanged text isn't announced.
+function announce(msg) {
+  const r = $(sheet.open ? '#sheet-live' : '#live');
+  if (r.textContent !== msg) { r.textContent = msg; return; }
+  r.textContent = '';
+  const open = sheet.open;
+  setTimeout(() => { if (sheet.open === open) r.textContent = msg; }, 100); // not into a sheet closed meanwhile
 }
 
 function confetti() {

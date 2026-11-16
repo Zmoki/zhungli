@@ -92,6 +92,8 @@ function wateringIn(r, d) {
   return r.wick ? 'wick' : WATERING[r.watering] ? r.watering : WATERING[d.watering] ? d.watering : 'top';
 }
 const isCardWay = (r, d) => mediumIn(r, d) === d.type && wateringIn(r, d) === cardWatering(d);
+// Interval bounds on the card's way: within the card's range, and never past the way's own limits (a terrarium: 60 days at most).
+const cardBounds = (d, way) => [Math.max(1, d.every * 0.4, way.min || 0), Math.min(d.every * 3, way.max || Infinity)];
 // Everything about a way of growing at once: the watering's fields over the medium's. Built once per pair.
 const WAYS = new Map();
 function wayOf(p) {
@@ -464,10 +466,7 @@ function actWater(id, silent) {
     const iv = r.wet > 0 ? (r.interval + measured) / 2 : Math.min(r.interval, (r.interval + measured) / 2) * 0.95;
     // Grown another way than the card says (a wick reservoir, water…), the card's interval doesn't apply: wider bounds.
     const way = wayOf({ type: mediumIn(r, d), watering: wateringIn(r, d) });
-    // On the card's way: within the card's range, and never past the way's own limits (a terrarium: 60 days at most).
-    r.interval = isCardWay(r, d)
-      ? clamp(iv, Math.max(1, d.every * 0.4, way.min || 0), Math.min(d.every * 3, way.max || Infinity))
-      : clamp(iv, way.min || 1, way.max || 45);
+    r.interval = isCardWay(r, d) ? clamp(iv, ...cardBounds(d, way)) : clamp(iv, way.min || 1, way.max || 45);
   }
   r.lastWater = t;
   r.wet = 0;

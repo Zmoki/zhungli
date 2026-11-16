@@ -517,12 +517,16 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* Toast + confetti */
 .toast {
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 104px); transform: translateX(-50%);
+  position: fixed; inset: auto; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 104px);
+  width: fit-content; margin: 0 auto; border: 0; overflow: visible;
   background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 99px; font-size: 0.941rem; font-weight: 800;
-  z-index: 20; max-width: calc(100vw - 32px); text-align: center; animation: pop .25s ease;
+  z-index: 20; max-width: 528px; text-align: center; animation: pop .25s ease;
 }
+/* Over an open sheet where popovers aren't supported (iOS 16): in a zero-height dock stuck to the sheet's bottom edge. */
+.toast-dock { position: sticky; z-index: 20; bottom: calc(env(safe-area-inset-bottom) + 24px); height: 0; }
+.toast-dock .toast { position: absolute; bottom: 0; }
 .toast .undo { border: 0; background: none; color: var(--bg); font: inherit; font-weight: 700; margin: -10px -6px -10px 4px; padding: 12px 10px; min-height: 44px; text-decoration: underline; }
-@keyframes pop { from { transform: translate(-50%, 10px); opacity: 0; } }
+@keyframes pop { from { transform: translateY(10px); opacity: 0; } }
 .confetti { position: fixed; top: -40px; z-index: 30; font-size: 26px; pointer-events: none; animation: fall linear forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
 

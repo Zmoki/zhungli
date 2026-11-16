@@ -9,10 +9,13 @@ let picked = new Set();
 // Title of the generic group in the full list; during a search it's just «Общие типы».
 const GENERIC_TITLE = 'Общие типы (если нет в списке)';
 const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
-function pickRow(d) {
+// A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
+function pickRow(d, changeFor, nowId) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
-  return `<button class="pick" data-act="pick" data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
-    <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc" aria-hidden="true">${I('plus')}</span></button>`;
+  const now = !!changeFor && nowId === d.id;
+  const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
+  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
+    <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${now ? 'сейчас · ' : ''}${meta}</small></span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
 let addFlow = null;
@@ -27,14 +30,23 @@ function endAddFlow(leftApp = false) {
   addFlow = null;
 }
 let searchTimer;
+// The catalog by groups under a search box: in the add sheet and when changing a plant's card (`changeFor`).
+function catalogHtml(changeFor) {
+  const groups = {};
+  PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
+  const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
+  const nowId = changeFor && def(changeFor).id;
+  return `<div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
+    ${changeFor ? '' : '<p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>'}
+    <div id="pick-none" class="pick-none" hidden></div>
+    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
+      ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
+}
 function openAdd() {
   picked = new Set();
   if (!sheet.open) endAddFlow(); // the close event doesn't fire in every browser
   startAddFlow('catalog');
   track('add_opened', { from: tab });
-  const groups = {};
-  PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
-  const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
@@ -45,15 +57,17 @@ function openAdd() {
       <span class="pt"><b>Своё растение</b><small>Напишите название и на что похоже, а уход я подберу.</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <div class="or">или выберите из каталога</div>
-    <div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
-    <p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>
-    <div id="pick-none" class="pick-none" hidden></div>
-    ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
-      ${groups[c].map(pickRow).join('')}</div>`).join('')}
+    ${catalogHtml()}
     <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+  catalogSearch();
+  openSheet();
+}
+// The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
+// events: whether one was made goes with `card_changed`.
+function catalogSearch(changeFor) {
   const pickGroups = [...document.querySelectorAll('.pick-group')];
-  const pickEnd = pickGroups[pickGroups.length - 1].nextElementSibling; // the bottom «Своё растение»
+  const pickEnd = $('#pick-end');
   const genericTitle = document.querySelector('.pick-group[data-generic] .group-title');
   let shownOrder = pickGroups;
   $('#pick-q').addEventListener('input', (e) => {
@@ -88,16 +102,18 @@ function openAdd() {
     // «(если нет в списке)» only reads right at the end of the full list.
     genericTitle.textContent = words.length ? 'Общие типы' : GENERIC_TITLE;
     // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
+    // Changing a card there's no own plant to offer: just the generic types.
     const none = $('#pick-none');
     none.hidden = any;
     if (!any) {
       none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
-        <button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>
-        <p class="mt-12 small muted">Или выберите похожий общий тип, уход у них почти одинаковый:</p>`;
+        ${changeFor ? '' : `<button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>`}
+        <p class="mt-12 small muted">${changeFor ? 'Выберите' : 'Или выберите'} похожий общий тип, уход у них почти одинаковый:</p>`;
       const g = document.querySelector('.pick-group[data-generic]');
       g.hidden = false;
       g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
     }
+    if (changeFor) { if (raw) cardSearched = true; return; }
     // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
     // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
     if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
@@ -109,7 +125,6 @@ function openAdd() {
       }, 1200);
     }
   });
-  openSheet();
 }
 // «Добавить N растений» at the bottom of the catalog and the import list.
 function setAddButton(b, n, emptyText) {

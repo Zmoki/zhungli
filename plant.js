@@ -207,7 +207,11 @@ function openPlant(id, tabKey) {
       <section class="group" aria-labelledby="g-name"><h3 id="g-name">Имя</h3>
         <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
-          ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div></section>
+          ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
+        ${isCustom(id) ? '' : `<div class="field" role="group" aria-labelledby="lbl-card"><label id="lbl-card">Карточка ухода</label>
+          <p class="m-0" id="card-now">${esc(def(id).species)}</p>
+          <p class="mt-6 small muted" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
+          <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-now card-hint">${I('arrow-left-right')}Сменить карточку</button></div>`}</section>
 
       <section class="group" aria-labelledby="g-place"><h3 id="g-place">Где стоит</h3>
         ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
@@ -299,6 +303,83 @@ function setWay(id, medium, watering) {
   if (settle) r.repotted = today();
   initBonus(S);
   return { from, settle };
+}
+
+// Moves a plant to another catalog card, say from the generic «Орхидея на коре» to «Фаленопсис».
+// What belongs to the plant stays: name, room, spot, photo, notes, history, light reading, greenhouse.
+// The roots don't move with the card: the plant keeps its medium and watering, now told against the new
+// card. If they differ from the new card's way, that way's tips stand in, as after «В чём растёт».
+// Own edits of the old card's tips (`own`) become notes, so the new card's tips show and nothing typed
+// is lost; tips hidden on the old card show again. The interval learned from waterings is kept (within
+// the new card's bounds on its way); a plant never watered starts from the new card's.
+// Own plants (S.custom) have no catalog card to change. Returns what changed and `restore()` for undo, or null.
+const CARD_FIELDS = ['def', 'own', 'species', 'medium', 'watering', 'wick', 'soilInterval', 'interval', 'nextCheck'];
+function setCard(id, key) {
+  const r = S.plants[id], from = def(id), d = PLANTS.find((c) => c.id === key);
+  if (!r || !d || !from || d === from || isCustom(id)) return null;
+  const medium = mediumIn(r, from), watering = wateringIn(r, from);
+  const way = { medium, watering }, newCare = careOf(d, way);
+  // What undo puts back: only what this change touched, so edits made since stay.
+  const prev = Object.fromEntries(CARD_FIELDS.map((k) => [k, k === 'own' && r.own ? { ...r.own } : r[k]]));
+  const prevBonus = ['dust', 'rotate'].map((k) => `${k}:${id}`).map((k) => [k, S.bonus[k], S.snooze[k]]);
+  const moved = [];
+  if (r.own) {
+    NOTE_KEYS.forEach(([k]) => {
+      const t = r.own[k];
+      if (t === undefined) return;
+      if (t && t !== newCare[k]) { r.notes = [...(r.notes || []), t]; moved.push(t); }
+      delete r.own[k];
+    });
+    if (!Object.keys(r.own).length) delete r.own;
+  }
+  r.def = d.id;
+  if (r.species === d.species) delete r.species;
+  delete r.watering; delete r.wick; delete r.soilInterval;
+  r.medium = medium;
+  if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
+  const onWay = isCardWay(r, d), g = wayOf({ type: medium, watering }), before = Math.round(r.interval);
+  if (!r.lastWater) r.interval = onWay ? d.every : (g.start || ((b) => b))(d.every);
+  else if (onWay) r.interval = clamp(r.interval, ...cardBounds(d, g));
+  // A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
+  const iv = Math.round(r.interval), putOff = (S.log[today()] || []).some((e) => e.id === id && e.a === 'later');
+  if (iv !== before && !r.wet && !putOff) {
+    const next = addDays(r.lastWater || today(), iv);
+    r.nextCheck = r.lastWater ? (next < today() ? today() : next) : (next < r.nextCheck ? next : r.nextCheck);
+  }
+  // Leaf dusting and turning come from the card.
+  [['dust', d.big], ['rotate', d.rotate]].forEach(([k, on]) => { if (!on) { delete S.bonus[`${k}:${id}`]; delete S.snooze[`${k}:${id}`]; } });
+  initBonus(S);
+  const restore = () => {
+    const x = S.plants[id];
+    if (!x) return false;
+    const put = (o, k, v) => { if (v === undefined) delete o[k]; else o[k] = v; };
+    Object.entries(prev).forEach(([k, v]) => put(x, k, v));
+    // Only the notes this change made go.
+    moved.forEach((t) => { const i = (x.notes || []).lastIndexOf(t); if (i >= 0) x.notes.splice(i, 1); });
+    if (x.notes && !x.notes.length) delete x.notes;
+    prevBonus.forEach(([k, b, z]) => { put(S.bonus, k, b); put(S.snooze, k, z); });
+    initBonus(S);
+    return true;
+  };
+  return { from, to: d, moved: moved.length, sameMedium: medium === d.type, restore };
+}
+
+// «Другая карточка»: the add sheet's catalog and search (catalogHtml, catalogSearch in add.js); a tap picks the new card.
+// Searches here aren't reported as catalog searches: only whether one was made goes with `card_changed`.
+let cardSearched = false;
+function openCardPicker(id) {
+  const d = def(id);
+  if (!d || isCustom(id)) return;
+  cardSearched = false;
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-head"><button class="icon-btn" data-act="card-back" data-id="${esc(id)}" aria-label="Назад к растению">${I('arrow-left')}</button>
+      <h2 class="m-0" tabindex="-1">Другая карточка</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
+    <p class="small muted">Сейчас: ${esc(d.species)}. Уход и подсказки будут из новой карточки. Имя, место, фото, заметки, история полива и замер света останутся.</p>
+    ${catalogHtml(id)}`;
+  catalogSearch(id);
+  openSheet();
+  $('#sheet-body h2').focus();
 }
 
 // The status, greenhouse and way badges on the card photo (and its drawing) follow a change right away.
@@ -415,6 +496,24 @@ Object.assign(ACTS, {
   'spot-new'(el, id) { addSpot(id, 'button'); },
   'way-medium'(el, id) { changeWay(id, 'medium', el.dataset.way); },
   'way-watering'(el, id) { changeWay(id, 'watering', el.dataset.way); },
+  'card-change'(el, id) { openCardPicker(id); },
+  'card-back'(el, id) { openPlant(id, 'settings'); $('[data-act="card-change"]').focus(); },
+  'card-pick'(el, id) {
+    if (el.dataset.key === def(id).id) { ACTS['card-back'](el, id); return; }
+    const res = setCard(id, el.dataset.key);
+    if (!res) return;
+    save();
+    track('card_changed', { from_card: res.from.id, to_card: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
+      same_medium: res.sameMedium, notes_moved: res.moved, searched: cardSearched });
+    ACTS['card-back'](el, id);
+    const undo = () => {
+      if (!res.restore()) return;
+      save();
+      if (sheet.open && cardFor === id) ACTS['card-back'](el, id); else render();
+      toast(`Снова карточка «${res.from.species}»`);
+    };
+    toast(`Теперь карточка «${res.to.species}».${res.sameMedium ? '' : ` Способ выращивания прежний: ${MEDIA[mediumIn(S.plants[id], res.to)].name.toLowerCase()}.`}`, undo);
+  },
   'card-notes'() { showCardTab('notes'); },
   'card-settings'() { showCardTab('settings'); },
   'card-history'() { showCardTab('history'); },
@@ -491,7 +590,7 @@ function addSpot(id, how) {
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }
   box.querySelectorAll('[data-act="spot"]').forEach((c) => c.classList.toggle('on', c === chip));
   spotForm(false, chip);
-  $('#live').textContent = `Место: ${s}`;
+  announce(`Место: ${s}`);
 }
 document.addEventListener('submit', (e) => {
   const form = e.target.closest('.new-spot');
