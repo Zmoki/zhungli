@@ -40,7 +40,12 @@ function toast(msg, undo) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.innerHTML = esc(msg) + (undo ? ' <button class="undo" id="undo">Отменить</button>' : '');
-  document.body.append(el);
+  // An open sheet is a modal <dialog>: it covers the page and makes the rest of it inert, so a toast in
+  // the page can't be seen or tapped. There the toast goes into the sheet and shows above it as a popover.
+  if (sheet.open) {
+    sheet.append(el);
+    if (el.showPopover) { el.popover = 'manual'; el.showPopover(); }
+  } else document.body.append(el);
   $('#live').textContent = msg;
   clearTimeout(toastTimer);
   document.removeEventListener('pointerdown', toastAway, true);

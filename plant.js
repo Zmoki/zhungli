@@ -312,18 +312,22 @@ function setWay(id, medium, watering) {
 // Own edits of the old card's tips (`own`) become notes, so the new card's tips show and nothing typed
 // is lost; tips hidden on the old card show again. The interval learned from waterings is kept (within
 // the new card's bounds on its way); a plant never watered starts from the new card's.
-// Own plants (S.custom) have no catalog card to change. Returns what changed, or null.
+// Own plants (S.custom) have no catalog card to change. Returns what changed and `restore()` for undo, or null.
+const CARD_FIELDS = ['def', 'own', 'species', 'medium', 'watering', 'wick', 'soilInterval', 'interval', 'nextCheck'];
 function setCard(id, key) {
   const r = S.plants[id], from = def(id), d = PLANTS.find((c) => c.id === key);
   if (!r || !d || !from || d === from || isCustom(id)) return null;
   const medium = mediumIn(r, from), watering = wateringIn(r, from);
   const way = { medium, watering }, newCare = careOf(d, way);
-  let moved = 0;
+  // What undo puts back: only what this change touched, so edits made since stay.
+  const prev = Object.fromEntries(CARD_FIELDS.map((k) => [k, k === 'own' && r.own ? { ...r.own } : r[k]]));
+  const prevBonus = ['dust', 'rotate'].flatMap((k) => [[S.bonus, `${k}:${id}`], [S.snooze, `${k}:${id}`]]).map(([o, k]) => [o, k, o[k]]);
+  const moved = [];
   if (r.own) {
     NOTE_KEYS.forEach(([k]) => {
       const t = r.own[k];
       if (t === undefined) return;
-      if (t && t !== newCare[k]) { r.notes = [...(r.notes || []), t]; moved++; }
+      if (t && t !== newCare[k]) { r.notes = [...(r.notes || []), t]; moved.push(t); }
       delete r.own[k];
     });
     if (!Object.keys(r.own).length) delete r.own;
@@ -335,17 +339,46 @@ function setCard(id, key) {
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
   const onWay = isCardWay(r, d), g = wayOf({ type: medium, watering }), before = Math.round(r.interval);
   if (!r.lastWater) r.interval = onWay ? d.every : (g.start || ((b) => b))(d.every);
-  else if (onWay) r.interval = clamp(r.interval, Math.max(1, d.every * 0.4, g.min || 0), Math.min(d.every * 3, g.max || Infinity));
-  // A new interval moves the next check, unless «Ещё влажно» answers set it.
-  const iv = Math.round(r.interval);
-  if (iv !== before && !r.wet) {
+  else if (onWay) r.interval = clamp(r.interval, ...cardBounds(d, g));
+  // A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
+  const iv = Math.round(r.interval), putOff = (S.log[today()] || []).some((e) => e.id === id && e.a === 'later');
+  if (iv !== before && !r.wet && !putOff) {
     const next = addDays(r.lastWater || today(), iv);
     r.nextCheck = r.lastWater ? (next < today() ? today() : next) : (next < r.nextCheck ? next : r.nextCheck);
   }
   // Leaf dusting and turning come from the card.
   [['dust', d.big], ['rotate', d.rotate]].forEach(([k, on]) => { if (!on) { delete S.bonus[`${k}:${id}`]; delete S.snooze[`${k}:${id}`]; } });
   initBonus(S);
-  return { from, to: d, moved, sameMedium: medium === d.type };
+  const restore = () => {
+    const x = S.plants[id];
+    if (!x) return false;
+    Object.entries(prev).forEach(([k, v]) => { if (v === undefined) delete x[k]; else x[k] = v; });
+    // Only the notes this change made go.
+    moved.forEach((t) => { const i = (x.notes || []).lastIndexOf(t); if (i >= 0) x.notes.splice(i, 1); });
+    if (x.notes && !x.notes.length) delete x.notes;
+    prevBonus.forEach(([o, k, v]) => { if (v === undefined) delete o[k]; else o[k] = v; });
+    initBonus(S);
+    return true;
+  };
+  return { from, to: d, moved: moved.length, sameMedium: medium === d.type, restore };
+}
+
+// «Другая карточка»: the add sheet's catalog and search (catalogHtml, catalogSearch in add.js); a tap picks the new card.
+// Searches here aren't reported as catalog searches: only whether one was made goes with `card_changed`.
+let cardSearched = false;
+function openCardPicker(id) {
+  const d = def(id);
+  if (!d || isCustom(id)) return;
+  cardSearched = false;
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-head"><button class="icon-btn" data-act="card-back" data-id="${esc(id)}" aria-label="Назад к растению">${I('arrow-left')}</button>
+      <h2 class="m-0" tabindex="-1">Другая карточка</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
+    <p class="small muted">Сейчас: ${esc(d.species)}. Уход и подсказки будут из новой карточки. Имя, место, фото, заметки, история полива и замер света останутся.</p>
+    ${catalogHtml(id)}`;
+  catalogSearch(id);
+  openSheet();
+  $('#sheet-body h2').focus();
 }
 
 // The status, greenhouse and way badges on the card photo (and its drawing) follow a change right away.
@@ -466,14 +499,18 @@ Object.assign(ACTS, {
   'card-back'(el, id) { openPlant(id, 'settings'); $('[data-act="card-change"]').focus(); },
   'card-pick'(el, id) {
     if (el.dataset.key === def(id).id) { ACTS['card-back'](el, id); return; }
-    const before = JSON.stringify(S);
     const res = setCard(id, el.dataset.key);
     if (!res) return;
     save();
     track('card_changed', { from_card: res.from.id, to_card: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
       same_medium: res.sameMedium, notes_moved: res.moved, searched: cardSearched });
     ACTS['card-back'](el, id);
-    const undo = () => { S = JSON.parse(before); save(); render(); if (sheet.open && cardFor === id) openPlant(id, 'settings'); };
+    const undo = () => {
+      if (!res.restore()) return;
+      save();
+      if (sheet.open && cardFor === id) ACTS['card-back'](el, id); else render();
+      toast(`Снова карточка «${res.from.species}»`);
+    };
     toast(`Теперь карточка «${res.to.species}».${res.sameMedium ? '' : ` Способ выращивания прежний: ${MEDIA[mediumIn(S.plants[id], res.to)].name.toLowerCase()}.`}`, undo);
   },
   'card-notes'() { showCardTab('notes'); },

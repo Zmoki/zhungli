@@ -9,10 +9,10 @@ let picked = new Set();
 // Title of the generic group in the full list; during a search it's just «Общие типы».
 const GENERIC_TITLE = 'Общие типы (если нет в списке)';
 const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
-// A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id), it picks this one.
-function pickRow(d, changeFor) {
+// A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
+function pickRow(d, changeFor, nowId) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
-  const now = changeFor && def(changeFor).id === d.id;
+  const now = !!changeFor && nowId === d.id;
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
   return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
     <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${now ? 'сейчас · ' : ''}${meta}</small></span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
@@ -35,11 +35,12 @@ function catalogHtml(changeFor) {
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
+  const nowId = changeFor && def(changeFor).id;
   return `<div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     ${changeFor ? '' : '<p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>'}
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
-      ${groups[c].map((d) => pickRow(d, changeFor)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
+      ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
 }
 function openAdd() {
   picked = new Set();
@@ -62,23 +63,8 @@ function openAdd() {
   catalogSearch();
   openSheet();
 }
-// Changing a plant's card: the same catalog and search, a tap picks the new card (see setCard in plant.js).
-// Searches here aren't reported as catalog searches: only whether one was made goes with `card_changed`.
-let cardSearched = false;
-function openCardPicker(id) {
-  const d = def(id);
-  if (!d || isCustom(id)) return;
-  cardSearched = false;
-  $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><button class="icon-btn" data-act="card-back" data-id="${esc(id)}" aria-label="Назад к растению">${I('arrow-left')}</button>
-      <h2 class="m-0" tabindex="-1">Другая карточка</h2>
-      <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <p class="small muted">Сейчас: ${esc(d.species)}. Уход и подсказки будут из новой карточки. Имя, место, фото, заметки, история полива и замер света останутся.</p>
-    ${catalogHtml(id)}`;
-  catalogSearch(id);
-  openSheet();
-  $('#sheet-body h2').focus();
-}
+// The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
+// events: whether one was made goes with `card_changed`.
 function catalogSearch(changeFor) {
   const pickGroups = [...document.querySelectorAll('.pick-group')];
   const pickEnd = $('#pick-end');
