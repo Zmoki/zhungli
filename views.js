@@ -531,7 +531,7 @@ function viewRoom() {
     <p class="small muted">Впишите, что показывает датчик рядом с растениями, и я скажу, кому некомфортно.</p>
     ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
-    ${many ? (ps.length ? `<p class="small muted mt-6">${CONDENSATION}</p>` : '') : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату, у каждой будет свой замер.</p>'}
+    ${many ? (ps.some(tempRange) ? `<p class="small muted mt-6">${CONDENSATION}</p>` : '') : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату, у каждой будет свой замер.</p>'}
 
     <h2>Если есть умный дом</h2>
     <p class="small muted">Например, в «Доме с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к умному дому. Датчик влажности и увлажнитель ставьте рядом с растениями.</p>
