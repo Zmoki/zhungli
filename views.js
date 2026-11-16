@@ -468,6 +468,8 @@ function viewLight() {
 
 /* ---------- Rooms ---------- */
 const roomOf = (p) => S.rooms.find((r) => r.id === p.room) || S.rooms[0];
+// Shown with the room's humidity advice: room-wide humidity makes windows sweat in winter.
+const CONDENSATION = 'Зимой при влажности выше 40% на холодных окнах выпадает конденсат, поэтому увлажняйте воздух у растений, а не во всей комнате.';
 const roomsN = (n) => `${n} ${plural(n, 'комната', 'комнаты', 'комнат')}`;
 
 // One room: its reading, who is uncomfortable, and what suits everyone in it.
@@ -485,7 +487,7 @@ function roomCard(rm, ps, many) {
     if (cold.length) notes.push(['snowflake', `Прохладно для: ${cold.map(typedHtml).join(', ')}. Уберите от холодного окна или включите обогреватель.`]);
     if (hot.length) notes.push(['flame', `Жарковато для: ${hot.map(typedHtml).join(', ')}. Проветрите или отодвиньте от горячей батареи.`]);
     if (rm.h < 50) {
-      notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Поставьте увлажнитель рядом с растениями${humidOnes.length ? `: особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
+      notes.push(['droplet-off', `Сухо (${esc(rm.h)}%). Увлажните воздух рядом с растениями${humidOnes.length ? `: особенно страдают ${humidOnes.map(typedHtml).join(', ')}` : ''}.`]);
     }
     if (rm.h > 75) notes.push(['droplets', `Очень влажно (${esc(rm.h)}%). Проветрите: сырость и застой воздуха ведут к грибкам. Следите за сфагнумом.`]);
     // Above every card's floor («не ниже 16 °C») but below the range they all like: fine, not ideal.
@@ -504,7 +506,7 @@ function roomCard(rm, ps, many) {
     ? `<p class="small muted mt-10">Удобно всем здесь: ${lo <= hi ? `${lo}–${hi} °C` : 'общего диапазона нет, смотрите карточки'}, влажность 50–70% рядом с растениями.</p>`
     : `<h2>Чтобы было удобно всем</h2>
     <div class="info"><b>Температура</b>${lo <= hi ? `При ${lo}–${hi} °C комфортно всем вашим растениям.` : 'Общего диапазона нет, смотрите условия в карточках.'}</div>
-    <div class="info"><b>Влажность</b>50–70% рядом с растениями.${humidOnes.length ? ` Если ниже, сохнут кончики листьев у этих растений: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания есть риск грибков. Зимой при влажности выше 40% на холодных окнах выпадает конденсат, поэтому увлажняйте воздух у растений, а не во всей комнате.</div>`;
+    <div class="info"><b>Влажность</b>50–70% рядом с растениями.${humidOnes.length ? ` Если ниже, сохнут кончики листьев у этих растений: ${esc(humidOnes.join(', '))}.` : ''} Выше 75% без проветривания есть риск грибков. ${CONDENSATION}</div>`;
   return `<section class="${many ? 'room' : ''}">${head}
     <div class="room-cards">
       <div class="metric"><div class="lbl">Температура</div><div class="val">${has ? esc(rm.t) + '°' : '—'}</div>
@@ -529,7 +531,7 @@ function viewRoom() {
     <p class="small muted">Впишите, что показывает датчик рядом с растениями, и я скажу, кому некомфортно.</p>
     ${S.rooms.map((rm) => roomCard(rm, ps.filter((p) => roomOf(p) === rm), many)).join('')}
     <button class="mt-12 btn ghost wide" data-act="room-add">Добавить комнату</button>
-    ${many ? '<p class="small muted mt-6">Зимой при влажности выше 40% на холодных окнах выпадает конденсат, поэтому увлажняйте воздух у растений, а не во всей комнате.</p>' : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату, у каждой будет свой замер.</p>'}
+    ${many ? (ps.length ? `<p class="small muted mt-6">${CONDENSATION}</p>` : '') : '<p class="small muted mt-6">Растения в разных комнатах? Добавьте комнату, у каждой будет свой замер.</p>'}
 
     <h2>Если есть умный дом</h2>
     <p class="small muted">Например, в «Доме с Алисой» → Сценарии. Для условий по влажности и температуре датчик должен быть подключён к умному дому. Датчик влажности и увлажнитель ставьте рядом с растениями.</p>
