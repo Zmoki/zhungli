@@ -19,17 +19,18 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
 
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
-// Keys go to the status filter too. Left out: a catalog card's own medium while the card's name shows and
-// already says it (lucky bamboo, cuttings in water), and a watering that is the medium's usual one (clay pebbles
-// on a reservoir). With a species of the user's own («Аглонема» on the cuttings card) the badge is back.
+// Keys go to the status filter too, so every plant in water can be found there. Left out: a watering that is
+// the medium's usual one (clay pebbles on a reservoir). The badge itself is left out when the plant's name or
+// species already says it («Черенки в воде», «Растение в аквариуме»).
 const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
 function growKeys(p) {
   const keys = [];
-  if (growBadge(p.type) && !(p.type === p.cardType && !isCustom(p.id) && p.species === def(p.id).species)) keys.push(p.type);
+  if (growBadge(p.type)) keys.push(p.type);
   if (growBadge(p.watering) && p.watering !== MEDIA[p.type].watering) keys.push(p.watering);
   return keys;
 }
-const growBadges = (p, words) => growKeys(p).slice(0, words ? 2 : 1).map((k) => {
+const saysWay = (p, k) => norm(`${p.title} ${p.species}`).includes(growBadge(k)[1]);
+const growBadges = (p, words) => growKeys(p).filter((k) => !saysWay(p, k)).slice(0, words ? 2 : 1).map((k) => {
   const [icon, word] = growBadge(k);
   return words ? `<span class="mood hero-mood way">${I(icon)}${word}</span>`
     : `<span class="gh way" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;

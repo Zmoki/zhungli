@@ -447,7 +447,6 @@ document.addEventListener('change', (e) => {
     const p = plant(id);
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
-    if (f === 'species') heroChanged(id); // an own species brings back the «в воде» badge of a water card
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'greenhouse') { r.greenhouse = el.checked; $('#gh-hint').innerHTML = ghHint(el.checked); track('greenhouse_toggled', { on: el.checked }); }
@@ -457,7 +456,7 @@ document.addEventListener('change', (e) => {
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
-  if (sheet.open && (f === 'greenhouse' || f === 'lux')) heroChanged(id);
+  if (sheet.open && ['greenhouse', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
