@@ -20,12 +20,13 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
 // Keys go to the status filter too, so every plant in water can be found there. Left out: a watering that is
-// the medium's usual one (clay pebbles on a reservoir). The badge itself is left out when the plant's name or
-// species already says it («Черенки в воде», «Растение в аквариуме»).
+// the medium's usual one (clay pebbles on a reservoir), and a card's own medium on a `noBadge` card
+// (tillandsia). The badge itself is left out when the plant's name or species already says it
+// («Черенки в воде», «Растение в аквариуме»).
 const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
 function growKeys(p) {
   const keys = [];
-  if (growBadge(p.type)) keys.push(p.type);
+  if (growBadge(p.type) && !(p.type === p.cardType && def(p.id).noBadge)) keys.push(p.type);
   if (growBadge(p.watering) && p.watering !== MEDIA[p.type].watering) keys.push(p.watering);
   return keys;
 }
