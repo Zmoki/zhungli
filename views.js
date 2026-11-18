@@ -263,7 +263,10 @@ function viewToday() {
     bonus.forEach((b) => {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
-        buttons: `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
+        buttons: b.contact
+          ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
+          <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
+          : `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
           <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button>`,
       });
     });
@@ -580,6 +583,14 @@ Object.assign(ACTS, {
   'bonus-skip'(el) {
     track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
     bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂');
+  },
+  // The feedback task asks once: «Написать» (the link opens Telegram) and «Не нужно» both put it away for good.
+  'feedback-answer'(el) {
+    S.bonus.feedback = today();
+    track(el.dataset.wrote ? 'bonus_done' : 'bonus_skipped', { kind: 'feedback' });
+    save();
+    // After the link has done its job: re-rendering now would remove it mid-click.
+    setTimeout(() => { render(); if (!el.dataset.wrote) toast('Хорошо, больше не спрошу 🙂'); }, 0);
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
   'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },

@@ -76,8 +76,8 @@ On every event:
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
-| `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) |
-| `bonus_skipped` | bonus task snoozed | `kind` |
+| `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `feedback` («Написать» on «Как вам Жунгли?») |
+| `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
@@ -99,7 +99,7 @@ On every event:
 | `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
-| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile); `from`: `settings` / `news` / `import` |
+| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile); `from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` |
 
 ## Adding an event
 

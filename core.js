@@ -12,7 +12,7 @@ const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform 
 const MINI_APP_LINK = 'https://t.me/ZhungliPlantsBot?startapp';
 // The authors' links, by their `data-out` name (author_link_clicked's target).
 const AUTHOR_LINKS = { telegram: 'https://t.me/zmoki', website: 'https://zmoki.xyz/', threads: 'https://www.threads.com/@pollyhill' };
-const outLink = (target, text, cls = '') => `<a ${cls ? `class="${cls}" ` : ''}href="${AUTHOR_LINKS[target]}" data-out="${target}" target="_blank" rel="noopener">${text}</a>`;
+const outLink = (target, text, cls = '', attrs = '') => `<a ${cls ? `class="${cls}" ` : ''}${attrs ? attrs + ' ' : ''}href="${AUTHOR_LINKS[target]}" data-out="${target}" target="_blank" rel="noopener">${text}</a>`;
 const MINI_APP = (() => {
   try {
     if (location.pathname.startsWith('/tg')) sessionStorage.setItem('zhungli.mini', '1');
