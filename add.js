@@ -74,7 +74,7 @@ function openAdd() {
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b></span>
+      <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <h3 class="sec-title">Каталог</h3>
     ${catalogHtml()}
@@ -97,6 +97,7 @@ function catalogSearch(changeFor) {
   pinWatch?.disconnect();
   pinWatch = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: sheet });
   pinWatch.observe(mark);
+  sheet.addEventListener('close', () => pinWatch?.disconnect(), { once: true });
   const pickGroups = [...document.querySelectorAll('.pick-group')];
   const pickEnd = $('#pick-end');
   const genericTitle = document.querySelector('.pick-group[data-generic] .group-title');
