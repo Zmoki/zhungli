@@ -9,16 +9,24 @@
 // installed app, so it shows the way there.
 
 /* ---------- A sample garden ---------- */
-const SAMPLE = [['mon-del', 'Подоконник', 0], ['pothos', 'Полка', 0], ['spath', 'Стол', 0], ['zz', 'Подоконник', 3],
+// [catalog id, spot, next check in days, own fields]. Three checks are due today; the zamioculcas (sample3) is
+// the happy one whose card the third story opens, so it has a few weeks of answers.
+const ago = (...pairs) => pairs.map(([n, a]) => ({ d: addDays(today(), -n), a }));
+const SAMPLE = [['mon-del', 'Подоконник', 0], ['pothos', 'Полка', 0], ['spath', 'Стол', 0],
+  ['zz', 'Подоконник', 3, { lastWater: addDays(today(), -6), hist: ago([6, 'water'], [13, 'wet'], [19, 'water'], [33, 'water']) }],
   ['chlorophytum', 'Полка', 2], ['sansevieria', 'Стол', 9], ['phal', 'Подоконник', 4]];
-function sampleGarden() {
+// For «Растения»: every kind of chip has someone in it (суховато, темновато, ярковато, напоено, хорошо, в теплице, в воде).
+const SAMPLE_RICH = [['mon-del', 'Подоконник', 0], ['ficus-lyrata', 'Подоконник', 0], ['calathea', 'Подоконник', 3, { greenhouse: true }],
+  ['fittonia', 'Подоконник', 2, { greenhouse: true }], ['pothos', 'Полка', 0], ['chlorophytum', 'Полка', 6, { lastWater: today(), hist: ago([0, 'water']) }],
+  ['cuttings', 'Полка', 4], ['zz', 'Стол', 3, { lux: 800 }], ['phal', 'Стол', 4, { lux: 30000 }], ['spath', 'Стол', 2]];
+function sampleGarden(list = SAMPLE) {
   const s = prepare(null);
   Object.assign(s, { statsNotice: true, hideInstall: true, hideTelegram: true, stayBrowser: today(), spots: ['Подоконник', 'Полка', 'Стол'] });
-  SAMPLE.forEach(([k, spot, inDays], i) => {
+  list.forEach(([k, spot, inDays, own], i) => {
     const d = PLANTS.find((x) => x.id === k);
     const watered = addDays(today(), -8);
     s.plants['sample' + i] = { ...runtime(d, addDays(today(), inDays)), def: d.id, medium: mediumIn({}, d), spot,
-      lastWater: watered, hist: [{ d: watered, a: 'water' }] };
+      lastWater: watered, hist: [{ d: watered, a: 'water' }], ...own };
   });
   initBonus(s);
   return s;
@@ -102,6 +110,17 @@ function tapAt(f, el) {
   void finger.offsetWidth; // restart the tap ring
   finger.classList.add('on', 'tap');
 }
+// Scrolls a phone's screen to `to` over 0.8 s (smooth scrollTo doesn't run on an inert element).
+function glide(scr, to, now) {
+  const from = scr.scrollTop, t0 = performance.now();
+  if (now) { scr.scrollTop = to; return; }
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / 800);
+    scr.scrollTop = from + (to - from) * (1 - (1 - p) ** 3);
+    if (p < 1 && scr.isConnected) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 const typeInto = (input, text, now) => {
   if (now) { input.value = text; return; }
   [...text].forEach((c, i) => storyTimers.push(setTimeout(() => { input.value += c; }, 600 + i * 300)));
@@ -167,17 +186,15 @@ function safariPhone(kind) {
   return phone(box, '');
 }
 // The animation: each step shows a layer (data-step on the phone) after the finger taps what leads to it.
-function safariSteps(f, caption, kind) {
-  const list = homeSteps();
-  const say = (i) => { caption.textContent = `${i + 1}. ${list[i]}`; };
-  const go = (step, target, i) => [
+// It plays once; then «Показать ещё раз» (`again`) starts it over. Not looped: moving content that runs on by itself
+// would need a way to pause it (WCAG 2.2.2).
+function safariSteps(f, again, kind) {
+  const go = (step, target) => [
     [1300, (now) => { if (!now) tapAt(f, f.querySelector(target)); }],
-    [450, () => { f.dataset.step = step; if (i !== undefined) say(i); }],
+    [450, () => { f.dataset.step = step; }],
   ];
-  say(0);
-  return kind === '26'
-    ? [...go('menu', '.sf-menu-btn', 1), ...go('sheet', '.sf-share-item', 2), ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn', 3), ...go('home', '.sf-new')]
-    : [...go('sheet', '.sf-share-btn', 1), ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn', 2), ...go('home', '.sf-new')];
+  return [...(kind === '26' ? go('menu', '.sf-menu-btn') : []), ...go('sheet', kind === '26' ? '.sf-share-item' : '.sf-share-btn'),
+    ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn'), ...go('home', '.sf-new'), [900, () => { again.hidden = false; }]];
 }
 const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`).join('')}</ol>`;
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
@@ -217,30 +234,42 @@ function todayStory(slide) {
 }
 // 2. «Растения»: the grid, then the «суховато» chip filters it.
 function plantsStory(slide) {
-  const f = phone(tame(onSample(sampleGarden(), viewPlants), mark({ 'st-need': '.st-chip[data-st="need"]' })), 'plants');
+  const f = phone(tame(onSample(sampleGarden(SAMPLE_RICH), viewPlants)), 'plants');
   slide.append(f);
-  return [[1200, (now) => {
-    const chip = f.querySelector('.st-need');
+  // A chip tapped: only its plants stay, as the app's own filter does («Все» is key '').
+  const filter = (key) => (now) => {
+    const chip = f.querySelector(`.st-chip[data-st="${key}"]`);
     if (!now) tapAt(f, chip);
     f.querySelectorAll('.st-chip.on').forEach((c) => c.classList.remove('on'));
     chip?.classList.add('on');
-    f.querySelectorAll('.pcard').forEach((c) => { c.hidden = !c.dataset.st.split(' ').includes('need'); });
+    f.querySelectorAll('.pcard').forEach((c) => { c.hidden = !!key && !c.dataset.st.split(' ').includes(key); });
     f.querySelectorAll('.pgroup').forEach((g) => { g.hidden = ![...g.querySelectorAll('.pcard')].some((c) => !c.hidden); });
-  }]];
+  };
+  return [[1300, filter('need')], [1700, filter('greenhouse')], [1700, filter('')]];
 }
-// 3. The plant card: it scrolls down to the cheat sheet.
+// 3. The plant card of a happy zamioculcas: it scrolls to its tabs, then opens «Настройки» and «История».
 function cardStory(slide) {
-  const html = onSample(sampleGarden(), () => {
+  const garden = sampleGarden();
+  const card = (key) => onSample(garden, () => {
     const own = cardTab;
-    cardTab = 'notes';
-    try { return plantCardHtml('sample0'); } finally { cardTab = own; }
+    cardTab = key;
+    try { return tame(`<div class="st-card-sheet">${plantCardHtml('sample3')}</div>`); } finally { cardTab = own; }
   });
-  const f = phone(tame(`<div class="st-card-sheet">${html}</div>`, mark({ 'st-tips': '.card-panel' })), '');
+  const f = phone(card('notes'), '');
   slide.append(f);
-  return [[1400, (now) => {
-    const scr = f.querySelector('.screen'), tips = f.querySelector('.st-tips');
-    if (tips) scr.scrollTo({ top: tips.offsetTop - 40, behavior: now ? 'instant' : 'smooth' });
-  }]];
+  const scr = f.querySelector('.screen');
+  // Scrolls the screen so `el` sits near its top (the screen is scaled: rects are divided back).
+  const scrollTo = (el, now) => {
+    if (!el) return;
+    const k = f.clientWidth / parseFloat(scr.style.width);
+    glide(scr, scr.scrollTop + (el.getBoundingClientRect().top - scr.getBoundingClientRect().top) / k - 24, now);
+  };
+  const tabBtn = (name) => [...f.querySelectorAll('.seg-tab')].find((b) => b.textContent.trim() === name);
+  const open = (key, name) => [
+    [1300, (now) => { if (!now) tapAt(f, tabBtn(name)); }],
+    [500, () => { const top = scr.scrollTop; setScreen(f, card(key)); scr.scrollTop = top; }],
+  ];
+  return [[1300, (now) => scrollTo(f.querySelector('.seg'), now)], ...open('settings', 'Настройки'), ...open('history', 'История')];
 }
 // 4. «Свет»: a reading goes in, and the tips appear.
 function lightStory(slide) {
@@ -287,15 +316,16 @@ function endStory(slide) {
     // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
     // other browsers) and with reduced motion, the list is shown as is.
     const sk = STILL.matches ? '' : safariKind();
-    box.innerHTML = `<h2 tabindex="-1">Добавьте Жунгли на экран «Домой»</h2>
-      <p class="lead">Растения будут жить в иконке.</p>
-      ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><p class="st-caption" aria-hidden="true"></p>` : steps(homeSteps())}
+    box.innerHTML = `<div class="st-head"><h2 tabindex="-1">Добавьте Жунгли на экран «Домой»</h2>
+      <p class="lead">Растения будут жить в иконке.</p></div>
+      ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><span class="st-phone-spot"></span>
+        <button class="btn st-btn ghost st-again" data-act="story-replay" hidden>Показать ещё раз</button>` : steps(homeSteps())}
       <p class="m-0 st-more"><button class="linkish" data-act="story-stay">Остаться в браузере</button></p>`;
     if (sk) {
       const f = safariPhone(sk);
-      box.querySelector('.st-caption').before(f);
+      box.querySelector('.st-phone-spot').replaceWith(f);
       slide.append(box);
-      return safariSteps(f, box.querySelector('.st-caption'), sk);
+      return safariSteps(f, box.querySelector('.st-again'), sk);
     }
   } else if (kind === 'in_app') {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
@@ -321,10 +351,10 @@ function showStory() {
   storyMax = Math.max(storyMax, storyI);
   storiesDlg.innerHTML = `
     <div class="st-bars" aria-hidden="true">${STORIES.map((_, k) => `<i${k <= storyI ? ' class="on"' : ''}></i>`).join('')}</div>
-    <div class="st-top"><b>${s.name} · ${storyI + 1} из ${STORIES.length}</b>
+    <div class="st-top"><span class="sr-only">${storyI + 1} из ${STORIES.length}</span>
       <span class="st-keys">${storyI ? '<button class="btn st-btn ghost" data-act="story-prev">Назад</button>' : ''}${storyI < STORIES.length - 1 ? '<button class="btn st-btn" data-act="story-next">Дальше</button>' : ''}</span>
       <button class="icon-btn st-x" data-act="story-close" aria-label="Пропустить">${I('x')}</button></div>
-    <div class="st-slide" id="story-slide">${s.h ? `<h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p>` : ''}</div>
+    <div class="st-slide" id="story-slide">${s.h ? `<div class="st-head"><h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p></div>` : ''}</div>
 `;
   const slide = $('#story-slide');
   const anim = s.build(slide) || [];
@@ -386,6 +416,7 @@ Object.assign(ACTS, {
   stories() { openStories(tab); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
+  'story-replay'() { showStory(); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
   // As «Остаться в браузере» on the install card: the plant picker shows in the browser.
   'story-stay'(el) { closeStories('stay'); el.dataset.kind = 'stories'; ACTS['stay-browser'](el); },
