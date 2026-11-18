@@ -353,7 +353,6 @@ dialog { --card: var(--bubble); }
 .info.warn { background: var(--red-soft); }
 #sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 24px); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.sheet-head .ava { width: 104px; height: 104px; font-size: 40px; border-radius: 30px; }
 .sheet-head h2 { font-size: 1.529rem; line-height: 1.15; }
 /* Plant card: a full-width picture that stays put while the card slides up over it */
 .hero-bar { position: sticky; top: 0; height: 0; z-index: 3; }

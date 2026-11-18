@@ -72,7 +72,7 @@ function openAdd(back = false) {
   startAddFlow('catalog');
   if (!back) track('add_opened', { from: tab });
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
+    <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
       <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
@@ -92,12 +92,12 @@ function openAdd(back = false) {
   updatePickBar();
   openSheet();
 }
-// Head of a sheet opened from the add sheet («Своё растение», AI import): a back arrow to the catalog in place
-// of the icon, as in «Другая карточка». Opened elsewhere (an empty screen), it has the icon and only closes.
+// Head of a sheet opened from the add sheet («Своё растение», AI import): a back arrow to the catalog, as in
+// «Другая карточка». Opened elsewhere (an empty screen), it only closes.
 // After «Добавить как своё» the way back also brings the search (`q`) back.
-const subHead = (icon, title, back, q = '') => `<div class="sheet-head">${back
+const subHead = (title, back, q = '') => `<div class="sheet-head">${back
   ? `<button class="icon-btn" data-act="add-back" data-to="${back}"${q ? ` data-q="${esc(q)}"` : ''} aria-label="Назад к каталогу">${I('arrow-left')}</button>`
-  : `<div class="ava" aria-hidden="true">${I(icon)}</div>`}<h2 class="m-0" tabindex="-1">${title}</h2>
+  : ''}<h2 class="m-0" tabindex="-1">${title}</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>`;
 // The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
 // events: whether one was made goes with `card_changed`.
@@ -202,7 +202,7 @@ function openCustom(species = '', from = 'button', back = '') {
   track('custom_opened', { from });
   const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
-    ${subHead('pencil', 'Новое растение', back, from === 'search_miss' ? species : '')}
+    ${subHead('Новое растение', back, from === 'search_miss' ? species : '')}
     <form id="add-form">
       <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия" value="${esc(species)}"></div>
       <div class="field"><label for="c-like">На что похоже</label><select class="input" id="c-like" name="like" aria-describedby="c-like-hint">
@@ -396,7 +396,7 @@ function openImport(back = '') {
   importItems = [];
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
-    ${subHead('bot', 'Импорт из чата с ИИ', back)}
+    ${subHead('Импорт из чата с ИИ', back)}
     <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>

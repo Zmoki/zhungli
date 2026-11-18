@@ -15,6 +15,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Solid cards:** long lists (plant grid, Light rows) are solid `--surface` cards without blur, so photos stand out and scrolling stays smooth.
 - **Settings cards:** the bottom of settings is three cards: «Приложение» on beige, «Статистика» on glass, «Сделали» on lilac (`--credits`). «Что нового» opens with a compact «Приложение» card: version, device number and the Telegram button.
 - **Shadows:** cards get the quiet `--shadow-soft`; only floating layers get `--shadow`.
+- **Sheet heads:** the title and ×, plus ← when there's a sheet to go back to. No icon square: it took a third of the first screen.
 - **Shape:** big rounded corners (`--radius`, 26px) and round chips.
 
 ## Color means something
