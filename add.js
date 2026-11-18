@@ -94,8 +94,9 @@ function openAdd(back = false) {
 }
 // Head of a sheet opened from the add sheet («Своё растение», AI import): a back arrow to the catalog in place
 // of the icon, as in «Другая карточка». Opened elsewhere (an empty screen), it has the icon and only closes.
-const subHead = (icon, title, back) => `<div class="sheet-head">${back
-  ? `<button class="icon-btn" data-act="add-back" data-to="${back}" aria-label="Назад к каталогу">${I('arrow-left')}</button>`
+// After «Добавить как своё» the way back also brings the search (`q`) back.
+const subHead = (icon, title, back, q = '') => `<div class="sheet-head">${back
+  ? `<button class="icon-btn" data-act="add-back" data-to="${back}"${q ? ` data-q="${esc(q)}"` : ''} aria-label="Назад к каталогу">${I('arrow-left')}</button>`
   : `<div class="ava" aria-hidden="true">${I(icon)}</div>`}<h2 class="m-0" tabindex="-1">${title}</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>`;
 // The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
@@ -201,7 +202,7 @@ function openCustom(species = '', from = 'button', back = '') {
   track('custom_opened', { from });
   const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
-    ${subHead('pencil', 'Новое растение', back)}
+    ${subHead('pencil', 'Новое растение', back, from === 'search_miss' ? species : '')}
     <form id="add-form">
       <div class="field"><label for="c-species">Что это за растение</label><input class="input" id="c-species" name="species" required placeholder="Например, Пеперомия" value="${esc(species)}"></div>
       <div class="field"><label for="c-like">На что похоже</label><select class="input" id="c-like" name="like" aria-describedby="c-like-hint">
@@ -594,7 +595,14 @@ Object.assign(ACTS, {
   // From inside the add sheet, the next sheet gets a way back to it.
   'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
   'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
-  'add-back'(el) { openAdd(true); $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])`)?.focus(); },
+  'add-back'(el) {
+    openAdd(true);
+    if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])`)?.focus(); return; }
+    const q = $('#pick-q');
+    q.value = el.dataset.q;
+    q.dispatchEvent(new Event('input'));
+    $('#pick-none [data-act="add-custom"]')?.focus();
+  },
   pick(el) {
     const k = el.dataset.key;
     if (picked.has(k)) picked.delete(k); else picked.add(k);
