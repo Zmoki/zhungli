@@ -41,7 +41,7 @@ const headButtons = () => `<div class="head-btns">
 function openNews() {
   const date = (d) => parse(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sparkles')}</div><h2 class="m-0">Что нового</h2>
+    <div class="sheet-head"><h2 class="m-0">Что нового</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     ${appCard('news')}
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
@@ -57,7 +57,7 @@ function openNews() {
 function openSettings() {
   const lim = S.settings.limit;
   $('#sheet-body').innerHTML = `
-    <div class="sheet-head"><div class="ava" aria-hidden="true">${I('settings')}</div><h2 class="m-0">Настройки</h2>
+    <div class="sheet-head"><h2 class="m-0">Настройки</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
