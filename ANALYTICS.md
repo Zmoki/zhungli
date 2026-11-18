@@ -79,7 +79,7 @@ On every event:
 | `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `feedback` («Написать» on «Как вам Жунгли?») |
 | `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
 | `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or from the card on the empty «Сегодня» | `from`: `auto` / the tab |
-| `stories_closed` | the stories closed | `reached`: the furthest story seen (1–6); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `install` («Понятно» on the iPhone install steps) / `stay` («Остаться в браузере» there) / `browser` («Понятно» on the in-app browser steps) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open) |
+| `stories_closed` | the stories closed | `reached`: the furthest story seen (1–6); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `stay` («Остаться в браузере» on the iPhone install steps) / `browser` («Понятно» on the in-app browser steps) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open) |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |

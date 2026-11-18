@@ -82,8 +82,8 @@ const STILL = matchMedia('(prefers-reduced-motion: reduce)');
 let storyTimers = [];
 const stopStory = () => { storyTimers.forEach(clearTimeout); storyTimers = []; };
 // Runs steps one after another ([delay ms, fn]). With reduced motion, all at once: the story shows its last frame.
-// The pace is slow on purpose: first the story's text gets read (START), then each step stretches by PACE.
-const START = 2000, PACE = 1.8;
+// The pace is slow on purpose: each step stretches by PACE, and the first waits for the story's line to be read.
+const START = 0, PACE = 1.8;
 function runSteps(steps) {
   stopStory();
   let t = START;
@@ -183,11 +183,11 @@ const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`)
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
-  { tab: 'today', name: 'Сегодня', h: 'Каждый день несколько растений', p: 'Потрогайте грунт и ответьте одной кнопкой. Жунгли запомнят, как быстро сохнет каждое.', build: todayStory },
-  { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно, а фильтр собирает тех, кто ждёт полива.', build: plantsStory },
-  { tab: 'plants', name: 'Карточка растения', h: 'У каждого растения своя карточка', p: 'Шпаргалка по уходу, история полива и настройки. Советы можно поправить под себя.', build: cardStory },
-  { tab: 'light', name: 'Свет', h: 'Кому темно, а кому слишком ярко', p: 'Впишите цифру с люксметра, и Жунгли подскажут, кого переставить.', build: lightStory },
-  { tab: 'room', name: 'Комната', h: 'Температура и влажность у растений', p: 'Впишите, что показывает датчик, и Жунгли скажут, кому некомфортно.', build: roomStory },
+  { tab: 'today', name: 'Сегодня', h: 'Несколько растений в день', p: 'Потрогайте грунт и ответьте.', build: todayStory },
+  { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно.', build: plantsStory },
+  { tab: 'plants', name: 'Карточка растения', h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
+  { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'Впишите замер люксметра.', build: lightStory },
+  { tab: 'room', name: 'Комната', h: 'Температура и влажность', p: 'Впишите показания датчика.', build: roomStory },
   { name: 'Начнём', build: endStory },
 ];
 
@@ -278,7 +278,7 @@ function endStory(slide) {
   box.className = 'st-end';
   if (kind === 'tiles') {
     const n = ticked.size;
-    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, а остальное найдём в каталоге.</p>
+    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Остальное найдём в каталоге.</p>
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
       <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
@@ -287,11 +287,10 @@ function endStory(slide) {
     // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
     // other browsers) and with reduced motion, the list is shown as is.
     const sk = STILL.matches ? '' : safariKind();
-    box.innerHTML = `<h2 tabindex="-1">Последний шаг: Жунгли на экране «Домой»</h2>
-      <p class="lead">Растения будут жить в иконке. Отмеченное в браузере туда не перейдёт.</p>
+    box.innerHTML = `<h2 tabindex="-1">Добавьте Жунгли на экран «Домой»</h2>
+      <p class="lead">Растения будут жить в иконке.</p>
       ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><p class="st-caption" aria-hidden="true"></p>` : steps(homeSteps())}
-      <button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button>
-      <button class="btn st-btn ghost wide" data-act="story-stay">Остаться в браузере</button>`;
+      <p class="m-0 st-more"><button class="linkish" data-act="story-stay">Остаться в браузере</button></p>`;
     if (sk) {
       const f = safariPhone(sk);
       box.querySelector('.st-caption').before(f);
@@ -300,13 +299,13 @@ function endStory(slide) {
     }
   } else if (kind === 'in_app') {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
-      <p class="lead">Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.</p>
+      <p class="lead">Отсюда Жунгли не добавить на экран «Домой».</p>
       ${steps(['Нажмите «•••» или «⋮» в углу экрана', `Выберите ${PLACE.menu}`])}
       <div class="btns"><button class="btn st-btn wide" data-act="story-close" data-story-end="browser">Понятно</button></div>
       <p class="m-0 st-more">Или ${tgButton('откройте в Телеграме')}</p>`;
   } else {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли в Телеграме</h2>
-      <p class="lead">Это браузер внутри Телеграма, здесь растения могут потеряться. В приложении Телеграма они хранятся в облаке и есть на всех ваших устройствах.</p>
+      <p class="lead">Там растения хранятся в облаке Телеграма.</p>
       <div class="btns">${tgButton('Открыть', 'wide')}</div>`;
   }
   slide.append(box);

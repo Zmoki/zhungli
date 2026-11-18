@@ -594,7 +594,7 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .st-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
 .st-top b { font-size: 0.882rem; color: var(--st-soft); }
 .stories .icon-btn { background: transparent; border: 2px solid var(--st-ink); color: var(--st-ink); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-.st-slide { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; overflow-y: auto; padding: 8px 0; }
+.st-slide { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 14px; overflow-y: auto; padding: 28px 0 8px; }
 .st-slide > h2, .st-end > h2 { margin: 0; font-size: 1.529rem; line-height: 1.15; color: var(--st-ink); }
 .stories .lead { margin: 0; font-size: 1rem; color: var(--st-soft); }
 /* «Назад» / «Дальше» for the keyboard: hidden until focused (taps go by the side of the screen) */
@@ -607,7 +607,7 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .stories .linkish, .stories .st-more { color: var(--st-ink); }
 .st-more { text-align: center; } .st-more .st-btn { margin-top: 10px; width: 100%; }
 /* A phone with a screen of the app, scaled down by fitPhones() */
-.phone { position: relative; flex: none; height: min(58dvh, 560px); aspect-ratio: 375 / 812; max-width: 100%; margin: 0 auto; border-radius: 34px; border: 5px solid var(--st-ink); overflow: hidden; background: var(--bg); color: var(--ink); box-shadow: 0 20px 40px rgba(0, 0, 0, .35); }
+.phone { position: relative; flex: none; height: min(58dvh, 560px); aspect-ratio: 375 / 812; max-width: 100%; margin: 0 auto; border-radius: 20px; border: 5px solid var(--st-ink); overflow: hidden; background: var(--bg); color: var(--ink); box-shadow: 0 20px 40px rgba(0, 0, 0, .35); }
 .phone .blob { position: absolute; right: -60px; top: -50px; width: 200px; height: 200px; border-radius: 50%; background: var(--blob-1); }
 .phone .screen { position: absolute; left: 0; top: 0; padding: 14px 16px 0; overflow: hidden; transform-origin: top left; }
 .phone .screen .tabs { position: absolute; }
@@ -624,7 +624,7 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .st-steps li::before { content: counter(st); flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid currentColor; font-weight: 900; }
 .st-steps li.on { background: var(--st-ink); color: var(--st-bg); }
 /* The drawn iPhone Safari in the last story (stories.js: safariPhone). Safari's own light look, whatever the theme. */
-.st-end .phone { height: min(42dvh, 420px); }
+.st-end .phone { height: min(52dvh, 500px); }
 .st-caption { margin: 0; min-height: 2.6em; text-align: center; font-weight: 800; color: var(--st-ink); }
 .sf { position: absolute; inset: 0; overflow: hidden; background: var(--bg); color: #1c1c1e; font-size: 16px; }
 .sf-page { padding: 14px 16px 0; }
