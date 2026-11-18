@@ -106,7 +106,7 @@ function catalogSearch(changeFor) {
     const none = $('#pick-none');
     none.hidden = any;
     if (!any) {
-      none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
+      none.innerHTML = `<p class="small muted" data-from="catalog">«${esc(raw)}» нет в каталоге. Напишите мне в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}, и я его добавлю.</p>
         ${changeFor ? '' : `<button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>`}
         <p class="mt-12 small muted">${changeFor ? 'Выберите' : 'Или выберите'} похожий общий тип, уход у них почти одинаковый:</p>`;
       const g = document.querySelector('.pick-group[data-generic]');

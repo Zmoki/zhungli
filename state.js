@@ -445,6 +445,12 @@ function bonusTasks() {
         who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите.' });
     }
   }
+  // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
+  const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
+  if (!S.bonus.feedback && days >= 5) {
+    out.push({ key: 'feedback', icon: 'smile', title: 'Как вам Жунгли?', task: 'Расскажите, что нравится и что мешает',
+      hint: 'Пара слов в Телеграм @zmoki. Я читаю всё и часто обновляю приложение.', contact: true });
+  }
   return out.slice(0, 2);
 }
 

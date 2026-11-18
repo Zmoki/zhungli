@@ -131,7 +131,7 @@ async function doImport(file) {
     track('backup_imported');
     toast('Готово, всё вернулось 🌿');
   } catch (e) {
-    toast('Это не похоже на копию Жунглей 🤔');
+    toast('Это не похоже на копию Жунглей 🤔 Если это точно она, напишите @zmoki в Телеграм.');
   }
 }
 

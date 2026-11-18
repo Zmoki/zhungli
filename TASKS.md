@@ -53,6 +53,7 @@ Every plant marked «В теплице» gets an airing task each day until it's
 | `dust:<id>` | Plants with big leaves (`big`) | 21 days after the last wipe. |
 | `rotate:<id>` | Plants that lean to the light (`rotate`) | 14 days after the last turn. |
 | `feed` | Everyone fed, from March to September | 14 days after the last feeding. |
+| `feedback` | Anyone with answers on 5 different days | Never: once. «Как вам Жунгли?» with «Написать» (opens Telegram @zmoki) and «Не нужно» instead of «Готово» / «Не сегодня»; both put it away for good. |
 
 Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents (except flowering ones marked `feed`, like kalanchoe), orchids on bark, phalaenopsis in sphagnum and cuttings in water. If nobody is left, there's no task.
 
