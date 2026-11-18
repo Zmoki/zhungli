@@ -3,8 +3,7 @@
 // «Как работают Жунгли»: one story per screen, opened from the empty «Сегодня».
 // The screens are the app's own views drawn for a sample garden: S is swapped for a sample state only while the
 // markup is built, then taps, ids and links are stripped, so nothing in a story reaches the person's data.
-// «Сегодня» lets you answer the checks yourself; the other screens play a short animation once (again
-// on coming back). Stories never move on by themselves: a tap on the right goes on, on the left back,
+// Each screen plays a short animation once (again on coming back): a finger taps, types or scrolls. Stories never move on by themselves: a tap on the right goes on, on the left back,
 // × skips them (keyboard: arrows, or the «Назад» / «Дальше» buttons that show on focus). The last one depends on
 // where Жунгли is open: on an iPhone browser or in another app's browser, plants ticked there wouldn't reach the
 // installed app, so it shows the way there.
@@ -44,31 +43,37 @@ function tame(html, prep) {
 }
 
 /* ---------- Frames ---------- */
-// A phone with a screen of the app, scaled to the story's width. Only to look at: inert and hidden from screen readers.
+// A phone showing a whole screen of the app, scaled down to fit. Only to look at: inert and hidden from screen readers.
+// The screen is laid out as on a 375 × 812 phone with the default text size: rem follows the person's text size
+// (iPhone «Размер текста»), so the virtual screen grows with it and the picture stays the same, only scaled.
 // `tabKey`: the tab bar with that tab on; none for a sheet, which covers the bar in the app.
 function phone(box, tabKey) {
-  const screen = document.createElement('div');
-  screen.className = 'screen';
-  screen.append(...box.childNodes);
-  if (tabKey) {
-    const tabs = document.querySelector('.tabs').cloneNode(true);
-    tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tabKey));
-    screen.append(tame(tabs.outerHTML).firstElementChild);
-  }
   const f = document.createElement('div');
   f.className = 'phone';
   f.inert = true;
   f.setAttribute('aria-hidden', 'true');
-  f.innerHTML = '<i class="blob"></i><span class="finger"></span>';
-  f.insertBefore(screen, f.lastChild);
+  f.innerHTML = '<i class="blob"></i><div class="screen"></div><span class="finger"></span>';
+  f.dataset.tab = tabKey || '';
+  setScreen(f, box);
   return f;
 }
+// New content for a phone's screen (the next frame of an animation); the finger stays.
+function setScreen(f, box, extra = '') {
+  const screen = f.querySelector('.screen');
+  screen.replaceChildren(...box.childNodes);
+  if (f.dataset.tab) {
+    const tabs = document.querySelector('.tabs').cloneNode(true);
+    tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.tab === f.dataset.tab));
+    screen.append(tame(tabs.outerHTML).firstElementChild);
+  }
+  if (extra) screen.insertAdjacentHTML('beforeend', extra);
+  applySizes(screen);
+}
 function fitPhones(root) {
+  const em = parseFloat(getComputedStyle(document.documentElement).fontSize) / 17;
   root.querySelectorAll('.phone').forEach((f) => {
-    const k = f.clientWidth / 375, scr = f.querySelector('.screen');
-    scr.style.transform = `scale(${k})`;
-    scr.style.height = `${f.clientHeight / k}px`;
-    applySizes(scr);
+    const w = 375 * em, scr = f.querySelector('.screen');
+    Object.assign(scr.style, { width: `${w}px`, height: `${812 * em}px`, transform: `scale(${f.clientWidth / w})` });
   });
 }
 
@@ -81,6 +86,8 @@ function runSteps(steps) {
   stopStory();
   let t = 0;
   steps.forEach(([ms, fn]) => { if (STILL.matches) fn(true); else storyTimers.push(setTimeout(fn, (t += ms))); });
+  // Then the finger goes away.
+  if (steps.length && !STILL.matches) storyTimers.push(setTimeout(() => storiesDlg.querySelectorAll('.finger').forEach((x) => x.classList.remove('on')), t + 1200));
 }
 // The finger moves to an element in the phone and taps it.
 function tapAt(f, el) {
@@ -99,7 +106,7 @@ const typeInto = (input, text, now) => {
 };
 
 /* ---------- The stories ---------- */
-let storyI = 0, storyMax = 0, storyState = null, storyEnded = '', ticked = new Set();
+let storyI = 0, storyMax = 0, storyEnded = '', ticked = new Set();
 // Where the last story leads: plants added here stay put (tiles), or have to go somewhere else first.
 function storyEnd() {
   if (MINI_APP) return 'tiles';
@@ -114,7 +121,7 @@ const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`)
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
-  { tab: 'today', name: 'Сегодня', h: 'Каждый день несколько растений', p: 'Потрогайте грунт и ответьте. Попробуйте сами:', build: todayStory },
+  { tab: 'today', name: 'Сегодня', h: 'Каждый день несколько растений', p: 'Потрогайте грунт и ответьте одной кнопкой. Жунгли запомнят, как быстро сохнет каждое.', build: todayStory },
   { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно, а фильтр собирает тех, кто ждёт полива.', build: plantsStory },
   { tab: 'plants', name: 'Карточка растения', h: 'У каждого растения своя карточка', p: 'Шпаргалка по уходу, история полива и настройки. Советы можно поправить под себя.', build: cardStory },
   { tab: 'light', name: 'Свет', h: 'Кому темно, а кому слишком ярко', p: 'Впишите цифру с люксметра, и Жунгли подскажут, кого переставить.', build: lightStory },
@@ -122,48 +129,33 @@ const STORIES = [
   { name: 'Начнём', build: endStory },
 ];
 
-// 1. «Сегодня»: the real progress and check card; the answers go to the sample garden.
+// 1. «Сегодня»: the checks get answered one by one («Полито», «Ещё влажно», «Полито»), with the real toasts,
+// until «Джунгли довольны!».
 function todayStory(slide) {
-  // The first check card keeps its two answers, retagged for the sample: `data-a` is the answer, `data-p` the plant.
-  const box = tame(onSample(storyState, viewToday), (b) => {
-    const card = b.querySelector('.task:not(.bonus):not(.done-row)');
-    card?.querySelectorAll('button').forEach((btn) => {
-      if (['water', 'wet'].includes(btn.dataset.act)) Object.assign(btn.dataset, { a: btn.dataset.act, p: btn.dataset.id });
-      else if (btn.dataset.act) btn.remove(); // «Не сейчас, завтра»; the picture stays, as a picture
-      else btn.setAttribute('tabindex', '-1');
-    });
-  });
-  const live = document.createElement('div');
-  live.className = 'st-today';
-  const progress = box.querySelector('.progress');
-  const card = box.querySelector('.task:not(.bonus):not(.done-row)');
-  const done = box.querySelector('.celebrate');
-  if (progress) live.append(progress);
-  if (card) {
-    card.querySelectorAll('[data-a]').forEach((b) => { b.dataset.act = 'story-answer'; });
-    live.append(card);
-  } else if (done) live.append(done);
-  slide.append(live);
-  applySizes(live);
+  const st = sampleGarden();
+  const f = phone(tame(onSample(st, viewToday)), 'today');
+  slide.append(f);
+  const answer = (a) => [
+    [1300, (now) => {
+      const card = f.querySelector('.task:not(.bonus):not(.done-row)');
+      if (!now) tapAt(f, card?.querySelector(a === 'water' ? '.btns .btn.water' : '.btns .btn:not(.water)'));
+    }],
+    [500, (now) => {
+      const msg = onSample(st, () => {
+        const id = todayPlan().shown[0]?.id;
+        if (!id) return '';
+        if (a === 'water') { actWater(id); return WATER_CHEERS[0]; }
+        actWet(id);
+        return `Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`;
+      });
+      setScreen(f, tame(onSample(st, viewToday)), now || !msg ? '' : `<div class="toast">${esc(msg)}</div>`);
+    }],
+  ];
+  return [...answer('water'), ...answer('wet'), ...answer('water')];
 }
-function answerSample(a, id) {
-  if (!storyState.plants[id]) return;
-  const msg = onSample(storyState, () => {
-    if (a === 'water') { actWater(id); return WATER_CHEERS[0]; }
-    actWet(id);
-    return `Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`;
-  });
-  track('story_answered', { answer: a === 'water' ? 'dry' : 'wet' });
-  showStory();
-  const say = $('#story-say');
-  say.textContent = msg;
-  say.hidden = false;
-  $('#stories .st-today .btn')?.focus();
-}
-
 // 2. «Растения»: the grid, then the «суховато» chip filters it.
 function plantsStory(slide) {
-  const f = phone(tame(onSample(storyState0(), viewPlants), mark({ 'st-need': '.st-chip[data-st="need"]' })), 'plants');
+  const f = phone(tame(onSample(sampleGarden(), viewPlants), mark({ 'st-need': '.st-chip[data-st="need"]' })), 'plants');
   slide.append(f);
   return [[1200, (now) => {
     const chip = f.querySelector('.st-need');
@@ -176,7 +168,7 @@ function plantsStory(slide) {
 }
 // 3. The plant card: it scrolls down to the cheat sheet.
 function cardStory(slide) {
-  const html = onSample(storyState0(), () => {
+  const html = onSample(sampleGarden(), () => {
     const own = cardTab;
     cardTab = 'notes';
     try { return plantCardHtml('sample0'); } finally { cardTab = own; }
@@ -190,34 +182,30 @@ function cardStory(slide) {
 }
 // 4. «Свет»: a reading goes in, and the tips appear.
 function lightStory(slide) {
-  const first = tame(onSample(storyState0(), viewLight), mark({ 'st-lux': 'input[data-id="sample0"]' }));
+  const first = tame(onSample(sampleGarden(), viewLight), mark({ 'st-lux': 'input[data-id="sample0"]' }));
   const f = phone(first, 'light');
   slide.append(f);
   return [
     [1000, (now) => { const inp = f.querySelector('.st-lux'); if (!now) tapAt(f, inp); if (inp) typeInto(inp, '800', now); }],
     [1400, () => {
-      const s = storyState0();
+      const s = sampleGarden();
       s.plants.sample0.lux = 800;
       s.plants.sample1.lux = 9000;
-      const next = phone(tame(onSample(s, viewLight)), 'light');
-      f.replaceWith(next);
-      fitPhones(slide);
+      setScreen(f, tame(onSample(s, viewLight)));
     }],
   ];
 }
 // 5. «Комната»: a reading of 18 °C and 35%, and who is uncomfortable.
 function roomStory(slide) {
-  const f = phone(tame(onSample(storyState0(), viewRoom), mark({ 'st-t': 'input[id^="in-t-"]', 'st-h': 'input[id^="in-h-"]' })), 'room');
+  const f = phone(tame(onSample(sampleGarden(), viewRoom), mark({ 'st-t': 'input[id^="in-t-"]', 'st-h': 'input[id^="in-h-"]' })), 'room');
   slide.append(f);
   return [
     [1000, (now) => { const t = f.querySelector('.st-t'); if (!now) tapAt(f, t); if (t) typeInto(t, '18', now); }],
     [900, (now) => { const h = f.querySelector('.st-h'); if (!now) tapAt(f, h); if (h) typeInto(h, '35', now); }],
     [1100, () => {
-      const s = storyState0();
+      const s = sampleGarden();
       Object.assign(s.rooms[0], { t: 18, h: 35, d: today() });
-      const next = phone(tame(onSample(s, viewRoom)), 'room');
-      f.replaceWith(next);
-      fitPhones(slide);
+      setScreen(f, tame(onSample(s, viewRoom)));
     }],
   ];
 }
@@ -255,8 +243,6 @@ function endStory(slide) {
   // The steps light up one by one.
   return box.querySelectorAll('.st-steps li').length ? [...box.querySelectorAll('.st-steps li')].map((li, i) => [i ? 900 : 600, () => li.classList.add('on')]) : [];
 }
-// The sample garden for the scripted stories: always fresh, so replays start from the same picture.
-const storyState0 = () => sampleGarden();
 
 /* ---------- The dialog ---------- */
 const storiesDlg = $('#stories');
@@ -270,7 +256,7 @@ function showStory() {
       <span class="st-keys">${storyI ? '<button class="btn st-btn ghost" data-act="story-prev">Назад</button>' : ''}${storyI < STORIES.length - 1 ? '<button class="btn st-btn" data-act="story-next">Дальше</button>' : ''}</span>
       <button class="icon-btn st-x" data-act="story-close" aria-label="Пропустить">${I('x')}</button></div>
     <div class="st-slide" id="story-slide">${s.h ? `<h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p>` : ''}</div>
-    <p class="st-say" id="story-say" role="status" hidden></p>`;
+`;
   const slide = $('#story-slide');
   const anim = s.build(slide) || [];
   fitPhones(slide);
@@ -282,7 +268,6 @@ function openStories(from) {
   storyI = 0; storyMax = 0; storyEnded = ''; ticked = new Set(); storyFrom = from;
   S.storiesSeen = today();
   save();
-  storyState = sampleGarden();
   track('stories_opened', { from });
   storiesDlg.showModal();
   showStory().querySelector('h2')?.focus();
@@ -309,7 +294,7 @@ storiesDlg.addEventListener('keydown', (e) => {
 });
 // A tap on the story, not on a control or the card you can answer: the left third goes back, the rest goes on.
 storiesDlg.addEventListener('click', (e) => {
-  if (e.target.closest('button, a, input, .st-today, .st-end .qs-grid')) return;
+  if (e.target.closest('button, a, input, .st-end .qs-grid')) return;
   const r = storiesDlg.getBoundingClientRect();
   goStory(e.clientX < r.left + r.width / 3 ? -1 : 1);
 });
@@ -333,7 +318,6 @@ Object.assign(ACTS, {
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
-  'story-answer'(el) { answerSample(el.dataset.a, el.dataset.p); },
   'story-tick'(el) {
     const k = el.dataset.key;
     if (ticked.has(k)) ticked.delete(k); else ticked.add(k);
