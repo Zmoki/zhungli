@@ -115,8 +115,20 @@ function storyEnd() {
   if (IOS && !navigator.standalone) return 'ios';
   return 'tiles';
 }
-// Safari 26 hides «Поделиться» in the menu at the left of the address bar («≡», «•••» in early 26 builds).
-const SAFARI_V = Number((navigator.userAgent.match(/Version\/(\d+)/) || [])[1] || 0);
+// The first steps to the home screen, by browser and version. Safari 26 on iPhone hides «Поделиться» in the menu
+// «≡» at the left of the address bar; older Safari has it in the bottom bar, on iPad at the top. Other iPhone
+// browsers (Chrome, Firefox, Edge, Яндекс) add to the home screen from their own «Поделиться».
+function homeSteps() {
+  const ua = navigator.userAgent;
+  const pad = !/iPhone|iPod/.test(ua);
+  const safari = !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua);
+  const v = Number((ua.match(/Version\/(\d+)/) || [])[1] || 0);
+  const share = !safari ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
+    : pad ? ['Нажмите «Поделиться» вверху справа']
+      : v >= 26 ? ['Нажмите «≡» слева в адресной строке', 'Выберите «Поделиться»']
+        : ['Нажмите «Поделиться» внизу экрана'];
+  return [...share, 'Выберите «На экран Домой», затем «Добавить»', 'Откройте Жунгли с новой иконки'];
+}
 const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`).join('')}</ol>`;
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
@@ -224,10 +236,9 @@ function endStory(slide) {
   } else if (kind === 'ios') {
     box.innerHTML = `<h2 tabindex="-1">Последний шаг: Жунгли на экране «Домой»</h2>
       <p class="lead">Растения будут жить в иконке. Отмеченное здесь, в браузере, туда не перейдёт, поэтому сначала добавьте иконку.</p>
-      ${steps([...(SAFARI_V >= 26 ? ['Нажмите кнопку меню слева в адресной строке («≡» или «•••»)', 'Выберите «Поделиться»'] : ['Нажмите «Поделиться» внизу экрана']),
-    'Выберите «На экран Домой», затем «Добавить»', 'Откройте Жунгли с новой иконки'])}
-      <div class="btns"><button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button></div>
-      <p class="m-0 st-more">Не хотите устанавливать? ${tgButton('Откройте в Телеграме')}</p>`;
+      ${steps(homeSteps())}
+      <button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button>
+      <button class="btn st-btn ghost wide" data-act="story-stay">Остаться в браузере</button>`;
   } else if (kind === 'in_app') {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
       <p class="lead">Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.</p>
@@ -318,6 +329,8 @@ Object.assign(ACTS, {
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
+  // As «Остаться в браузере» on the install card: the plant picker shows in the browser.
+  'story-stay'(el) { closeStories('stay'); el.dataset.kind = 'stories'; ACTS['stay-browser'](el); },
   'story-tick'(el) {
     const k = el.dataset.key;
     if (ticked.has(k)) ticked.delete(k); else ticked.add(k);
