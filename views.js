@@ -90,21 +90,22 @@ function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
   if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
-  const { share, where, menu } = PLACE;
+  const { where } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
     return hintCard('sprout', 'Сначала откройте Жунгли в Телеграме',
       'Это браузер внутри Телеграма: здесь растения могут потеряться. В приложении Телеграма они хранятся в облаке.',
       `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>${stay('Остаться здесь')}`);
   }
+  // The steps themselves are in the last story («Показать, как»), drawn for this browser and its version.
+  const how = '<button class="btn primary" data-act="stories-install">Показать, как</button>';
   if (kind === 'in_app') {
     return hintCard('triangle-alert', `Сначала откройте Жунгли ${where}`,
-      `Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения могут потеряться. В меню приложения выберите ${menu}.`,
-      stay('Остаться здесь'));
+      'Отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.', `${how}${stay('Остаться здесь')}`);
   }
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-    `${share} → «На экран Домой», затем откройте Жунгли с иконки. Отмеченное в браузере туда не перейдёт, а браузер может его стереть, если пару недель не заходить.`,
-    `${stay('Остаться в браузере')}<button class="btn ghost" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>`);
+    `Растения будут жить в иконке, отмеченное в браузере туда не перейдёт. Уже добавили? <button class="linkish" data-act="hide-install" data-kind="ios_empty">Скрыть</button>`,
+    `${how}${stay('Остаться в браузере')}`);
 }
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;

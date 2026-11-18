@@ -450,6 +450,8 @@ const storyCard = () => `<button class="st-open" data-act="stories"><span class=
 
 Object.assign(ACTS, {
   stories() { openStories(tab); },
+  // «Показать, как» on the install card: straight to the last story, the way to the home screen.
+  'stories-install'() { openStories('install_card'); goStory(STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
