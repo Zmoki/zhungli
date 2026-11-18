@@ -82,6 +82,8 @@ function installWhere() {
   if (MINI_APP || S.stayBrowser || Object.keys(S.plants).length) return null;
   if (IN_TELEGRAM && !S.hideTelegram) return 'telegram_browser';
   if (IN_APP && !S.hideInstall) return 'in_app';
+  // Said «Уже добавили»: this browser now only points to the icon (S.homeIcon), until «Остаться в браузере».
+  if (IOS && !IN_TELEGRAM && !navigator.standalone && S.homeIcon) return 'ios_added';
   if (IOS && !IN_TELEGRAM && !navigator.standalone && !S.hideInstall) return 'ios';
   return null;
 }
@@ -103,9 +105,17 @@ function installFirst() {
     return hintCard('triangle-alert', `Сначала откройте Жунгли ${where}`,
       'Отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.', `${how}${stay('Остаться здесь')}`);
   }
+  // Already added: the browser is a separate Жунгли with its own (empty) storage, so it sends people to the icon.
+  // A change of mind is one tap away and works as «Остаться в браузере».
+  if (kind === 'ios_added') {
+    return hintCard('smartphone', 'Жунгли уже на экране «Домой»',
+      'Откройте их с иконки, там ваши растения. Здесь, в браузере, отдельные Жунгли, и растения отсюда в иконку не попадут.',
+      stay('Остаться в браузере'));
+  }
+  // The person tells which way they go: the icon («Уже добавили») or the browser.
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-    `Растения будут жить в иконке, отмеченное в браузере туда не перейдёт. Уже добавили? <button class="linkish" data-act="hide-install" data-kind="ios_empty">Скрыть</button>`,
-    `${how}${stay('Остаться в браузере')}`);
+    'Растения будут жить в иконке, отмеченное в браузере туда не перейдёт.',
+    `${how}<button class="btn ghost" data-act="home-added">Уже добавили</button>${stay('Остаться в браузере')}`);
 }
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
@@ -596,6 +606,7 @@ Object.assign(ACTS, {
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
   'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
+  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { kind: 'ios_added' }); save(); render(); },
   'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;

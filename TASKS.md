@@ -11,7 +11,7 @@ With no plants yet, «Сегодня» shows the quick picks, without a welcome 
 **Install first:** where plants added now wouldn't reach the installed app or could be lost, the quick picks on every empty screen are replaced by the way there: the empty screen's card gets short and the way there goes under it at full width, so its buttons fit the first screen. This lasts until the person gets there or taps «Остаться в браузере» / «Остаться здесь» (remembered; «Восстановить копию» waits too, and settings say where to restore). After that, the reminders to move plants wait 3 days:
 - Telegram's in-app browser: open the mini app;
 - another app's browser (Facebook, Instagram, VK…; on Android any app's WebView): open Жунгли in Safari or the browser;
-- a browser on iPhone or iPad: add to the home screen (the home-screen app keeps its data apart from the browser); «Скрыть» for those who have the icon.
+- a browser on iPhone or iPad: add to the home screen (the home-screen app keeps its data apart from the browser). «Уже добавили» (`S.homeIcon`) turns this browser into a pointer: «Жунгли уже на экране „Домой“, откройте их с иконки», with «Остаться в браузере» for a change of mind.
 
 The iPhone and other-app cards are short: «Показать, как» opens the last story, with the steps for that browser.
 
