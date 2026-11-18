@@ -626,9 +626,8 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .st-steps li::before { content: counter(st); flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid currentColor; font-weight: 900; }
 .st-steps li.on { background: var(--st-ink); color: var(--st-bg); }
 /* The drawn iPhone Safari in the last story (stories.js: safariPhone). Safari's own light look, whatever the theme. */
-.st-phone-wrap { position: relative; align-self: center; }
-/* Over the bottom of the drawn Safari once it has played, so the story never needs scrolling */
-.stories .st-again { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); min-height: 44px; padding: 8px 18px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
+/* Held: the animation is paused; the bars dim a little as in other stories */
+dialog.stories.held .st-bars { opacity: .5; }
 .sf { position: absolute; inset: 0; overflow: hidden; background: var(--bg); color: #1c1c1e; font-size: 16px; }
 .sf-page { padding: 14px 16px 0; }
 .sf-ic { width: 24px; height: 24px; fill: none; stroke: #1c1c1e; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

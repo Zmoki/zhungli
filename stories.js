@@ -3,9 +3,10 @@
 // «Как работают Жунгли»: one story per screen, opened from the empty «Сегодня».
 // The screens are the app's own views drawn for a sample garden: S is swapped for a sample state only while the
 // markup is built, then taps, ids and links are stripped, so nothing in a story reaches the person's data.
-// Each screen plays a short animation once (again on coming back): a finger taps, types or scrolls. Stories never move on by themselves: a tap on the right goes on, on the left back,
-// × skips them (keyboard: arrows, or the «Назад» / «Дальше» buttons that show on focus). The last one depends on
-// where Жунгли is open: on an iPhone browser or in another app's browser, plants ticked there wouldn't reach the
+// Each screen plays a short animation on a loop: a finger taps, types or scrolls. Press and hold (or Space) pauses
+// it, as moving content must be pausable (WCAG 2.2.2). Stories never move on by themselves: a tap on the right goes
+// on, on the left back, × skips them (keyboard: arrows, or the «Назад» / «Дальше» buttons that show on focus).
+// The last one depends on where Жунгли is open: on an iPhone browser or in another app's browser, plants ticked there wouldn't reach the
 // installed app, so it shows the way there.
 
 /* ---------- A sample garden ---------- */
@@ -94,12 +95,16 @@ const stopStory = () => { storyTimers.forEach(clearTimeout); storyTimers = []; }
 const START = 0, PACE = 1.8;
 // After a tap starts (the finger moves for 0.9 s, then presses), what it does shows only once it has landed.
 const LAND = 650;
-function runSteps(steps) {
+// How long the last frame stays before the animation starts over.
+const LOOP_REST = 3000;
+function runSteps(steps, onDone) {
   stopStory();
   let t = START;
   steps.forEach(([ms, fn]) => { if (STILL.matches) fn(true); else storyTimers.push(setTimeout(fn, (t += ms * PACE))); });
-  // Then the finger goes away.
-  if (steps.length && !STILL.matches) storyTimers.push(setTimeout(() => storiesDlg.querySelectorAll('.finger').forEach((x) => x.classList.remove('on')), t + 1200));
+  if (!steps.length || STILL.matches) return;
+  // Then the finger goes away, and after a pause on the last frame it all starts again.
+  storyTimers.push(setTimeout(() => storiesDlg.querySelectorAll('.finger').forEach((x) => x.classList.remove('on')), t + 1200));
+  if (onDone) storyTimers.push(setTimeout(onDone, t + LOOP_REST));
 }
 // The finger moves to an element in the phone and taps it.
 function tapAt(f, el) {
@@ -188,22 +193,20 @@ function safariPhone(kind) {
   return phone(box, '');
 }
 // The animation: each step shows a layer (data-step on the phone) after the finger taps what leads to it.
-// It plays once; then «Показать ещё раз» (`again`) starts it over. Not looped: moving content that runs on by itself
-// would need a way to pause it (WCAG 2.2.2).
-function safariSteps(f, again, kind) {
+function safariSteps(f, kind) {
   const go = (step, target) => [
     [1300, (now) => { if (!now) tapAt(f, f.querySelector(target)); }],
     [LAND, () => { f.dataset.step = step; }],
   ];
   return [...(kind === '26' ? go('menu', '.sf-menu-btn') : []), ...go('sheet', kind === '26' ? '.sf-share-item' : '.sf-share-btn'),
-    ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn'), ...go('home', '.sf-new'), [900, () => { again.hidden = false; }]];
+    ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn'), ...go('home', '.sf-new')];
 }
 const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`).join('')}</ol>`;
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
   { tab: 'today', name: 'Сегодня', h: 'Несколько растений в день', p: 'По вашим ответам Жунгли подстроят полив под каждое.', build: todayStory },
-  { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно.', build: plantsStory },
+  { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
   { tab: 'plants', name: 'Карточка растения', h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
   { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'Впишите замер люксметра.', build: lightStory },
   { tab: 'room', name: 'Комната', h: 'Температура и влажность', p: 'Впишите показания датчика.', build: roomStory },
@@ -323,13 +326,12 @@ function endStory(slide) {
     const sk = STILL.matches ? '' : safariKind();
     box.innerHTML = `<div class="st-head"><h2 tabindex="-1">Добавьте Жунгли на экран «Домой»</h2>
       <p class="lead">Растения будут жить в иконке.</p></div>
-      ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><div class="st-phone-wrap"><span class="st-phone-spot"></span>
-        <button class="btn st-btn st-again" data-act="story-replay" hidden>Показать ещё раз</button></div>` : steps(homeSteps())}`;
+      ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><span class="st-phone-spot"></span>` : steps(homeSteps())}`;
     if (sk) {
       const f = safariPhone(sk);
       box.querySelector('.st-phone-spot').replaceWith(f);
       slide.append(box);
-      return safariSteps(f, box.querySelector('.st-again'), sk);
+      return safariSteps(f, sk);
     }
   } else if (kind === 'in_app') {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
@@ -351,6 +353,8 @@ function endStory(slide) {
 const storiesDlg = $('#stories');
 function showStory() {
   stopStory();
+  held = false;
+  storiesDlg.classList.remove('held');
   const s = STORIES[storyI];
   storyMax = Math.max(storyMax, storyI);
   storiesDlg.innerHTML = `
@@ -361,10 +365,27 @@ function showStory() {
     <div class="st-slide" id="story-slide">${s.h ? `<div class="st-head"><h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p></div>` : ''}</div>
 `;
   const slide = $('#story-slide');
+  playStory(slide, s);
+  return slide;
+}
+// Builds the story's screen and plays its animation; when it ends, builds it afresh and plays again. The heading
+// stays (the last story rebuilds its own, and gets the focus back if it had it).
+function playStory(slide, s) {
+  const focused = slide.contains(document.activeElement) && document.activeElement.matches('h2');
+  [...slide.children].forEach((c) => { if (!c.classList.contains('st-head')) c.remove(); });
   const anim = s.build(slide) || [];
   fitPhones(slide);
-  runSteps(anim);
-  return slide;
+  if (focused) slide.querySelector('h2')?.focus({ preventScroll: true });
+  runSteps(anim, () => playStory(slide, s));
+}
+// Press and hold pauses the animation (as in any stories); letting go starts it over. Space does the same.
+let holdTimer = null, held = false;
+function pauseStory() { held = true; stopStory(); storiesDlg.classList.add('held'); }
+function resumeStory() {
+  held = false;
+  storiesDlg.classList.remove('held');
+  const slide = $('#story-slide');
+  if (slide && storiesDlg.open) playStory(slide, STORIES[storyI]);
 }
 let storyFrom = '';
 function openStories(from) {
@@ -394,9 +415,20 @@ storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
   if (e.key === 'ArrowRight') goStory(1);
   if (e.key === 'ArrowLeft') goStory(-1);
+  if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); if (held) resumeStory(); else pauseStory(); }
 });
+storiesDlg.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button, a, input')) return;
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(pauseStory, 350);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => storiesDlg.addEventListener(t, () => {
+  clearTimeout(holdTimer);
+  if (held) { resumeStory(); storiesDlg.dataset.justHeld = '1'; }
+}));
 // A tap on the story, not on a control or the card you can answer: the left third goes back, the rest goes on.
 storiesDlg.addEventListener('click', (e) => {
+  if (storiesDlg.dataset.justHeld) { delete storiesDlg.dataset.justHeld; return; } // that was a hold, not a tap
   if (e.target.closest('button, a, input, .st-end .qs-grid')) return;
   const r = storiesDlg.getBoundingClientRect();
   goStory(e.clientX < r.left + r.width / 3 ? -1 : 1);
@@ -420,7 +452,6 @@ Object.assign(ACTS, {
   stories() { openStories(tab); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
-  'story-replay'() { showStory(); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
   'story-tick'(el) {
     const k = el.dataset.key;
