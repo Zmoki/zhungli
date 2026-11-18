@@ -115,7 +115,7 @@ function storyEnd() {
   if (IOS && !navigator.standalone) return 'ios';
   return 'tiles';
 }
-// Safari 26 hides «Поделиться» behind «•••».
+// Safari 26 hides «Поделиться» in the menu at the left of the address bar («≡», «•••» in early 26 builds).
 const SAFARI_V = Number((navigator.userAgent.match(/Version\/(\d+)/) || [])[1] || 0);
 const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`).join('')}</ol>`;
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
@@ -224,7 +224,7 @@ function endStory(slide) {
   } else if (kind === 'ios') {
     box.innerHTML = `<h2 tabindex="-1">Последний шаг: Жунгли на экране «Домой»</h2>
       <p class="lead">Растения будут жить в иконке. Отмеченное здесь, в браузере, туда не перейдёт, поэтому сначала добавьте иконку.</p>
-      ${steps([...(SAFARI_V >= 26 ? ['Нажмите «•••» внизу справа', 'Выберите «Поделиться»'] : ['Нажмите «Поделиться» внизу экрана']),
+      ${steps([...(SAFARI_V >= 26 ? ['Нажмите кнопку меню слева в адресной строке («≡» или «•••»)', 'Выберите «Поделиться»'] : ['Нажмите «Поделиться» внизу экрана']),
     'Выберите «На экран Домой», затем «Добавить»', 'Откройте Жунгли с новой иконки'])}
       <div class="btns"><button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button></div>
       <p class="m-0 st-more">Не хотите устанавливать? ${tgButton('Откройте в Телеграме')}</p>`;
