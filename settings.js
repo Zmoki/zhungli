@@ -152,13 +152,14 @@ Object.assign(ACTS, {
   },
   import() { endQuick('restore'); $('#import-input').click(); },
   reset() {
-    if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
+    if (confirm('Точно стереть все отметки и начать заново? Фото и настройки тоже удалятся.')) {
       track('data_reset');
       flushStats();
       // A stats opt-out is about the person, not the plants: it outlives the reset.
       if (S.settings.stats === false) {
         const fresh = prepare(null);
         fresh.settings.stats = false;
+        fresh.statsNotice = S.statsNotice;
         localStorage.setItem(KEY, JSON.stringify(fresh));
       } else localStorage.removeItem(KEY);
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
