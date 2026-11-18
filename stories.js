@@ -117,7 +117,8 @@ function storyEnd() {
 }
 // The first steps to the home screen, by browser and version. Safari 26 on iPhone hides «Поделиться» in the menu
 // «≡» at the left of the address bar; older Safari has it in the bottom bar, on iPad at the top. Other iPhone
-// browsers (Chrome, Firefox, Edge, Яндекс) add to the home screen from their own «Поделиться».
+// browsers (Chrome, Firefox, Edge, Яндекс) add to the home screen from their own «Поделиться». The share sheet a
+// page can open (navigator.share) has no «На экран Домой» (checked on an iPhone, Safari 26), so it's steps only.
 function homeSteps() {
   const ua = navigator.userAgent;
   const pad = !/iPhone|iPod/.test(ua);
@@ -236,7 +237,6 @@ function endStory(slide) {
   } else if (kind === 'ios') {
     box.innerHTML = `<h2 tabindex="-1">Последний шаг: Жунгли на экране «Домой»</h2>
       <p class="lead">Растения будут жить в иконке. Отмеченное здесь, в браузере, туда не перейдёт, поэтому сначала добавьте иконку.</p>
-      ${navigator.share ? `<button class="btn st-btn ghost wide" data-act="story-share">${I('copy')}Открыть «Поделиться»</button>` : ''}
       ${steps(homeSteps())}
       <button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button>
       <button class="btn st-btn ghost wide" data-act="story-stay">Остаться в браузере</button>`;
@@ -330,8 +330,6 @@ Object.assign(ACTS, {
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
-  // Test: does the share sheet a page opens offer «На экран Домой»? Kept only if it does.
-  'story-share'() { navigator.share({ title: 'Жунгли', url: `${location.origin}/` }).catch(() => {}); },
   // As «Остаться в браузере» on the install card: the plant picker shows in the browser.
   'story-stay'(el) { closeStories('stay'); el.dataset.kind = 'stories'; ACTS['stay-browser'](el); },
   'story-tick'(el) {
