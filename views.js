@@ -211,6 +211,7 @@ function viewToday() {
     return html + emptyCard('Привет! Это Жунгли', `${daily}, и запомню, как быстро сохнет каждое растение. ${calm}`, {
       big: '<div class="big">🌱</div>',
       short: `${daily}. ${calm}`,
+      story: true,
       after: `<p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p>`,
     }) + currentHint();
   }
@@ -452,10 +453,12 @@ function addFromCatalog(keys, source) {
 
 // The card on an empty screen with the quick picks. Where installing comes first (installFirst), the card gets short
 // (no big picture, `short` text) and the way to install goes under it at full width, so its buttons fit the first screen.
-function emptyCard(title, text, { big = '', short = text, after = '' } = {}) {
+// `story`: the card that opens «Как работают Жунгли» (stories.js), on the empty «Сегодня».
+function emptyCard(title, text, { big = '', short = text, after = '', story = false } = {}) {
   const gate = installFirst();
-  if (gate) return `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p></div>${gate}`;
-  return `<div class="celebrate">${big}<h2>${title}</h2><p class="muted">${text}</p>${quickStart()}${after}</div>`;
+  const st = story ? storyCard() : '';
+  if (gate) return `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p>${st}</div>${gate}`;
+  return `<div class="celebrate">${big}<h2>${title}</h2><p class="muted">${text}</p>${st}${quickStart()}${after}</div>`;
 }
 
 function viewLight() {

@@ -572,6 +572,65 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .id-row b { font-size: 1.294rem; font-weight: 900; letter-spacing: .02em; }
 .ids .linkish { margin-top: 4px; min-height: 44px; }
 
+/* «Как работают Жунгли»: the card on the empty «Сегодня» */
+.st-open { display: flex; align-items: center; gap: 14px; width: 100%; margin: 14px 0 4px; padding: 10px 14px; min-height: 64px; text-align: left; font: inherit; color: var(--ink); background: var(--card); border: 2px solid var(--edge); box-shadow: 0 4px 0 var(--edge); border-radius: 22px; }
+.st-open:active { transform: translateY(4px); box-shadow: none; }
+.st-ring { flex: none; width: 56px; height: 56px; border-radius: 50%; padding: 3px; background: conic-gradient(var(--leafy), var(--sky), var(--air), var(--leafy)); }
+.st-ring > span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--green-soft); border: 3px solid var(--sheet-solid); }
+.st-ring svg.pl { width: 44px; height: 44px; }
+.st-open-t { flex: 1; } .st-open-t b { display: block; font-size: 1rem; font-weight: 900; } .st-open-t small { color: var(--muted); font-weight: 700; font-size: 0.882rem; }
+.st-open > .ic { flex: none; width: 22px; height: 22px; }
+/* The stories have their own look: a deep leaf green with cream text and flat pill buttons, the same in both
+   themes. The app's screens inside keep the app's own colors. Cream on this green is 11:1, the soft text 10:1. */
+dialog.stories {
+  --st-bg: #123b25; --st-ink: #fff6ea; --st-soft: #d6eedd;
+  width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; box-shadow: none;
+  padding: calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--st-ink);
+  background: radial-gradient(120% 60% at 100% 0%, #1f5c39 0%, transparent 60%), radial-gradient(90% 50% at 0% 100%, #0d2f1c 0%, transparent 70%), var(--st-bg);
+}
+dialog.stories[open] { display: flex; flex-direction: column; }
+.st-bars { display: flex; gap: 4px; } .st-bars i { flex: 1; height: 4px; border-radius: 4px; background: rgba(255, 246, 234, .3); } .st-bars i.on { background: var(--st-ink); }
+.st-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.st-top b { font-size: 0.882rem; color: var(--st-soft); }
+.stories .icon-btn { background: transparent; border: 2px solid var(--st-ink); color: var(--st-ink); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.st-slide { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; overflow-y: auto; padding: 8px 0; }
+.stories h2 { margin: 0; font-size: 1.529rem; line-height: 1.15; color: var(--st-ink); }
+.stories .lead { margin: 0; font-size: 1rem; color: var(--st-soft); }
+/* «Назад» / «Дальше» for the keyboard: hidden until focused (taps go by the side of the screen) */
+.st-keys { display: flex; gap: 8px; margin-left: auto; }
+.st-keys .st-btn:not(:focus-visible) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; min-height: 0; }
+.st-keys .st-btn { min-height: 44px; padding: 8px 16px; }
+.st-hint { margin: 10px 0 0; text-align: center; font-size: 0.882rem; color: var(--st-soft); }
+.stories .st-btn { border-radius: 99px; min-height: 54px; font-weight: 900; box-shadow: none; transform: none; background: var(--st-ink); color: var(--st-bg); border: 2px solid var(--st-ink); text-decoration: none; }
+.stories .st-btn.ghost { background: transparent; color: var(--st-ink); border-color: rgba(255, 246, 234, .8); }
+.stories .st-btn:disabled { opacity: .6; }
+.stories .linkish, .stories .st-more { color: var(--st-ink); }
+.st-more { text-align: center; } .st-more .st-btn { margin-top: 10px; width: 100%; }
+/* A phone with a screen of the app, scaled down by fitPhones() */
+.phone { position: relative; flex: none; width: min(100%, 290px); height: min(54dvh, 500px); margin: 0 auto; border-radius: 34px; border: 5px solid var(--st-ink); overflow: hidden; background: var(--bg); color: var(--ink); box-shadow: 0 20px 40px rgba(0, 0, 0, .35); }
+.phone .blob { position: absolute; right: -60px; top: -50px; width: 200px; height: 200px; border-radius: 50%; background: var(--blob-1); }
+.phone .screen { position: absolute; left: 0; top: 0; width: 375px; padding: 14px 16px 0; overflow: hidden; transform-origin: top left; }
+.phone .screen .tabs { position: absolute; }
+.phone .st-card-sheet { margin: -14px -16px 0; background: var(--sheet-solid); }
+.finger { position: absolute; z-index: 5; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: rgba(42, 33, 24, .35); border: 3px solid #fff; opacity: 0; transition: left .5s ease, top .5s ease, opacity .3s; pointer-events: none; }
+.finger.on { opacity: 1; }
+.finger.tap { animation: st-tap .6s ease .5s; }
+@keyframes st-tap { 50% { transform: scale(.7); } }
+/* «Сегодня»: the real progress and check card, at full size so its buttons can be tapped */
+.st-today { color: var(--ink); }
+.st-today .task, .st-today .progress, .st-today .celebrate { background: var(--sheet-solid); border-color: transparent; margin-bottom: 0; }
+.st-today .progress { margin-bottom: 10px; }
+.st-say { margin: 8px 0 0; text-align: center; font-weight: 800; color: var(--st-ink); }
+/* The last story */
+.st-end { display: flex; flex-direction: column; gap: 14px; }
+.st-end .qs { background: var(--sheet-solid); color: var(--ink); }
+.st-steps { margin: 0; padding: 0; list-style: none; counter-reset: st; display: flex; flex-direction: column; gap: 8px; }
+.st-steps li { counter-increment: st; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 18px; background: rgba(255, 246, 234, .08); color: var(--st-soft); font-weight: 700; transition: background .4s, color .4s; }
+.st-steps li::before { content: counter(st); flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid currentColor; font-weight: 900; }
+.st-steps li.on { background: var(--st-ink); color: var(--st-bg); }
+@media (prefers-reduced-motion: reduce) { .finger, .st-steps li { transition: none; } .finger.tap { animation: none; } }
+
 /* What's new */
 .news { margin: 18px 0 0; }
 .news h3 { margin: 0 0 6px; font-size: 1.059rem; }
