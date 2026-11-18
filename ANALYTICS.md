@@ -99,7 +99,7 @@ On every event:
 | `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
-| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram`; `from`: `settings` / `news` / `import` |
+| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile); `from`: `settings` / `news` / `import` |
 
 ## Adding an event
 

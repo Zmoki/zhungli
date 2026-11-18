@@ -3,9 +3,10 @@
 // Settings, «Что нового» and backup.
 
 /* ---------- Settings and backup ---------- */
-// Author line at the bottom of settings and «Что нового».
-const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy">Конфиденциальность</a><br>
-      Идеи и баги присылайте в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
+// Credits at the bottom of «Что нового». Settings have them as cards (openSettings).
+const outLink = (href, target, text, cls = '') => `<a ${cls ? `class="${cls}" ` : ''}href="${href}" data-out="${target}" target="_blank" rel="noopener">${text}</a>`;
+const CREDITS = `Сделали ${outLink('https://www.threads.com/@pollyhill', 'threads', 'Полина')} и ${outLink('https://zmoki.xyz/', 'website', 'Зарема')} · <a href="privacy">Конфиденциальность</a><br>
+      Идеи и баги присылайте в Телеграм ${outLink('https://t.me/zmoki', 'telegram', '@zmoki')}`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
 const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
@@ -23,7 +24,7 @@ function openNews() {
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
       <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
-    <p class="small muted credit" data-from="news">${AUTHOR}</p>`;
+    <p class="small muted credit" data-from="news">${CREDITS}</p>`;
   track('news_opened', { had_new: hasNews() });
   S.seen = APP_VERSION;
   save();
@@ -52,14 +53,31 @@ function openSettings() {
     <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
-    <h2>Статистика</h2>
-    <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений, но без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
-      ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b>. Пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
-    <h2>Напоминание</h2>
-    <p class="small muted">Поставьте ежедневное напоминание, например на 10 утра, в «Напоминаниях» или попросите об этом голосового помощника.</p>
-    <button class="mt-24 btn danger wide" data-act="reset">Начать с чистого листа</button>
-    <p class="small muted credit" data-from="settings">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
+    <h2>Чистый лист</h2>
+    <p class="small muted">Сотрёт все растения, комнаты, места, заметки и фото ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
+    <button class="btn danger wide" data-act="reset">Начать с чистого листа</button>
+    <div data-from="settings">
+      <section class="set-card app" aria-labelledby="h-app"><h3 id="h-app">Приложение</h3>
+        <div class="ids">
+          <p class="id-row"><span class="muted">Версия</span><b>${esc(APP_VERSION)}</b></p>
+          ${savedAnonId() ? `<p class="id-row"><span class="muted">Номер устройства</span><b>${esc(savedAnonId().slice(0, 8))}</b></p>` : ''}
+          <button class="linkish small" data-act="news">Что нового</button>
+        </div>
+        <p class="m-0"><b>Идеи и баги</b></p>
+        <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку. Отвечаю быстро и часто обновляю Жунгли, так что можно поучаствовать в улучшении приложения.</p>
+        <div class="btns">${outLink('https://t.me/zmoki', 'telegram', 'Написать @zmoki', 'btn primary')}</div>
+      </section>
+      <section class="set-card stats" aria-labelledby="h-stats"><h3 id="h-stats">Статистика</h3>
+        <label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
+        <p class="mt-6 small muted m-0">Без названий, заметок и фото. <a class="linkish" href="privacy">Конфиденциальность</a></p>
+      </section>
+      <section class="set-card credits" aria-labelledby="h-credits"><h3 id="h-credits">Сделали</h3>
+        <p class="m-0"><b>Полина</b></p>
+        <p class="small muted">Удобство и растения · ${outLink('https://www.threads.com/@pollyhill', 'threads', '@pollyhill', 'linkish')} в Threads</p>
+        <p class="m-0"><b>Зарема</b></p>
+        <p class="small muted m-0">Разработка · ${outLink('https://zmoki.xyz/', 'website', 'zmoki.xyz', 'linkish')}</p>
+      </section>
+    </div>`;
   openSheet();
 }
 
