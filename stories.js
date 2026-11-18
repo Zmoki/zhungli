@@ -119,16 +119,63 @@ function storyEnd() {
 // «≡» at the left of the address bar; older Safari has it in the bottom bar, on iPad at the top. Other iPhone
 // browsers (Chrome, Firefox, Edge, Яндекс) add to the home screen from their own «Поделиться». The share sheet a
 // page can open (navigator.share) has no «На экран Домой» (checked on an iPhone, Safari 26), so it's steps only.
-function homeSteps() {
+// Which Safari is this: `26` (iPhone, menu «≡» in the address bar), `old` (iPhone, «Поделиться» in the bottom bar),
+// or '' (iPad, other browsers): those get the steps as text, without the animated Safari.
+function safariKind() {
   const ua = navigator.userAgent;
-  const pad = !/iPhone|iPod/.test(ua);
-  const safari = !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua);
-  const v = Number((ua.match(/Version\/(\d+)/) || [])[1] || 0);
-  const share = !safari ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
-    : pad ? ['Нажмите «Поделиться» вверху справа']
-      : v >= 26 ? ['Нажмите «≡» слева в адресной строке', 'Выберите «Поделиться»']
-        : ['Нажмите «Поделиться» внизу экрана'];
+  if (!/iPhone|iPod/.test(ua) || /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua)) return '';
+  return Number((ua.match(/Version\/(\d+)/) || [])[1] || 0) >= 26 ? '26' : 'old';
+}
+function homeSteps() {
+  const sk = safariKind();
+  const share = sk === '26' ? ['Нажмите «≡» слева в адресной строке', 'Выберите «Поделиться»']
+    : sk === 'old' ? ['Нажмите «Поделиться» внизу экрана']
+      : /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(navigator.userAgent) ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
+        : ['Нажмите «Поделиться» вверху справа']; // Safari on iPad
   return [...share, 'Выберите «На экран Домой», затем «Добавить»', 'Откройте Жунгли с новой иконки'];
+}
+// A drawn iPhone Safari with this page in it, and the way to the home screen played out on it: the menu (Safari 26),
+// the share sheet, «На экран Домой», «Добавить», and the new icon. Only to look at; the caption under it says each step.
+const SF = {
+  menu: '<svg viewBox="0 0 24 24" class="sf-ic"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  share: '<svg viewBox="0 0 24 24" class="sf-ic"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg>',
+  reload: '<svg viewBox="0 0 24 24" class="sf-ic"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>',
+  tabs: '<svg viewBox="0 0 24 24" class="sf-ic"><rect x="7" y="7" width="13" height="13" rx="3"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+  back: '<svg viewBox="0 0 24 24" class="sf-ic"><path d="M15 5l-7 7 7 7"/></svg>',
+  book: '<svg viewBox="0 0 24 24" class="sf-ic"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>',
+};
+function safariPhone(kind) {
+  const page = tame(onSample(prepare(null), viewToday));
+  const icon = '<img class="sf-app" src="icons/icon-180.png" alt="">';
+  const bar = kind === '26'
+    ? `<div class="sf-bar"><span class="sf-round">${SF.back}</span><span class="sf-url"><b class="sf-menu-btn">${SF.menu}</b><span>zhungli.zmoki.xyz</span>${SF.reload}</span><span class="sf-round">${SF.tabs}</span></div>`
+    : `<div class="sf-bar old"><span class="sf-url">zhungli.zmoki.xyz</span><div class="sf-row">${SF.back}<span class="sf-dim">${SF.back}</span><b class="sf-share-btn">${SF.share}</b>${SF.book}${SF.tabs}</div></div>`;
+  const box = document.createElement('div');
+  box.innerHTML = `<div class="sf">
+    <div class="sf-page"></div>${bar}
+    <div class="sf-menu"><span>Добавить закладку</span><b class="sf-share-item">${SF.share}Поделиться</b><span>Найти на странице</span></div>
+    <div class="sf-sheet"><div class="sf-sheet-head">${icon}<span><b>Жунгли</b><small>zhungli.zmoki.xyz</small></span></div>
+      <div class="sf-apps"><i></i><i></i><i></i><i></i></div>
+      <div class="sf-list"><span>Скопировать</span><span>Добавить в «Избранное»</span><b class="sf-home-item">На экран «Домой»</b></div></div>
+    <div class="sf-add"><div class="sf-add-bar"><span>Отменить</span><b>На экран «Домой»</b><b class="sf-add-btn">Добавить</b></div>
+      <div class="sf-add-card">${icon}<span><b>Жунгли</b><small>zhungli.zmoki.xyz</small></span></div></div>
+    <div class="sf-home"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="sf-new">${icon}<small>Жунгли</small></span></div>
+  </div>`;
+  box.querySelector('.sf-page').append(...page.childNodes);
+  return phone(box, '');
+}
+// The animation: each step shows a layer (data-step on the phone) after the finger taps what leads to it.
+function safariSteps(f, caption, kind) {
+  const list = homeSteps();
+  const say = (i) => { caption.textContent = `${i + 1}. ${list[i]}`; };
+  const go = (step, target, i) => [
+    [1300, (now) => { if (!now) tapAt(f, f.querySelector(target)); }],
+    [450, () => { f.dataset.step = step; if (i !== undefined) say(i); }],
+  ];
+  say(0);
+  return kind === '26'
+    ? [...go('menu', '.sf-menu-btn', 1), ...go('sheet', '.sf-share-item', 2), ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn', 3), ...go('home', '.sf-new')]
+    : [...go('sheet', '.sf-share-btn', 1), ...go('add', '.sf-home-item'), ...go('home', '.sf-add-btn', 2), ...go('home', '.sf-new')];
 }
 const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`).join('')}</ol>`;
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
@@ -235,11 +282,20 @@ function endStory(slide) {
       <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
       <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>`;
   } else if (kind === 'ios') {
+    // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
+    // other browsers) and with reduced motion, the list is shown as is.
+    const sk = STILL.matches ? '' : safariKind();
     box.innerHTML = `<h2 tabindex="-1">Последний шаг: Жунгли на экране «Домой»</h2>
-      <p class="lead">Растения будут жить в иконке. Отмеченное здесь, в браузере, туда не перейдёт, поэтому сначала добавьте иконку.</p>
-      ${steps(homeSteps())}
+      <p class="lead">Растения будут жить в иконке. Отмеченное в браузере туда не перейдёт.</p>
+      ${sk ? `<ol class="sr-only">${homeSteps().map((t) => `<li>${t}</li>`).join('')}</ol><p class="st-caption" aria-hidden="true"></p>` : steps(homeSteps())}
       <button class="btn st-btn wide" data-act="story-close" data-story-end="install">Понятно</button>
       <button class="btn st-btn ghost wide" data-act="story-stay">Остаться в браузере</button>`;
+    if (sk) {
+      const f = safariPhone(sk);
+      box.querySelector('.st-caption').before(f);
+      slide.append(box);
+      return safariSteps(f, box.querySelector('.st-caption'), sk);
+    }
   } else if (kind === 'in_app') {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
       <p class="lead">Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.</p>
