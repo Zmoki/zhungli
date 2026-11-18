@@ -270,8 +270,7 @@ function showStory() {
       <span class="st-keys">${storyI ? '<button class="btn st-btn ghost" data-act="story-prev">Назад</button>' : ''}${storyI < STORIES.length - 1 ? '<button class="btn st-btn" data-act="story-next">Дальше</button>' : ''}</span>
       <button class="icon-btn st-x" data-act="story-close" aria-label="Пропустить">${I('x')}</button></div>
     <div class="st-slide" id="story-slide">${s.h ? `<h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p>` : ''}</div>
-    <p class="st-say" id="story-say" role="status" hidden></p>
-    ${storyI ? '' : '<p class="st-hint">Касание справа: дальше, слева: назад</p>'}`;
+    <p class="st-say" id="story-say" role="status" hidden></p>`;
   const slide = $('#story-slide');
   const anim = s.build(slide) || [];
   fitPhones(slide);
