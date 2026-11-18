@@ -3,9 +3,9 @@
 // Settings, «Что нового» and backup.
 
 /* ---------- Settings and backup ---------- */
-// Author line at the bottom of settings and «Что нового».
-const AUTHOR = `Сделала Зарема · <a href="https://zmoki.xyz/" data-out="website" target="_blank" rel="noopener">zmoki.xyz</a> · <a href="privacy">Конфиденциальность</a><br>
-      Идеи и баги присылайте в Телеграм <a href="https://t.me/zmoki" data-out="telegram" target="_blank" rel="noopener">@zmoki</a>`;
+// Credits at the bottom of «Что нового». Settings have them as cards (openSettings).
+const CREDITS = `Сделали ${outLink('threads', 'Полина')} и ${outLink('website', 'Зарема')} · <a href="privacy">Конфиденциальность</a><br>
+      Идеи и баги присылайте в Телеграм ${outLink('telegram', '@zmoki')}`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
 const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
@@ -23,7 +23,7 @@ function openNews() {
     ${CHANGELOG.map((e) => `<div class="news ${String(e.v) === APP_VERSION ? 'current' : ''}">
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
       <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
-    <p class="small muted credit" data-from="news">${AUTHOR}</p>`;
+    <p class="small muted credit" data-from="news">${CREDITS}</p>`;
   track('news_opened', { had_new: hasNews() });
   S.seen = APP_VERSION;
   save();
@@ -52,14 +52,32 @@ function openSettings() {
     <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
-    <h2>Статистика</h2>
-    <div class="field"><label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-      <p class="mt-6 small muted">Какие кнопки нажимают, версия приложения, тип устройства, страна и число растений, но без названий, имён, заметок, фото и мест. Помогает понять, что улучшить. <a class="linkish" href="privacy" data-from="settings">Подробнее</a></p>
-      ${savedAnonId() ? `<p class="small muted">Номер устройства: <b>${esc(savedAnonId().slice(0, 8))}</b>. Пригодится, если захотите удалить отправленную статистику.</p>` : ''}</div>
-    <h2>Напоминание</h2>
-    <p class="small muted">Поставьте ежедневное напоминание, например на 10 утра, в «Напоминаниях» или попросите об этом голосового помощника.</p>
-    <button class="mt-24 btn danger wide" data-act="reset">Начать с чистого листа</button>
-    <p class="small muted credit" data-from="settings">Версия ${esc(APP_VERSION)} · <button class="linkish" data-act="news">Что нового</button><br>${AUTHOR}</p>`;
+    <h2>Чистый лист</h2>
+    <p class="small muted">Сотрёт все растения, комнаты, места, заметки, фото и настройки ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
+    <button class="btn danger wide" data-act="reset">Начать с чистого листа</button>
+    <div data-from="settings">
+      <section class="set-card app" aria-labelledby="h-app"><h2 id="h-app">Приложение</h2>
+        <div class="ids">
+          <p class="id-row"><span class="muted">Версия</span><b>${esc(APP_VERSION)}</b></p>
+          ${savedAnonId() ? `<p class="id-row"><span class="muted">Номер устройства</span><b>${esc(savedAnonId().slice(0, 8))}</b></p>
+          <p class="small muted m-0">Пригодится, если захотите удалить отправленную статистику.</p>` : ''}
+          <button class="linkish small" data-act="news">Что нового</button>
+        </div>
+        <p class="m-0"><b>Идеи и баги</b></p>
+        <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку. Отвечаю быстро и часто обновляю Жунгли, так что можно поучаствовать в улучшении приложения.</p>
+        <div class="btns">${outLink('telegram', 'Написать @zmoki', 'btn primary')}</div>
+      </section>
+      <section class="set-card stats" aria-labelledby="h-stats"><h2 id="h-stats">Статистика</h2>
+        <label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
+        <p class="mt-6 small muted m-0">Без названий, имён, заметок, фото и мест. <a class="linkish" href="privacy">Конфиденциальность</a></p>
+      </section>
+      <section class="set-card credits" aria-labelledby="h-credits"><h2 id="h-credits">Сделали</h2>
+        <p class="m-0"><b>Полина</b></p>
+        <p class="small muted">Удобство и растения · ${outLink('threads', '@pollyhill', 'linkish')} в Threads</p>
+        <p class="m-0"><b>Зарема</b></p>
+        <p class="small muted m-0">Разработка · ${outLink('website', 'zmoki.xyz', 'linkish')}</p>
+      </section>
+    </div>`;
   openSheet();
 }
 
@@ -134,10 +152,16 @@ Object.assign(ACTS, {
   },
   import() { endQuick('restore'); $('#import-input').click(); },
   reset() {
-    if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
+    if (confirm('Точно стереть все отметки и начать заново? Фото и настройки тоже удалятся.')) {
       track('data_reset');
       flushStats();
-      localStorage.removeItem(KEY);
+      // A stats opt-out is about the person, not the plants: it outlives the reset.
+      if (S.settings.stats === false) {
+        const fresh = prepare(null);
+        fresh.settings.stats = false;
+        fresh.statsNotice = S.statsNotice;
+        localStorage.setItem(KEY, JSON.stringify(fresh));
+      } else localStorage.removeItem(KEY);
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
         .then(() => idbReq((st) => st.clear(), 'readwrite'))
         .finally(() => location.reload());

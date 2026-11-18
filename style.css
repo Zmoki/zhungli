@@ -55,6 +55,7 @@
   --shadow: 0 10px 30px rgba(90, 50, 10, .12);
   --shadow-soft: 0 2px 10px rgba(90, 50, 10, .07); /* cards: quiet, so photos stand out */
   --surface: #ffffff; /* solid card fill for plant lists */
+  --credits: #e3ddff; /* «Сделали» card in settings */
   --radius: 26px;
   color-scheme: light dark;
 }
@@ -96,6 +97,7 @@
     --glass-photo: rgba(34, 28, 46, .9);
     --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
     --surface: #2a2338;
+    --credits: #22344a;
   }
 }
 :root[data-theme="dark"] {
@@ -133,6 +135,7 @@
   --glass-photo: rgba(34, 28, 46, .9);
   --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
   --surface: #2a2338;
+  --credits: #22344a;
 }
 
 /* Solid layers for people who turn off transparency */
@@ -555,6 +558,17 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .linkish { border: 0; background: none; padding: 0; color: var(--green); font: inherit; font-weight: 800; text-decoration: underline; }
 .credit { text-align: center; margin-top: 20px; }
 .credit a { color: var(--green); }
+/* Settings: cards at the bottom (app, stats, credits) */
+.set-card { border-radius: 24px; padding: 16px; margin-top: 14px; }
+.set-card h2 { margin: 0 0 12px; font-size: 1.059rem; }
+.set-card.app { background: var(--beige); margin-top: 28px; }
+.set-card.stats { background: var(--card); border: 1px solid var(--line); }
+.set-card.credits { background: var(--credits); }
+.ids { background: var(--card); border-radius: 18px; padding: 8px 14px 10px; margin-bottom: 14px; }
+.id-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin: 0; padding: 4px 0; }
+.id-row + .id-row { border-top: 1px solid var(--line); }
+.id-row b { font-size: 1.294rem; font-weight: 900; letter-spacing: .02em; }
+.ids .linkish { margin-top: 4px; min-height: 44px; }
 
 /* What's new */
 .news { margin: 18px 0 0; }
