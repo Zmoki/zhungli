@@ -6,22 +6,29 @@
 // Credits at the bottom of «Что нового». Settings have them as a card (openSettings).
 const CREDITS = `Сделали ${outLink('threads', 'Полина')} и ${outLink('website', 'Зарема')} · <a href="privacy">Конфиденциальность</a>`;
 
-// The «Приложение» card: version, device number and how to reach us. At the bottom of settings and
-// the top of «Что нового» (there without its title and link: the sheet is the changelog itself).
+// The «Приложение» card: version, device number and how to reach us. Full at the bottom of settings;
+// compact at the top of «Что нового», so the changes still start on the first screen.
 function appCard(from) {
-  const news = from === 'news';
-  const fresh = Number(APP_VERSION) >= CHANGELOG[0].v;
   const id = savedAnonId();
-  return `<section class="set-card app" data-from="${from}" ${news ? 'aria-label="Приложение"' : 'aria-labelledby="h-app"'}>${news ? '' : '<h2 id="h-app">Приложение</h2>'}
+  const row = (k, v) => `<p class="id-row"><span class="muted">${k}</span><b>${esc(v)}</b></p>`;
+  const write = (label) => outLink('telegram', label, 'btn primary');
+  if (from === 'news') {
+    return `<section class="set-card app" data-from="news" aria-label="Приложение">
+        <div class="ids">${row('Версия', APP_VERSION)}${id ? row('Номер устройства', id.slice(0, 8)) : ''}</div>
+        <div class="contact-row"><b>Идеи и баги</b>${write('Написать @zmoki')}</div>
+      </section>`;
+  }
+  const fresh = Number(APP_VERSION) >= CHANGELOG[0].v;
+  return `<section class="set-card app" data-from="${from}" aria-labelledby="h-app"><h2 id="h-app">Приложение</h2>
         <div class="ids">
-          <p class="id-row"><span class="muted">Версия${fresh ? ', самая свежая' : ''}</span><b>${esc(APP_VERSION)}</b></p>
-          ${id ? `<p class="id-row"><span class="muted">Номер устройства</span><b>${esc(id.slice(0, 8))}</b></p>
+          ${row(`Версия${fresh ? ', самая свежая' : ''}`, APP_VERSION)}
+          ${id ? `${row('Номер устройства', id.slice(0, 8))}
           <p class="small muted m-0">Пригодится, если захотите удалить отправленную статистику.</p>` : ''}
-          ${news ? '' : '<button class="linkish small" data-act="news">Что нового</button>'}
+          <button class="linkish small" data-act="news">Что нового</button>
         </div>
         <p class="m-0"><b>Идеи и баги</b></p>
         <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку. Отвечаю быстро и часто обновляю Жунгли, так что можно поучаствовать в улучшении приложения.</p>
-        <div class="btns">${outLink('telegram', 'Написать @zmoki', 'btn primary')}</div>
+        <div class="btns">${write('Написать @zmoki')}</div>
       </section>`;
 }
 
@@ -72,8 +79,8 @@ function openSettings() {
     <h2>Чистый лист</h2>
     <p class="small muted">Сотрёт все растения, комнаты, места, заметки, фото и настройки ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
     <button class="btn danger wide" data-act="reset">Начать с чистого листа</button>
+    ${appCard('settings')}
     <div data-from="settings">
-      ${appCard('settings')}
       <section class="set-card stats" aria-labelledby="h-stats"><h2 id="h-stats">Статистика</h2>
         <label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
         <p class="mt-6 small muted m-0">Без названий, имён, заметок, фото и мест. <a class="linkish" href="privacy">Конфиденциальность</a></p>
