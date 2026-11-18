@@ -44,7 +44,7 @@ On every event:
 | `import_prompt_shown` | «Не вставляется? Показать запрос» in AI import: copying didn't reach the AI chat | — |
 | `import_failed` | the picked file has no plant list | `length` of the file's text; `file_ext`: `json` / `txt` / `other` (never the name); `reason`: `empty` / `unreadable` (couldn't be opened) / `too_big` (over 1 MB) / `backup` (a Жунгли backup, not an AI file) / `no_list` (no brackets) / `bad_json` (could not be read even after repairs) / `no_plants` (read, but no plant had a name); `has_code_fence`, `has_curly_quotes`, `has_spaced_numbers`. No file content is sent |
 | `add_opened` | «Добавить растения» sheet opened | `from`: tab it was opened from |
-| `custom_opened` | own plant form opened | `from`: `button` («Своё растение» in the add sheet) / `search_miss` («Добавить «…»» after a catalog search found nothing) |
+| `custom_opened` | own plant form opened | `from`: `button` («Своё растение» under «Не нашли своё?») / `search_miss` («Добавить как своё» after a catalog search found nothing) |
 | `quick_abandoned` | tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app | `picked` (how many ticked); `then`: `catalog` / `import` / `restore` / `left_app` (what they turned to instead of «Добавить»; they may still add there) |
 | `import_opened` | AI import sheet opened | — |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |

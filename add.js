@@ -9,6 +9,30 @@ let picked = new Set();
 // Title of the generic group in the full list; during a search it's just «Общие типы».
 const GENERIC_TITLE = 'Общие типы (если нет в списке)';
 const searchStem = (w) => (w.length >= 6 ? w.slice(0, -2) : w.length === 5 ? w.slice(0, -1) : w);
+// Latin typed in the catalog search also reads as Russian two ways: botanical Latin by sound («aloca» →
+// «алока», «chlorophytum» → «хлорофитум»), and Russian typed on an English layout («fkjrf» → «алока»).
+// So every plant is found by its Latin name without listing it in `aka`.
+const EN_KEYS = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
+const RU_KEYS = 'йцукенгшщзхъфывапролджэячсмитьбюё';
+const fromLayout = (s) => s.replace(/./g, (c) => { const i = EN_KEYS.indexOf(c); return i < 0 ? c : RU_KEYS[i]; });
+const LATIN_SOUNDS = {
+  sch: 'ш', zh: 'ж', kh: 'х', ch: 'х', sh: 'ш', ts: 'ц', ya: 'я', yu: 'ю', yo: 'е', ph: 'ф', th: 'т', ck: 'к', qu: 'кв', ae: 'е', oe: 'оэ',
+  a: 'а', b: 'б', c: 'к', d: 'д', e: 'е', f: 'ф', g: 'г', h: 'х', i: 'и', j: 'дж', k: 'к', l: 'л', m: 'м', n: 'н', o: 'о', p: 'п',
+  q: 'к', r: 'р', s: 'с', t: 'т', u: 'у', v: 'в', w: 'в', x: 'кс', y: 'и', z: 'з',
+};
+const fromLatin = (s) => s.replace(/sch|zh|kh|ch|sh|ts|ya|yu|yo|ph|th|ck|qu|ae|oe|[a-z]/g, (m, at) => {
+  const vowel = (c) => /[aeiouy]/.test(c || '');
+  if (m === 'c' && /[eiy]/.test(s[at + 1] || '')) return 'ц'; // cissus → циссус
+  if (m === 's' && vowel(s[at - 1]) && vowel(s[at + 1])) return 'з'; // alocasia → алоказия
+  if (m === 'e' && !/[a-z]/.test(s[at - 1] || '')) return 'э'; // echeveria → эхеверия
+  return LATIN_SOUNDS[m];
+});
+// The ways a query can be read, each as a list of stemmed words: as typed, and for Latin also by sound and by layout.
+function searchReadings(raw) {
+  const q = norm(raw);
+  const all = /[a-z]/.test(q) ? [q, fromLatin(q), fromLayout(q)] : [q];
+  return [...new Set(all)].map((s) => s.split(/\s+/).filter(Boolean).map(searchStem));
+}
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
 function pickRow(d, changeFor, nowId) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
@@ -36,8 +60,7 @@ function catalogHtml(changeFor) {
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
-  return `<div class="search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
-    ${changeFor ? '' : '<p class="pick-help small muted">Отметьте все свои растения. Если вашего нет, добавьте его как своё или выберите похожий общий тип.</p>'}
+  return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
       ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
@@ -50,22 +73,30 @@ function openAdd() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><div class="ava" aria-hidden="true">${I('sprout')}</div><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <button class="import-cta" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Сразу много через чат с ИИ</b><small>Спросите ChatGPT, Claude или другого ИИ-помощника о своих растениях. Он сделает файл со списком и советами по уходу, а вы загрузите его сюда.</small></span>
+    <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
+      <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
-    <button class="import-cta mt-8" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
-      <span class="pt"><b>Своё растение</b><small>Напишите название и на что похоже, а уход я подберу.</small></span>
-      <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
-    <div class="or">или выберите из каталога</div>
+    <h3 class="sec-title">Каталог</h3>
     ${catalogHtml()}
-    <button class="mt-12 btn ghost wide" data-act="add-custom">${I('pencil')}Своё растение</button>
+    <div id="end-own"><div class="group-title">Не нашли своё?</div>
+      <button class="import-cta mini" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
+        <span class="pt"><b>Своё растение</b><small>Название и на что похоже, уход подберу</small></span>
+        <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button></div>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   catalogSearch();
   openSheet();
 }
 // The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
 // events: whether one was made goes with `card_changed`.
+let pinWatch = null;
 function catalogSearch(changeFor) {
+  // The search stays at the top while the list scrolls; once it's stuck there it gets the sheet's solid fill,
+  // so the list doesn't show through (before that it sits on the sheet's own glass).
+  const bar = $('.pick-search'), mark = document.createElement('div');
+  bar.before(mark);
+  pinWatch?.disconnect();
+  pinWatch = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: sheet });
+  pinWatch.observe(mark);
   const pickGroups = [...document.querySelectorAll('.pick-group')];
   const pickEnd = $('#pick-end');
   const genericTitle = document.querySelector('.pick-group[data-generic] .group-title');
@@ -73,8 +104,9 @@ function catalogSearch(changeFor) {
   $('#pick-q').addEventListener('input', (e) => {
     const raw = e.target.value.trim();
     // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
-    const words = norm(raw).split(/\s+/).filter(Boolean).map(searchStem);
-    const hits = (text) => words.every((w) => text.includes(w));
+    const readings = searchReadings(raw);
+    const words = readings[0];
+    const hits = (text) => readings.some((ws) => ws.every((w) => text.includes(w)));
     // The group name counts only when nothing else matched: «лиана» finds the vines,
     // but «кактус» doesn't list every succulent.
     const byCat = words.length > 0 && !pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => hits(b.dataset.q)));
@@ -101,15 +133,17 @@ function catalogSearch(changeFor) {
     if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
     // «(если нет в списке)» only reads right at the end of the full list.
     genericTitle.textContent = words.length ? 'Общие типы' : GENERIC_TITLE;
-    // Nothing found: never a dead end. Offer the typed name as an own plant, and show all generic types.
+    // Nothing found: never a dead end. Offer the typed name as an own plant (instead of «Не нашли своё?»
+    // at the end of the list, so there's one such button), and show all generic types under it.
     // Changing a card there's no own plant to offer: just the generic types.
     const none = $('#pick-none');
     none.hidden = any;
+    if ($('#end-own')) $('#end-own').hidden = !any;
     if (!any) {
       none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
-        ${changeFor ? '' : `<button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить «${esc(raw.length > 14 ? raw.slice(0, 13) + '…' : raw)}»</button>`}
+        ${changeFor ? '' : `<button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить как своё</button>`}
         <p class="mt-12 small muted" data-from="catalog">Чтобы оно появилось в каталоге с советами, напишите Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}.</p>
-        <p class="mt-12 small muted">${changeFor ? 'Выберите' : 'Или выберите'} похожий общий тип, уход у них почти одинаковый:</p>`;
+        ${changeFor ? '<p class="mt-12 small muted">А пока выберите похожий общий тип, уход у них почти одинаковый:</p>' : ''}`;
       const g = document.querySelector('.pick-group[data-generic]');
       g.hidden = false;
       g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
