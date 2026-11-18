@@ -207,12 +207,11 @@ function viewToday() {
   let html = `<header class="hello head-row"><div><h1>${greeting()}!</h1><div class="date">${esc(date)}</div></div>
     ${headButtons()}</header>`;
 
+  // Empty: no welcome card, the stories (stories.js) open by themselves on the first launch and explain the app.
+  // Only the quick picks, or the way to install first.
   if (!allPlants().length) {
-    const daily = 'Каждый день покажу, что пора проверить', calm = 'Без долгов и красных просрочек.';
-    return html + emptyCard('Привет! Это Жунгли', `${daily}, и запомню, как быстро сохнет каждое растение. ${calm}`, {
-      big: '<div class="big">🌱</div>',
-      short: `${daily}. ${calm}`,
-      story: true,
+    return html + emptyCard('', '', {
+      bare: true,
       after: `<p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p>`,
     }) + currentHint();
   }
@@ -454,12 +453,11 @@ function addFromCatalog(keys, source) {
 
 // The card on an empty screen with the quick picks. Where installing comes first (installFirst), the card gets short
 // (no big picture, `short` text) and the way to install goes under it at full width, so its buttons fit the first screen.
-// `story`: the card that opens «Как работают Жунгли» (stories.js), on the empty «Сегодня».
-function emptyCard(title, text, { big = '', short = text, after = '', story = false } = {}) {
+// `bare`: without the title and text (the empty «Сегодня»).
+function emptyCard(title, text, { big = '', short = text, after = '', bare = false } = {}) {
   const gate = installFirst();
-  const st = story ? storyCard() : '';
-  if (gate) return `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p>${st}</div>${gate}`;
-  return `<div class="celebrate">${big}<h2>${title}</h2><p class="muted">${text}</p>${st}${quickStart()}${after}</div>`;
+  if (gate) return bare ? gate : `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p></div>${gate}`;
+  return `<div class="celebrate">${bare ? '' : `${big}<h2>${title}</h2><p class="muted">${text}</p>`}${quickStart()}${after}</div>`;
 }
 
 function viewLight() {

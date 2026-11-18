@@ -1,6 +1,6 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 'use strict';
-// «Как работают Жунгли»: one story per screen, opened from the empty «Сегодня».
+// «Как работают Жунгли»: one story per screen, opened by itself on the first launch.
 // The screens are the app's own views drawn for a sample garden: S is swapped for a sample state only while the
 // markup is built, then taps, ids and links are stripped, so nothing in a story reaches the person's data.
 // Each screen plays a short animation on a loop: a finger taps, types or scrolls. Press and hold (or Space) pauses
@@ -444,12 +444,7 @@ function autoStories() {
 function storiesYield() {
   if (storiesDlg.open && storyFrom === 'auto') closeStories('restored');
 }
-// The card on the empty «Сегодня» that opens the stories.
-const storyCard = () => `<button class="st-open" data-act="stories"><span class="st-ring" aria-hidden="true"><span>${plantSvg(PLANTS.find((p) => p.id === 'mon-del'), 'fine')}</span></span>
-  <span class="st-open-t"><b>Как работают Жунгли</b><small>6 экранов, меньше минуты</small></span>${I('chevron-right')}</button>`;
-
 Object.assign(ACTS, {
-  stories() { openStories(tab); },
   // «Показать, как» on the install card: straight to the last story, the way to the home screen.
   'stories-install'() { openStories('install_card'); goStory(STORIES.length - 1); },
   'story-next'() { goStory(1); },

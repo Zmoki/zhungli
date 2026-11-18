@@ -572,14 +572,6 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .id-row b { font-size: 1.294rem; font-weight: 900; letter-spacing: .02em; }
 .ids .linkish { margin-top: 4px; min-height: 44px; }
 
-/* «Как работают Жунгли»: the card on the empty «Сегодня» */
-.st-open { display: flex; align-items: center; gap: 14px; width: 100%; margin: 14px 0 4px; padding: 10px 14px; min-height: 64px; text-align: left; font: inherit; color: var(--ink); background: var(--card); border: 2px solid var(--edge); box-shadow: 0 4px 0 var(--edge); border-radius: 22px; }
-.st-open:active { transform: translateY(4px); box-shadow: none; }
-.st-ring { flex: none; width: 56px; height: 56px; border-radius: 50%; padding: 3px; background: conic-gradient(var(--leafy), var(--sky), var(--air), var(--leafy)); }
-.st-ring > span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--green-soft); border: 3px solid var(--sheet-solid); }
-.st-ring svg.pl { width: 44px; height: 44px; }
-.st-open-t { flex: 1; } .st-open-t b { display: block; font-size: 1rem; font-weight: 900; } .st-open-t small { color: var(--muted); font-weight: 700; font-size: 0.882rem; }
-.st-open > .ic { flex: none; width: 22px; height: 22px; }
 /* The stories have their own look: a deep leaf green with cream text and flat pill buttons, the same in both
    themes. The app's screens inside keep the app's own colors. Cream on this green is 11:1, the soft text 10:1. */
 dialog.stories {
@@ -766,6 +758,7 @@ summary { cursor: pointer; }
 .empty-note { text-align: center; margin-top: 24px; }
 /* Quick picks on empty screens: two columns of compact plant tiles */
 .qs-title { text-align: left; margin-bottom: 10px; }
+.celebrate > .qs-title:first-child { margin-top: 0; }
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .qs {
   display: flex; align-items: center; gap: 6px; min-height: 52px; text-align: left;
