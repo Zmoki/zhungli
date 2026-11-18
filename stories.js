@@ -205,11 +205,11 @@ const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`)
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
-  { tab: 'today', name: 'Сегодня', h: 'Несколько растений в день', p: 'По вашим ответам Жунгли подстроят полив под каждое.', build: todayStory },
+  { tab: 'today', name: 'Сегодня', h: 'Отмечайте дела на сегодня', p: 'По вашим ответам Жунгли подстроят полив под каждое растение.', build: todayStory },
   { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
   { tab: 'plants', name: 'Карточка растения', h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
-  { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'Впишите замер люксметра.', build: lightStory },
-  { tab: 'room', name: 'Комната', h: 'Температура и влажность', p: 'Впишите показания датчика.', build: roomStory },
+  { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'По замеру Жунгли подскажут, кому темно и кого переставить.', build: lightStory },
+  { tab: 'room', name: 'Комната', h: 'Температура и влажность', p: 'По датчику Жунгли подскажут, кому некомфортно и что сделать.', build: roomStory },
   { name: 'Начнём', build: endStory },
 ];
 
