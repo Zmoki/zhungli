@@ -50,6 +50,7 @@ function startAddFlow(sheetName) {
 function endAddFlow(leftApp = false) {
   // What the catalog lacks: sent whether or not something was added in the end.
   if (addFlow && addFlow.missed) track('catalog_missed', { query: addFlow.missed, added: addFlow.done });
+  if (!leftApp) customDraft = null; // the sheet is closing: a kept «Новое растение» draft goes with it
   if (addFlow && !addFlow.done) track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp });
   addFlow = null;
 }
@@ -97,7 +98,7 @@ function openAdd(back = false) {
 // After «Добавить как своё» the way back also brings the search (`q`) back.
 const subHead = (title, back, q = '') => `<div class="sheet-head">${back
   ? `<button class="icon-btn" data-act="add-back" data-to="${back}"${q ? ` data-q="${esc(q)}"` : ''} aria-label="Назад к каталогу">${I('arrow-left')}</button>`
-  : ''}<h2 class="m-0" tabindex="-1">${title}</h2>
+  : ''}<h2 class="m-0">${title}</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>`;
 // The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
 // events: whether one was made goes with `card_changed`.
@@ -163,6 +164,7 @@ function catalogSearch(changeFor) {
       g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
     }
     if (changeFor) { if (raw) cardSearched = true; return; }
+    if (e.detail === 'restore') return;
     // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
     // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
     if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
@@ -197,6 +199,9 @@ const catRank = (c) => {
 // Two fields are enough: what it is and what it's like. The care comes from that generic type;
 // the numbers stay editable under «Тонкая настройка».
 const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
+// What was typed in «Новое растение» before ← to the catalog: it comes back if the form is opened again
+// while the add sheet stays open (cleared when the sheet closes or the plant is added).
+let customDraft = null;
 function openCustom(species = '', from = 'button', back = '') {
   startAddFlow('custom');
   track('custom_opened', { from });
@@ -232,6 +237,14 @@ function openCustom(species = '', from = 'button', back = '') {
   };
   fillFrom(like);
   form.like.addEventListener('change', () => fillFrom(def(form.like.value)));
+  // A draft for another plant (opened now with a different searched name) doesn't carry over.
+  if (customDraft && species && species !== customDraft.species) customDraft = null;
+  if (customDraft) {
+    const { tuneOpen, ...fields } = customDraft;
+    Object.entries(fields).forEach(([k, v]) => { if (form.elements[k]) form.elements[k].value = v; });
+    form.querySelector('.tune').open = tuneOpen;
+    $('#c-like-hint').textContent = def(form.like.value)?.hint ? `Например: ${def(form.like.value).hint}.` : '';
+  }
   // Changing the care in «Тонкая настройка» by hand (not the values a type fills in, not the name)
   // tells whether two fields are enough.
   let tuned = false;
@@ -239,6 +252,7 @@ function openCustom(species = '', from = 'button', back = '') {
   if (!species) form.species.focus();
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    customDraft = null;
     if (addFlow) addFlow.done = true;
     const f = new FormData(e.target);
     const base = def(String(f.get('like'))) || like;
@@ -596,11 +610,14 @@ Object.assign(ACTS, {
   'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
   'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
   'add-back'(el) {
+    const form = $('#add-form');
+    if (form) customDraft = { ...Object.fromEntries(new FormData(form)), tuneOpen: form.querySelector('.tune').open };
     openAdd(true);
     if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])`)?.focus(); return; }
+    // The search comes back as it was, but it isn't a new search: catalog_searched isn't sent again.
     const q = $('#pick-q');
     q.value = el.dataset.q;
-    q.dispatchEvent(new Event('input'));
+    q.dispatchEvent(new CustomEvent('input', { detail: 'restore' }));
     $('#pick-none [data-act="add-custom"]')?.focus();
   },
   pick(el) {
