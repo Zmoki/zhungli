@@ -560,7 +560,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .credit a { color: var(--green); }
 /* Settings: cards at the bottom (app, stats, credits) */
 .set-card { border-radius: 24px; padding: 16px; margin-top: 14px; }
-.set-card h3 { margin: 0 0 12px; font-size: 1.059rem; font-weight: 900; }
+.set-card h2 { margin: 0 0 12px; font-size: 1.059rem; }
 .set-card.app { background: var(--beige); margin-top: 28px; }
 .set-card.stats { background: var(--card); border: 1px solid var(--line); }
 .set-card.credits { background: var(--credits); }

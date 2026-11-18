@@ -4,9 +4,8 @@
 
 /* ---------- Settings and backup ---------- */
 // Credits at the bottom of «Что нового». Settings have them as cards (openSettings).
-const outLink = (href, target, text, cls = '') => `<a ${cls ? `class="${cls}" ` : ''}href="${href}" data-out="${target}" target="_blank" rel="noopener">${text}</a>`;
-const CREDITS = `Сделали ${outLink('https://www.threads.com/@pollyhill', 'threads', 'Полина')} и ${outLink('https://zmoki.xyz/', 'website', 'Зарема')} · <a href="privacy">Конфиденциальность</a><br>
-      Идеи и баги присылайте в Телеграм ${outLink('https://t.me/zmoki', 'telegram', '@zmoki')}`;
+const CREDITS = `Сделали ${outLink('threads', 'Полина')} и ${outLink('website', 'Зарема')} · <a href="privacy">Конфиденциальность</a><br>
+      Идеи и баги присылайте в Телеграм ${outLink('telegram', '@zmoki')}`;
 
 // Header buttons: «Что нового» (with a dot when there are unseen changes) and settings.
 const hasNews = () => CHANGELOG.some((e) => e.v > Number(S.seen || 0));
@@ -54,28 +53,29 @@ function openSettings() {
     <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
     <h2>Чистый лист</h2>
-    <p class="small muted">Сотрёт все растения, комнаты, места, заметки и фото ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
+    <p class="small muted">Сотрёт все растения, комнаты, места, заметки, фото и настройки ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
     <button class="btn danger wide" data-act="reset">Начать с чистого листа</button>
     <div data-from="settings">
-      <section class="set-card app" aria-labelledby="h-app"><h3 id="h-app">Приложение</h3>
+      <section class="set-card app" aria-labelledby="h-app"><h2 id="h-app">Приложение</h2>
         <div class="ids">
           <p class="id-row"><span class="muted">Версия</span><b>${esc(APP_VERSION)}</b></p>
-          ${savedAnonId() ? `<p class="id-row"><span class="muted">Номер устройства</span><b>${esc(savedAnonId().slice(0, 8))}</b></p>` : ''}
+          ${savedAnonId() ? `<p class="id-row"><span class="muted">Номер устройства</span><b>${esc(savedAnonId().slice(0, 8))}</b></p>
+          <p class="small muted m-0">Пригодится, если захотите удалить отправленную статистику.</p>` : ''}
           <button class="linkish small" data-act="news">Что нового</button>
         </div>
         <p class="m-0"><b>Идеи и баги</b></p>
         <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку. Отвечаю быстро и часто обновляю Жунгли, так что можно поучаствовать в улучшении приложения.</p>
-        <div class="btns">${outLink('https://t.me/zmoki', 'telegram', 'Написать @zmoki', 'btn primary')}</div>
+        <div class="btns">${outLink('telegram', 'Написать @zmoki', 'btn primary')}</div>
       </section>
-      <section class="set-card stats" aria-labelledby="h-stats"><h3 id="h-stats">Статистика</h3>
+      <section class="set-card stats" aria-labelledby="h-stats"><h2 id="h-stats">Статистика</h2>
         <label class="toggle"><input type="checkbox" id="stats-on" ${S.settings.stats === false ? '' : 'checked'}> Отправлять анонимную статистику</label>
-        <p class="mt-6 small muted m-0">Без названий, заметок и фото. <a class="linkish" href="privacy">Конфиденциальность</a></p>
+        <p class="mt-6 small muted m-0">Без названий, имён, заметок, фото и мест. <a class="linkish" href="privacy">Конфиденциальность</a></p>
       </section>
-      <section class="set-card credits" aria-labelledby="h-credits"><h3 id="h-credits">Сделали</h3>
+      <section class="set-card credits" aria-labelledby="h-credits"><h2 id="h-credits">Сделали</h2>
         <p class="m-0"><b>Полина</b></p>
-        <p class="small muted">Удобство и растения · ${outLink('https://www.threads.com/@pollyhill', 'threads', '@pollyhill', 'linkish')} в Threads</p>
+        <p class="small muted">Удобство и растения · ${outLink('threads', '@pollyhill', 'linkish')} в Threads</p>
         <p class="m-0"><b>Зарема</b></p>
-        <p class="small muted m-0">Разработка · ${outLink('https://zmoki.xyz/', 'website', 'zmoki.xyz', 'linkish')}</p>
+        <p class="small muted m-0">Разработка · ${outLink('website', 'zmoki.xyz', 'linkish')}</p>
       </section>
     </div>`;
   openSheet();
@@ -155,7 +155,12 @@ Object.assign(ACTS, {
     if (confirm('Точно стереть все отметки и начать заново? Фото тоже удалятся.')) {
       track('data_reset');
       flushStats();
-      localStorage.removeItem(KEY);
+      // A stats opt-out is about the person, not the plants: it outlives the reset.
+      if (S.settings.stats === false) {
+        const fresh = prepare(null);
+        fresh.settings.stats = false;
+        localStorage.setItem(KEY, JSON.stringify(fresh));
+      } else localStorage.removeItem(KEY);
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
         .then(() => idbReq((st) => st.clear(), 'readwrite'))
         .finally(() => location.reload());
