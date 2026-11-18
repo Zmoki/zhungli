@@ -82,10 +82,12 @@ const STILL = matchMedia('(prefers-reduced-motion: reduce)');
 let storyTimers = [];
 const stopStory = () => { storyTimers.forEach(clearTimeout); storyTimers = []; };
 // Runs steps one after another ([delay ms, fn]). With reduced motion, all at once: the story shows its last frame.
+// The pace is slow on purpose: first the story's text gets read (START), then each step stretches by PACE.
+const START = 2000, PACE = 1.8;
 function runSteps(steps) {
   stopStory();
-  let t = 0;
-  steps.forEach(([ms, fn]) => { if (STILL.matches) fn(true); else storyTimers.push(setTimeout(fn, (t += ms))); });
+  let t = START;
+  steps.forEach(([ms, fn]) => { if (STILL.matches) fn(true); else storyTimers.push(setTimeout(fn, (t += ms * PACE))); });
   // Then the finger goes away.
   if (steps.length && !STILL.matches) storyTimers.push(setTimeout(() => storiesDlg.querySelectorAll('.finger').forEach((x) => x.classList.remove('on')), t + 1200));
 }
@@ -102,7 +104,7 @@ function tapAt(f, el) {
 }
 const typeInto = (input, text, now) => {
   if (now) { input.value = text; return; }
-  [...text].forEach((c, i) => storyTimers.push(setTimeout(() => { input.value += c; }, i * 160)));
+  [...text].forEach((c, i) => storyTimers.push(setTimeout(() => { input.value += c; }, 600 + i * 300)));
 };
 
 /* ---------- The stories ---------- */
