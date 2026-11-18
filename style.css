@@ -562,9 +562,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .set-card { border-radius: 24px; padding: 16px; margin-top: 14px; }
 .set-card h2 { margin: 0 0 12px; font-size: 1.059rem; }
 .set-card.app { background: var(--beige); margin-top: 28px; }
+.sheet-head + .set-card { margin-top: 0; } /* «Что нового» opens with it */
 .set-card.stats { background: var(--card); border: 1px solid var(--line); }
 .set-card.credits { background: var(--credits); }
 .ids { background: var(--card); border-radius: 18px; padding: 8px 14px 10px; margin-bottom: 14px; }
+.contact-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding-bottom: 4px; } /* room for the button floor */
 .id-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin: 0; padding: 4px 0; }
 .id-row + .id-row { border-top: 1px solid var(--line); }
 .id-row b { font-size: 1.294rem; font-weight: 900; letter-spacing: .02em; }

@@ -13,7 +13,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Ground:** plain cream (`--bg`) with three soft blobs: sun at the top right, leaf on the right, sky at the bottom left (`.blobs`). They're pastel on purpose, so plain text on top keeps 7:1.
 - **Glass:** floating layers (tab bar, round icon buttons, sheets) and the cards on «Сегодня», Комната and the light tips use frosted glass (`--glass-bg`, `--glass-blur`). `prefers-reduced-transparency` turns it solid.
 - **Solid cards:** long lists (plant grid, Light rows) are solid `--surface` cards without blur, so photos stand out and scrolling stays smooth.
-- **Settings cards:** the bottom of settings is three cards: «Приложение» on beige, «Статистика» on glass, «Сделали» on lilac (`--credits`).
+- **Settings cards:** the bottom of settings is three cards: «Приложение» on beige, «Статистика» on glass, «Сделали» on lilac (`--credits`). «Что нового» opens with a compact «Приложение» card: version, device number and the Telegram button.
 - **Shadows:** cards get the quiet `--shadow-soft`; only floating layers get `--shadow`.
 - **Shape:** big rounded corners (`--radius`, 26px) and round chips.
 
