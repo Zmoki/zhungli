@@ -449,7 +449,7 @@ function bonusTasks() {
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
   if (!S.bonus.feedback && days >= 5) {
     out.push({ key: 'feedback', icon: 'smile', title: 'Как вам Жунгли?', task: 'Расскажите, что нравится и что мешает',
-      hint: 'Пара слов в Телеграм @zmoki. Я читаю всё и часто обновляю приложение.', contact: true });
+      hint: 'Пара слов Зареме в Телеграм @zmoki. Она читает всё и часто обновляет приложение.', contact: true });
   }
   return out.slice(0, 2);
 }
