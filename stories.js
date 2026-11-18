@@ -183,7 +183,7 @@ const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`)
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
-  { tab: 'today', name: 'Сегодня', h: 'Несколько растений в день', p: 'Потрогайте грунт и ответьте.', build: todayStory },
+  { tab: 'today', name: 'Сегодня', h: 'Несколько растений в день', p: 'По вашим ответам Жунгли подстроят полив под каждое.', build: todayStory },
   { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно.', build: plantsStory },
   { tab: 'plants', name: 'Карточка растения', h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
   { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'Впишите замер люксметра.', build: lightStory },
