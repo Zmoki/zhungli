@@ -248,6 +248,7 @@ save();
 booting = false;
 render();
 appStarted = true;
+autoStories();
 loadPhotos();
 checkUpdate();
 // ready_ms: from navigation start until the first screen is built (painted right after). Not sent when

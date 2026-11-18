@@ -277,8 +277,11 @@ function showStory() {
   runSteps(anim);
   return slide;
 }
+let storyFrom = '';
 function openStories(from) {
-  storyI = 0; storyMax = 0; storyEnded = ''; ticked = new Set();
+  storyI = 0; storyMax = 0; storyEnded = ''; ticked = new Set(); storyFrom = from;
+  S.storiesSeen = today();
+  save();
   storyState = sampleGarden();
   track('stories_opened', { from });
   storiesDlg.showModal();
@@ -312,6 +315,15 @@ storiesDlg.addEventListener('click', (e) => {
 });
 addEventListener('resize', () => { if (storiesDlg.open) fitPhones(storiesDlg); });
 
+// The first launch opens them right away: no plants yet and never seen (S.storiesSeen; it travels with backups and
+// Telegram's cloud). Not over a sheet. In the mini app a cloud copy may still arrive: then they step aside (storiesYield).
+function autoStories() {
+  if (S.storiesSeen || Object.keys(S.plants).length || sheet.open || storiesDlg.open) return;
+  openStories('auto');
+}
+function storiesYield() {
+  if (storiesDlg.open && storyFrom === 'auto') closeStories('restored');
+}
 // The card on the empty «Сегодня» that opens the stories.
 const storyCard = () => `<button class="st-open" data-act="stories"><span class="st-ring" aria-hidden="true"><span>${plantSvg(PLANTS.find((p) => p.id === 'mon-del'), 'fine')}</span></span>
   <span class="st-open-t"><b>Как работают Жунгли</b><small>6 экранов, меньше минуты</small></span>${I('chevron-right')}</button>`;
