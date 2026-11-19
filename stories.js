@@ -134,7 +134,7 @@ const typeInto = (input, text, now) => {
 };
 
 /* ---------- The stories ---------- */
-let storyI = 0, storyMax = 0, storyEnded = '', ticked = new Set(), storySeen = new Set();
+let storyI = 0, storyMax = 0, storyEnded = '', ticked = new Set(), storySeen = new Set(), storyAway = false;
 // Where the last story leads: plants added here stay put (tiles), or have to go somewhere else first.
 function storyEnd() {
   if (MINI_APP) return 'tiles';
@@ -397,7 +397,7 @@ function resumeStory() {
 let storyFrom = '';
 // `at`: the story to start on (the last one for the way to the home screen).
 function openStories(from, at = 0) {
-  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyFrom = from;
+  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from;
   S.storiesSeen = today();
   save();
   track('stories_opened', { from });
@@ -422,13 +422,18 @@ function trackStoriesClosed(how) {
     ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
 }
 // Leaving the app with the stories open (another app, the home screen, closing the tab) may be the last thing that
-// happens: the page can be gone before they're closed. So it counts as closing them (`left`), sent before app.js
-// flushes the stats on the same event. Back to them: they count as opened again (`return`), to close once more.
-let storyAway = false;
+// happens: the page can be gone before they're closed. So it counts as closing them, sent before app.js flushes the
+// stats on the same event: `telegram` after the Telegram button, `followed` from a last story whose steps lead out
+// of here (to Safari, or to the home screen after «На экран Домой»), else `left`. Back to them: they count as
+// opened again (`return`), to close once more.
 document.addEventListener('visibilitychange', () => {
   if (!storiesDlg.open) return;
-  if (document.hidden && !storyAway) { storyAway = true; trackStoriesClosed('left'); }
-  else if (!document.hidden && storyAway) { storyAway = false; track('stories_opened', { from: 'return' }); }
+  if (document.hidden && !storyAway) {
+    storyAway = true;
+    const steps = storyI === STORIES.length - 1 && ['ios', 'in_app'].includes(storyEnd());
+    trackStoriesClosed(storyEnded || (steps ? 'followed' : 'left'));
+    storyEnded = '';
+  } else if (!document.hidden && storyAway) { storyAway = false; track('stories_opened', { from: 'return' }); }
 });
 storiesDlg.addEventListener('close', () => {
   stopStory();
@@ -498,7 +503,8 @@ Object.assign(ACTS, {
   // Plants saved as a copy in Safari, on the way to the home-screen app (the hint there says to restore it here).
   'story-restore'() { closeStories('restore'); ACTS.import(); },
 });
-// The Telegram link in the last story also closes it (the link itself opens Telegram).
+// The Telegram button in the last story opens Telegram and leaves the stories open: they close as `telegram` when
+// the app hides (see visibilitychange above) or, if it doesn't, whenever they're closed.
 document.addEventListener('click', (e) => {
   const a = e.target.closest('#stories [data-story-end="telegram"]');
   if (a) storyEnded = 'telegram';
