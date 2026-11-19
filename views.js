@@ -430,9 +430,11 @@ function lightIdeas() {
   return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
 }
 
-// Empty screens: tap the plants you have and add them in one go. Anything else is one tap away.
-const QUICK = [['mon-del', 'Монстера'], ['zz', 'Замиокулькас'], ['spath', 'Спатифиллум'], ['phal', 'Орхидея'],
-  ['pothos', 'Потос'], ['ficus-benj', 'Фикус Бенджамина'], ['sansevieria', 'Сансевиерия'], ['violet', 'Фиалка']];
+// Empty screens: tap the plants you have and add them in one go. Anything else is one tap away. Six, so the add
+// button stays near them: the most searched care («<растение> уход» in Yandex, zhungli-content keywords/houseplants)
+// among plants with one catalog card (a «Фикус» tile couldn't say which of three).
+const QUICK = [['begonia', 'Бегония'], ['phal', 'Орхидея'], ['zz', 'Замиокулькас'], ['calathea', 'Калатея'],
+  ['crassula', 'Денежное дерево'], ['anth', 'Антуриум']];
 let qsPicked = new Set();
 let qsReported = false;
 // Tiles ticked but not added: reported once when the person turns to another way of adding or leaves the app.

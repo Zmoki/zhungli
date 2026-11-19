@@ -763,6 +763,10 @@ summary { cursor: pointer; }
 /* Quick picks on empty screens: two columns of compact plant tiles */
 .qs-title { text-align: left; margin-bottom: 10px; }
 .celebrate > .qs-title:first-child { margin-top: 0; }
+/* Once something is ticked, «Добавить» stays in view above the tab bar while the tiles scroll (narrow phones, large text). */
+#qs-add:not(:disabled) { position: sticky; z-index: 4; bottom: calc(env(safe-area-inset-bottom) + 92px); }
+/* A tile reached with the keyboard scrolls clear of the pinned button and the tab bar. */
+.qs-grid .qs { scroll-margin-bottom: calc(env(safe-area-inset-bottom) + 160px); }
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .qs {
   display: flex; align-items: center; gap: 6px; min-height: 52px; text-align: left;
