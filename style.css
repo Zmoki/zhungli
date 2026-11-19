@@ -1,5 +1,8 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 :root {
+  /* Where the tab bar's top edge is, from the bottom of the screen: its 10px gap, 6px padding twice, a 56px button
+     and a 1px border twice (large text adds up to 8px). Change it together with .tabs. */
+  --tabs-top: calc(env(safe-area-inset-bottom) + 80px);
   /* Whimsy + glass: plain cream ground, bright flat colors, glass on what floats */
   --bg: #fff4e2;
   --card: rgba(255, 255, 255, .66);
@@ -184,7 +187,7 @@ b, strong { font-weight: 800; }
 main {
   max-width: 560px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 112px);
+  padding: calc(env(safe-area-inset-top) + 20px) 16px calc(var(--tabs-top) + 32px);
 }
 
 h1 { font-size: clamp(1.7rem, 8vw, 2rem); font-weight: 900; line-height: 1.1; margin: 0 0 4px; letter-spacing: -.01em; }
@@ -519,7 +522,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* Toast + confetti */
 .toast {
-  position: fixed; inset: auto; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 104px);
+  position: fixed; inset: auto; left: 16px; right: 16px; bottom: calc(var(--tabs-top) + 24px);
   width: fit-content; margin: 0 auto; border: 0; overflow: visible;
   background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 99px; font-size: 0.941rem; font-weight: 800;
   z-index: 20; max-width: 528px; text-align: center; animation: pop .25s ease;
@@ -763,6 +766,15 @@ summary { cursor: pointer; }
 /* Quick picks on empty screens: two columns of compact plant tiles */
 .qs-title { text-align: left; margin-bottom: 10px; }
 .celebrate > .qs-title:first-child { margin-top: 0; }
+/* Once something is ticked, «Добавить» stays in view above the tab bar while the tiles scroll (narrow phones, large text). */
+#qs-add { container-type: inline-size; }
+#qs-add:not(:disabled) { position: sticky; z-index: 4; bottom: calc(var(--tabs-top) + 16px); }
+/* Its label stays on one line: with large text, where «+ Добавить 3 растения» doesn't fit, the plus goes, and on
+   a narrow screen the word too («Добавить 3»). */
+@container (max-width: 12.5rem) { #qs-add .ic { display: none; } }
+@container (max-width: 11rem) { #qs-add .qs-noun { display: none; } }
+/* A tile reached with the keyboard scrolls clear of the pinned button (one line, up to 4.5rem) and the tab bar. */
+.qs-grid .qs { scroll-margin-bottom: calc(var(--tabs-top) + 28px + 4.5rem); }
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .qs {
   display: flex; align-items: center; gap: 6px; min-height: 52px; text-align: left;
