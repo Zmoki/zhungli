@@ -78,7 +78,7 @@ On every event:
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `feedback` («Написать» on «Как вам Жунгли?») |
 | `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
-| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added); both go straight to the last story |
+| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added); both go straight to the last story |
 | `stories_closed` | the stories closed | `reached`: the furthest story seen (1–6); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open); `ending`, if the last story was seen: `tiles` / `telegram` / `in_app` / `ios_26` (Safari 26 steps) / `ios_old` (older Safari steps) / `ios_other` (text steps: iPad, other browsers); `ticked`: tiles ticked there but not added |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |

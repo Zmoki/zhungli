@@ -149,16 +149,18 @@ function storyEnd() {
 // page can open (navigator.share) has no «На экран Домой» (checked on an iPhone, Safari 26), so it's steps only.
 // Which Safari is this: `26` (iPhone, menu «≡» in the address bar), `old` (iPhone, «Поделиться» in the bottom bar),
 // or '' (iPad, other browsers): those get the steps as text, without the animated Safari.
+// (The Google app is another app's browser, IN_APP: it gets the in-app ending, not these steps.)
+const OTHER_IOS_BROWSER = /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/;
 function safariKind() {
   const ua = navigator.userAgent;
-  if (!/iPhone|iPod/.test(ua) || /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua)) return '';
+  if (!/iPhone|iPod/.test(ua) || OTHER_IOS_BROWSER.test(ua)) return '';
   return Number((ua.match(/Version\/(\d+)/) || [])[1] || 0) >= 26 ? '26' : 'old';
 }
 function homeSteps() {
   const sk = safariKind();
   const share = sk === '26' ? ['Нажмите «≡» слева в адресной строке', 'Выберите «Поделиться»']
     : sk === 'old' ? ['Нажмите «Поделиться» внизу экрана']
-      : /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(navigator.userAgent) ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
+      : OTHER_IOS_BROWSER.test(navigator.userAgent) ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
         : ['Нажмите «Поделиться» вверху справа']; // Safari on iPad
   // Safari 26 adds «Открыть как веб-приложение»: switched off, the icon opens a Safari tab, not the app.
   const add = sk === '26' ? 'Выберите «На экран Домой», оставьте «Открыть как веб-приложение» включённым и нажмите «Добавить»'
@@ -209,12 +211,12 @@ const steps = (list) => `<ol class="st-steps">${list.map((t) => `<li>${t}</li>`)
 const tgButton = (label, cls = 'ghost') => `<a class="btn st-btn ${cls}" href="${MINI_APP_LINK}" data-act="open-mini-app" data-story-end="telegram">${I('sprout')}${label}</a>`;
 
 const STORIES = [
-  { tab: 'today', name: 'Сегодня', h: 'Отмечайте дела на сегодня', p: 'По вашим ответам Жунгли подстроят полив под каждое растение.', build: todayStory },
-  { tab: 'plants', name: 'Растения', h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
-  { tab: 'plants', name: 'Карточка растения', h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
-  { tab: 'light', name: 'Свет', h: 'Кому темно, кому ярко', p: 'По замеру Жунгли подскажут, кому темно и кого переставить.', build: lightStory },
-  { tab: 'room', name: 'Комната', h: 'Температура и влажность', p: 'По датчику Жунгли подскажут, кому некомфортно и что сделать.', build: roomStory },
-  { name: 'Начнём', build: endStory },
+  { h: 'Отмечайте дела на сегодня', p: 'По вашим ответам Жунгли подстроят полив под каждое растение.', build: todayStory },
+  { h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
+  { h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
+  { h: 'Кому темно, кому ярко', p: 'По замеру Жунгли подскажут, кому темно и кого переставить.', build: lightStory },
+  { h: 'Температура и влажность', p: 'По датчику Жунгли подскажут, кому некомфортно и что сделать.', build: roomStory },
+  { build: endStory },
 ];
 
 // 1. «Сегодня»: the checks get answered one by one («Полито», «Ещё влажно», «Полито»), with the real toasts,
@@ -364,7 +366,7 @@ function showStory() {
     <div class="st-bars" aria-hidden="true">${STORIES.map((_, k) => `<i${k <= storyI ? ' class="on"' : ''}></i>`).join('')}</div>
     <div class="st-top"><span class="sr-only">${storyI + 1} из ${STORIES.length}</span>
       <span class="st-keys">${storyI ? '<button class="btn st-btn ghost" data-act="story-prev">Назад</button>' : ''}${storyI < STORIES.length - 1 ? '<button class="btn st-btn" data-act="story-next">Дальше</button>' : ''}</span>
-      <button class="icon-btn st-x" data-act="story-close" aria-label="Пропустить">${I('x')}</button></div>
+      <button class="icon-btn st-x" data-act="story-close" aria-label="${storyI < STORIES.length - 1 ? 'Пропустить' : 'Закрыть'}">${I('x')}</button></div>
     <div class="st-slide" id="story-slide">${s.h ? `<div class="st-head"><h2 tabindex="-1">${s.h}</h2><p class="lead">${s.p}</p></div>` : ''}</div>
 `;
   const slide = $('#story-slide');
@@ -417,6 +419,7 @@ storiesDlg.addEventListener('close', () => {
   track('stories_closed', { reached: storyMax + 1, how, ending: last ? ending : undefined,
     ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
   storiesDlg.innerHTML = '';
+  checkUpdate(); // an update that came while they were open waited for this
 });
 storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
@@ -445,9 +448,11 @@ addEventListener('resize', () => { if (storiesDlg.open) fitPhones(storiesDlg); }
 
 // The first launch opens them right away: no plants yet and never seen (S.storiesSeen; it travels with backups and
 // Telegram's cloud). Not over a sheet. In the mini app a cloud copy may still arrive: then they step aside (storiesYield).
+// The iPhone home-screen app has its own empty storage, but the person most likely just watched them in Safari
+// and came here by the last one's steps: it opens on the last story, the plant tiles (the earlier ones are a tap back).
 function autoStories() {
   if (S.storiesSeen || Object.keys(S.plants).length || sheet.open || storiesDlg.open) return;
-  openStories('auto');
+  if (IOS && navigator.standalone) { openStories('home_icon'); goStory(STORIES.length - 1); } else openStories('auto');
 }
 function storiesYield() {
   if (storiesDlg.open && storyFrom === 'auto') closeStories('restored');

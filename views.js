@@ -109,7 +109,7 @@ function installFirst() {
   if (kind === 'ios_added') {
     return hintCard('smartphone', 'Жунгли уже на экране «Домой»',
       'Откройте их с иконки, там ваши растения. Здесь, в браузере, отдельные Жунгли, и растения отсюда в иконку не попадут.',
-      stay('Остаться в браузере'));
+      `${how.replace('btn primary', 'btn')}${stay('Остаться в браузере')}`);
   }
   // The person tells which way they go: the icon («Уже добавили») or the browser.
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
@@ -183,6 +183,12 @@ function currentHint() {
       return hintCard('smartphone', 'Открывайте Жунгли с иконки',
         'Здесь, в браузере, осталась старая копия: отметки отсюда не попадут в Жунгли на экране «Домой». Если ещё не перенесли растения, нажмите там «Восстановить копию».',
         '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
+    }
+    // Said «Уже добавили» earlier, then stayed: the icon is there, only the plants need to move.
+    if (S.homeIcon) {
+      return hintCard('smartphone', 'Перенесите растения в иконку',
+        'Жунгли на экране «Домой» не видят растения из браузера. Сохраните копию здесь, а там нажмите «Восстановить копию».',
+        '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Не нужно</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
       `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
