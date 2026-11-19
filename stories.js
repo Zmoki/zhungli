@@ -422,9 +422,9 @@ storiesDlg.addEventListener('close', () => {
   track('stories_closed', { reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined,
     ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
   storiesDlg.innerHTML = '';
-  // An update that came while they were open waited for this. Not right after the cloud restore: its toast says
-  // why the plants appeared.
-  if (how !== 'restored') checkUpdate();
+  // An update that came while they were open waited for this. Only when they were simply closed: otherwise
+  // something else is starting (a restore's file picker, a toast about added or restored plants).
+  if (how === 'close') checkUpdate();
 });
 storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
