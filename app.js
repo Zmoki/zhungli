@@ -177,7 +177,7 @@ async function checkUpdate() {
   try {
     const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
     const v = r.ok ? (await r.text()).trim() : '';
-    if (!v || v === APP_VERSION || sheet.open) return;
+    if (!v || v === APP_VERSION || sheet.open || $('#stories').open) return; // not mid-sheet or mid-story
     if (sessionStorage.getItem('zhungli.reloadedFor') === v) return; // avoid a reload loop
     sessionStorage.setItem('zhungli.reloadedFor', v);
     location.reload();

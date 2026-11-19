@@ -16,7 +16,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Settings cards:** the bottom of settings is three cards: «Приложение» on beige, «Статистика» on glass, «Сделали» on lilac (`--credits`). «Что нового» opens with a compact «Приложение» card: version, device number and the Telegram button.
 - **Shadows:** cards get the quiet `--shadow-soft`; only floating layers get `--shadow`.
 - **Sheet heads:** the title and ×, plus ← when there's a sheet to go back to. No icon square: it took a third of the first screen.
-- **Stories** («Как работают Жунгли»): their own look, the same in both themes. Deep leaf green (`--st-bg`) with cream text, white progress bars, flat pill buttons without the chunky floor, and the app's real screens inside in a cream phone frame.
+- **Stories** («Как работают Жунгли»): their own look, the same in both themes. Deep leaf green (`--st-bg`) with cream text, white progress bars, flat pill buttons without the chunky floor, and the app's real screens inside in a cream phone frame. The phones are pictures (hidden from screen readers, which get the same steps as text) scaled down to fit, so their text may end up under 14px; the drawn Safari's text is in rem like the app's.
 - **Shape:** big rounded corners (`--radius`, 26px) and round chips.
 
 ## Color means something

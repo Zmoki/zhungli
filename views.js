@@ -55,7 +55,7 @@ let installPrompt = null;
 // no «На экран Домой» or install, and their data can be lost like in Telegram's. Telegram has its own hint above.
 // A few Android browsers are built on the WebView too; they name themselves, so they're left out.
 const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
-  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent)
+  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp|GSA\//i.test(navigator.userAgent)
     || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent))
     // iPhone apps' own browsers (Telegram's too, which often can't be told apart) leave «Safari/» out of the
     // user agent; Safari and other browsers keep it. Home-screen apps leave it out as well.
@@ -66,7 +66,6 @@ const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.use
 const PLACE = (() => {
   const ua = navigator.userAgent;
   return {
-    share: /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»',
     device: /iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad',
     where: IOS ? 'в Safari' : 'в браузере',
     menu: IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»',
@@ -160,7 +159,7 @@ function currentHint() {
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
   const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !IN_APP && !S.hideInstall && !gated;
-  const { share, device } = PLACE;
+  const { device } = PLACE;
   if (stats) return stats;
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
   // It waits for the first plant: the mini app keeps its data in Telegram's cloud, so nothing is lost by waiting.
@@ -186,8 +185,8 @@ function currentHint() {
         '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
-      `Так ${device} не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
-      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
+      `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
+      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn" data-act="stories-install">Показать, как</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
   return '';
 }

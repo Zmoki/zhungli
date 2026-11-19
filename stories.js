@@ -160,7 +160,10 @@ function homeSteps() {
     : sk === 'old' ? ['Нажмите «Поделиться» внизу экрана']
       : /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(navigator.userAgent) ? ['Нажмите «Поделиться» в адресной строке или в меню браузера']
         : ['Нажмите «Поделиться» вверху справа']; // Safari on iPad
-  return [...share, 'Выберите «На экран Домой», затем «Добавить»', 'Откройте Жунгли с новой иконки'];
+  // Safari 26 adds «Открыть как веб-приложение»: switched off, the icon opens a Safari tab, not the app.
+  const add = sk === '26' ? 'Выберите «На экран Домой», оставьте «Открыть как веб-приложение» включённым и нажмите «Добавить»'
+    : 'Выберите «На экран Домой», затем «Добавить»';
+  return [...share, add, 'Откройте Жунгли с новой иконки'];
 }
 // A drawn iPhone Safari with this page in it, and the way to the home screen played out on it: the menu (Safari 26),
 // the share sheet, «На экран Домой», «Добавить», and the new icon. Only to look at; the caption under it says each step.
@@ -186,7 +189,8 @@ function safariPhone(kind) {
       <div class="sf-apps"><i></i><i></i><i></i><i></i></div>
       <div class="sf-list"><span>Скопировать</span><span>Добавить в «Избранное»</span><b class="sf-home-item">На экран «Домой»</b></div></div>
     <div class="sf-add"><div class="sf-add-bar"><span>Отменить</span><b>На экран «Домой»</b><b class="sf-add-btn">Добавить</b></div>
-      <div class="sf-add-card">${icon}<span><b>Жунгли</b><small>zhungli.zmoki.xyz</small></span></div></div>
+      <div class="sf-add-card">${icon}<span><b>Жунгли</b><small>zhungli.zmoki.xyz</small></span></div>
+      ${kind === '26' ? '<div class="sf-add-card sf-webapp"><span>Открыть как веб-приложение</span><i class="sf-switch"></i></div>' : ''}</div>
     <div class="sf-home"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="sf-new">${icon}<small>Жунгли</small></span></div>
   </div>`;
   box.querySelector('.sf-page').append(...page.childNodes);
@@ -250,7 +254,7 @@ function plantsStory(slide) {
     f.querySelectorAll('.pcard').forEach((c) => { c.hidden = !!key && !c.dataset.st.split(' ').includes(key); });
     f.querySelectorAll('.pgroup').forEach((g) => { g.hidden = ![...g.querySelectorAll('.pcard')].some((c) => !c.hidden); });
   }]];
-  return [...filter('need'), ...filter('greenhouse'), ...filter('')];
+  return [...filter('need'), ...filter('dim'), ...filter('greenhouse')];
 }
 // 3. The plant card of a happy zamioculcas: it scrolls to its tabs, then opens «Настройки» and «История».
 function cardStory(slide) {
@@ -423,7 +427,8 @@ storiesDlg.addEventListener('pointerdown', (e) => {
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => storiesDlg.addEventListener(t, () => {
   clearTimeout(holdTimer);
-  if (held) { resumeStory(); storiesDlg.dataset.justHeld = '1'; }
+  // The click that may follow a hold isn't a tap; iOS often sends none, so the mark goes away by itself.
+  if (held) { resumeStory(); storiesDlg.dataset.justHeld = '1'; setTimeout(() => { delete storiesDlg.dataset.justHeld; }, 400); }
 }));
 // A tap on the story, not on a control or the card you can answer: the left third goes back, the rest goes on.
 storiesDlg.addEventListener('click', (e) => {

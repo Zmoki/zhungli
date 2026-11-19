@@ -579,6 +579,7 @@ dialog.stories {
   width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; box-shadow: none;
   padding: calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 16px);
   -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--st-ink);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; /* hold pauses, it doesn't select */
   background: radial-gradient(120% 60% at 100% 0%, #1f5c39 0%, transparent 60%), radial-gradient(90% 50% at 0% 100%, #0d2f1c 0%, transparent 70%), var(--st-bg);
 }
 dialog.stories[open] { display: flex; flex-direction: column; }
@@ -620,13 +621,13 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 /* The drawn iPhone Safari in the last story (stories.js: safariPhone). Safari's own light look, whatever the theme. */
 /* Held: the animation is paused; the bars dim a little as in other stories */
 dialog.stories.held .st-bars { opacity: .5; }
-.sf { position: absolute; inset: 0; overflow: hidden; background: var(--bg); color: #1c1c1e; font-size: 16px; }
+.sf { position: absolute; inset: 0; overflow: hidden; background: var(--bg); color: #1c1c1e; font-size: 0.941rem; }
 .sf-page { padding: 14px 16px 0; }
 .sf-ic { width: 24px; height: 24px; fill: none; stroke: #1c1c1e; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .sf-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px 30px; }
 .sf-round, .sf-url { background: #f2f2f2; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); }
 .sf-round { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; }
-.sf-url { flex: 1; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-radius: 26px; font-size: 15px; }
+.sf-url { flex: 1; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-radius: 26px; font-size: 0.882rem; }
 .sf-url span { flex: 1; text-align: center; }
 .sf-menu-btn { display: grid; place-items: center; }
 .sf-bar.old { flex-direction: column; gap: 8px; padding: 8px 14px 28px; background: #f7f7f7; box-shadow: 0 -1px 0 #d1d1d6; }
@@ -639,16 +640,19 @@ dialog.stories.held .st-bars { opacity: .5; }
 .sf-sheet { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 16px 40px; border-radius: 22px 22px 0 0; background: #f2f2f7; transform: translateY(100%); transition: transform .6s ease; }
 .sf-sheet-head, .sf-add-card { display: flex; align-items: center; gap: 12px; }
 .sf-app { width: 52px; height: 52px; border-radius: 12px; }
-.sf small { display: block; font-size: 13px; color: #48484a; }
+.sf small { display: block; font-size: 0.765rem; color: #48484a; }
 .sf-apps { display: flex; gap: 18px; margin: 16px 0; } .sf-apps i { width: 56px; height: 56px; border-radius: 14px; background: #d8d8de; }
 .sf-list { display: flex; flex-direction: column; border-radius: 12px; background: #fff; }
 .sf-list > * { padding: 13px 16px; border-top: 1px solid #e5e5ea; } .sf-list > :first-child { border-top: 0; }
 .sf-add { position: absolute; inset: 0; padding-top: 50px; background: #f2f2f7; transform: translateY(100%); transition: transform .6s ease; }
 .sf-add-bar { display: flex; justify-content: space-between; padding: 0 16px 14px; color: #00429d; } .sf-add-bar b:nth-child(2) { color: #1c1c1e; }
 .sf-add-card { margin: 0 16px; padding: 14px; border-radius: 12px; background: #fff; }
+.sf-webapp { margin-top: 12px; justify-content: space-between; }
+.sf-switch { flex: none; width: 50px; height: 30px; border-radius: 15px; background: #248a3d; position: relative; }
+.sf-switch::after { content: ''; position: absolute; right: 2px; top: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; }
 .sf-home { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 60px); justify-content: space-around; align-content: start; gap: 28px 0; padding: 70px 20px; background: linear-gradient(160deg, #5b8def, #a46be0); opacity: 0; transition: opacity .7s; }
 .sf-home i { width: 60px; height: 60px; border-radius: 14px; background: rgba(255, 255, 255, .35); }
-.sf-new { display: flex; flex-direction: column; align-items: center; gap: 4px; } .sf-new .sf-app { width: 60px; height: 60px; border-radius: 14px; } .sf-new small { color: #fff; font-size: 12px; }
+.sf-new { display: flex; flex-direction: column; align-items: center; gap: 4px; } .sf-new .sf-app { width: 60px; height: 60px; border-radius: 14px; } .sf-new small { color: #fff; font-size: 0.706rem; }
 [data-step="menu"] .sf-menu { opacity: 1; transform: none; }
 [data-step="sheet"] .sf-sheet, [data-step="add"] .sf-sheet { transform: none; }
 [data-step="add"] .sf-add { transform: none; }
