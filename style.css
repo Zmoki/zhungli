@@ -522,7 +522,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* Toast + confetti */
 .toast {
-  position: fixed; inset: auto; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 104px);
+  position: fixed; inset: auto; left: 16px; right: 16px; bottom: calc(var(--tabs-top) + 24px);
   width: fit-content; margin: 0 auto; border: 0; overflow: visible;
   background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 99px; font-size: 0.941rem; font-weight: 800;
   z-index: 20; max-width: 528px; text-align: center; animation: pop .25s ease;
@@ -769,8 +769,10 @@ summary { cursor: pointer; }
 /* Once something is ticked, «Добавить» stays in view above the tab bar while the tiles scroll (narrow phones, large text). */
 #qs-add { container-type: inline-size; }
 #qs-add:not(:disabled) { position: sticky; z-index: 4; bottom: calc(var(--tabs-top) + 16px); }
-/* Its label stays on one line: with large text, where «+ Добавить 3 растения» doesn't fit, the plus goes. */
+/* Its label stays on one line: with large text, where «+ Добавить 3 растения» doesn't fit, the plus goes, and on
+   a narrow screen the word too («Добавить 3»). */
 @container (max-width: 12.5rem) { #qs-add .ic { display: none; } }
+@container (max-width: 11rem) { #qs-add .qs-noun { display: none; } }
 /* A tile reached with the keyboard scrolls clear of the pinned button (one line, up to 4.5rem) and the tab bar. */
 .qs-grid .qs { scroll-margin-bottom: calc(var(--tabs-top) + 28px + 4.5rem); }
 .qs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }

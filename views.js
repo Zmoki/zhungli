@@ -445,6 +445,8 @@ function endQuick(then) {
   track('quick_abandoned', { picked: qsPicked.size, then });
   qsReported = true;
 }
+// «Добавить» under the tiles. The word after the number can hide on a narrow screen with large text (style.css).
+const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Отметьте, что есть');
 function quickStart() {
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);
@@ -454,7 +456,7 @@ function quickStart() {
   const n = qsPicked.size;
   return `<p class="mt-14 qs-title"><b>Что у вас растёт?</b> Отметьте, а остальное найдём в каталоге.</p>
     <div class="qs-grid">${tiles}</div>
-    <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
+    <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${qsAddText(n)}</button>
     <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
     <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенесите из чата с ИИ</button></p>`;
 }
@@ -634,7 +636,9 @@ Object.assign(ACTS, {
     qsReported = false;
     el.classList.toggle('on', qsPicked.has(k));
     el.setAttribute('aria-pressed', qsPicked.has(k));
-    setAddButton($('#qs-add'), qsPicked.size, 'Отметьте, что есть');
+    const b = $('#qs-add');
+    b.disabled = !qsPicked.size;
+    b.innerHTML = qsAddText(qsPicked.size);
   },
   'qs-add'() {
     const keys = [...qsPicked];
