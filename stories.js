@@ -134,7 +134,7 @@ const typeInto = (input, text, now) => {
 };
 
 /* ---------- The stories ---------- */
-let storyI = 0, storyMax = 0, storyEnded = '', ticked = new Set();
+let storyI = 0, storyMax = 0, storyEnded = '', ticked = new Set(), storySeen = new Set();
 // Where the last story leads: plants added here stay put (tiles), or have to go somewhere else first.
 function storyEnd() {
   if (MINI_APP) return 'tiles';
@@ -325,7 +325,8 @@ function endStory(slide) {
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
       <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
-      <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>`;
+      <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>
+      ${IOS && navigator.standalone ? '<p class="m-0 st-more">Сохранили копию в браузере? <button class="linkish" data-act="story-restore">Восстановить копию</button></p>' : ''}`;
   } else if (kind === 'ios') {
     // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
     // other browsers) and with reduced motion, the list is shown as is.
@@ -362,6 +363,7 @@ function showStory() {
   storiesDlg.classList.remove('held');
   const s = STORIES[storyI];
   storyMax = Math.max(storyMax, storyI);
+  storySeen.add(storyI);
   storiesDlg.innerHTML = `
     <div class="st-bars" aria-hidden="true">${STORIES.map((_, k) => `<i${k <= storyI ? ' class="on"' : ''}></i>`).join('')}</div>
     <div class="st-top"><span class="sr-only">${storyI + 1} из ${STORIES.length}</span>
@@ -393,8 +395,9 @@ function resumeStory() {
   if (slide && storiesDlg.open) playStory(slide, STORIES[storyI]);
 }
 let storyFrom = '';
-function openStories(from) {
-  storyI = 0; storyMax = 0; storyEnded = ''; ticked = new Set(); storyFrom = from;
+// `at`: the story to start on (the last one for the way to the home screen).
+function openStories(from, at = 0) {
+  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyFrom = from;
   S.storiesSeen = today();
   save();
   track('stories_opened', { from });
@@ -416,10 +419,12 @@ storiesDlg.addEventListener('close', () => {
   const how = storyEnded || 'close', last = storyMax === STORIES.length - 1;
   // Which last story was seen (by the iPhone guide it showed), and tiles ticked there but never added.
   const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
-  track('stories_closed', { reached: storyMax + 1, how, ending: last ? ending : undefined,
+  track('stories_closed', { reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined,
     ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
   storiesDlg.innerHTML = '';
-  checkUpdate(); // an update that came while they were open waited for this
+  // An update that came while they were open waited for this. Not right after the cloud restore: its toast says
+  // why the plants appeared.
+  if (how !== 'restored') checkUpdate();
 });
 storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
@@ -452,14 +457,14 @@ addEventListener('resize', () => { if (storiesDlg.open) fitPhones(storiesDlg); }
 // and came here by the last one's steps: it opens on the last story, the plant tiles (the earlier ones are a tap back).
 function autoStories() {
   if (S.storiesSeen || Object.keys(S.plants).length || sheet.open || storiesDlg.open) return;
-  if (IOS && navigator.standalone) { openStories('home_icon'); goStory(STORIES.length - 1); } else openStories('auto');
+  if (IOS && navigator.standalone) openStories('home_icon', STORIES.length - 1); else openStories('auto');
 }
 function storiesYield() {
   if (storiesDlg.open && storyFrom === 'auto') closeStories('restored');
 }
 Object.assign(ACTS, {
   // «Показать, как» on the install card or the iPhone hint: straight to the last story, the way to the home screen.
-  'stories-install'(el) { openStories(el.dataset.from || 'install_card'); goStory(STORIES.length - 1); },
+  'stories-install'(el) { openStories(el.dataset.from || 'install_card', STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
@@ -476,6 +481,8 @@ Object.assign(ACTS, {
   },
   'story-catalog'() { closeStories('catalog'); openAdd(); },
   'story-import'() { closeStories('import'); openImport(); },
+  // Plants saved as a copy in Safari, on the way to the home-screen app (the hint there says to restore it here).
+  'story-restore'() { closeStories('restore'); ACTS.import(); },
 });
 // The Telegram link in the last story also closes it (the link itself opens Telegram).
 document.addEventListener('click', (e) => {

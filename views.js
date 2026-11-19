@@ -188,7 +188,7 @@ function currentHint() {
     if (S.homeIcon) {
       return hintCard('smartphone', 'Перенесите растения в иконку',
         'Жунгли на экране «Домой» не видят растения из браузера. Сохраните копию здесь, а там нажмите «Восстановить копию».',
-        '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Не нужно</button>');
+        '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_icon_move">Не нужно</button>');
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
       `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
