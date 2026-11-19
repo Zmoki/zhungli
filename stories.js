@@ -418,7 +418,7 @@ function trackStoriesClosed(how) {
   const last = storyMax === STORIES.length - 1;
   // Which last story was seen (by the iPhone guide it showed), and tiles ticked there but never added.
   const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
-  track('stories_closed', { reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined,
+  track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined,
     ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
 }
 // Leaving the app with the stories open (another app, the home screen, closing the tab) may be the last thing that
@@ -445,7 +445,7 @@ addEventListener('pageshow', (e) => { if (e.persisted && !document.hidden) stori
 storiesDlg.addEventListener('close', () => {
   stopStory();
   const how = storyEnded || 'close';
-  if (storyAway) storyAway = false; // closed while away: already counted as `left`
+  if (storyAway) storyAway = false; // closed while away: already counted when they left
   else trackStoriesClosed(how);
   storiesDlg.innerHTML = '';
   // An update that came while they were open waited for this. Only when they were simply closed: otherwise
