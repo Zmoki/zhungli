@@ -131,17 +131,23 @@ function applySizes(root = document) {
   });
 }
 // Plant cards off screen are skipped (content-visibility in style.css) and stand in at their last drawn height.
-// A redraw makes new cards that don't know it, so carry each one's height over: otherwise the cards above
-// change height and the page jumps (Safari doesn't keep the scroll on what's in view). Cards never drawn
-// stand in at --pcard-h, taken from a card in view.
+// A redraw makes new cards that don't know it, so carry it over for drawn cards, and for skipped ones above
+// the screen so nothing in view moves (Safari doesn't keep the scroll on what's in view). Other cards stand in
+// at --pcard-h, taken from a drawn card in view, so it follows the current width and text size.
 function cardSizes(view) {
   const cards = [...view.querySelectorAll('.pcard:not([hidden])')];
   if (!cards.length) return null;
   const cs = getComputedStyle(cards[0]);
   const pad = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
-  const sizes = new Map(cards.map((c) => [c.dataset.open, c.getBoundingClientRect().height - pad]));
-  const seen = cards.find((c) => c.getBoundingClientRect().bottom > 0);
-  if (seen) view.style.setProperty('--pcard-h', `${sizes.get(seen.dataset.open)}px`);
+  const sizes = new Map();
+  let seen = 0;
+  cards.forEach((c) => {
+    const r = c.getBoundingClientRect(), h = r.height - pad;
+    const drawn = c.querySelector('.pic').checkVisibility?.({ contentVisibilityAuto: true }) ?? true;
+    if (drawn && !seen && r.bottom > 0) seen = h;
+    if (drawn || r.bottom <= 0) sizes.set(c.dataset.open, h);
+  });
+  if (seen) view.style.setProperty('--pcard-h', `${seen}px`);
   return sizes;
 }
 function keepCardSizes(view, sizes) {
