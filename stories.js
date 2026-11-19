@@ -411,7 +411,11 @@ function closeStories(how) {
 }
 storiesDlg.addEventListener('close', () => {
   stopStory();
-  track('stories_closed', { reached: storyMax + 1, how: storyEnded || 'close' });
+  const how = storyEnded || 'close', last = storyMax === STORIES.length - 1;
+  // Which last story was seen (by the iPhone guide it showed), and tiles ticked there but never added.
+  const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
+  track('stories_closed', { reached: storyMax + 1, how, ending: last ? ending : undefined,
+    ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
   storiesDlg.innerHTML = '';
 });
 storiesDlg.addEventListener('keydown', (e) => {
@@ -449,8 +453,8 @@ function storiesYield() {
   if (storiesDlg.open && storyFrom === 'auto') closeStories('restored');
 }
 Object.assign(ACTS, {
-  // «Показать, как» on the install card: straight to the last story, the way to the home screen.
-  'stories-install'() { openStories('install_card'); goStory(STORIES.length - 1); },
+  // «Показать, как» on the install card or the iPhone hint: straight to the last story, the way to the home screen.
+  'stories-install'(el) { openStories(el.dataset.from || 'install_card'); goStory(STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },

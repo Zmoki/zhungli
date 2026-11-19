@@ -186,7 +186,7 @@ function currentHint() {
     }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
       `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
-      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn" data-act="stories-install">Показать, как</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
+      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn" data-act="stories-install" data-from="install_hint">Показать, как</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
   return '';
 }

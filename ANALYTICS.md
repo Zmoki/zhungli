@@ -78,8 +78,8 @@ On every event:
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `feedback` («Написать» on «Как вам Жунгли?») |
 | `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
-| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» on the install card | `from`: `auto` / `install_card` (straight to the last story) |
-| `stories_closed` | the stories closed | `reached`: the furthest story seen (1–6); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `browser` («Понятно» on the in-app browser steps) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open) |
+| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added); both go straight to the last story |
+| `stories_closed` | the stories closed | `reached`: the furthest story seen (1–6); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open); `ending`, if the last story was seen: `tiles` / `telegram` / `in_app` / `ios_26` (Safari 26 steps) / `ios_old` (older Safari steps) / `ios_other` (text steps: iPad, other browsers); `ticked`: tiles ticked there but not added |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `settings_opened` | settings opened from the header | — |
@@ -90,7 +90,7 @@ On every event:
 | `field_changed` | any input, select or textarea changed (text fields on leaving them) | `field`: static id or name; `type`; `checked` for checkboxes. Never the value |
 | `show_all_clicked` | «show all» on Today | — |
 | `install_hint_hidden` | home screen hint closed | `kind`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup) / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) |
-| `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch) | `where`: `ios` (browser on iPhone or iPad) / `in_app` (another app's browser) / `telegram_browser` On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. |
+| `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch) | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. |
 | `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where` |
 | `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | — |
