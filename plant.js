@@ -183,6 +183,12 @@ function openPlant(id, tabKey) {
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
   cardFor = id;
+  $('#sheet-body').innerHTML = plantCardHtml(id);
+  openSheet();
+}
+// The plant card's markup on the current `cardTab`; the stories draw it for a sample plant too.
+function plantCardHtml(id) {
+  const p = plant(id);
   const mc = mood(p)[2];
   const ls = lightStatus(p);
   const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)}: ${histWord(h.a)}`).join('<br>');
@@ -190,7 +196,7 @@ function openPlant(id, tabKey) {
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
   // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
   const panel = (k, html) => `<div role="tabpanel" class="card-panel" id="cp-${k}" aria-labelledby="ct-${k}"${k === 'history' ? ' tabindex="0"' : ''}${k === cardTab ? '' : ' hidden'}>${html}</div>`;
-  $('#sheet-body').innerHTML = `
+  return `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
       <div class="hero-acts">${heroActs(id)}</div>
@@ -242,7 +248,6 @@ function openPlant(id, tabKey) {
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
       <p class="history">${histHtml}</p>` : plannedHtml(p))}
     </div>`;
-  openSheet();
 }
 
 async function resize(file) {

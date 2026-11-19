@@ -177,7 +177,7 @@ async function checkUpdate() {
   try {
     const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
     const v = r.ok ? (await r.text()).trim() : '';
-    if (!v || v === APP_VERSION || sheet.open) return;
+    if (!v || v === APP_VERSION || sheet.open || storiesDlg.open) return; // not mid-sheet or mid-story
     if (sessionStorage.getItem('zhungli.reloadedFor') === v) return; // avoid a reload loop
     sessionStorage.setItem('zhungli.reloadedFor', v);
     location.reload();
@@ -248,6 +248,7 @@ save();
 booting = false;
 render();
 appStarted = true;
+autoStories();
 loadPhotos();
 checkUpdate();
 // ready_ms: from navigation start until the first screen is built (painted right after). Not sent when

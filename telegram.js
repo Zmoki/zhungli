@@ -163,6 +163,7 @@
           dirty = false;
           hadPlants = true;
           if (!sheet.open) render();
+          storiesYield();
           toast('Растения загружены из Телеграма 🌿');
           report('restored', plantsIn(cloud));
           track('cloud_restored', { plants: plantsIn(S), tasks_due: pendingCount() });

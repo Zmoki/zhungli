@@ -55,7 +55,7 @@ let installPrompt = null;
 // no «На экран Домой» or install, and their data can be lost like in Telegram's. Telegram has its own hint above.
 // A few Android browsers are built on the WebView too; they name themselves, so they're left out.
 const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.userAgent))
-  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp/i.test(navigator.userAgent)
+  && (/FBAN|FBAV|Instagram|LinkedInApp|\bLine\/|VKClient|VKAndroidApp|OKApp|GSA\//i.test(navigator.userAgent)
     || (/Android.*; wv\)/.test(navigator.userAgent) && !/DuckDuckGo|Ecosia|MiuiBrowser|HeyTapBrowser|UCBrowser|OPR\/|YaBrowser|SamsungBrowser|Brave|Vivaldi/.test(navigator.userAgent))
     // iPhone apps' own browsers (Telegram's too, which often can't be told apart) leave «Safari/» out of the
     // user agent; Safari and other browsers keep it. Home-screen apps leave it out as well.
@@ -66,7 +66,6 @@ const IN_APP = !IN_TELEGRAM && !MINI_APP && (IOS || /Android/.test(navigator.use
 const PLACE = (() => {
   const ua = navigator.userAgent;
   return {
-    share: /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua) ? 'Safari → «Поделиться»' : '«Поделиться»',
     device: /iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad',
     where: IOS ? 'в Safari' : 'в браузере',
     menu: IOS ? '«Открыть в Safari» или «в браузере»' : '«Открыть в браузере» или «в Chrome»',
@@ -82,6 +81,8 @@ function installWhere() {
   if (MINI_APP || S.stayBrowser || Object.keys(S.plants).length) return null;
   if (IN_TELEGRAM && !S.hideTelegram) return 'telegram_browser';
   if (IN_APP && !S.hideInstall) return 'in_app';
+  // Said «Уже добавили»: this browser now only points to the icon (S.homeIcon), until «Остаться в браузере».
+  if (IOS && !IN_TELEGRAM && !navigator.standalone && S.homeIcon) return 'ios_added';
   if (IOS && !IN_TELEGRAM && !navigator.standalone && !S.hideInstall) return 'ios';
   return null;
 }
@@ -90,21 +91,30 @@ function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
   if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
-  const { share, where, menu } = PLACE;
+  const { where } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
     return hintCard('sprout', 'Сначала откройте Жунгли в Телеграме',
       'Это браузер внутри Телеграма: здесь растения могут потеряться. В приложении Телеграма они хранятся в облаке.',
       `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>${stay('Остаться здесь')}`);
   }
+  // The steps themselves are in the last story («Показать, как»), drawn for this browser and its version.
+  const how = '<button class="btn primary" data-act="stories-install">Показать, как</button>';
   if (kind === 'in_app') {
     return hintCard('triangle-alert', `Сначала откройте Жунгли ${where}`,
-      `Это браузер внутри приложения: отсюда Жунгли не добавить на экран «Домой», а растения могут потеряться. В меню приложения выберите ${menu}.`,
-      stay('Остаться здесь'));
+      'Отсюда Жунгли не добавить на экран «Домой», а растения здесь могут потеряться.', `${how}${stay('Остаться здесь')}`);
   }
+  // Already added: the browser is a separate Жунгли with its own (empty) storage, so it sends people to the icon.
+  // A change of mind is one tap away and works as «Остаться в браузере».
+  if (kind === 'ios_added') {
+    return hintCard('smartphone', 'Жунгли уже на экране «Домой»',
+      'Откройте их с иконки, там ваши растения. Здесь, в браузере, отдельные Жунгли, и растения отсюда в иконку не попадут.',
+      `${how.replace('btn primary', 'btn')}${stay('Остаться в браузере')}`);
+  }
+  // The person tells which way they go: the icon («Уже добавили») or the browser.
   return hintCard('smartphone', 'Сначала добавьте Жунгли на экран «Домой»',
-    `${share} → «На экран Домой», затем откройте Жунгли с иконки. Отмеченное в браузере туда не перейдёт, а браузер может его стереть, если пару недель не заходить.`,
-    `${stay('Остаться в браузере')}<button class="btn ghost" data-act="hide-install" data-kind="ios_empty">Уже на экране</button>`);
+    'Растения будут жить в иконке, отмеченное в браузере туда не перейдёт.',
+    `${how}<button class="btn ghost" data-act="home-added">Уже добавили</button>${stay('Остаться в браузере')}`);
 }
 function currentHint() {
   const hasPlants = Object.keys(S.plants).length > 0;
@@ -149,7 +159,7 @@ function currentHint() {
     : '';
   // iPhone keeps a home-screen app's data apart from the browser's: the icon opens an empty Жунгли.
   const iosBrowser = IOS && !navigator.standalone && !MINI_APP && !IN_APP && !S.hideInstall && !gated;
-  const { share, device } = PLACE;
+  const { device } = PLACE;
   if (stats) return stats;
   // In the mini app: Telegram's own «add to home screen» (telegram.js sets tgHome when it's available).
   // It waits for the first plant: the mini app keeps its data in Telegram's cloud, so nothing is lost by waiting.
@@ -174,9 +184,15 @@ function currentHint() {
         'Здесь, в браузере, осталась старая копия: отметки отсюда не попадут в Жунгли на экране «Домой». Если ещё не перенесли растения, нажмите там «Восстановить копию».',
         '<button class="btn" data-act="export" data-from="install_hint">Сохранить ещё раз</button><button class="btn ghost" data-act="hide-install" data-kind="ios_moved">Понятно</button>');
     }
+    // Said «Уже добавили» earlier, then stayed: the icon is there, only the plants need to move.
+    if (S.homeIcon) {
+      return hintCard('smartphone', 'Перенесите растения в иконку',
+        'Жунгли на экране «Домой» не видят растения из браузера. Сохраните копию здесь, а там нажмите «Восстановить копию».',
+        '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_icon_move">Не нужно</button>');
+    }
     return hintCard('smartphone', 'Добавьте Жунгли на экран «Домой»',
-      `Так ${device} не сотрёт ваши отметки. ${share} → «На экран Домой». Оттуда Жунгли откроются пустыми: сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
-      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
+      `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
+      '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn" data-act="stories-install" data-from="install_hint">Показать, как</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
   return '';
 }
@@ -206,11 +222,11 @@ function viewToday() {
   let html = `<header class="hello head-row"><div><h1>${greeting()}!</h1><div class="date">${esc(date)}</div></div>
     ${headButtons()}</header>`;
 
+  // Empty: no welcome card, the stories (stories.js) open by themselves on the first launch and explain the app.
+  // Only the quick picks, or the way to install first.
   if (!allPlants().length) {
-    const daily = 'Каждый день покажу, что пора проверить', calm = 'Без долгов и красных просрочек.';
-    return html + emptyCard('Привет! Это Жунгли', `${daily}, и запомню, как быстро сохнет каждое растение. ${calm}`, {
-      big: '<div class="big">🌱</div>',
-      short: `${daily}. ${calm}`,
+    return html + emptyCard('', '', {
+      bare: true,
       after: `<p class="mt-12 small muted">Уже вели Жунгли ${navigator.standalone ? 'в браузере или на другом устройстве' : 'на другом устройстве'}? <button class="linkish" data-act="import">Восстановить копию</button></p>`,
     }) + currentHint();
   }
@@ -452,10 +468,11 @@ function addFromCatalog(keys, source) {
 
 // The card on an empty screen with the quick picks. Where installing comes first (installFirst), the card gets short
 // (no big picture, `short` text) and the way to install goes under it at full width, so its buttons fit the first screen.
-function emptyCard(title, text, { big = '', short = text, after = '' } = {}) {
+// `bare`: without the title and text (the empty «Сегодня»).
+function emptyCard(title, text, { big = '', short = text, after = '', bare = false } = {}) {
   const gate = installFirst();
-  if (gate) return `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p></div>${gate}`;
-  return `<div class="celebrate">${big}<h2>${title}</h2><p class="muted">${text}</p>${quickStart()}${after}</div>`;
+  if (gate) return bare ? gate : `<div class="celebrate compact"><h2>${title}</h2><p class="muted">${short}</p></div>${gate}`;
+  return `<div class="celebrate">${bare ? '' : `${big}<h2>${title}</h2><p class="muted">${text}</p>`}${quickStart()}${after}</div>`;
 }
 
 function viewLight() {
@@ -594,6 +611,7 @@ Object.assign(ACTS, {
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
   'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
+  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { kind: 'ios_added' }); save(); render(); },
   'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;
