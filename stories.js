@@ -334,11 +334,17 @@ function endStory(slide) {
       return safariSteps(f, sk);
     }
   } else if (kind === 'in_app') {
+    // Test: a link that leaves the app's browser for Safari (iOS 17+, x-safari-https) or the default browser
+    // (Android intent). It carries ?stories=install, so the browser opens straight on the way to the home screen.
+    // The steps stay below in case the app blocks it.
+    const there = `${location.host}/?stories=install`;
+    const href = IOS ? `x-safari-https://${there}` : `intent://${there}#Intent;scheme=https;end`;
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
       <p class="lead">Отсюда Жунгли не добавить на экран «Домой».</p>
+      <a class="btn st-btn wide" href="${href}" data-act="story-open-browser">Открыть ${PLACE.where}</a>
+      <p class="m-0 lead">Не открылось?</p>
       ${steps(['Нажмите «•••» или «⋮» в углу экрана', `Выберите ${PLACE.menu}`])}
-      <div class="btns"><button class="btn st-btn wide" data-act="story-close" data-story-end="browser">Понятно</button></div>
-      <p class="m-0 st-more">Или ${tgButton('откройте в Телеграме')}</p>`;
+      <p class="m-0 st-more">Или ${tgButton('Открыть в Телеграме')}</p>`;
   } else {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли в Телеграме</h2>
       <p class="lead">Там растения хранятся в облаке Телеграма.</p>
@@ -437,7 +443,15 @@ addEventListener('resize', () => { if (storiesDlg.open) fitPhones(storiesDlg); }
 
 // The first launch opens them right away: no plants yet and never seen (S.storiesSeen; it travels with backups and
 // Telegram's cloud). Not over a sheet. In the mini app a cloud copy may still arrive: then they step aside (storiesYield).
+// Opened from «Открыть в Safari» in another app's browser (?stories=install): straight to the last story, the way
+// to the home screen for this browser.
 function autoStories() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('stories') === 'install') {
+    history.replaceState(null, '', location.pathname);
+    if (!Object.keys(S.plants).length && !sheet.open) { openStories('in_app_link'); goStory(STORIES.length - 1); }
+    return;
+  }
   if (S.storiesSeen || Object.keys(S.plants).length || sheet.open || storiesDlg.open) return;
   openStories('auto');
 }
@@ -449,6 +463,7 @@ Object.assign(ACTS, {
   'stories-install'() { openStories('install_card'); goStory(STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },
+  'story-open-browser'() { storyEnded = 'open_browser'; },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
   'story-tick'(el) {
     const k = el.dataset.key;
