@@ -425,16 +425,23 @@ function trackStoriesClosed(how) {
 // happens: the page can be gone before they're closed. So it counts as closing them, sent before app.js flushes the
 // stats on the same event: `telegram` after the Telegram button, `followed` from a last story whose steps lead out
 // of here (to Safari, or to the home screen after «На экран Домой»), else `left`. Back to them: they count as
-// opened again (`return`), to close once more.
-document.addEventListener('visibilitychange', () => {
-  if (!storiesDlg.open) return;
-  if (document.hidden && !storyAway) {
-    storyAway = true;
-    const steps = storyI === STORIES.length - 1 && ['ios', 'in_app'].includes(storyEnd());
-    trackStoriesClosed(storyEnded || (steps ? 'followed' : 'left'));
-    storyEnded = '';
-  } else if (!document.hidden && storyAway) { storyAway = false; track('stories_opened', { from: 'return' }); }
-});
+// opened again (`return`), to close once more. Closing the mini app or the tab may fire only pagehide, and a page
+// back from the back-forward cache only pageshow, so those count too (once each, by `storyAway`).
+function storiesLeft() {
+  if (!storiesDlg.open || storyAway) return;
+  storyAway = true;
+  const steps = storyI === STORIES.length - 1 && ['ios', 'in_app'].includes(storyEnd());
+  trackStoriesClosed(storyEnded || (steps ? 'followed' : 'left'));
+  storyEnded = '';
+}
+function storiesBack() {
+  if (!storiesDlg.open || !storyAway) return;
+  storyAway = false;
+  track('stories_opened', { from: 'return' });
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) storiesLeft(); else storiesBack(); });
+addEventListener('pagehide', storiesLeft);
+addEventListener('pageshow', (e) => { if (e.persisted && !document.hidden) storiesBack(); });
 storiesDlg.addEventListener('close', () => {
   stopStory();
   const how = storyEnded || 'close';
@@ -504,7 +511,7 @@ Object.assign(ACTS, {
   'story-restore'() { closeStories('restore'); ACTS.import(); },
 });
 // The Telegram button in the last story opens Telegram and leaves the stories open: they close as `telegram` when
-// the app hides (see visibilitychange above) or, if it doesn't, whenever they're closed.
+// the app hides (see storiesLeft above) or, if it doesn't, whenever they're closed.
 document.addEventListener('click', (e) => {
   const a = e.target.closest('#stories [data-story-end="telegram"]');
   if (a) storyEnded = 'telegram';
