@@ -130,14 +130,32 @@ function applySizes(root = document) {
     if (el.dataset.w) el.style.width = el.dataset.w + '%';
   });
 }
+// Plant cards off screen are skipped (content-visibility in style.css) and stand in at their last drawn height.
+// A redraw makes new cards that don't know it, so carry each one's height over: otherwise the cards above
+// change height and the page jumps (Safari doesn't keep the scroll on what's in view). Cards never drawn
+// stand in at --pcard-h, taken from a card in view.
+function cardSizes(view) {
+  const cards = [...view.querySelectorAll('.pcard:not([hidden])')];
+  if (!cards.length) return null;
+  const cs = getComputedStyle(cards[0]);
+  const pad = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
+  const sizes = new Map(cards.map((c) => [c.dataset.open, c.getBoundingClientRect().height - pad]));
+  const seen = cards.find((c) => c.getBoundingClientRect().bottom > 0);
+  if (seen) view.style.setProperty('--pcard-h', `${sizes.get(seen.dataset.open)}px`);
+  return sizes;
+}
+function keepCardSizes(view, sizes) {
+  if (sizes) view.querySelectorAll('.pcard').forEach((c) => { const h = sizes.get(c.dataset.open); if (h) c.style.containIntrinsicSize = `auto ${h}px`; });
+}
 function render() {
   const view = $('#view');
   // Tile ticks only matter while the collection is empty: once plants are in, by any way, they're done.
   if (Object.keys(S.plants).length) { qsPicked.clear(); qsReported = false; }
+  const sizes = tab === 'plants' && cardSizes(view);
   view.innerHTML = tab === 'today' ? viewToday() : tab === 'plants' ? viewPlants() : tab === 'light' ? viewLight() : viewRoom();
   applySizes(view);
   revokeOldPhotos();
-  if (tab === 'plants') filterPlants();
+  if (tab === 'plants') { keepCardSizes(view, sizes); filterPlants(); }
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
 }
 

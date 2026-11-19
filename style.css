@@ -322,9 +322,10 @@ button { cursor: pointer; }
 .pcard {
   border: 1px solid var(--line); border-radius: 28px; color: var(--ink);
   padding: 9px 9px 12px; text-align: left; display: flex; flex-direction: column; gap: 6px;
-  /* Cards off screen skip layout and paint until scrolled near: opening «Растения» with 30+ plants laid out
-     every card's drawing at once (~25% of the tap on a slow phone). `auto` keeps each card's last real height */
-  content-visibility: auto; contain-intrinsic-size: auto 270px;
+  /* Cards off screen skip layout and paint until scrolled near. Laying out all of them was the biggest part of
+     opening «Растения» with 30+ plants on a slow phone. Skipped cards stand in at --pcard-h (measured by
+     render() from a drawn card) or, once drawn, at their last real height */
+  content-visibility: auto; contain-intrinsic-size: auto var(--pcard-h, 16rem);
 }
 .pcard .pic {
   aspect-ratio: 3 / 4; border-radius: 21px; background: var(--green-soft);
