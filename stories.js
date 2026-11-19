@@ -337,8 +337,7 @@ function endStory(slide) {
     // Only steps: a link that would leave for Safari (x-safari-https) does nothing in Threads (checked on an iPhone).
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли ${PLACE.where}</h2>
       <p class="lead">Отсюда Жунгли не добавить на экран «Домой».</p>
-      ${steps(['Нажмите «•••» или «⋮» в углу экрана', `Выберите ${PLACE.menu}`])}
-      <p class="m-0 st-more">Или ${tgButton('Открыть в Телеграме')}</p>`;
+      ${steps(['Нажмите «•••» или «⋮» в углу экрана', `Выберите ${PLACE.menu}`])}`;
   } else {
     box.innerHTML = `<h2 tabindex="-1">Откройте Жунгли в Телеграме</h2>
       <p class="lead">Там растения хранятся в облаке Телеграма.</p>
