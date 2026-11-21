@@ -62,7 +62,7 @@ Cards that really rest have `rest` (alocasia, the Venus flytrap). «Покой»
 | `rotate:<id>` | Plants that lean to the light (`rotate`) | 14 days after the last turn. |
 | `prune:<id>` | Plants with «Обрезка» on in «Напоминания» (`remind` in the record), in its months | `every` days after the last pruning (2 weeks, a month, 2 months, or 300 days for «Раз в год»); at once in its months if never. One turned-on reminder comes first; more wait behind the other bonus tasks. Plants with irritating sap (`toxic`) get a gloves warning. |
 | `rinse:<id>` | Plants with «Промывка грунта» on, in a pot without the medium's own rinse | Same as `prune`: every 4 months or half a year, at once if never. |
-| `feed` | Everyone fed, from March to September | 14 days after the last feeding. |
+| `feed:<ids>` | «День подкормки»: the plants due by their own schedule (`feedDue`) | Each plant `feedEvery` days (14 by default, 30, or 0 for never) after its last feeding `fed`, from March to September; in winter only plants marked «Зимой под лампой» (`lamp`), monthly. A tick per plant, all on: «Готово» notes the ticked ones (`fed`, «подкормлено» in the history), the unticked come back in 3 days. «Подкормлено сегодня» in the plant card notes it any day. |
 | `feedback` | Anyone with answers on 5 different days | Never: once. «Как вам Жунгли?» with «Написать» (opens Telegram @zmoki) and «Не нужно» instead of «Готово» / «Не сегодня»; both put it away for good. |
 
 Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents (except flowering ones marked `feed`, like kalanchoe), orchids on bark, phalaenopsis in sphagnum and cuttings in water. If nobody is left, there's no task.

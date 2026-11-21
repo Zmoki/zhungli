@@ -100,7 +100,24 @@ const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(
 const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
-  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
+  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно, по расписанию в «Подкормке».');
+}
+// «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
+// Redrawn alone, so a chip or the checkbox keeps focus.
+function feedBox(p) {
+  const n = feedEvery(p), last = p.fed;
+  const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;
+  const when = !n ? 'Не позову на «День подкормки».'
+    : feedDue(p) ? 'Позову в «Если есть силы» сегодня.'
+      : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
+        : winterNow() && !p.lamp ? 'Зимой без лампы не зову: растение почти не растёт. Позову с марта.'
+          : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
+  return `<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
+    <p class="mt-6 small muted" id="feed-when">${when}</p></div>
+    ${n ? `<div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp ? 'checked' : ''}> Зимой под лампой</label>
+      <p class="mt-6 small muted" id="lamp-hint">Под лампой растение растёт и зимой: позову раз в месяц, удобрение слабее, чем летом.</p></div>` : ''}
+    <p class="small muted m-0">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
+    <button class="mt-8 btn ok" data-act="feed-done" data-id="${esc(p.id)}">${I('utensils')}Подкормлено сегодня</button>`;
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -209,7 +226,7 @@ function glanceHtml(p) {
     ${WATERING[p.watering]?.badge ? `<li>${I(WATERING[p.watering].badge[0])}<span>${WATERING[p.watering].badge[1]}</span></li>` : ''}</ul>`;
 }
 // Answers in history. Neutral words: an entry doesn't say which way the plant grew then.
-const HIST_WORDS = { water: 'полив', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено' };
+const HIST_WORDS = { water: 'полив', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', feed: 'подкормлено' };
 // Dots: a watering or a working system is full, the other answer is light.
 const HIST_DOTS = { water: 'w', ok: 'w', wet: 'd', fix: 'd' };
 // The legend's words: the kinds shown in the strip (`shown`), else the current way's: a system's checks, or waterings.
@@ -338,6 +355,8 @@ function plantCardHtml(id) {
       ${p.rest && !resting(p) ? `<section class="group" aria-labelledby="g-rest"><h3 id="g-rest">Покой</h3>
         <p class="small muted">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
         <button class="btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button></section>` : ''}
+
+      <section class="group" aria-labelledby="g-feed" id="feed-group"${feedsOnDay(p) ? '' : ' hidden'}><h3 id="g-feed">Подкормка</h3><div id="feed-box">${feedBox(p)}</div></section>
 
       <section class="group" aria-labelledby="g-new"><h3 id="g-new">Новое растение</h3>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
@@ -534,6 +553,7 @@ function changeWay(id, f, value) {
   $('#int-field').hidden = !!wayOf(p).noChecks;
   $('#int-field').innerHTML = intBox(p);
   Object.keys(REMINDERS).forEach((k) => { const f = $(`#remind-field-${k}`); if (f) f.hidden = !remindFits(p, k); });
+  $('#feed-group').hidden = !feedsOnDay(p); $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
   $('#repot-field').hidden = !feedsOnDay(p);
   if (res.settle) {
@@ -567,8 +587,9 @@ document.addEventListener('change', (e) => {
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
-  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
-  if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
+  if (f === 'lamp') { r.lamp = el.checked; save(); $('#feed-box').innerHTML = feedBox(plant(id)); $('#f-lamp').focus(); track('feed_lamp_toggled', { on: el.checked }); return; }
+  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
+  if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); }
   if (f === 'remind') {
     const k = el.dataset.kind;
     const start = remindStart(plant(id), k);
@@ -600,6 +621,24 @@ document.addEventListener('change', (e) => {
 
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
+  'feed-every'(el, id) {
+    const n = Number(el.dataset.n);
+    S.plants[id].feedEvery = n; save();
+    $('#feed-box').innerHTML = feedBox(plant(id));
+    $(`[data-act="feed-every"][data-n="${n}"]`).focus();
+    track('feed_schedule_changed', { every: n });
+  },
+  'feed-done'(el, id) {
+    const undo = snapshot();
+    feedDone(id); save();
+    $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
+    $('[data-act="feed-done"]').focus();
+    track('feeding_logged', { from: 'card', n: 1 });
+    toast('Подкормка записана 🍽️', () => {
+      undo();
+      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); }
+    });
+  },
   // Rest: checks twice as rare (the interval comes back after), no feeding day, until new growth.
   'rest-start'(el, id) {
     const r = S.plants[id];

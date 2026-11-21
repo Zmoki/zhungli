@@ -138,10 +138,10 @@ function remindOf(r, kind) {
   return REMINDERS[kind] && x && x.every > 0 && Array.isArray(x.months) && x.months.length ? x : null;
 }
 // Answers to checks in a plant's history: reminders done (a pruning) aren't checks.
-const checksOf = (p) => (p.hist || []).filter((h) => !REMINDERS[h.a]);
+const checksOf = (p) => (p.hist || []).filter((h) => !REMINDERS[h.a] && h.a !== 'feed');
 const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 // Kinds of per-plant bonus tasks, for cleaning up after a plant is removed.
-const BONUS_KINDS = ['dust', 'rotate', ...Object.keys(REMINDERS), ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
+const BONUS_KINDS = ['dust', 'rotate', 'feed', ...Object.keys(REMINDERS), ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
 const mediumIn = (r, d) => (MEDIA[r.medium] ? r.medium : MEDIA[d.type] ? d.type : 'soil');
 // Watering of a potted plant (null when the medium isn't in a pot). Older plants keep wick watering in r.wick.
 const cardWatering = (d) => (MEDIA[d.type] && MEDIA[d.type].pot ? (WATERING[d.watering] ? d.watering : 'top') : null);
@@ -272,6 +272,8 @@ function prepare(raw) {
   if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
   s.v = 4;
+  // One feeding day for everyone (S.bonus.feed) became a date per plant: each keeps the rhythm it had.
+  if (s.bonus && s.bonus.feed) { Object.values(s.plants).forEach((r) => { if (!r.fed) r.fed = s.bonus.feed; }); delete s.bonus.feed; }
   initBonus(s);
   return s;
 }
@@ -333,7 +335,6 @@ function initBonus(s) {
     const care = MEDIA[mediumIn(s.plants[id], d)].care;
     if (care && !s.bonus[`${care.kind}:${id}`]) s.bonus[`${care.kind}:${id}`] = t;
   });
-  if (!s.bonus.feed) s.bonus.feed = addDays(t, -14);
 }
 
 // New plant ids: p… for catalog plants, c… for own and imported ones.
@@ -520,13 +521,12 @@ function bonusTasks() {
     out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, hint: care.hint }
       : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, who: ps.map((p) => p.title), hint: care.hint });
   });
-  if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
-    // Fed on the day: soil-like media, plus flowering succulents (dry with `feed`). The rest get fertilizer with every watering, or none.
-    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p) && !settling(p) && !resting(p));
-    if (who.length) {
-      out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-        who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».' });
-    }
+  // «День подкормки»: the plants due by their own schedule (feedDue), each ticked off on its own.
+  const fed = allPlants().filter((p) => feedDue(p) && !snoozed('feed:' + p.id));
+  if (fed.length) {
+    out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), feed: fed,
+      task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
+      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».` });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
@@ -536,9 +536,28 @@ function bonusTasks() {
   }
   return [...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
 }
+// Feeding per plant (`fed`: the last date, `feedEvery`: days, 0 = not fed, `lamp`: fed in winter under a grow light).
+// Sources (the content repo's feeding facts): fed while growing, March to September; in winter without a lamp the
+// plant barely grows, so no reminders; under a lamp once a month and weaker. A feeding can be noted any day.
+const FEED_EVERY = [[14, '2 недели'], [30, 'Месяц'], [0, 'Не кормлю']];
+const feedEvery = (p) => (Number.isFinite(p.feedEvery) ? p.feedEvery : 14);
+const winterNow = () => { const m = new Date().getMonth() + 1; return m < 3 || m > 9; };
+function feedDue(p) {
+  if (!feedsOnDay(p) || repotted(p) || settling(p) || resting(p) || !feedEvery(p)) return false;
+  if (winterNow() && !p.lamp) return false;
+  const every = winterNow() ? Math.max(feedEvery(p), 30) : feedEvery(p);
+  return !p.fed || diff(p.fed, today()) >= every;
+}
+function feedDone(id) {
+  const r = S.plants[id];
+  if (!r) return;
+  r.fed = today();
+  delete S.snooze['feed:' + id];
+  hist(r, 'feed');
+}
 // A bonus task done: today's date for each key it stands for; a reminder also goes to the plant's history.
 function bonusDone(key) {
-  bonusKeys(key).forEach((k) => { const [kind, id] = k.split(':'); if (REMINDERS[kind]) remindDone(id, kind); else S.bonus[k] = today(); });
+  bonusKeys(key).forEach((k) => { const [kind, id] = k.split(':'); if (kind === 'feed') feedDone(id); else if (REMINDERS[kind]) remindDone(id, kind); else S.bonus[k] = today(); });
 }
 // A reminder done (from «Сегодня» or the plant card): the date for the next one, and a line in the history.
 function remindDone(id, kind) {
