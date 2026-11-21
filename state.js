@@ -106,21 +106,27 @@ const WATERING = {
 // every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
 // toggle: the checkbox in the kind's own section of the plant card; start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
 // gloves: the card's sap warning goes with the task; fits(p): shown and asked only for such plants.
-// Feeding per plant can be another kind here.
+// Feeding (feedDue) and the soil rinse (RINSE, «Банный день») have their own logic.
 const REMINDERS = {
   prune: { name: 'Обрезка', toggle: 'Звать на обрезку', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️', icon: 'scissors', gloves: true,
     hint: 'Острым чистым секатором над узлом, срезы не замазывать. После больного растения протереть лезвие хлорным отбеливателем 1:9 и ополоснуть: спирт не берёт вирус табачной мозаики. Бледные вытянутые стебли просят света, а не обрезки.',
     every: [[14, '2 недели', 'раз в 2 недели'], [30, 'Месяц', 'раз в месяц'], [60, '2 месяца', 'раз в 2 месяца'], [300, 'Раз в год', 'раз в год']],
     start: { every: 300, months: [3, 4] } },
-  // Salts from fertilizer and hard water stay in the pot. A medium with its own rinse (clay pebbles, pon) has it already.
-  rinse: { name: 'Промывка грунта', toggle: 'Звать на промывку', task: 'Промойте грунт', verb: 'промыть грунт', done: 'промыто', btn: 'Промыто сегодня', toast: 'Промывка записана 🚿', icon: 'droplets',
-    why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев. Промывать всех сразу удобнее в «Банный день»: «Настройки» приложения.',
-    hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
-    every: [[120, '4 месяца', 'раз в 4 месяца'], [180, 'Полгода', 'раз в полгода']],
-    start: { every: 120, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-    // Watered only with distilled water (carnivorous plants), the pot gathers no salts.
-    fits: (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care && !p.distilled },
 };
+// Soil rinse against salts from fertilizer and hard water: done on «Банный день» (bathPlan), or noted in the plant
+// card (`rinse:<id>` in S.bonus, «промыто» in the history). Not for a medium with its own rinse (clay pebbles, pon),
+// nor without soil in a pot, nor for plants watered only with distilled water (carnivorous): they gather no salts.
+const RINSE = {
+  why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев.',
+  hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
+};
+const rinseFits = (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care && !p.distilled;
+function rinseDone(id) {
+  const r = S.plants[id];
+  if (!r) return;
+  S.bonus['rinse:' + id] = today();
+  hist(r, 'rinse');
+}
 // Cats and dogs (ASPCA, else NC State or Pet Poison Helpline; see the content repo's pets facts): a card's `pets` is
 // 'toxic' or 'safe', one value for both since they differ only for true lilies, which aren't in the catalog.
 // It may become { cats, dogs }; then the worse of the two counts. No value: no data (generic cards never say safe).
@@ -138,10 +144,10 @@ function remindOf(r, kind) {
   return REMINDERS[kind] && x && x.every > 0 && Array.isArray(x.months) && x.months.length ? x : null;
 }
 // Answers to checks in a plant's history: reminders done (a pruning) aren't checks.
-const checksOf = (p) => (p.hist || []).filter((h) => !REMINDERS[h.a] && h.a !== 'feed');
+const checksOf = (p) => (p.hist || []).filter((h) => !REMINDERS[h.a] && h.a !== 'feed' && h.a !== 'rinse');
 const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 // Kinds of per-plant bonus tasks, for cleaning up after a plant is removed.
-const BONUS_KINDS = ['dust', 'rotate', 'feed', ...Object.keys(REMINDERS), ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
+const BONUS_KINDS = ['dust', 'rotate', 'feed', 'rinse', ...Object.keys(REMINDERS), ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
 const mediumIn = (r, d) => (MEDIA[r.medium] ? r.medium : MEDIA[d.type] ? d.type : 'soil');
 // Watering of a potted plant (null when the medium isn't in a pot). Older plants keep wick watering in r.wick.
 const cardWatering = (d) => (MEDIA[d.type] && MEDIA[d.type].pot ? (WATERING[d.watering] ? d.watering : 'top') : null);
@@ -272,6 +278,12 @@ function prepare(raw) {
   if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
   s.v = 4;
+  // Per-plant «Промывка грунта» reminders became «Банный день»: whoever had one gets it with the same interval.
+  const rinses = Object.values(s.plants).map((r) => r.remind && r.remind.rinse).filter(Boolean);
+  if (rinses.length) {
+    if (!(s.settings.bath > 0)) s.settings.bath = Math.min(...rinses.map((x) => x.every || 120));
+    Object.values(s.plants).forEach((r) => { if (r.remind) { delete r.remind.rinse; if (!Object.keys(r.remind).length) delete r.remind; } });
+  }
   // One feeding day for everyone (S.bonus.feed) became a date per plant: each keeps the rhythm it had.
   if (s.bonus && s.bonus.feed) { Object.values(s.plants).forEach((r) => { if (!r.fed) r.fed = s.bonus.feed; }); delete s.bonus.feed; }
   initBonus(s);
@@ -526,7 +538,7 @@ function bonusTasks() {
   if (fed.length) {
     out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили',
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Промывка грунта».` });
+      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
@@ -545,7 +557,7 @@ function bathPlan() {
   const every = bathEvery(), t = today();
   if (!every) return null;
   const last = (p) => S.bonus['rinse:' + p.id];
-  const due = allPlants().filter((p) => remindFits(p, 'rinse') && !resting(p) && !settling(p) && (!last(p) || diff(last(p), t) >= every));
+  const due = allPlants().filter((p) => rinseFits(p) && !p.noBath && !resting(p) && !settling(p) && (!last(p) || diff(last(p), t) >= every));
   // Dry today: a soil check (from above or below) that's due.
   const ready = due.filter((p) => p.nextCheck <= t && soilCheck(p.watering) && !wayOf(p).noChecks);
   const rested = S.bonus.bath && diff(S.bonus.bath, t) < 7, snoozed = S.snooze.bath && S.snooze.bath > t;

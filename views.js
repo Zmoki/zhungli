@@ -233,7 +233,7 @@ function bathHtml(bp) {
   }
   if (bathStep === 2) {
     const ps = bathPicked.map(plant).filter(Boolean);
-    return taskCard({ ...base, sub: ps.map((p) => p.title).join(', '), task: 'Пошли купать!', hint: REMINDERS.rinse.hint,
+    return taskCard({ ...base, sub: ps.map((p) => p.title).join(', '), task: 'Пошли купать!', hint: RINSE.hint,
       buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
   }
   return taskCard({ ...base, sub: `${plantsN(bp.ready.length)} с подсохшим грунтом`, task: 'Устраиваем сегодня банный день?',
@@ -679,7 +679,7 @@ Object.assign(ACTS, {
   'bath-done'() {
     const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
     // Logged as waterings, so they count on «Сегодня» like a check answered; one watered meanwhile isn't watered twice.
-    ids.forEach((id) => { if (S.plants[id].lastWater !== today()) actWater(id); remindDone(id, 'rinse'); });
+    ids.forEach((id) => { if (S.plants[id].lastWater !== today()) actWater(id); rinseDone(id); });
     S.bonus.bath = today();
     bathStep = 0; bathPicked = [];
     logToday({ a: 'bonus:bath', title: 'Банный день' });
