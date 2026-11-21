@@ -126,7 +126,8 @@ function careOf(d, r) {
   // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
   // Its check question and watering tip are for watering from above; a wick or reservoir has its own.
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
-  const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, m.feedTip].filter(Boolean).join(' ');
+  // feedTip speaks of top-ups (a wick, a reservoir); drip irrigation gets the way's own hint about fertilizer.
+  const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, WATERING[w].act === 'top' && m.feedTip].filter(Boolean).join(' ');
   const check = own ? d.check : (fromAbove && alt.check) || '';
   return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
 }
