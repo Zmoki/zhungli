@@ -296,7 +296,7 @@ const IMPORT_PROMPT = `Сделайте файл plants.json со списком
 - room: комната, где стоит, если она упоминалась (например "Кухня"), иначе ""
 - spot: место в комнате: подоконник, полка, стол и т. п., если оно упоминалось, иначе ""
 - type: в чём растёт. Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов, сушить почти полностью), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде: черенки, растения в банке), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
-- watering: как поливать растение в горшке. Варианты: "top" (сверху), "wick" (фитиль), "reservoir" (резервуар в горшке: кашпо с автополивом, керамзит с запасом раствора); для воды, блока, террариума и аквариума ставьте "top"
+- watering: как поливать растение в горшке. Варианты: "top" (сверху), "wick" (фитиль), "reservoir" (резервуар в горшке: кашпо с автополивом, керамзит с запасом раствора), "drip" (капельный автополив или полив по таймеру из шланга); для воды, блока, террариума и аквариума ставьте "top"
 - lux: сколько света нужно, в люксах, [от, до]
 - every: через сколько дней обычно проверять полив (для керамзита проверять уровень раствора, для воды смотреть, пора ли её менять)
 - check: вопрос при проверке, например "Верхние 2–3 см сухие?" или "Уровень раствора на минимуме?"
@@ -366,6 +366,8 @@ function importType(x) {
 function importWatering(x, type) {
   const t = `${x || ''} ${type || ''}`.toLowerCase();
   if (/wick|фитил/.test(t)) return 'wick';
+  // Before the reservoir: «капельный автополив» is drip irrigation, «кашпо с автополивом» a reservoir.
+  if (/drip|irrigat|капел|таймер|timer/.test(t)) return 'drip';
   if (/reserv|резерв|автопол|self.?water|semi|hydro|гидро/.test(t)) return 'reservoir';
   return 'top';
 }
@@ -390,7 +392,8 @@ function normImport(o) {
     room: cap(str(o.room, 40)), spot: cap(str(o.spot ?? o.place, 40)),
     emoji: [...str(o.emoji, 16)].slice(0, 2).join('') || '🪴',
     type, ...(watering !== 'top' ? { watering } : {}),
-    lux, every: clamp(Math.round(num(o.every)) || 6, 1, 60),
+    // Drip irrigation is checked every 2 weeks (it doesn't learn): the AI's watering interval doesn't apply.
+    lux, every: watering === 'drip' ? WATERING.drip.start() : clamp(Math.round(num(o.every)) || 6, 1, 60),
     check: str(o.check, 100), water: str(o.water), soil: str(o.soil), cond: str(o.cond), tip: str(o.tip),
     toxic: yes(o.toxic), big: yes(o.big), quips: quips.length ? quips : GENERIC_QUIPS,
   };

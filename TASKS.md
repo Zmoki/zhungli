@@ -69,7 +69,7 @@ The card follows the check card (all task cards come from `taskCard` in `views.j
 
 ## Progress and the day log
 
-`S.log[date]` holds entries `{ id, a, title }`, where `a` is `water`, `wet`, `later`, `vent` or `bonus:<key>`. It's kept for 7 days.
+`S.log[date]` holds entries `{ id, a, title }`, where `a` is `water`, `wet`, `ok`, `fix` (drip irrigation checks), `later`, `vent` or `bonus:<key>`. It's kept for 7 days.
 
 - **Pending:** the checks shown plus airings not done.
 - **Done:** everything in today's log except `later` and bonus tasks.

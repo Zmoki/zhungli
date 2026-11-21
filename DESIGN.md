@@ -42,7 +42,7 @@ Statuses have their own hues, the same in chips, filters and the Light tab tags:
 | напоено | blue (`--st-watered`) | laugh |
 | хорошо | green (`--st-fine`) | smile |
 | в теплице | pink (`--st-gh`) | house-heart |
-| how it grows, when not an ordinary pot | teal (`--st-grow`) | the way's icon: glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (на минералке), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром) |
+| how it grows, when not an ordinary pot | teal (`--st-grow`) | the way's icon: glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (на минералке), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром), timer (на автополиве) |
 
 Status chips on pictures are white glass (`--glass-photo`) with the status color on the face and the word, so they keep 7:1 even over a black photo.
 
@@ -52,7 +52,7 @@ Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim colo
 
 ## Plant card
 
-Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick or reservoir if any), then watering. Below them three tabs: «Заметки» (tips and own notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows) and «История» (the last 4 weeks as dots, then the list; with no answers yet, the next 4 weeks with the planned checks dashed). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown. A checkbox's hint, ticked, says what it does; unticked, it says what ticking would do («**Если отметить:**»), then on its own line what happens now («**Сейчас**»), with only those lead words bold. «Недавно пересажено» shows only for plants called on «День подкормки», the only thing it changes.
+Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick, reservoir or drip irrigation if any), then watering. Below them three tabs: «Заметки» (tips and own notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows) and «История» (the last 4 weeks as dots, then the list; with no answers yet, the next 4 weeks with the planned checks dashed). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown. A checkbox's hint, ticked, says what it does; unticked, it says what ticking would do («**Если отметить:**»), then on its own line what happens now («**Сейчас**»), with only those lead words bold. «Недавно пересажено» shows only for plants called on «День подкормки», the only thing it changes.
 
 ## Plant pictures
 

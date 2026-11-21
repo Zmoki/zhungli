@@ -20,7 +20,7 @@ Record fields:
 | `interval` | Learned days between checks. |
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
-| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' }`. |
+| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed). |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
 | `medium` | What the roots are in. Catalog plants keep it from the day they're added, so a card's new `type` doesn't move them. |
@@ -65,12 +65,19 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | `top` сверху | the medium's | the medium's |
 | `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато» |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
+| `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «пора проверить» |
+
+Drip irrigation (`fixed` in `WATERING`) waters by itself, so its checks look at the system and nothing is learned:
+- **Interval:** the person's pick from chips in the plant card (1, 2, 3 or 4 weeks; 2 by default), not the stepper.
+- **«Работает»:** next check after the whole interval. **«Поправлено»:** a look again in a quarter of it (at least 3 days), to see the fix holds.
+- `lastWater` holds the last check, and a check doesn't make the plant «напоено». History says «работает» / «поправлено».
+- AI import reads `"watering": "drip"`, and words like «капельный», «drip», «irrigation»; «кашпо с автополивом» stays a reservoir.
 
 Water is «мутновато» when due. Water, sphagnum and a block come first among checks due the same day. A card's own `check` replaces the medium's question. A question becomes a task («Полейте, если …», «Смените воду, если …», «Сбрызните, если …»); a check written as an instruction is shown as is.
 
 Picking another way than the card's:
 - The card's `check` is dropped, and its «Как поливаю» tip gives way to the new way's. With another medium, «Субстрат» does too. The rest of the card stays.
-- The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
+- The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, drip irrigation at 14, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
 - Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 6 weeks.
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
 - Own edits of the tips that no longer fit («Как поливать», and «Субстрат» with another medium) become notes, so nothing typed is lost.
@@ -96,8 +103,8 @@ A new plant starts with the card's `every`. Plants added together get their firs
 
 | Key | Word | When |
 |---|---|---|
-| `need` | суховато (a reservoir: пустовато, water: мутновато) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
-| `watered` | напоено | Watered today. |
+| `need` | суховато (a reservoir: пустовато, water: мутновато, drip irrigation: пора проверить) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
+| `watered` | напоено | Watered today (not for drip irrigation, where it's only a check). |
 | `dim` | темновато | Lux reading under the card's minimum. |
 | `hot` | ярковато | Lux reading over the maximum × 1.25. |
 | `fine` | хорошо | None of the above. |
