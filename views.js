@@ -590,8 +590,8 @@ Object.assign(ACTS, {
     const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
     afterTask('Свежий воздух! 🌬️', undo);
   },
-  'vent-off'(el, id) {
-    if (confirm('Теплица больше не нужна? Больше не буду напоминать проветривать.')) {
+  async 'vent-off'(el, id) {
+    if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не буду напоминать проветривать.', ok: 'Не нужна' })) {
       const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
     }
   },
@@ -662,24 +662,24 @@ Object.assign(ACTS, {
     track('room_saved', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
   },
   // Rooms are also added, renamed and removed from settings (data-from="settings").
-  'room-add'(el) {
-    const name = (prompt('Как называется комната? Например, «Спальня» или «Кухня»') || '').trim();
+  async 'room-add'(el) {
+    const name = (await ask({ title: 'Как называется комната?', input: { placeholder: 'Например, «Спальня» или «Кухня»' }, ok: 'Добавить' })) || '';
     if (!name) return;
     S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
     if (el.dataset.from === 'settings') openSettings();
     toast('Комната добавлена. Выберите её в карточках растений 🪴');
     track('room_added', { rooms: S.rooms.length });
   },
-  'room-rename'(el) {
+  async 'room-rename'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
-    const name = rm && (prompt('Новое название комнаты', rm.name) || '').trim();
+    const name = rm && ((await ask({ title: 'Новое название комнаты', input: { value: rm.name }, ok: 'Сохранить' })) || '');
     if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
   },
-  'room-del'(el) {
+  async 'room-del'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
     if (!rm || S.rooms.length < 2) return;
     const rest = S.rooms.filter((x) => x !== rm);
-    if (!confirm(`Убрать комнату «${rm.name}»? Её растения перейдут в «${rest[0].name}».`)) return;
+    if (!(await ask({ title: `Убрать комнату «${rm.name}»?`, text: `Её растения перейдут в «${rest[0].name}».`, ok: 'Убрать', danger: true }))) return;
     Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
     S.rooms = rest; save(); render();
     if (el.dataset.from === 'settings') openSettings();

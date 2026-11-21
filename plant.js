@@ -571,8 +571,8 @@ document.addEventListener('change', (e) => {
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
   photo(el, id) { photoFor = id; $('#photo-input').click(); },
-  'photo-remove'(el, id) {
-    if (confirm('Убрать фото? Вместо него будет рисунок.')) {
+  async 'photo-remove'(el, id) {
+    if (await ask({ title: 'Убрать фото?', text: 'Вместо него будет рисунок.', ok: 'Убрать', danger: true })) {
       dropPhoto(id);
       if (window.photoRemoved) window.photoRemoved(id);
       openPlant(id);
@@ -678,8 +678,8 @@ Object.assign(ACTS, {
     $('#water-box').innerHTML = waterBox(p);
     track('check_interval_set', { days: n, ...kindOf(id) });
   },
-  delete(el, id) {
-    if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
+  async delete(el, id) {
+    if (await ask({ title: `Убрать «${plant(id).title}» из коллекции?`, text: 'Отметки, заметки и фото этого растения удалятся.', ok: 'Убрать', danger: true })) {
       delete S.plants[id];
       dropPhoto(id);
       for (const k of BONUS_KINDS.map((x) => `${x}:${id}`)) { delete S.bonus[k]; delete S.snooze[k]; }
@@ -746,10 +746,10 @@ document.addEventListener('keydown', (e) => {
   showCardTab(k, true);
 });
 
-function saveNote(el, id, act) {
+async function saveNote(el, id, act) {
   const key = el.dataset.key;
   const text = act === 'note-del' ? '' : $('#note-text').value.trim();
-  if (act === 'note-del' && (key[0] === 'n' || !careOf(def(id), S.plants[id])[key]) && !confirm('Удалить заметку?')) return;
+  if (act === 'note-del' && (key[0] === 'n' || !careOf(def(id), S.plants[id])[key]) && !(await ask({ title: 'Удалить заметку?', ok: 'Удалить', danger: true }))) return;
   const action = setNote(id, key, text);
   if (action) track('note_changed', { action, note: noteKind(key) });
   noteEdit = null; save(); refreshCheat(id);

@@ -35,6 +35,34 @@ sheet.addEventListener('close', () => { // closed by swipe, Esc or the close but
 });
 sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
+// In-app confirm and prompt (#ask), instead of the browser's: the app's look, text size and theme,
+// above the sheet. Resolves to true or the typed text; false or null when cancelled (button, Esc, a tap outside).
+// The «yes» button submits the form, so Enter in the field means yes.
+const askBox = $('#ask');
+function ask({ title, text = '', ok, cancel = 'Отмена', danger = false, input = null }) {
+  // One question at a time: a second one while the first is open counts as cancelled.
+  if (askBox.open) return Promise.resolve(input ? null : false);
+  return new Promise((resolve) => {
+    askBox.setAttribute('role', input ? 'dialog' : 'alertdialog');
+    if (text) askBox.setAttribute('aria-describedby', 'ask-text'); else askBox.removeAttribute('aria-describedby');
+    askBox.innerHTML = `<form method="dialog">
+      <h2 id="ask-title">${esc(title)}</h2>${text ? `<p id="ask-text" class="mt-8">${esc(text)}</p>` : ''}
+      ${input ? `<input id="ask-input" class="input mt-14" type="text" maxlength="40" autocomplete="off" enterkeyhint="done" aria-labelledby="ask-title" value="${esc(input.value || '')}" placeholder="${esc(input.placeholder || '')}">` : ''}
+      <div class="btns mt-20"><button type="button" class="btn" id="ask-no">${esc(cancel)}</button><button class="btn ${danger ? 'danger' : 'ok'}" value="yes">${esc(ok)}</button></div></form>`;
+    const field = $('#ask-input');
+    $('#ask-no').onclick = () => askBox.close('no');
+    askBox.addEventListener('close', () => {
+      const yes = askBox.returnValue === 'yes';
+      resolve(input ? (yes ? field.value.trim() : null) : yes);
+    }, { once: true });
+    askBox.returnValue = '';
+    askBox.showModal();
+    // A choice to undo something starts on «Отмена»; a name starts in the field.
+    if (field) { field.focus(); field.select(); } else $('#ask-no').focus();
+  });
+}
+askBox.addEventListener('click', (e) => { if (e.target === askBox) askBox.close('no'); });
+
 let toastTimer;
 function toast(msg, undo) {
   document.querySelector('.toast')?.remove();

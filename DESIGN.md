@@ -50,6 +50,10 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked; their text reads like a chip's.
 
+## Questions
+
+Never the browser's `confirm()` or `prompt()`: they ignore the theme and text size and look foreign in the home-screen app. `ask()` in `app.js` opens a small card in the middle of the screen, over the sheet too: a title as the question, a line on what happens, an optional text field, and two buttons, «Отмена» first. Undoing actions (removing, erasing, replacing) have a red button and start with focus on «Отмена»; a name starts in the field, and Enter saves it.
+
 ## Plant card
 
 Top to bottom: the picture, the name, the plant's words right under it, short facts (check interval, light, temperature, medium, and a wick, reservoir or drip irrigation if any), then watering. Below them three tabs: «Заметки» (tips and own notes, where the card always opens), «Настройки» (name, place, light, greenhouse, how it grows, reminders) and «История» (the last 4 weeks as dots, then the list; with no answers yet, the next 4 weeks with the planned checks dashed). A card opened right after adding one plant starts on «Настройки». Choices show all their options as chips, never in a dropdown. A checkbox's hint, ticked, says what it does; unticked, it says what ticking would do («**Если отметить:**»), then on its own line what happens now («**Сейчас**»), with only those lead words bold. «Недавно пересажено» shows only for plants called on «День подкормки», the only thing it changes.
