@@ -53,7 +53,7 @@ On every event:
 | `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`, `from_medium`: `soil` / `dry` / `sphagnum` / `bark` / `coco` / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium`; `watering`, `from_watering`: `top` / `bottom` / `wick` / `reservoir` / `tray` / `drip` / `none` (not in a pot); `settle` (counted as repotting) |
 | `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `days`: `7` / `14` / `21` / `28`; `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_card`, `to_card` (catalog ids); `from_generic`, `to_generic`; `same_medium` (the plant's medium is the new card's); `notes_moved` (edited tips turned into notes); `searched` (something was typed in the search; searches there send no `catalog_searched`) |
-| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse`, or a way of growing: `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` |
+| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `pets` (toxic to pets), or a way of growing: `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` / `help` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied or the file picker is open, since going to the AI chat or to Files is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` (one file per part of the app since v89; before that, mostly `app.js`) |
@@ -76,6 +76,8 @@ On every event:
 | `lux_entered` | lux reading saved | `from`: `light_tab` / `card` |
 | `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing) | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone); `new_spot`: not in the spot list before. Never the spot's name |
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
+| `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
+| `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune`, `rinse` (reminders turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
