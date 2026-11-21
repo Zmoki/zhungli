@@ -103,8 +103,9 @@ function repotHint(p) {
   return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
-const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${parse(p.resting.since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</b>${esc(p.rest.tip)}
-  <button class="mt-12 btn ok wide" data-act="rest-end" data-id="${esc(p.id)}">${I('sprout')}${esc(p.rest.end)}</button></div>`;
+// A plant moved to a card without `rest` while resting still gets the way back.
+const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${parse(p.resting.since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</b>${p.rest ? esc(p.rest.tip) : ''}
+  <button class="mt-12 btn ok wide" data-act="rest-end" data-id="${esc(p.id)}">${I('sprout')}${esc(p.rest ? p.rest.end : 'Снова растёт')}</button></div>`;
 // «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -306,7 +307,7 @@ function plantCardHtml(id) {
     <p class="quip">${esc(quipOf(p))}</p>
     <div id="glance">${glanceHtml(p)}</div>
     <div id="water-box">${waterBox(p)}</div>
-    ${resting(p) && p.rest ? restBox(p) : ''}
+    ${resting(p) ? restBox(p) : ''}
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
     ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
@@ -602,8 +603,10 @@ Object.assign(ACTS, {
   // Rest: checks twice as rare (the interval comes back after), no feeding day, until new growth.
   'rest-start'(el, id) {
     const r = S.plants[id];
-    r.resting = { since: today(), iv: r.interval };
-    r.interval = Math.min(Math.round(r.interval * 2), 45);
+    // Drip irrigation keeps its picked interval: it checks the system, not the soil.
+    const fixed = !!wayOf(plant(id)).fixed;
+    r.resting = { since: today(), ...(fixed ? {} : { iv: r.interval }) };
+    if (!fixed) r.interval = Math.min(Math.round(r.interval * 2), 45);
     const next = addDays(r.lastWater || today(), Math.round(r.interval));
     r.nextCheck = next < today() ? today() : next;
     save(); track('rest_started', kindOf(id));
