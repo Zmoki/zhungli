@@ -646,14 +646,17 @@ document.addEventListener('change', (e) => {
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
   'rinse-done'(el, id) {
-    const undo = snapshot();
+    const undo = snapshot(), p = plant(id);
+    // A rinse is a thorough watering, as on «Банный день»: the soil check moves on too (once a day).
+    if (soilCheck(p.watering) && !wayOf(p).noChecks && S.plants[id].lastWater !== today()) actWater(id);
     rinseDone(id); save();
     $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
+    $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
     $('[data-act="rinse-done"]').focus();
     track('rinse_logged', { from: 'card' });
     toast('Промывка записана 🚿', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); }
     });
   },
   'feed-every'(el, id) {
