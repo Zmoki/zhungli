@@ -18,8 +18,8 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
     : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`) + newBadge(p, words);
 // A new plant in quarantine: the same kind of badge, in the plant card only as words.
 const newBadge = (p, words) => (!isNew(p) ? ''
-  : words ? `<span class="mood hero-mood greenhouse">${I('search')}на карантине</span>`
-    : `<span class="gh" title="На карантине">${I('search')}<span class="sr-only">на карантине</span></span>`) + restBadge(p, words);
+  : words ? `<span class="mood hero-mood greenhouse">${I('biohazard')}на карантине</span>`
+    : `<span class="gh" title="На карантине">${I('biohazard')}<span class="sr-only">на карантине</span></span>`) + restBadge(p, words);
 // With pets at home: a paw on the plant. The plant card says toxic or safe; grid cards mark only the toxic.
 const petBadge = (p, words) => {
   const v = petsOn() && petsOf(p);
@@ -390,7 +390,7 @@ function stateFilter(ps) {
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
     ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'greenhouse') : ''}
-    ${n.new ? chip('new', `${I('search')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
+    ${n.new ? chip('new', `${I('biohazard')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
     ${n.pets ? chip('pets', `${I('paw-print')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
