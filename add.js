@@ -33,6 +33,29 @@ function searchReadings(raw) {
   const all = /[a-z]/.test(q) ? [q, fromLatin(q), fromLayout(q)] : [q];
   return [...new Set(all)].map((s) => s.split(/\s+/).filter(Boolean).map(searchStem));
 }
+// When nothing matches as typed, the search forgives typos: о/а and е/и/э/я count as the same sound, a doubled
+// letter as one, and a long word may be a letter off (8+ letters; 11+: two). Words then match from their start,
+// so «дифенбахия», «дефенбахия» and «манстера» find their plants, but «авокадо» doesn't find «алоказия».
+const looseSound = (s) => s.replace(/о/g, 'а').replace(/[еэя]/g, 'и').replace(/(.)\1+/g, '$1');
+// Fewest edits that turn `w` into the start of `t`.
+function prefixEdits(w, t) {
+  let prev = [...Array(t.length + 1).keys()];
+  for (let i = 1; i <= w.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= t.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (w[i - 1] === t[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return Math.min(...prev);
+}
+function typoMatcher(readings) {
+  const loose = readings.map((ws) => ws.map(looseSound));
+  return (text) => {
+    const tokens = looseSound(text).split(/[^а-яa-z0-9]+/);
+    const edits = (w) => (w.length >= 11 ? 2 : w.length >= 8 ? 1 : 0);
+    const near = (w) => tokens.some((t) => t.startsWith(w) || (edits(w) && prefixEdits(w, t) <= edits(w)));
+    return loose.some((ws) => ws.every(near));
+  };
+}
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
 function pickRow(d, changeFor, nowId) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
@@ -121,10 +144,13 @@ function catalogSearch(changeFor) {
     // Every word must match somewhere: «фикус бенджамина» finds the generic type, not every ficus.
     const readings = searchReadings(raw);
     const words = readings[0];
-    const hits = (text) => readings.some((ws) => ws.every((w) => text.includes(w)));
+    const exact = (text) => readings.some((ws) => ws.every((w) => text.includes(w)));
+    const found = (test) => pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => test(b.dataset.q)));
+    // Typos are forgiven only when the query as typed finds nothing, so a correct name never brings look-alikes.
+    const hits = !words.length || found(exact) ? exact : typoMatcher(readings);
     // The group name counts only when nothing else matched: «лиана» finds the vines,
     // but «кактус» doesn't list every succulent.
-    const byCat = words.length > 0 && !pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => hits(b.dataset.q)));
+    const byCat = words.length > 0 && !found(hits);
     let any = false;
     const score = new Map();
     pickGroups.forEach((g) => {
