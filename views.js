@@ -312,7 +312,7 @@ function viewToday() {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
         // «День подкормки»: a tick per plant, all on; «Готово» notes the ticked ones, the rest come back in a few days.
-        pick: b.feed ? `<fieldset class="feed-who"><legend class="sr-only">Кого подкормили</legend>${b.feed.map((p) => `<label class="toggle"><input type="checkbox" data-feed="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>` : '',
+        pick: b.pick ? `<fieldset class="feed-who"><legend class="sr-only">${b.pickLegend}</legend>${b.pick.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>` : '',
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
@@ -641,12 +641,23 @@ Object.assign(ACTS, {
   },
   'bonus-done'(el) {
     const undo = snapshot();
+    if (el.dataset.key === 'bath') {
+      const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')];
+      const done = boxes.filter((x) => x.checked).map((x) => x.dataset.pick);
+      if (!done.length) { toast('Отметьте, кого промыли'); return; }
+      done.forEach((id) => remindDone(id, 'rinse'));
+      S.bonus.bath = today();
+      track('bath_day_done', { n: done.length, of: boxes.length });
+      logToday({ a: 'bonus:bath', title: 'Банный день' });
+      afterTask(done.length === boxes.length ? 'Все чистые 🛁' : `Промыто: ${plantsN(done.length)} 🛁`, undo);
+      return;
+    }
     if (el.dataset.key.startsWith('feed:')) {
-      const boxes = [...el.closest('.task').querySelectorAll('[data-feed]')];
-      const fed = boxes.filter((x) => x.checked).map((x) => x.dataset.feed);
+      const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')];
+      const fed = boxes.filter((x) => x.checked).map((x) => x.dataset.pick);
       if (!fed.length) { toast('Отметьте, кого подкормили'); return; }
       fed.forEach(feedDone);
-      boxes.filter((x) => !x.checked).forEach((x) => { S.snooze['feed:' + x.dataset.feed] = addDays(today(), 3); });
+      boxes.filter((x) => !x.checked).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
       track('feeding_logged', { from: 'day', n: fed.length, of: boxes.length });
       logToday({ a: 'bonus:feed', title: 'День подкормки' });
       afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);

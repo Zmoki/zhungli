@@ -83,6 +83,8 @@ On every event:
 | `feeding_logged` | plants noted as fed | `from`: `day` («Готово» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
 | `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `0` |
 | `feed_lamp_toggled` | «Зимой под лампой» | `on` |
+| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` |
+| `bath_day_done` | «Готово» on «Банный день» | `n` rinsed of `of` listed |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
 | `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |

@@ -62,6 +62,7 @@ function openSettings() {
     <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра, а первыми покажу тех, кому нужнее.</p></div>
+    <div class="field" id="bath-box">${bathBox()}</div>
     <div class="field"><label class="toggle"><input type="checkbox" id="pets-on" aria-describedby="pets-hint" ${petsOn() ? 'checked' : ''}> Дома есть кошка или собака</label>
       <p class="mt-6 small muted" id="pets-hint">Покажу, какие растения для них ядовиты, а в каталоге какие безопасны. По базе ASPCA.</p></div>
     <h2>Комнаты</h2>
@@ -143,8 +144,23 @@ $('#import-input').addEventListener('change', (e) => {
   if (f) doImport(f);
 });
 
+// «Банный день»: off, or how often the whole collection gets its soil rinsed on one day. Redrawn alone.
+function bathBox() {
+  const n = bathEvery(), last = S.bonus.bath;
+  const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="bath-every" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;
+  return `<label class="toggle"><input type="checkbox" id="bath-on" aria-describedby="bath-hint" ${n ? 'checked' : ''}> Банный день</label>
+    <div class="mt-6 small muted hint" id="bath-hint"><p>Промыть грунт у всех растений в горшках в один день: соли от удобрений и жёсткой воды вымываются разом.</p>
+      <p>${n ? `Позову в «Если есть силы» раз в ${BATH_EVERY.find(([d]) => d === n)?.[1].toLowerCase() || `${n} дней`}. ${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не устраивали.'}` : '<b>Сейчас</b> не зову.'}</p></div>
+    ${n ? `<div class="field mt-12" role="group" aria-labelledby="lbl-bath"><label id="lbl-bath">Как часто</label><div class="chips">${BATH_EVERY.map(chip).join('')}</div></div>` : ''}`;
+}
+
 /* ---------- Taps in settings ---------- */
 Object.assign(ACTS, {
+  'bath-every'(el) {
+    S.settings.bath = Number(el.dataset.n); save();
+    $('#bath-box').innerHTML = bathBox(); $(`[data-act="bath-every"][data-n="${el.dataset.n}"]`).focus(); render();
+    track('bath_day_changed', { every: S.settings.bath });
+  },
   settings() { track('settings_opened'); openSettings(); },
   news() { openNews(); },
   limit(el) {
@@ -186,6 +202,7 @@ Object.assign(ACTS, {
 });
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (el.id === 'bath-on') { S.settings.bath = el.checked ? 120 : 0; save(); $('#bath-box').innerHTML = bathBox(); $('#bath-on').focus(); render(); track('bath_day_changed', { every: S.settings.bath }); return; }
   if (el.id === 'pets-on') { S.settings.pets = el.checked; save(); render(); track('pets_toggled', { on: el.checked }); return; }
   if (el.id !== 'stats-on') return;
   if (!el.checked) statsQueue = [];

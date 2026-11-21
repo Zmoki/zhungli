@@ -114,7 +114,7 @@ const REMINDERS = {
     start: { every: 300, months: [3, 4] } },
   // Salts from fertilizer and hard water stay in the pot. A medium with its own rinse (clay pebbles, pon) has it already.
   rinse: { name: 'Промывка грунта', toggle: 'Звать на промывку', task: 'Промойте грунт', verb: 'промыть грунт', done: 'промыто', btn: 'Промыто сегодня', toast: 'Промывка записана 🚿', icon: 'droplets',
-    why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев.',
+    why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев. Промывать всех сразу удобнее в «Банный день»: «Настройки» приложения.',
     hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
     every: [[120, '4 месяца', 'раз в 4 месяца'], [180, 'Полгода', 'раз в полгода']],
     start: { every: 120, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
@@ -524,9 +524,15 @@ function bonusTasks() {
   // «День подкормки»: the plants due by their own schedule (feedDue), each ticked off on its own.
   const fed = allPlants().filter((p) => feedDue(p) && !snoozed('feed:' + p.id));
   if (fed.length) {
-    out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), feed: fed,
+    out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили',
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
       hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Промывка грунта».` });
+  }
+  // «Банный день»: the whole collection's soil rinsed on one day, as people with many plants do it.
+  const bath = bathEvery(), bathers = bath ? allPlants().filter((p) => remindFits(p, 'rinse')) : [];
+  if (bathers.length && (!S.bonus.bath || diff(S.bonus.bath, t) >= bath) && !snoozed('bath')) {
+    out.push({ key: 'bath', icon: 'droplets', title: 'Банный день', sub: plantsN(bathers.length), pick: bathers, pickLegend: 'Кого промыли',
+      task: 'Промойте грунт у всех растений', hint: REMINDERS.rinse.hint });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
@@ -536,6 +542,10 @@ function bonusTasks() {
   }
   return [...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
 }
+// «Банный день» in the app's settings (S.settings.bath: days between bath days, or none): every plant that can be
+// rinsed (see REMINDERS.rinse.fits) on one day. Ticked plants count as rinsed, so their own rinse reminder restarts.
+const BATH_EVERY = [[60, '2 месяца'], [120, '4 месяца'], [180, 'Полгода']];
+const bathEvery = () => (S.settings && S.settings.bath > 0 ? S.settings.bath : 0);
 // Feeding per plant (`fed`: the last date, `feedEvery`: days, 0 = not fed, `lamp`: fed in winter under a grow light).
 // Sources (the content repo's feeding facts): fed while growing, March to September; in winter without a lamp the
 // plant barely grows, so no reminders; under a lamp once a month and weaker. A feeding can be noted any day.
