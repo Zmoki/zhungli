@@ -20,7 +20,8 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // watering: the medium's usual watering when it isn't from above (clay pebbles stand on a reservoir).
 // Only WATERING: fixed: the plant waters itself (drip irrigation): checks look at the system, their interval
 // is the person's pick from `picks` (days) and doesn't learn, and a check doesn't make the plant «напоено»;
-// icons: the check buttons' icons; recheck: days to the next check after the second answer.
+// icons: the check buttons' icons; recheck: days to the next check after the second answer;
+// soilCheck: the soil is checked as for watering from above, so the card's check question still fits.
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
@@ -76,6 +77,8 @@ const MEDIA = {
 };
 const WATERING = {
   top: { name: 'Сверху' },
+  bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон',
+    water: 'Поставить горшок в поддон или миску с водой на полчаса, остаток воды слить. Раз в несколько месяцев полить сверху обильно, чтобы вымыть соли.' },
   wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: () => 7, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
     hint: 'Не буду звать поливать, а напомню заглянуть в бак, есть ли вода.',
@@ -137,6 +140,8 @@ function wayOf(p) {
   return WAYS.get(key);
 }
 const labelsOf = (p) => wayOf(p).labels;
+// Watering from below checks the soil as from above: a card's question for either fits the other.
+const soilCheck = (w) => !w || w === 'top' || !!WATERING[w].soilCheck;
 // The card's care for how the plant grows. Grown another way than the card says, the card's check
 // question and its watering tip don't fit, nor its substrate tip with another medium: that way's own tips stand in.
 function careOf(d, r) {
@@ -147,7 +152,7 @@ function careOf(d, r) {
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
   // feedTip speaks of top-ups (a wick, a reservoir); drip irrigation gets the way's own hint about fertilizer.
   const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, WATERING[w].act === 'top' && m.feedTip].filter(Boolean).join(' ');
-  const check = own ? d.check : (fromAbove && alt.check) || '';
+  const check = own ? d.check : !soilCheck(w) ? '' : sameMedium ? (soilCheck(cardWatering(d)) && d.check) || '' : alt.check || '';
   return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
