@@ -171,6 +171,25 @@ const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<section
   ${remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
     : `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.toggle}</label>
   <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`}</section>`).join('\n');
+// «Промывка грунта» in the plant card: done on «Банный день», so here only how it goes for this plant, the last
+// time, «Промыто сегодня» and a way to leave it out. Without soil to rinse, why not; nothing for a block or terrarium.
+function rinseBox(p) {
+  const box = (body) => `<section class="group" aria-labelledby="g-rinse" id="rinse-field"><h3 id="g-rinse">Промывка грунта</h3>${body}</section>`;
+  if (!rinseFits(p)) {
+    const care = MEDIA[p.type].care;
+    const note = p.type === 'water' ? 'В воде грунта нет: соли уходят со сменой воды.'
+      : care && ['flush', 'leach'].includes(care.kind) ? `У этого субстрата своя промывка: позову отдельно («${care.task}»).`
+        : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.' : '';
+    return note ? box(`<div class="small muted hint">${hintLines(note)}</div>`) : '';
+  }
+  const n = bathEvery(), last = S.bonus['rinse:' + p.id];
+  const how = !n ? 'Промывать удобнее всех сразу: включите «Банный день» в «Настройках» приложения.'
+    : p.noBath ? 'В банный день не позову.'
+      : `В банный день позову, когда подсохнет грунт: раз в ${(BATH_EVERY.find(([d]) => d === n)?.[1] || `${n} дней`).toLowerCase()}.`;
+  return box(`<div class="small muted hint" id="rinse-hint">${hintLines(RINSE.why, how, last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не промывали.')}</div>
+    ${n ? `<div class="field mt-12"><label class="toggle"><input type="checkbox" data-field="nobath" data-id="${esc(p.id)}" ${p.noBath ? 'checked' : ''}> Не купать это растение</label></div>` : ''}
+    <button class="mt-8 btn ok" data-act="rinse-done" data-id="${esc(p.id)}">${I('droplets')}Промыто сегодня</button>`);
+}
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
   const r = S.plants[id];
@@ -228,7 +247,7 @@ function glanceHtml(p) {
     ${WATERING[p.watering]?.badge ? `<li>${I(WATERING[p.watering].badge[0])}<span>${WATERING[p.watering].badge[1]}</span></li>` : ''}</ul>`;
 }
 // Answers in history. Neutral words: an entry doesn't say which way the plant grew then.
-const HIST_WORDS = { water: 'полив', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', feed: 'подкормлено' };
+const HIST_WORDS = { water: 'полив', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', feed: 'подкормлено', rinse: 'промыто' };
 // Dots: a watering or a working system is full, the other answer is light.
 const HIST_DOTS = { water: 'w', ok: 'w', wet: 'd', fix: 'd' };
 // The legend's words: the kinds shown in the strip (`shown`), else the current way's: a system's checks, or waterings.
@@ -374,6 +393,7 @@ function plantCardHtml(id) {
 </section>
 
       ${remindBox(id)}
+      <div id="rinse-wrap">${rinseBox(plant(id))}</div>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', historyHtml(p))}
     </div>`;
@@ -555,6 +575,7 @@ function changeWay(id, f, value) {
   $('#int-field').hidden = !!wayOf(p).noChecks;
   $('#int-field').innerHTML = intBox(p);
   Object.keys(REMINDERS).forEach((k) => { const f = $(`#remind-field-${k}`); if (f) f.hidden = !remindFits(p, k); });
+  $('#rinse-wrap').innerHTML = rinseBox(p);
   $('#feed-group').hidden = !feedsOnDay(p); $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
   $('#repot-field').hidden = !feedsOnDay(p);
@@ -589,6 +610,7 @@ document.addEventListener('change', (e) => {
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
+  if (f === 'nobath') { r.noBath = el.checked || undefined; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('[data-field="nobath"]').focus(); track('bath_opt_out', { on: el.checked }); return; }
   if (f === 'lamp') { r.lamp = el.checked; save(); $('#feed-box').innerHTML = feedBox(plant(id)); $('#f-lamp').focus(); track('feed_lamp_toggled', { on: el.checked }); return; }
   if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); }
@@ -623,6 +645,20 @@ document.addEventListener('change', (e) => {
 
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
+  'rinse-done'(el, id) {
+    const undo = snapshot(), p = plant(id);
+    // A rinse is a thorough watering, as on «Банный день»: the soil check moves on too (once a day).
+    if (soilCheck(p.watering) && !wayOf(p).noChecks && S.plants[id].lastWater !== today()) actWater(id);
+    rinseDone(id); save();
+    $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
+    $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
+    $('[data-act="rinse-done"]').focus();
+    track('rinse_logged', { from: 'card' });
+    toast('Промывка записана 🚿', () => {
+      undo();
+      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); }
+    });
+  },
   'feed-every'(el, id) {
     const n = Number(el.dataset.n);
     S.plants[id].feedEvery = n; save();
