@@ -79,18 +79,34 @@ function waterBox(p) {
   return `<div class="info water"><b>${w.title || g.name}</b>${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
     <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
+// Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
+// a section that silently disappears reads as a bug («у меня нет кнопки…»).
+const whyNot = (text, id = '') => `<p class="small muted why-not"${id ? ` id="${id}"` : ''}>${text}</p>`;
+const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральном субстрате', leca: 'в керамзите', water: 'в воде',
+  mount: 'на блоке', terrarium: 'в закрытом террариуме', aquarium: 'в аквариуме' };
+const upFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+// Why a plant isn't on «День подкормки».
+function feedWhyNot(p) {
+  if (p.distilled) return 'Хищные растения не удобряют в грунт.';
+  if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды; черенкам до корней не нужно.';
+  if (MEDIA[p.type].feed === 'each') return `${upFirst(WHERE[p.type])} удобрение в слабой дозе добавляют в каждый полив: отдельного дня подкормки нет.`;
+  if (p.noFeed) return 'Для этого растения подкормки нет.';
+  return `Для растений ${WHERE[p.type] || 'с таким субстратом'} день подкормки не назначаю.`;
+}
+const waterWhyNot = (p) => `Растение ${WHERE[p.type]}, не в горшке: способ полива не выбирается.`;
 // «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
 // watered, and what that means. All options are chips, nothing hidden in a dropdown.
 function wayBox(p, d) {
   // A bog way (a tray of standing water) only where the card or the plant uses it: it rots ordinary roots.
   const ways = Object.fromEntries(Object.entries(WATERING).filter(([k, w]) => !w.bog || k === p.watering || k === cardWatering(d)));
-  const chips = (field, label, list, value, attrs = '') => `<div class="field" role="group" aria-labelledby="lbl-${field}" aria-describedby="way-hint"${attrs}>
+  const chips = (field, label, list, value, attrs = '', off = false, after = '') => `<div class="field" role="group" aria-labelledby="lbl-${field}" aria-describedby="way-hint"${attrs}>
     <label id="lbl-${field}">${label}</label><div class="chips">
-    ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}">${x.name}</button>`).join('')}</div></div>`;
+    ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}"${off ? ' disabled' : ''}>${x.name}</button>`).join('')}</div>${after}</div>`;
+  const pot = MEDIA[p.type].pot;
   return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
-    <div class="field" id="repot-field"${feedsOnDay(p) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
+    <div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Недавно пересажено</label>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>
-    ${chips('watering', 'Как поливаю', ways, p.watering || 'top', ` id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}`)}
+    ${chips('watering', 'Как поливаю', ways, pot ? p.watering || 'top' : '', ' id="watering-field"', !pot, whyNot(pot ? '' : waterWhyNot(p), 'watering-why'))}
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
@@ -98,28 +114,29 @@ function wayBox(p, d) {
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
   ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
 // Under each checkbox: ticked, what it does; unticked, what ticking would do, then what happens now.
-// Repotting only matters for plants called on «День подкормки»; for the rest it's hidden.
+// Repotting only matters for plants called on «День подкормки»; for the rest it's greyed out, with why.
 const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
+  if (!feedsOnDay(p)) return hintLines('Влияет только на подкормку, а у этого растения дня подкормки нет.');
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
   return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно, по расписанию в «Подкормке».');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
 // Redrawn alone, so a chip or the checkbox keeps focus.
 function feedBox(p) {
-  const n = feedEvery(p), last = p.fed;
-  const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;
-  const when = !n ? 'Не позову на «День подкормки».'
+  const n = feedEvery(p), last = p.fed, off = !feedsOnDay(p), dis = off ? ' disabled' : '';
+  const chip = ([d, label]) => `<button class="chip ${!off && n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${!off && n === d}"${dis}>${label}</button>`;
+  const when = off ? '' : !n ? 'Не позову на «День подкормки».'
     : feedDue(p) ? 'Позову в «Если есть силы» сегодня.'
       : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
         : winterNow() && !p.lamp ? 'Зимой без лампы не зову: растение почти не растёт. Позову с марта.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
-  return `${p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)} Слабо и регулярно лучше, чем крепко и редко.</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
+  return `${off ? whyNot(feedWhyNot(p)) : p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)} Слабо и регулярно лучше, чем крепко и редко.</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p></div>
-    ${n ? `<div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp ? 'checked' : ''}> Зимой под лампой</label>
-      <p class="mt-6 small muted" id="lamp-hint">Под лампой растение растёт и зимой: позову раз в месяц, удобрение слабее, чем летом.</p></div>` : ''}
-    <p class="small muted m-0">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
-    <button class="mt-8 btn ok" data-act="feed-done" data-id="${esc(p.id)}">${I('utensils')}Подкормлено сегодня</button>`;
+    <div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp && n && !off ? 'checked' : ''}${n && !off ? '' : ' disabled'}> Зимой под лампой</label>
+      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : n ? 'Под лампой растение растёт и зимой: позову раз в месяц, удобрение слабее, чем летом.' : 'Сначала выберите, как часто кормить.'}</p></div>
+    ${off && !last ? '' : `<p class="small muted m-0">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>`}
+    <button class="mt-8 btn ok" data-act="feed-done" data-id="${esc(p.id)}"${dis}>${I('utensils')}Подкормлено сегодня</button>`;
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -164,7 +181,7 @@ function remindMore(id, kind) {
     <p class="small muted m-0" id="remind-last-${kind}">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
     <button class="mt-8 btn ok" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}">${I(R.icon)}${R.btn}</button>`;
 }
-// Every kind is drawn; one that doesn't fit how the plant grows (flushing clay pebbles) is hidden, and shown again by changeWay.
+// Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
 // A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
 const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<section class="group" aria-labelledby="g-${kind}" id="remind-field-${kind}"${remindNo(id, kind) || remindFits(plant(id), kind) ? '' : ' hidden'}><h3 id="g-${kind}">${R.name}</h3>
@@ -179,15 +196,17 @@ function rinseBox(p) {
     const care = MEDIA[p.type].care;
     const note = p.type === 'water' ? 'В воде грунта нет: соли уходят со сменой воды.'
       : care && ['flush', 'leach'].includes(care.kind) ? `У этого субстрата своя промывка: позову отдельно («${care.task}»).`
-        : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.' : '';
-    return note ? box(`<div class="small muted hint">${hintLines(note)}</div>`) : '';
+        : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.'
+          : p.type === 'terrarium' ? 'В закрытом террариуме промывать нельзя: воде некуда стечь.'
+            : p.type === 'aquarium' ? 'Корни в аквариуме: грунта для промывки нет.' : 'На блоке грунта для промывки нет.';
+    return box(`${whyNot(note)}<button class="mt-8 btn ok" disabled>${I('droplets')}Промыто сегодня</button>`);
   }
   const n = bathEvery(), last = S.bonus['rinse:' + p.id];
   const how = !n ? 'Промывать удобнее всех сразу: включите «Банный день» в «Настройках» приложения.'
     : p.noBath ? 'В банный день не позову.'
       : `В банный день позову, когда подсохнет грунт: раз в ${(BATH_EVERY.find(([d]) => d === n)?.[1] || `${n} дней`).toLowerCase()}.`;
   return box(`<div class="small muted hint" id="rinse-hint">${hintLines(RINSE.why, how, last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не промывали.')}</div>
-    ${n ? `<div class="field mt-12"><label class="toggle"><input type="checkbox" data-field="nobath" data-id="${esc(p.id)}" ${p.noBath ? 'checked' : ''}> Не купать это растение</label></div>` : ''}
+    <div class="field mt-12"><label class="toggle"><input type="checkbox" data-field="nobath" data-id="${esc(p.id)}" ${n && p.noBath ? 'checked' : ''}${n ? '' : ' disabled'}> Не купать это растение</label></div>
     <button class="mt-8 btn ok" data-act="rinse-done" data-id="${esc(p.id)}">${I('droplets')}Промыто сегодня</button>`);
 }
 // Sets one reminder: null turns it off. Reports the change.
@@ -205,6 +224,7 @@ const intHint = (p) => `Подстраивается само, когда на �
 const everyLabel = (n) => (n === 7 ? 'Неделя' : `${n / 7} недели`);
 function intBox(p) {
   const g = wayOf(p), iv = Math.round(p.interval);
+  if (g.noChecks) return `<label id="lbl-int">Проверять примерно каждые</label>${whyNot('Корни в аквариуме: проверять полив не нужно.')}`;
   if (g.fixed) {
     return `<label id="lbl-int">Проверять систему</label><div class="chips">
       ${g.picks.map((n) => `<button class="chip ${iv === n ? 'on' : ''}" data-act="int-pick" data-id="${esc(p.id)}" data-n="${n}" aria-pressed="${iv === n}">${everyLabel(n)}</button>`).join('')}</div>
@@ -354,7 +374,7 @@ function plantCardHtml(id) {
         <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
           ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
-        ${isCustom(id) ? '' : `<div class="field" role="group" aria-labelledby="lbl-card"><label id="lbl-card">Карточка ухода</label>
+        ${isCustom(id) ? `<div class="field"><p class="m-0"><b>Карточка ухода</b></p>${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="mt-8 btn" disabled>${I('arrow-left-right')}Сменить карточку</button></div>` : `<div class="field" role="group" aria-labelledby="lbl-card"><label id="lbl-card">Карточка ухода</label>
           <p class="m-0" id="card-now">${esc(def(id).species)}</p>
           <p class="mt-6 small muted" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
           <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-now card-hint">${I('arrow-left-right')}Сменить карточку</button></div>`}</section>
@@ -373,11 +393,14 @@ function plantCardHtml(id) {
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
 
-      ${p.rest && !resting(p) ? `<section class="group" aria-labelledby="g-rest"><h3 id="g-rest">Покой</h3>
-        <p class="small muted">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
-        <button class="btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button></section>` : ''}
+      <section class="group" aria-labelledby="g-rest"><h3 id="g-rest">Покой</h3>${resting(p)
+    ? whyNot('Растение сейчас в покое: вернуть обычный уход можно в блоке «Покой» над вкладками.')
+    : p.rest
+    ? `<p class="small muted">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
+        <button class="btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button>`
+    : `${whyNot('Для этого растения покой не отмечается: в его карточке покоя нет.')}<button class="btn wide" disabled>${I('moon')}Ушло в покой</button>`}</section>
 
-      <section class="group" aria-labelledby="g-feed" id="feed-group"${feedsOnDay(p) ? '' : ' hidden'}><h3 id="g-feed">Подкормка</h3><div id="feed-box">${feedBox(p)}</div></section>
+      <section class="group" aria-labelledby="g-feed" id="feed-group"><h3 id="g-feed">Подкормка</h3><div id="feed-box">${feedBox(p)}</div></section>
 
       <section class="group" aria-labelledby="g-new"><h3 id="g-new">Новое растение</h3>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
@@ -389,7 +412,7 @@ function plantCardHtml(id) {
 
       <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
         <div id="way-box">${wayBox(p, def(id))}</div>
-        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}>${intBox(p)}</div>
+        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>
 </section>
 
       ${remindBox(id)}
@@ -565,24 +588,26 @@ function changeWay(id, f, value) {
   save();
   const p = plant(id);
   // The chips stay in place, so the tapped one keeps focus; only their state and what's around them change.
-  [['medium', p.type], ['watering', p.watering || 'top']].forEach(([k, v]) => document.querySelectorAll(`[data-act="way-${k}"]`).forEach((c) => {
+  // Not in a pot: no watering way is picked, the chips are greyed out.
+  [['medium', p.type], ['watering', MEDIA[p.type].pot ? p.watering || 'top' : '']].forEach(([k, v]) => document.querySelectorAll(`[data-act="way-${k}"]`).forEach((c) => {
     c.classList.toggle('on', c.dataset.way === v);
     c.setAttribute('aria-pressed', c.dataset.way === v);
   }));
-  $('#watering-field').hidden = !MEDIA[p.type].pot;
+  const pot = MEDIA[p.type].pot;
+  document.querySelectorAll('[data-act="way-watering"]').forEach((c) => { c.disabled = !pot; });
+  $('#watering-why').outerHTML = whyNot(pot ? '' : waterWhyNot(p), 'watering-why');
   $('#way-note').innerHTML = wayNote(p, d);
   $('#water-box').innerHTML = waterBox(p);
-  $('#int-field').hidden = !!wayOf(p).noChecks;
   $('#int-field').innerHTML = intBox(p);
   Object.keys(REMINDERS).forEach((k) => { const f = $(`#remind-field-${k}`); if (f) f.hidden = !remindFits(p, k); });
   $('#rinse-wrap').innerHTML = rinseBox(p);
-  $('#feed-group').hidden = !feedsOnDay(p); $('#feed-box').innerHTML = feedBox(p);
+  $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
-  $('#repot-field').hidden = !feedsOnDay(p);
+  $('#f-repotted').disabled = !feedsOnDay(p);
+  // The hint follows both the box (a settle ticks it) and whether the plant is fed on the day at all.
+  if (res.settle) { const box = $('[data-field="repotted"]'); if (box) box.checked = true; }
+  $('#repot-hint').innerHTML = repotHint(p);
   if (res.settle) {
-    const box = $('[data-field="repotted"]');
-    if (box) box.checked = true;
-    $('#repot-hint').innerHTML = repotHint(p);
     // Only plants called on «День подкормки» notice it.
     if (feedsOnDay(p)) toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
   }

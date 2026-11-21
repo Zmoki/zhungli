@@ -43,7 +43,7 @@ Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on
 - **`own`:** edits of the old card's tips become notes (unless they match the new card's tip), and hidden tips show again: they were written against the old card.
 - **Interval:** a plant never watered starts from the new card's `every` (or its way's start). A learned one is kept, within the new card's bounds on its way. `soilInterval` is dropped, so going back to the card's way starts from the new `every`. A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
 - `species` is dropped when it equals the new card's name. Dusting and turning follow the new card's `big` and `rotate`.
-- Own and imported plants (`S.custom`) have no catalog card: the control isn't shown for them.
+- Own and imported plants (`S.custom`) have no catalog card: the button is greyed out, with why.
 
 ## How it grows
 
@@ -100,7 +100,7 @@ The plant card's «Настройки» has a section per kind in `REMINDERS` (`
   - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the checkbox; a reminder already on stays.
   - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the checkbox and before the task hint.
   - Cards without `prune` keep the general hint: where to cut, a bleach rinse after a sick plant, and that pale stretched stems need light.
-- **«Промывка грунта»** is not a reminder: the soil rinse is done on «Банный день» (see [TASKS.md](TASKS.md#bonus-tasks)). Its section in the plant card says how it goes for this plant, the last time (`rinse:<id>` in `S.bonus`), «Промыто сегодня» and, with the bath day on, «Не купать это растение» (`noBath`). Without soil to rinse it says why (water, clay pebbles and pon with their own rinse, distilled water only) or isn't shown. Per-plant rinse reminders from v126 to v136 turn into «Банный день» with the same interval.
+- **«Промывка грунта»** is not a reminder: the soil rinse is done on «Банный день» (see [TASKS.md](TASKS.md#bonus-tasks)). Its section in the plant card says how it goes for this plant, the last time (`rinse:<id>` in `S.bonus`), «Промыто сегодня» and, with the bath day on, «Не купать это растение» (`noBath`). Without soil to rinse it says why (water, clay pebbles and pon with their own rinse, distilled water only, a closed terrarium, an aquarium, a block). Per-plant rinse reminders from v126 to v136 turn into «Банный день» with the same interval.
 
 Each, once ticked, shows:
 - «В какие месяцы»: 12 chips, at least one stays on;

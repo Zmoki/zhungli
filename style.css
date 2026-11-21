@@ -362,6 +362,10 @@ dialog.ask form { padding: 22px 20px 20px; }
 dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .info.water { background: var(--blue-soft); }
 .info.rest, .info.safe { background: var(--green-soft); }
+/* Plant settings that don't apply stay visible, greyed out, with a line saying why (.why-not) */
+.chip:disabled, .btn:disabled, .toggle input:disabled { opacity: .45; cursor: default; }
+.toggle:has(input:disabled), .field label.toggle:has(input:disabled) { color: var(--muted); cursor: default; }
+.why-not:empty { display: none; }
 /* Sap and pet warnings: a gap from the notes above */
 .card-warns { margin-top: 14px; }
 /* Pets: a paw, red-ish when toxic, green when safe */
