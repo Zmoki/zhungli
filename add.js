@@ -33,27 +33,40 @@ function searchReadings(raw) {
   const all = /[a-z]/.test(q) ? [q, fromLatin(q), fromLayout(q)] : [q];
   return [...new Set(all)].map((s) => s.split(/\s+/).filter(Boolean).map(searchStem));
 }
-// When nothing matches as typed, the search forgives typos: о/а and е/и/э/я count as the same sound, a doubled
-// letter as one, and a long word may be a letter off (8+ letters; 11+: two). Words then match from their start,
-// so «дифенбахия», «дефенбахия» and «манстера» find their plants, but «авокадо» doesn't find «алоказия».
+// When nothing matches as typed (neither a plant nor a group name), the search forgives typos: о/а and е/и/э/я
+// count as the same sound, a doubled letter as one, and words match from their start. A searched word (ending
+// already trimmed) of 8+ letters may be a letter off, 11+ letters two. So «дифенбахия», «дефенбахия» and
+// «манстера» find their plants, but «авокадо» doesn't find «алоказия».
 const looseSound = (s) => s.replace(/о/g, 'а').replace(/[еэя]/g, 'и').replace(/(.)\1+/g, '$1');
-// Fewest edits that turn `w` into the start of `t`.
-function prefixEdits(w, t) {
+// Each row's words, loosened once: the texts never change while the sheet is open.
+const looseWords = new Map();
+const looseTokens = (text) => {
+  let t = looseWords.get(text);
+  if (!t) looseWords.set(text, t = looseSound(text).split(/[^а-яa-z0-9]+/).filter(Boolean));
+  return t;
+};
+// Whether `w` turns into the start of `t` in at most `max` edits. Gives up as soon as a row of the table is over
+// `max`, so most words are dropped after a letter or two: this runs on every keystroke.
+function nearStart(w, t, max) {
+  if (t.length < w.length - max) return false;
   let prev = [...Array(t.length + 1).keys()];
   for (let i = 1; i <= w.length; i++) {
     const cur = [i];
-    for (let j = 1; j <= t.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (w[i - 1] === t[j - 1] ? 0 : 1));
+    let low = i;
+    for (let j = 1; j <= t.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (w[i - 1] === t[j - 1] ? 0 : 1));
+      if (cur[j] < low) low = cur[j];
+    }
+    if (low > max) return false;
     prev = cur;
   }
-  return Math.min(...prev);
+  return Math.min(...prev) <= max;
 }
 function typoMatcher(readings) {
-  const loose = readings.map((ws) => ws.map(looseSound));
+  const loose = readings.map((ws) => ws.map((w) => [looseSound(w), w.length >= 11 ? 2 : w.length >= 8 ? 1 : 0]));
   return (text) => {
-    const tokens = looseSound(text).split(/[^а-яa-z0-9]+/);
-    const edits = (w) => (w.length >= 11 ? 2 : w.length >= 8 ? 1 : 0);
-    const near = (w) => tokens.some((t) => t.startsWith(w) || (edits(w) && prefixEdits(w, t) <= edits(w)));
-    return loose.some((ws) => ws.every(near));
+    const tokens = looseTokens(text);
+    return loose.some((ws) => ws.every(([w, max]) => tokens.some((t) => t.startsWith(w) || (max && nearStart(w, t, max)))));
   };
 }
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
@@ -145,12 +158,15 @@ function catalogSearch(changeFor) {
     const readings = searchReadings(raw);
     const words = readings[0];
     const exact = (text) => readings.some((ws) => ws.every((w) => text.includes(w)));
-    const found = (test) => pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => test(b.dataset.q)));
-    // Typos are forgiven only when the query as typed finds nothing, so a correct name never brings look-alikes.
-    const hits = !words.length || found(exact) ? exact : typoMatcher(readings);
-    // The group name counts only when nothing else matched: «лиана» finds the vines,
-    // but «кактус» doesn't list every succulent.
-    const byCat = words.length > 0 && !found(hits);
+    const found = (test, cat) => pickGroups.some((g) => [...g.querySelectorAll('.pick')].some((b) => test(cat ? `${b.dataset.q} ${b.dataset.cat}` : b.dataset.q)));
+    // Tried in order, the first that finds something wins. The plant as typed; the group name, so «лиана» finds
+    // the vines but «кактус» doesn't list every succulent; then the same with typos forgiven, so a correct name
+    // never brings look-alikes.
+    let hits = exact, byCat = false, typo = false;
+    if (words.length && !found(exact)) {
+      if (found(exact, true)) byCat = true;
+      else { hits = typoMatcher(readings); typo = true; byCat = !found(hits); }
+    }
     let any = false;
     const score = new Map();
     pickGroups.forEach((g) => {
@@ -198,7 +214,7 @@ function catalogSearch(changeFor) {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
-        track('catalog_searched', { found: any });
+        track('catalog_searched', { found: any, ...(typo && any && { typo: true }) });
       }, 1200);
     }
   });

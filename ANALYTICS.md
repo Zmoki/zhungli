@@ -47,7 +47,7 @@ On every event:
 | `custom_opened` | own plant form opened | `from`: `button` («Своё растение» under «Не нашли своё?») / `search_miss` («Добавить как своё» after a catalog search found nothing) |
 | `quick_abandoned` | tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app | `picked` (how many ticked); `then`: `catalog` / `import` / `restore` / `left_app` (what they turned to instead of «Добавить»; they may still add there) |
 | `import_opened` | AI import sheet opened | — |
-| `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found` |
+| `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found`; `typo: true` when only the typo-forgiving pass found something |
 | `catalog_missed` | the add sheet closed after a search that found nothing: once, with the last such search (a fixed typo or a later hit clears it) | `query` (what was typed, up to 40 characters), `added` (whether plants were added in the end). To learn which plants the catalog lacks |
 | `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`, `from_medium`: `soil` / `dry` / `sphagnum` / `bark` / `coco` / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium`; `watering`, `from_watering`: `top` / `wick` / `reservoir` / `drip` / `none` (not in a pot); `settle` (counted as repotting) |
 | `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `days`: `7` / `14` / `21` / `28`; `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
