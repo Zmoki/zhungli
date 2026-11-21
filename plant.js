@@ -364,8 +364,8 @@ function rowValues(p) {
 }
 const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', way: 'Как растёт',
   feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
-function setRow(key, body, vals) {
-  const [v, off] = vals[key], open = openRows.has(key);
+function setRow(key, body, vals, opened) {
+  const [v, off] = vals[key], open = opened.has(key);
   return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
     <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
     <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
@@ -380,12 +380,13 @@ function refreshRows() {
 }
 // Submit too: a new spot added with Enter goes through the form, with no click or change after it.
 ['change', 'click', 'input', 'submit'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#cp-settings')) setTimeout(refreshRows, 0); }));
-function openPlant(id, tabKey) {
+// `rows`: settings rows to open, as for a plant just added (name and place).
+function openPlant(id, tabKey, rows) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
-  if (openRowsFor !== id) { openRows = new Set(); openRowsFor = id; }
+  if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
@@ -394,7 +395,9 @@ function openPlant(id, tabKey) {
 // ids, so each handler still redraws its own part (feedBox, rinseBox, wayBox…).
 function settingsHtml(id, p, ls, spots) {
   const v = rowValues(p);
-  const row = (key, body) => setRow(key, body, v);
+  // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
+  const opened = openRowsFor === id ? openRows : new Set();
+  const row = (key, body) => setRow(key, body, v, opened);
   return `${setGroup('Растение',
     row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
