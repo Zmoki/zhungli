@@ -341,15 +341,16 @@ function showCardTab(k, focus) {
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
 let openRows = new Set(), openRowsFor = null;
 const dayMonth = (iso) => parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+// Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
-  const prune = remindOf(r, 'prune'), n = bathEvery();
+  const prune = remindOf(r, 'prune'), n = bathEvery(), place = [S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean);
   const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : MEDIA[p.type].feed === 'each' ? 'в каждый полив' : 'нет дня подкормки';
   const rinseOff = p.type === 'water' ? 'соли уходят с водой' : MEDIA[p.type].care ? 'своя промывка' : p.distilled ? 'не нужна' : 'нельзя';
   return {
-    name: [p.name || 'без имени', !p.name],
-    card: isCustom(p.id) ? ['своё растение', true] : [def(p.id).species, false],
-    place: [[S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean).join(', ') || 'не выбрано', !p.spot],
+    name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
+    card: isCustom(p.id) ? ['своё растение', true] : [esc(def(p.id).species), false],
+    place: place.length ? [place.map(typedHtml).join(', '), false] : ['не выбрано', true],
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
     way: [`${MEDIA[p.type].name.toLowerCase()}${pot ? ', ' + (WATERING[p.watering] || WATERING.top).name.toLowerCase() : ''}`, false],
@@ -366,7 +367,7 @@ const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place:
 function setRow(key, body, vals) {
   const [v, off] = vals[key], open = openRows.has(key);
   return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
-    <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${esc(v)}</span>${I('chevron-right')}</button>
+    <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
     <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
 }
 const setGroup = (title, rows) => `<h3 class="group-title">${title}</h3><div class="srows">${rows}</div>`;
@@ -375,9 +376,10 @@ function refreshRows() {
   if (!sheet.open || !cardFor || !$('#cp-settings')) return;
   const p = plant(cardFor);
   if (!p) return;
-  Object.entries(rowValues(p)).forEach(([k, [v, off]]) => { const el = $(`#srv-${k}`); if (el) { el.textContent = v; el.classList.toggle('off', off); } });
+  Object.entries(rowValues(p)).forEach(([k, [v, off]]) => { const el = $(`#srv-${k}`); if (el) { if (el.innerHTML !== v) el.innerHTML = v; el.classList.toggle('off', off); } });
 }
-['change', 'click', 'input'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#cp-settings')) setTimeout(refreshRows, 0); }));
+// Submit too: a new spot added with Enter goes through the form, with no click or change after it.
+['change', 'click', 'input', 'submit'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#cp-settings')) setTimeout(refreshRows, 0); }));
 function openPlant(id, tabKey) {
   const p = plant(id);
   if (!p) return;
