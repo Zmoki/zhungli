@@ -95,7 +95,7 @@ Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one 
 
 ## Reminders
 
-The plant card's «Настройки» has a section per kind in `REMINDERS` (`state.js`), like «Теплица»: its name as the title and a checkbox «Звать на обрезку» (`toggle`). There's no «Напоминания» heading: the app has no notifications, it calls people in «Если есть силы».
+The plant card's «Настройки» has a row per kind in `REMINDERS` (`state.js`) under «Уход», like «Теплица»: its name as the title and, opened, a checkbox «Звать на обрезку» (`toggle`). There's no «Напоминания» heading: the app has no notifications, it calls people in «Если есть силы».
 - **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April, or in the card's `prune.months`. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season). A card's `prune` comes from the checked pruning facts:
   - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the checkbox; a reminder already on stays.
   - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the checkbox and before the task hint.
