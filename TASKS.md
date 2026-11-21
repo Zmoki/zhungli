@@ -65,7 +65,7 @@ Cards that really rest have `rest` (alocasia, the Venus flytrap). «Покой»
 | (bath day) | «Банный день» on in the app's settings (`S.settings.bath`: 60, 120 or 180 days between a plant's rinses) | A card of its own at the top of «Если есть силы», drawn by `bathHtml`, not a bonus task. It offers only plants due a rinse (`rinseFits`, not `noBath`, not resting or settling) whose soil check is due today: rinsing a wet pot through drowns it. Steps: «Устраиваем сегодня банный день?» → «Кого купаем?» (a tick each) → «Пошли купать!» (the rinse hint) → «Покупали!». Bathed plants count as watered (a check answered) and rinsed (`rinse:<id>` in `S.bonus`, «промыто» in the history); the toast names who's left for next time. At most once a week (`S.bonus.bath`); «Не сегодня» waits 3 days. From Polina. |
 | `feedback` | Anyone with answers on 5 different days | Never: once. «Как вам Жунгли?» with «Написать» (opens Telegram @zmoki) and «Не нужно» instead of «Готово» / «Не сегодня»; both put it away for good. |
 
-Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents (except flowering ones marked `feed`, like kalanchoe), orchids on bark, phalaenopsis in sphagnum and cuttings in water. If nobody is left, there's no task.
+Feeding skips plants marked `noFeed`, those repotted in the last 6 weeks, succulents (except flowering ones marked `feed`, like kalanchoe) and cuttings in water. Orchids on bark or in sphagnum are fed (weakly and regularly, by the orchid facts); a card's `feedNote` (orchids: half a dose) goes into the task hint and the plant card's «Подкормка». If nobody is left, there's no task.
 
 New plants get staggered start dates (`initBonus`), so wiping tasks don't all arrive on one day.
 

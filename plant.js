@@ -114,7 +114,7 @@ function feedBox(p) {
       : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
         : winterNow() && !p.lamp ? 'Зимой без лампы не зову: растение почти не растёт. Позову с марта.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
-  return `<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
+  return `${p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)} Слабо и регулярно лучше, чем крепко и редко.</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p></div>
     ${n ? `<div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp ? 'checked' : ''}> Зимой под лампой</label>
       <p class="mt-6 small muted" id="lamp-hint">Под лампой растение растёт и зимой: позову раз в месяц, удобрение слабее, чем летом.</p></div>` : ''}
