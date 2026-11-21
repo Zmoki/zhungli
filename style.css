@@ -361,6 +361,7 @@ dialog.ask { margin: auto; width: calc(100% - 32px); max-width: 420px; border-ra
 dialog.ask form { padding: 22px 20px 20px; }
 dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .info.water { background: var(--blue-soft); }
+.info.rest { background: var(--green-soft); }
 .info.warn { background: var(--red-soft); }
 #sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 24px); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
