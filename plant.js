@@ -106,7 +106,7 @@ function wayBox(p, d) {
   return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
     <div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Недавно пересажено</label>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>
-    ${chips('watering', 'Как поливаю', ways, p.watering || 'top', ' id="watering-field"', !pot, whyNot(pot ? '' : waterWhyNot(p), 'watering-why'))}
+    ${chips('watering', 'Как поливаю', ways, pot ? p.watering || 'top' : '', ' id="watering-field"', !pot, whyNot(pot ? '' : waterWhyNot(p), 'watering-why'))}
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
@@ -181,7 +181,7 @@ function remindMore(id, kind) {
     <p class="small muted m-0" id="remind-last-${kind}">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
     <button class="mt-8 btn ok" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}">${I(R.icon)}${R.btn}</button>`;
 }
-// Every kind is drawn; one that doesn't fit how the plant grows (flushing clay pebbles) is hidden, and shown again by changeWay.
+// Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
 // A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
 const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<section class="group" aria-labelledby="g-${kind}" id="remind-field-${kind}"${remindNo(id, kind) || remindFits(plant(id), kind) ? '' : ' hidden'}><h3 id="g-${kind}">${R.name}</h3>
@@ -588,7 +588,8 @@ function changeWay(id, f, value) {
   save();
   const p = plant(id);
   // The chips stay in place, so the tapped one keeps focus; only their state and what's around them change.
-  [['medium', p.type], ['watering', p.watering || 'top']].forEach(([k, v]) => document.querySelectorAll(`[data-act="way-${k}"]`).forEach((c) => {
+  // Not in a pot: no watering way is picked, the chips are greyed out.
+  [['medium', p.type], ['watering', MEDIA[p.type].pot ? p.watering || 'top' : '']].forEach(([k, v]) => document.querySelectorAll(`[data-act="way-${k}"]`).forEach((c) => {
     c.classList.toggle('on', c.dataset.way === v);
     c.setAttribute('aria-pressed', c.dataset.way === v);
   }));
@@ -603,10 +604,10 @@ function changeWay(id, f, value) {
   $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
   $('#f-repotted').disabled = !feedsOnDay(p);
+  // The hint follows both the box (a settle ticks it) and whether the plant is fed on the day at all.
+  if (res.settle) { const box = $('[data-field="repotted"]'); if (box) box.checked = true; }
+  $('#repot-hint').innerHTML = repotHint(p);
   if (res.settle) {
-    const box = $('[data-field="repotted"]');
-    if (box) box.checked = true;
-    $('#repot-hint').innerHTML = repotHint(p);
     // Only plants called on «День подкормки» notice it.
     if (feedsOnDay(p)) toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
   }
