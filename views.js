@@ -458,7 +458,8 @@ function quickStart() {
     <div class="qs-grid">${tiles}</div>
     <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${qsAddText(n)}</button>
     <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
-    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенесите из чата с ИИ</button></p>`;
+    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенесите из чата с ИИ</button></p>
+    <p class="mt-8 small muted name-help">Не знаете название? <button class="linkish" data-act="name-help" data-from="empty">Как узнать</button></p>`;
 }
 // After adding from the catalog or the quick picks: one plant opens its card, several go to «Растения».
 function addFromCatalog(keys, source) {

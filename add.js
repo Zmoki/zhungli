@@ -98,6 +98,7 @@ function catalogHtml(changeFor) {
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
+    ${changeFor ? '' : nameHelpLink('search', 'Не знаете, как называется растение?')}
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
       ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
@@ -199,6 +200,7 @@ function catalogSearch(changeFor) {
     if (!any) {
       none.innerHTML = `<p class="small muted">«${esc(raw)}» нет в каталоге.</p>
         ${changeFor ? '' : `<button class="mt-8 btn primary wide" data-act="add-custom" data-q="${esc(raw)}">${I('plus')}Добавить как своё</button>`}
+        ${changeFor ? '' : nameHelpLink('not_found', 'Не знаете точное название? Как узнать')}
         <p class="mt-12 small muted" data-from="catalog">Чтобы оно появилось в каталоге с советами, напишите Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}.</p>
         ${changeFor ? '<p class="mt-12 small muted">А пока выберите похожий общий тип, уход у них почти одинаковый:</p>' : ''}`;
       const g = document.querySelector('.pick-group[data-generic]');
@@ -326,7 +328,7 @@ function openCustom(species = '', from = 'button', back = '') {
 /* ---------- Import from an AI chat ---------- */
 // The user copies a prompt into ChatGPT/Claude, picks the plants.json file it sends,
 // and the plants become custom plants with their care tips.
-const IMPORT_PROMPT = `Сделайте файл plants.json со списком моих растений для приложения «Жунгли» и пришлите его мне для скачивания: файлом, не текстом в чате. Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня).
+const IMPORT_PROMPT = `Сделайте файл plants.json со списком моих растений для приложения «Жунгли» и пришлите его мне для скачивания: файлом, не текстом в чате. Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня). Если в чате есть фото растений, определите вид по фото. Если не уверены, выберите самый вероятный и в tip первой фразой напишите, что вид определён по фото и его стоит проверить.
 
 Если в чате сказано, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пишите проверку и уход именно для этого способа.
 
@@ -446,6 +448,28 @@ let importRepaired = false;
 let importExt = '';
 let importPicked = new Set();
 // How to copy the shown prompt by hand: the gesture that opens the system menu differs by platform.
+// «Как узнать, что за растение»: for people who don't know the name. The phone's own apps or an AI chat tell it
+// from a photo; nothing goes through Жунгли. Opened from the add sheet (`back`, with the search as it was) or from
+// the empty first screen.
+const nameHelpLink = (from, text) => `<p class="mt-8 small name-help"><button class="linkish" data-act="name-help" data-from="${from}">${text}</button></p>`;
+function openNameHelp(from, back = '', q = '') {
+  track('name_help_opened', { from });
+  if (addFlow) addFlow.sheet = 'help';
+  const search = back
+    ? `<button class="mt-10 btn primary wide" data-act="add-back" data-to="name-help"${q ? ` data-q="${esc(q)}"` : ''}>${I('search')}Искать в каталоге</button>`
+    : `<button class="mt-10 btn primary wide" data-act="add-plant">${I('search')}Искать в каталоге</button>`;
+  $('#sheet-body').innerHTML = `
+    ${subHead('Как узнать, что за растение', back, q)}
+    <div class="info"><b>Сфотографируйте</b>Лист целиком и растение сбоку, при дневном свете.</div>
+    <div class="info"><b>Спросите приложение</b>Умную камеру в приложении Яндекс или Google Lens. Они покажут похожие растения с названиями.</div>
+    <div class="info"><b>Или спросите ИИ</b>Отправьте фото в ChatGPT или Claude: он определит растения и сразу соберёт список для Жунглей.
+      <button class="mt-10 btn wide" data-act="add-import">${I('bot')}Перенести из чата с ИИ</button></div>
+    <div class="info"><b>Найдите в каталоге</b>Сорт не знаете: берите карточку без сорта, например «Диффенбахия». Даже род неясен: «Своё растение» и в нём «На что похоже».
+      ${search}</div>`;
+  // The way back returns focus to the link that was tapped (there can be two: under the search and after it).
+  document.querySelectorAll('#sheet [data-act="add-back"]').forEach((b) => { b.dataset.from = from; });
+  openSheet();
+}
 const PROMPT_HINT = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Нажмите на текст, затем ещё раз. В меню выберите «Выбрать все», потом «Скопировать».'
   : /Android/.test(navigator.userAgent) ? 'Подержите палец на тексте. В меню выберите «Выбрать все», потом «Копировать».'
     : 'Выделите весь текст (Ctrl+A или ⌘A) и скопируйте.';
@@ -456,7 +480,7 @@ function openImport(back = '') {
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
     ${subHead('Импорт из чата с ИИ', back)}
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения.
+    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
@@ -654,16 +678,24 @@ Object.assign(ACTS, {
   // From inside the add sheet, the next sheet gets a way back to it.
   'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
   'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
+  // From the add sheet the way back keeps the search; from the empty screen the sheet only closes.
+  'name-help'(el) {
+    const inAdd = !!el.closest('#sheet');
+    openNameHelp(el.dataset.from, inAdd ? 'name-help' : '', inAdd ? $('#pick-q')?.value.trim() || '' : '');
+  },
   'add-back'(el) {
     const form = $('#add-form');
     if (form) customDraft = { ...Object.fromEntries(new FormData(form)), tuneOpen: form.querySelector('.tune').open };
     openAdd(true);
-    if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])`)?.focus(); return; }
+    if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])${el.dataset.from ? `[data-from="${el.dataset.from}"]` : ''}`)?.focus(); return; }
     // The search comes back as it was, but it isn't a new search: catalog_searched isn't sent again.
     const q = $('#pick-q');
     q.value = el.dataset.q;
     q.dispatchEvent(new CustomEvent('input', { detail: 'restore' }));
-    $('#pick-none [data-act="add-custom"]')?.focus();
+    // Focus goes back to the button that was tapped, or to «Добавить как своё» when that was the way out.
+    const which = `#sheet [data-act="${el.dataset.to}"]${el.dataset.from ? `[data-from="${el.dataset.from}"]` : ''}`;
+    const shown = [...document.querySelectorAll(which)].find((b) => b.offsetParent);
+    (shown || $('#pick-none [data-act="add-custom"]'))?.focus();
   },
   pick(el) {
     const k = el.dataset.key;
