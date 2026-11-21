@@ -100,7 +100,15 @@ const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(
 const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
-  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
+  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
+}
+// «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
+function newHint(p) {
+  const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  if (!isNew(p)) return hintLines('<b>Если отметить:</b> 6 недель раз в неделю позову осмотреть на вредителей, а первые 4 недели не позову подкормить и обрезать.', '<b>Сейчас</b> растение не новое.');
+  return hintLines(...[`Карантин до ${day(NEW_DAYS)}: держите отдельно от других растений, раз в неделю позову осмотреть.`,
+    settling(p) ? `До ${day(SETTLE_DAYS)} растение привыкает: лучше не переставлять, не обрезать и не пересаживать, на подкормку не позову.` : '',
+    p.settle && settling(p) ? esc(p.settle) : ''].filter(Boolean));
 }
 const ghHint = (on) => (on ? hintLines('Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.')
   : hintLines('<b>Если отметить:</b> каждый день напомню проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не напоминаю.'));
@@ -321,6 +329,10 @@ function plantCardHtml(id) {
         <div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
+
+      <section class="group" aria-labelledby="g-new"><h3 id="g-new">Новое растение</h3>
+        <div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
+          <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div></section>
 
       <section class="group" aria-labelledby="g-gh"><h3 id="g-gh">Теплица</h3>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
@@ -546,6 +558,7 @@ document.addEventListener('change', (e) => {
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
+  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'remind') {
     const k = el.dataset.kind;
@@ -560,7 +573,7 @@ document.addEventListener('change', (e) => {
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
-  if (sheet.open && ['greenhouse', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
+  if (sheet.open && ['greenhouse', 'bought', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
