@@ -140,13 +140,13 @@ function wayOf(p) {
   return WAYS.get(key);
 }
 const labelsOf = (p) => wayOf(p).labels;
+// Watering from below checks the soil as from above: a card's question for either fits the other.
+const soilCheck = (w) => !w || w === 'top' || !!WATERING[w].soilCheck;
 // The card's care for how the plant grows. Grown another way than the card says, the card's check
 // question and its watering tip don't fit, nor its substrate tip with another medium: that way's own tips stand in.
 function careOf(d, r) {
   const k = mediumIn(r, d), m = MEDIA[k], w = wateringIn(r, d);
   const own = isCardWay(r, d), sameMedium = k === d.type, fromAbove = !w || w === 'top';
-  // Watering from below checks the soil as from above: a card's question for either fits the other.
-  const soilCheck = (x) => !x || x === 'top' || !!WATERING[x].soilCheck;
   // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
   // Its check question and watering tip are for watering from above; a wick or reservoir has its own.
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
