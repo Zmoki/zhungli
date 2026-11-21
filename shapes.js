@@ -64,19 +64,19 @@ const SHAPES = {
     <ellipse class="co" cx="32" cy="7" rx="5" ry="6.5"/>${POT_SVG}`,
   // Venus flytrap: open two-lobed traps, red inside
   flytrap: `<path class="st" d="M32 44c-3-7-8-12-14-15M32 44c3-7 8-12 14-15M32 44V22"/>
-    <g transform="translate(17 27) rotate(-35)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="tr" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="tr" d="M-6 2a6 4 0 0 0 12 0z"/></g><g transform="translate(47 27) rotate(35)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="tr" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="tr" d="M-6 2a6 4 0 0 0 12 0z"/></g><g transform="translate(32 16) rotate(0)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="tr" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="tr" d="M-6 2a6 4 0 0 0 12 0z"/></g>${POT_SVG}`,
+    <g transform="translate(17 27) rotate(-35)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="trap" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="trap" d="M-6 2a6 4 0 0 0 12 0z"/></g><g transform="translate(47 27) rotate(35)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="trap" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="trap" d="M-6 2a6 4 0 0 0 12 0z"/></g><g transform="translate(32 16) rotate(0)"><path class="lf" d="M-8-1a8 6 0 0 1 16 0z"/><path class="trap" d="M-6-1a6 4 0 0 1 12 0z"/><path class="lf" d="M-8 2a8 6 0 0 0 16 0z"/><path class="trap" d="M-6 2a6 4 0 0 0 12 0z"/></g>${POT_SVG}`,
   // Sundew: spoon leaves on stalks, red with drops of dew
   sundew: `<path class="st" d="M32 44c-4-6-9-10-16-12M32 44c4-6 9-10 16-12M32 44c-1-8-4-15-8-21M32 44c1-8 4-15 8-21"/>
-    <ellipse class="tr" cx="14" cy="31" rx="5" ry="3.4" transform="rotate(-20 14 31)"/><ellipse class="tr" cx="50" cy="31" rx="5" ry="3.4" transform="rotate(20 50 31)"/>
-    <ellipse class="tr" cx="23" cy="20" rx="3.4" ry="5" transform="rotate(-25 23 20)"/><ellipse class="tr" cx="41" cy="20" rx="3.4" ry="5" transform="rotate(25 41 20)"/>
+    <ellipse class="trap" cx="14" cy="31" rx="5" ry="3.4" transform="rotate(-20 14 31)"/><ellipse class="trap" cx="50" cy="31" rx="5" ry="3.4" transform="rotate(20 50 31)"/>
+    <ellipse class="trap" cx="23" cy="20" rx="3.4" ry="5" transform="rotate(-25 23 20)"/><ellipse class="trap" cx="41" cy="20" rx="3.4" ry="5" transform="rotate(25 41 20)"/>
     <circle class="gl" cx="12" cy="28" r="1.3"/><circle class="gl" cx="17" cy="29" r="1.3"/><circle class="gl" cx="52" cy="28" r="1.3"/><circle class="gl" cx="47" cy="29" r="1.3"/>
     <circle class="gl" cx="21" cy="16" r="1.3"/><circle class="gl" cx="25" cy="17" r="1.3"/><circle class="gl" cx="43" cy="16" r="1.3"/><circle class="gl" cx="39" cy="17" r="1.3"/>${POT_SVG}`,
   // Nepenthes: leaves with tendrils ending in hanging pitchers
   pitcher: `<path class="st" d="M32 44V28M14 32c-3 3-4 6-3 10M50 32c3 3 4 6 3 10"/>
     <ellipse class="lf" cx="22" cy="29" rx="11" ry="4.2" transform="rotate(-18 22 29)"/><ellipse class="lf2" cx="42" cy="29" rx="11" ry="4.2" transform="rotate(18 42 29)"/>
     <ellipse class="lf" cx="32" cy="20" rx="4" ry="9"/>
-    <path class="tr" d="M9 42c-2 5-1 11 3 13 4-2 5-8 3-13z"/><ellipse class="lf2" cx="12" cy="41" rx="4" ry="1.6"/>
-    <path class="tr" d="M49 42c-2 5-1 11 3 13 4-2 5-8 3-13z"/><ellipse class="lf2" cx="52" cy="41" rx="4" ry="1.6"/>${POT_SVG}`,
+    <path class="trap" d="M9 42c-2 5-1 11 3 13 4-2 5-8 3-13z"/><ellipse class="lf2" cx="12" cy="41" rx="4" ry="1.6"/>
+    <path class="trap" d="M49 42c-2 5-1 11 3 13 4-2 5-8 3-13z"/><ellipse class="lf2" cx="52" cy="41" rx="4" ry="1.6"/>${POT_SVG}`,
   cutting: `<path class="gl" d="M20 26h24v30a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4z"/><path class="jar" d="M20 24v32a4 4 0 0 0 4 4h16a4 4 0 0 0 4-4V24"/>
     <path class="rt" d="M32 50c-2 3-4 5-7 6M32 50c1 3 3 5 6 6M32 50v7"/><path class="st" d="M32 50V14"/>
     <ellipse class="lf" cx="25" cy="16" rx="7" ry="4" transform="rotate(25 25 16)"/><ellipse class="lf2" cx="39" cy="10" rx="7" ry="4" transform="rotate(-25 39 10)"/>`,
@@ -118,7 +118,7 @@ function shapeOf(d) {
   if (/колеус/.test(s)) return 'coleus';
   if (/мухолов|дионе/.test(s)) return 'flytrap';
   if (/росянк|жирянк/.test(s)) return 'sundew';
-  if (/непентес|кувшин|саррацен/.test(s)) return 'pitcher';
+  if (/непентес|саррацен/.test(s)) return 'pitcher';
   if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|филодендрон скан|аквариум/.test(s)) return 'trailing';
   if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
