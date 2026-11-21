@@ -104,16 +104,16 @@ const WATERING = {
 // They come as bonus tasks (`<kind>:<id>`, the date in S.bonus as for dusting) in the active months (1–12),
 // `every` days after the last time, at once if never. «Готово» also goes to the plant's history as `kind`.
 // every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
-// start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
+// toggle: the checkbox in the kind's own section of the plant card; start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
 // gloves: the card's sap warning goes with the task; fits(p): shown and asked only for such plants.
 // Feeding per plant can be another kind here.
 const REMINDERS = {
-  prune: { name: 'Обрезка', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️', icon: 'scissors', gloves: true,
+  prune: { name: 'Обрезка', toggle: 'Звать на обрезку', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️', icon: 'scissors', gloves: true,
     hint: 'Острым чистым секатором над узлом, срезы не замазывать. После больного растения протереть лезвие хлорным отбеливателем 1:9 и ополоснуть: спирт не берёт вирус табачной мозаики. Бледные вытянутые стебли просят света, а не обрезки.',
     every: [[14, '2 недели', 'раз в 2 недели'], [30, 'Месяц', 'раз в месяц'], [60, '2 месяца', 'раз в 2 месяца'], [300, 'Раз в год', 'раз в год']],
     start: { every: 300, months: [3, 4] } },
   // Salts from fertilizer and hard water stay in the pot. A medium with its own rinse (clay pebbles, pon) has it already.
-  rinse: { name: 'Промывка грунта', task: 'Промойте грунт', verb: 'промыть грунт', done: 'промыто', btn: 'Промыто сегодня', toast: 'Промывка записана 🚿', icon: 'droplets',
+  rinse: { name: 'Промывка грунта', toggle: 'Звать на промывку', task: 'Промойте грунт', verb: 'промыть грунт', done: 'промыто', btn: 'Промыто сегодня', toast: 'Промывка записана 🚿', icon: 'droplets',
     why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев.',
     hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
     every: [[120, '4 месяца', 'раз в 4 месяца'], [180, 'Полгода', 'раз в полгода']],
@@ -526,7 +526,7 @@ function bonusTasks() {
   if (fed.length) {
     out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), feed: fed,
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».` });
+      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Промывка грунта».` });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;

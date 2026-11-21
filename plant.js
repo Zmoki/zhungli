@@ -133,9 +133,9 @@ function newHint(p) {
     settling(p) ? `До ${day(SETTLE_DAYS)} растение привыкает: лучше не переставлять, не обрезать и не пересаживать, на подкормку не позову.` : '',
     p.settle && settling(p) ? esc(p.settle) : ''].filter(Boolean));
 }
-const ghHint = (on) => (on ? hintLines('Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.')
-  : hintLines('<b>Если отметить:</b> каждый день напомню проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не напоминаю.'));
-// «Напоминания» in «Настройки»: a checkbox per kind; ticked, how often, in which months, and «done today».
+const ghHint = (on) => (on ? hintLines('Каждый день позову проветрить. Снимите галочку, когда растение переедет из теплицы.')
+  : hintLines('<b>Если отметить:</b> каждый день позову проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не зову.'));
+// «Обрезка», «Промывка грунта» in «Настройки»: a section per kind (like «Теплица») with a checkbox; ticked, how often, in which months, and «done today».
 // Only the part under the checkbox is redrawn, so the checkbox keeps focus.
 const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 // Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
@@ -153,7 +153,7 @@ function monthsText(ms) {
 }
 function remindMore(id, kind) {
   const R = REMINDERS[kind], x = remindOf(S.plants[id], kind), last = S.bonus[`${kind}:${id}`], c = remindCard(plant(id), kind);
-  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, c.tip && esc(c.tip), `<b>Если отметить:</b> позову ${R.verb} в «Если есть силы»${c.months ? `: ${monthsText(c.months)}` : ' в выбранные месяцы'}.`, `<b>Сейчас</b> не напоминаю.`].filter(Boolean))}</div>`;
+  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, c.tip && esc(c.tip), `<b>Если отметить:</b> позову ${R.verb} в «Если есть силы»${c.months ? `: ${monthsText(c.months)}` : ' в выбранные месяцы'}.`, `<b>Сейчас</b> не зову.`].filter(Boolean))}</div>`;
   const often = R.every.find(([n]) => n === x.every);
   const chip = (act, attr, on, label, aria = '') => `<button class="chip ${on ? 'on' : ''}" data-act="${act}" data-id="${esc(id)}" data-kind="${kind}" ${attr} aria-pressed="${on}"${aria}>${label}</button>`;
   return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[c.tip && esc(c.tip), `Позову ${R.verb} в «Если есть силы» ${often ? often[2] : `раз в ${days(x.every)}`}: ${monthsText(x.months)}.`].filter(Boolean))}</div>
@@ -167,10 +167,10 @@ function remindMore(id, kind) {
 // Every kind is drawn; one that doesn't fit how the plant grows (flushing clay pebbles) is hidden, and shown again by changeWay.
 // A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
-const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => remindNo(id, kind)
-  ? `<div class="field" id="remind-field-${kind}"><p class="m-0"><b>${R.name}</b></p><div class="mt-6 small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div></div>`
-  : `<div class="field" id="remind-field-${kind}"${remindFits(plant(id), kind) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.name}</label>
-  <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`).join('');
+const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<section class="group" aria-labelledby="g-${kind}" id="remind-field-${kind}"${remindNo(id, kind) || remindFits(plant(id), kind) ? '' : ' hidden'}><h3 id="g-${kind}">${R.name}</h3>
+  ${remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
+    : `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.toggle}</label>
+  <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`}</section>`).join('\n');
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
   const r = S.plants[id];
@@ -373,7 +373,7 @@ function plantCardHtml(id) {
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}>${intBox(p)}</div>
 </section>
 
-      <section class="group" aria-labelledby="g-remind"><h3 id="g-remind">Напоминания</h3>${remindBox(id)}</section>
+      ${remindBox(id)}
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', historyHtml(p))}
     </div>`;

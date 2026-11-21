@@ -31,7 +31,7 @@ Record fields:
 | `soilInterval` | The card's interval, kept while the plant grows another way. |
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
-| `remind` | Reminders turned on in «Напоминания»: `{ prune: { every, months }, rinse: … }`, days and months 1–12. See [Reminders](#reminders). |
+| `remind` | Reminders turned on in «Обрезка» and «Промывка грунта»: `{ prune: { every, months }, rinse: … }`, days and months 1–12. See [Reminders](#reminders). |
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
@@ -94,7 +94,7 @@ Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one 
 
 ## Reminders
 
-«Напоминания» in the plant card's «Настройки» has a checkbox per kind in `REMINDERS` (`state.js`):
+The plant card's «Настройки» has a section per kind in `REMINDERS` (`state.js`), like «Теплица»: its name as the title and a checkbox «Звать на обрезку» / «Звать на промывку» (`toggle`). There's no «Напоминания» heading: the app has no notifications, it calls people in «Если есть силы».
 - **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April, or in the card's `prune.months`. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season). A card's `prune` comes from the checked pruning facts:
   - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the checkbox; a reminder already on stays.
   - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the checkbox and before the task hint.
