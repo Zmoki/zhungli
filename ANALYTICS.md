@@ -89,7 +89,7 @@ On every event:
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune`, `rinse` (reminders turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
-| `reminder_changed` | a reminder in the plant card's «Напоминания» changed | `kind`: `prune` / `rinse`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300` for `prune`, `120` / `180` for `rinse`) and `months` (how many are on), unless off |
+| `reminder_changed` | «Звать на обрезку» / «Звать на промывку» or their options changed in the plant card | `kind`: `prune` / `rinse`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300` for `prune`, `120` / `180` for `rinse`) and `months` (how many are on), unless off |
 | `reminder_logged` | «Обрезано сегодня» or «Промыто сегодня» in the plant card | `kind`: `prune` / `rinse`; `from`: `card` |
 | `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
 | `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added), both straight to the last story / `return` (back in the app to stories still open: not a way in, see `left` in `stories_closed`) |

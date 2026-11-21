@@ -632,10 +632,10 @@ Object.assign(ACTS, {
     afterTask(isNew(plant(id)) && diff(S.plants[id].bought, today()) + 7 >= NEW_DAYS ? 'Карантин позади: можно ставить к остальным 🌿' : 'Осмотрено 🔍 Загляну через неделю', undo);
   },
   'inspect-off'(el, id) {
-    const undo = snapshot(); S.plants[id].bought = false; track('quarantine_toggled', { on: false, from: 'task' }); afterTask('Хорошо, больше не напоминаю осматривать', undo);
+    const undo = snapshot(); S.plants[id].bought = false; track('quarantine_toggled', { on: false, from: 'task' }); afterTask('Хорошо, больше не зову осматривать', undo);
   },
   async 'vent-off'(el, id) {
-    if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не буду напоминать проветривать.', ok: 'Не нужна' })) {
+    if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не позову проветривать.', ok: 'Не нужна' })) {
       const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
     }
   },
