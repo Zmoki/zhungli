@@ -19,7 +19,10 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
 // A new plant in quarantine: the same kind of badge, in the plant card only as words.
 const newBadge = (p, words) => (!isNew(p) ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('search')}на карантине</span>`
-    : `<span class="gh" title="На карантине">${I('search')}<span class="sr-only">на карантине</span></span>`);
+    : `<span class="gh" title="На карантине">${I('search')}<span class="sr-only">на карантине</span></span>`) + restBadge(p, words);
+const restBadge = (p, words) => (!resting(p) ? ''
+  : words ? `<span class="mood hero-mood greenhouse">${I('moon')}отдыхает</span>`
+    : `<span class="gh" title="Отдыхает">${I('moon')}<span class="sr-only">отдыхает</span></span>`);
 
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
@@ -198,8 +201,15 @@ function currentHint() {
       `Так ${device} не сотрёт ваши отметки. С иконки Жунгли откроются пустыми, поэтому сначала сохраните копию здесь, а там нажмите «Восстановить копию».`,
       '<button class="btn ok" data-act="export" data-from="install_hint">Сохранить копию</button><button class="btn" data-act="stories-install" data-from="install_hint">Показать, как</button><button class="btn ghost" data-act="hide-install" data-kind="ios_move">Уже на экране</button>');
   }
-  return '';
+  return winterHint(hasPlants);
 }
+// Once a winter (November to February): tropical plants slow down for lack of light, they don't need rest
+// (the content repo's dormancy facts). «Понятно» hides it until next winter.
+const winterOf = () => { const d = new Date(), m = d.getMonth() + 1; return m >= 11 ? d.getFullYear() : m <= 2 ? d.getFullYear() - 1 : 0; };
+const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen === winterOf() ? ''
+  : hintCard('sun-dim', 'Зимой растения растут медленнее',
+    'Тропическим растениям зимой не нужен покой, им не хватает света. Подвиньте их ближе к окну или к лампе, поливайте реже и не кормите, пока нет роста. В тепле без света побеги вытягиваются.',
+    '<button class="btn" data-act="winter-ok">Понятно</button>'));
 
 // «Species · place» under a plant's name on task cards, as HTML; `extra` adds app text, e.g. the last watering.
 const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filter(Boolean).map(typedHtml), ...extra.filter(Boolean).map(esc)].join(' · ');
@@ -266,7 +276,7 @@ function viewToday() {
       p, subHtml: plantSubHtml(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
       buttons: `<button class="btn ${g.fixed ? 'ok' : 'water'}" data-act="water" data-id="${esc(p.id)}">${I(yi)}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${ni ? I(ni) : ''}${no}</button>`,
-      hint: p.water,
+      hint: resting(p) && p.rest ? p.rest.water : p.water,
       after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button>`,
     });
   });
@@ -354,7 +364,7 @@ function spotGroups(ps, room) {
 // The chips also teach which face means what.
 let plantSt = '';
 // Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
-const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(isNew(p) ? ['new'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
+const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(isNew(p) ? ['new'] : []), ...(resting(p) ? ['rest'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
 function stateFilter(ps) {
   const n = {};
   const due = [];
@@ -368,6 +378,7 @@ function stateFilter(ps) {
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
+    ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'greenhouse') : ''}
     ${n.new ? chip('new', `${I('search')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
     ${n.pets ? chip('pets', `${I('triangle-alert')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'way') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
@@ -649,6 +660,7 @@ Object.assign(ACTS, {
     ask.userChoice.then(({ outcome }) => { track('install_prompt', { outcome }); render(); }, () => render());
   },
   'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); },
+  'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },
   'stats-ok'() { S.statsNotice = true; save(); render(); },
   'stats-off'() { statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); },
   'open-mini-app'() { track('mini_app_link_clicked', { has_plants: Object.keys(S.plants).length > 0 }); flushStats(); }, // the link opens Telegram

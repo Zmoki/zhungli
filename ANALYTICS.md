@@ -53,7 +53,7 @@ On every event:
 | `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`, `from_medium`: `soil` / `dry` / `sphagnum` / `bark` / `coco` / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium`; `watering`, `from_watering`: `top` / `bottom` / `wick` / `reservoir` / `tray` / `drip` / `none` (not in a pot); `settle` (counted as repotting) |
 | `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `days`: `7` / `14` / `21` / `28`; `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
 | `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_card`, `to_card` (catalog ids); `from_generic`, `to_generic`; `same_medium` (the plant's medium is the new card's); `notes_moved` (edited tips turned into notes); `searched` (something was typed in the search; searches there send no `catalog_searched`) |
-| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `pets` (toxic to pets), or a way of growing: `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` |
+| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets), or a way of growing: `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` |
 | `add_abandoned` | add sheet closed without adding | `sheet`: `catalog` / `custom` / `import` / `help` (last one shown); `searched`; `no_results` (last search found nothing); `picked`; `left_app` (the app went to background with the sheet open; not reported when the import prompt was copied or the file picker is open, since going to the AI chat or to Files is expected) |
 | `js_error` | script error, at most 5 per page load | `message` (150 chars), `source` file, `line` (one file per part of the app since v89; before that, mostly `app.js`) |
@@ -78,6 +78,9 @@ On every event:
 | `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
 | `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`; `from`: `card` / `task` |
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none |
+| `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
+| `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
+| `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
 | `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |

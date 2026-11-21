@@ -87,6 +87,8 @@ const repotted = (p) => !!p.repotted && diff(p.repotted, today()) < REPOT_DAYS;
 // (Clemson), the first 4 of them settling in: no feeding, pruning, moving or repotting (UF/IFAS, for ficus).
 const NEW_DAYS = 42, SETTLE_DAYS = 28;
 const isNew = (p) => !!p.bought && diff(p.bought, today()) < NEW_DAYS;
+// «Покой» (`resting` in the record: { since, iv }) for cards with `rest`: checks twice as rare, no feeding.
+const resting = (p) => !!(p && p.resting && p.resting.since);
 const settling = (p) => !!p.bought && diff(p.bought, today()) < SETTLE_DAYS;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 

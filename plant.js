@@ -102,6 +102,10 @@ function repotHint(p) {
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
   return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
 }
+// A plant at rest (cards with `rest`): since when, what to do, and the way back.
+// A plant moved to a card without `rest` while resting still gets the way back.
+const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${parse(p.resting.since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</b>${p.rest ? esc(p.rest.tip) : ''}
+  <button class="mt-12 btn ok wide" data-act="rest-end" data-id="${esc(p.id)}">${I('sprout')}${esc(p.rest ? p.rest.end : 'Снова растёт')}</button></div>`;
 // «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -303,6 +307,7 @@ function plantCardHtml(id) {
     <p class="quip">${esc(quipOf(p))}</p>
     <div id="glance">${glanceHtml(p)}</div>
     <div id="water-box">${waterBox(p)}</div>
+    ${resting(p) ? restBox(p) : ''}
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
     ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
@@ -329,6 +334,10 @@ function plantCardHtml(id) {
         <div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
+
+      ${p.rest && !resting(p) ? `<section class="group" aria-labelledby="g-rest"><h3 id="g-rest">Покой</h3>
+        <p class="small muted">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
+        <button class="btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button></section>` : ''}
 
       <section class="group" aria-labelledby="g-new"><h3 id="g-new">Новое растение</h3>
         <div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
@@ -591,6 +600,27 @@ document.addEventListener('change', (e) => {
 
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
+  // Rest: checks twice as rare (the interval comes back after), no feeding day, until new growth.
+  'rest-start'(el, id) {
+    const r = S.plants[id];
+    // Drip irrigation keeps its picked interval: it checks the system, not the soil.
+    const fixed = !!wayOf(plant(id)).fixed;
+    r.resting = { since: today(), ...(fixed ? {} : { iv: r.interval }) };
+    if (!fixed) r.interval = Math.min(Math.round(r.interval * 2), 45);
+    const next = addDays(r.lastWater || today(), Math.round(r.interval));
+    r.nextCheck = next < today() ? today() : next;
+    save(); track('rest_started', kindOf(id));
+    openPlant(id); toast('Хорошо, пусть отдыхает 🌙');
+  },
+  'rest-end'(el, id) {
+    const r = S.plants[id], days = diff(r.resting.since, today());
+    if (r.resting.iv) r.interval = r.resting.iv;
+    delete r.resting;
+    const next = addDays(today(), Math.round(r.interval));
+    if (r.nextCheck > next) r.nextCheck = next;
+    save(); track('rest_ended', { days, ...kindOf(id) });
+    openPlant(id); toast('Ура, проснулась! 🌱');
+  },
   photo(el, id) { photoFor = id; $('#photo-input').click(); },
   async 'photo-remove'(el, id) {
     if (await ask({ title: 'Убрать фото?', text: 'Вместо него будет рисунок.', ok: 'Убрать', danger: true })) {

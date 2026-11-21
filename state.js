@@ -522,7 +522,7 @@ function bonusTasks() {
   });
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     // Fed on the day: soil-like media, plus flowering succulents (dry with `feed`). The rest get fertilizer with every watering, or none.
-    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p) && !settling(p));
+    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p) && !settling(p) && !resting(p));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
         who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».' });
