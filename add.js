@@ -72,7 +72,7 @@ function typoMatcher(readings) {
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
 function pickRow(d, changeFor, nowId) {
   const pets = petsOn() && { toxic: 'ядовито для питомцев', safe: 'безопасно для питомцев' }[petsOf(d)];
-  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? pets + ' · ' : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
+  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? `<span class="pet-tag ${petsOf(d)}">${I('paw-print')}${pets}</span> · ` : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
   const now = !!changeFor && nowId === d.id;
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
   return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-pets="${petsOf(d)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
@@ -100,7 +100,7 @@ function catalogHtml(changeFor) {
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     ${changeFor ? '' : nameHelpLink('search', 'Не знаете, как называется растение?')}
-    ${petsOn() && !changeFor ? `<div class="chips mt-8"><button class="chip" data-act="pick-pets" aria-pressed="false">${I('check')}Безопасно для питомцев</button></div>
+    ${petsOn() && !changeFor ? `<div class="chips mt-8"><button class="chip" data-act="pick-pets" aria-pressed="false">${I('paw-print')}Безопасно для питомцев</button></div>
       <p id="pick-pets-none" class="mt-8 small muted" role="status" hidden>Среди безопасных для питомцев такого нет. Снимите фильтр, чтобы увидеть все растения.</p>` : ''}
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>

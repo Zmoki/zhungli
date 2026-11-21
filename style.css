@@ -361,7 +361,14 @@ dialog.ask { margin: auto; width: calc(100% - 32px); max-width: 420px; border-ra
 dialog.ask form { padding: 22px 20px 20px; }
 dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .info.water { background: var(--blue-soft); }
-.info.rest { background: var(--green-soft); }
+.info.rest, .info.safe { background: var(--green-soft); }
+/* Sap and pet warnings: a gap from the notes above */
+.card-warns { margin-top: 14px; }
+/* Pets: a paw, red-ish when toxic, green when safe */
+.mood.pets.toxic, .gh.pets.toxic, .pet-tag.toxic { color: var(--st-gh); }
+.mood.pets.safe, .pet-tag.safe { color: var(--st-fine); }
+.pet-tag { font-weight: 800; white-space: nowrap; }
+.pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
 /* «День подкормки»: a tick per plant, above the buttons */
 .feed-who { border: 0; padding: 0; margin: 0 0 14px; display: grid; gap: 6px; }
 .info.warn { background: var(--red-soft); }
