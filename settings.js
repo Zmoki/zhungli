@@ -113,7 +113,7 @@ async function doImport(file) {
   try {
     const data = JSON.parse(await file.text());
     if (data.app !== 'zhungli' || !data.state) throw new Error('bad');
-    if (!confirm('Заменить текущие данные копией от ' + new Date(data.at).toLocaleDateString('ru-RU') + '?')) return;
+    if (!(await ask({ title: 'Заменить текущие данные?', text: 'Вместо них будет копия от ' + new Date(data.at).toLocaleDateString('ru-RU') + '.', ok: 'Заменить', danger: true }))) return;
     S = prepare(data.state);
     stored = readStored(); // a restore replaces data on purpose, even newer data from another window
     save();
@@ -149,15 +149,15 @@ Object.assign(ACTS, {
     S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
-  'spot-del'(el) {
+  async 'spot-del'(el) {
     const sp = el.dataset.spot;
     const there = Object.values(S.plants).filter((r) => r.spot === sp);
-    if (there.length && !confirm(`Здесь ${plantsN(there.length)}. Убрать место «${sp}»? Растения останутся без места.`)) return;
+    if (there.length && !(await ask({ title: `Убрать место «${sp}»?`, text: `Здесь ${plantsN(there.length)}. Они останутся без места.`, ok: 'Убрать', danger: true }))) return;
     there.forEach((r) => { r.spot = ''; });
     S.spots = S.spots.filter((x) => x !== sp); save(); openSettings();
   },
-  'spot-add'() {
-    const sp = prompt('Как называется место?');
+  async 'spot-add'() {
+    const sp = await ask({ title: 'Как называется место?', input: { placeholder: 'Например, «Подоконник»' }, ok: 'Добавить' });
     if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); }
   },
   export(el) {
@@ -165,8 +165,8 @@ Object.assign(ACTS, {
     if (el.dataset.from === 'install_hint' && !S.movedHome) { S.movedHome = true; save(); render(); }
   },
   import() { endQuick('restore'); $('#import-input').click(); },
-  reset() {
-    if (confirm('Точно стереть все отметки и начать заново? Фото и настройки тоже удалятся.')) {
+  async reset() {
+    if (await ask({ title: 'Стереть всё и начать заново?', text: 'Удалятся все отметки, фото и настройки.', ok: 'Стереть', danger: true })) {
       track('data_reset');
       flushStats();
       // A stats opt-out is about the person, not the plants: it outlives the reset.
