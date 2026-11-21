@@ -7,14 +7,15 @@
 const CREDITS = `Сделали ${outLink('threads', 'Полина')} и ${outLink('website', 'Зарема')} · <a href="privacy">Конфиденциальность</a>`;
 
 // The «Приложение» card: version, device number and how to reach us. Full at the bottom of settings;
-// compact at the top of «Что нового», so the changes still start on the first screen.
+// compact at the top of «Что нового» (version and contact only), so the changes still start on the first screen.
+// The device number lives in settings only: it's needed only to delete sent stats.
 function appCard(from) {
   const id = savedAnonId();
   const row = (k, v) => `<p class="id-row"><span class="muted">${k}</span><b>${esc(v)}</b></p>`;
   const write = (label) => outLink('telegram', label, 'btn primary');
   if (from === 'news') {
     return `<section class="set-card app" data-from="news" aria-label="Приложение">
-        <div class="ids">${row('Версия', APP_VERSION)}${id ? row('Номер устройства', id.slice(0, 8)) : ''}</div>
+        <div class="ids">${row('Версия', APP_VERSION)}</div>
         <div class="contact-row"><b>Идеи и баги</b>${write('Написать @zmoki')}</div>
       </section>`;
   }
