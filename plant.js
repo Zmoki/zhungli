@@ -104,11 +104,12 @@ function wayBox(p, d) {
     ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}"${off ? ' disabled' : ''}>${x.name}</button>`).join('')}</div>${after}</div>`;
   const pot = MEDIA[p.type].pot;
   return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
-    <div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Недавно пересажено</label>
-      <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>
     ${chips('watering', 'Как поливаю', ways, pot ? p.watering || 'top' : '', ' id="watering-field"', !pot, whyNot(pot ? '' : waterWhyNot(p), 'watering-why'))}
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
+// «Недавно пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
+const repotBox = (p) => `<div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Недавно пересажено</label>
+      <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
 // Redrawn alone on a change, so the tapped chip keeps focus.
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
@@ -184,14 +185,13 @@ function remindMore(id, kind) {
 // Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
 // A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
-const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<section class="group" aria-labelledby="g-${kind}" id="remind-field-${kind}"${remindNo(id, kind) || remindFits(plant(id), kind) ? '' : ' hidden'}><h3 id="g-${kind}">${R.name}</h3>
-  ${remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
-    : `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.toggle}</label>
-  <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`}</section>`).join('\n');
+const remindBody = (id, kind) => (remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
+  : `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${REMINDERS[kind].toggle}</label>
+  <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`);
 // «Промывка грунта» in the plant card: done on «Банный день», so here only how it goes for this plant, the last
 // time, «Промыто сегодня» and a way to leave it out. Without soil to rinse, why not; nothing for a block or terrarium.
 function rinseBox(p) {
-  const box = (body) => `<section class="group" aria-labelledby="g-rinse" id="rinse-field"><h3 id="g-rinse">Промывка грунта</h3>${body}</section>`;
+  const box = (body) => body; // its row (setRow) is the section
   if (!rinseFits(p)) {
     const care = MEDIA[p.type].care;
     const note = p.type === 'water' ? 'В воде грунта нет: соли уходят со сменой воды.'
@@ -337,14 +337,102 @@ function showCardTab(k, focus) {
   if (focus) $('#ct-' + k).focus();
 }
 
-function openPlant(id, tabKey) {
+// The plant's «Настройки»: four groups of folding rows. Each row shows its current value (rowValues) and opens on
+// tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
+let openRows = new Set(), openRowsFor = null;
+const dayMonth = (iso) => parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+// Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
+function rowValues(p) {
+  const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
+  const prune = remindOf(r, 'prune'), n = bathEvery(), place = [S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean);
+  const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : MEDIA[p.type].feed === 'each' ? 'в каждый полив' : 'нет дня подкормки';
+  const rinseOff = p.type === 'water' ? 'соли уходят с водой' : MEDIA[p.type].care ? 'своя промывка' : p.distilled ? 'не нужна' : 'нельзя';
+  return {
+    name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
+    card: isCustom(p.id) ? ['своё растение', true] : [esc(def(p.id).species), false],
+    place: place.length ? [place.map(typedHtml).join(', '), false] : ['не выбрано', true],
+    light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
+    gh: [p.greenhouse ? 'в теплице' : 'нет', false],
+    way: [`${MEDIA[p.type].name.toLowerCase()}${pot ? ', ' + (WATERING[p.watering] || WATERING.top).name.toLowerCase() : ''}`, false],
+    feed: !fed ? [feedOff, true] : [{ 14: 'раз в 2 недели', 30: 'раз в месяц', 0: 'не кормлю' }[feedEvery(p)] + (p.lamp && feedEvery(p) ? ', под лампой' : ''), false],
+    prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
+    rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
+    bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не отмечается', true],
+  };
+}
+const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', way: 'Как растёт',
+  feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
+function setRow(key, body, vals, opened) {
+  const [v, off] = vals[key], open = opened.has(key);
+  return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
+    <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
+    <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
+}
+const setGroup = (title, rows) => `<h3 class="group-title">${title}</h3><div class="srows">${rows}</div>`;
+// After any change in the settings, the row values catch up (the handlers redraw only their own bodies).
+function refreshRows() {
+  if (!sheet.open || !cardFor || !$('#cp-settings')) return;
+  const p = plant(cardFor);
+  if (!p) return;
+  Object.entries(rowValues(p)).forEach(([k, [v, off]]) => { const el = $(`#srv-${k}`); if (el) { if (el.innerHTML !== v) el.innerHTML = v; el.classList.toggle('off', off); } });
+}
+// Submit too: a new spot added with Enter goes through the form, with no click or change after it.
+['change', 'click', 'input', 'submit'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#cp-settings')) setTimeout(refreshRows, 0); }));
+// `rows`: settings rows to open, as for a plant just added (name and place).
+function openPlant(id, tabKey, rows) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
+  if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
+}
+// The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their
+// ids, so each handler still redraws its own part (feedBox, rinseBox, wayBox…).
+function settingsHtml(id, p, ls, spots) {
+  const v = rowValues(p);
+  // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
+  const opened = openRowsFor === id ? openRows : new Set();
+  const row = (key, body) => setRow(key, body, v, opened);
+  return `${setGroup('Растение',
+    row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
+        <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
+          ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>`)
+    + row('card', isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="mt-8 btn" disabled>${I('arrow-left-right')}Сменить карточку</button>`
+      : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
+          <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`))}
+    ${setGroup('Где живёт',
+    row('place', `${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
+          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
+          ${spots.map((sp) => spotChip(id, sp, p.spot === sp)).join('')}
+          <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
+          <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
+            <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div>`)
+    + row('light', `<div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
+          <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
+          ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>`)
+    + row('gh', `<div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
+          <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
+    ${setGroup('Уход',
+    row('way', `<div id="way-box">${wayBox(p, def(id))}</div>
+        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>`)
+    + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
+    + row('prune', remindBody(id, 'prune'))
+    + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`))}
+    ${setGroup('Сейчас',
+    row('bought', `<div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
+          <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
+    + row('repot', repotBox(p))
+    + row('rest', resting(p) ? whyNot('Растение сейчас в покое: вернуть обычный уход можно в блоке «Покой» над вкладками.')
+      : p.rest ? `<p class="small muted m-0">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
+        <button class="mt-8 btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button>`
+        : `${whyNot('Для этого растения покой не отмечается: в его карточке покоя нет.')}<button class="mt-8 btn wide" disabled>${I('moon')}Ушло в покой</button>`))}
+    <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`;
 }
 // The plant card's markup on the current `cardTab`; the stories draw it for a sample plant too.
 function plantCardHtml(id) {
@@ -369,55 +457,7 @@ function plantCardHtml(id) {
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
     ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
-    ${panel('settings', `
-      <section class="group" aria-labelledby="g-name"><h3 id="g-name">Имя</h3>
-        <div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
-        <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
-          ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>
-        ${isCustom(id) ? `<div class="field"><p class="m-0"><b>Карточка ухода</b></p>${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="mt-8 btn" disabled>${I('arrow-left-right')}Сменить карточку</button></div>` : `<div class="field" role="group" aria-labelledby="lbl-card"><label id="lbl-card">Карточка ухода</label>
-          <p class="m-0" id="card-now">${esc(def(id).species)}</p>
-          <p class="mt-6 small muted" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
-          <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-now card-hint">${I('arrow-left-right')}Сменить карточку</button></div>`}</section>
-
-      <section class="group" aria-labelledby="g-place"><h3 id="g-place">Где стоит</h3>
-        ${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
-          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
-        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
-          ${spots.map((s) => spotChip(id, s, p.spot === s)).join('')}
-          <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
-          <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
-            <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div></section>
-
-      <section class="group" aria-labelledby="g-light"><h3 id="g-light">Свет</h3>
-        <div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
-          <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
-          ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div></section>
-
-      <section class="group" aria-labelledby="g-rest"><h3 id="g-rest">Покой</h3>${resting(p)
-    ? whyNot('Растение сейчас в покое: вернуть обычный уход можно в блоке «Покой» над вкладками.')
-    : p.rest
-    ? `<p class="small muted">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
-        <button class="btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button>`
-    : `${whyNot('Для этого растения покой не отмечается: в его карточке покоя нет.')}<button class="btn wide" disabled>${I('moon')}Ушло в покой</button>`}</section>
-
-      <section class="group" aria-labelledby="g-feed" id="feed-group"><h3 id="g-feed">Подкормка</h3><div id="feed-box">${feedBox(p)}</div></section>
-
-      <section class="group" aria-labelledby="g-new"><h3 id="g-new">Новое растение</h3>
-        <div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
-          <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div></section>
-
-      <section class="group" aria-labelledby="g-gh"><h3 id="g-gh">Теплица</h3>
-        <div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
-          <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div></section>
-
-      <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
-        <div id="way-box">${wayBox(p, def(id))}</div>
-        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>
-</section>
-
-      ${remindBox(id)}
-      <div id="rinse-wrap">${rinseBox(plant(id))}</div>
-      <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
+    ${panel('settings', `${settingsHtml(id, p, ls, spots)}`)}
     ${panel('history', historyHtml(p))}
     </div>`;
 }
@@ -599,7 +639,6 @@ function changeWay(id, f, value) {
   $('#way-note').innerHTML = wayNote(p, d);
   $('#water-box').innerHTML = waterBox(p);
   $('#int-field').innerHTML = intBox(p);
-  Object.keys(REMINDERS).forEach((k) => { const f = $(`#remind-field-${k}`); if (f) f.hidden = !remindFits(p, k); });
   $('#rinse-wrap').innerHTML = rinseBox(p);
   $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
@@ -670,6 +709,13 @@ document.addEventListener('change', (e) => {
 
 /* ---------- Taps on the plant card ---------- */
 Object.assign(ACTS, {
+  // A settings row opens and closes in place; the open ones are remembered while this plant's card is redrawn.
+  srow(el) {
+    const key = el.dataset.row, body = $(`#srb-${key}`), open = el.getAttribute('aria-expanded') !== 'true';
+    el.setAttribute('aria-expanded', open); body.hidden = !open;
+    if (open) openRows.add(key); else openRows.delete(key);
+    if (open) track('settings_row_opened', { row: key });
+  },
   'rinse-done'(el, id) {
     const undo = snapshot(), p = plant(id);
     // A rinse is a thorough watering, as on «Банный день»: the soil check moves on too (once a day).
