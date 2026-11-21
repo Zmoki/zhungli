@@ -103,7 +103,7 @@ const WATERING = {
 // Feeding per plant can be another kind here.
 const REMINDERS = {
   prune: { name: 'Обрезка', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️', icon: 'scissors', gloves: true,
-    hint: 'Чистым острым секатором или ножницами. Убрать сухие и вытянутые побеги, длинные укоротить.',
+    hint: 'Острым чистым секатором, над узлом, без пенька; срезы не замазывать. После больного растения лезвие протереть раствором хлорного отбеливателя 1:9 и ополоснуть: спирт не берёт вирус табачной мозаики. Вытянутые бледные стебли значат, что мало света: обрезка этого не исправит.',
     every: [[14, '2 недели', 'раз в 2 недели'], [30, 'Месяц', 'раз в месяц'], [60, '2 месяца', 'раз в 2 месяца'], [300, 'Раз в год', 'раз в год']],
     start: { every: 300, months: [3, 4] } },
   // Salts from fertilizer and hard water stay in the pot. A medium with its own rinse (clay pebbles, pon) has it already.
@@ -114,6 +114,10 @@ const REMINDERS = {
     start: { every: 120, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
     fits: (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care },
 };
+// A card's word on a reminder: `prune: { no }` (not pruned, and why), or `prune: { months, tip }`.
+const remindCard = (p, kind) => (kind === 'prune' && p.prune) || {};
+// What ticking a reminder sets: a card's own months over the kind's.
+const remindStart = (p, kind) => ({ ...REMINDERS[kind].start, ...(remindCard(p, kind).months ? { months: remindCard(p, kind).months } : {}) });
 // Whether a plant gets a kind of reminder at all (flushing isn't for clay pebbles, nor for a plant in water).
 const remindFits = (p, kind) => !REMINDERS[kind].fits || REMINDERS[kind].fits(p);
 // A plant's reminder of one kind, or null when it's off (or malformed, say from an edited backup).
@@ -477,7 +481,7 @@ function bonusTasks() {
       if (!x || !x.months.includes(month) || snoozed(k) || !remindFits(p, kind)) return;
       // Cutting is when sap gets on skin: plants with irritating sap get the card's gloves warning.
       const gloves = p.toxic && R.gloves ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
-      if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: R.hint + gloves });
+      if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: [remindCard(p, kind).tip, R.hint].filter(Boolean).join(' ') + gloves });
     });
     const dk = 'dust:' + p.id;
     if (p.big && S.bonus[dk] && diff(S.bonus[dk], t) >= 21 && !snoozed(dk)) {

@@ -111,11 +111,11 @@ function monthsText(ms) {
   return runs.flatMap((r) => (r.length >= 3 ? [`${MONTHS[r[0] - 1]}–${MONTHS[r[r.length - 1] - 1]}`] : r.map((m) => MONTHS[m - 1]))).join(', ');
 }
 function remindMore(id, kind) {
-  const R = REMINDERS[kind], x = remindOf(S.plants[id], kind), last = S.bonus[`${kind}:${id}`];
-  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, `<b>Если отметить:</b> позову ${R.verb} в «Если есть силы» в выбранные месяцы.`, `<b>Сейчас</b> не напоминаю.`].filter(Boolean))}</div>`;
+  const R = REMINDERS[kind], x = remindOf(S.plants[id], kind), last = S.bonus[`${kind}:${id}`], c = remindCard(plant(id), kind);
+  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, c.tip && esc(c.tip), `<b>Если отметить:</b> позову ${R.verb} в «Если есть силы»${c.months ? `: ${monthsText(c.months)}` : ' в выбранные месяцы'}.`, `<b>Сейчас</b> не напоминаю.`].filter(Boolean))}</div>`;
   const often = R.every.find(([n]) => n === x.every);
   const chip = (act, attr, on, label, aria = '') => `<button class="chip ${on ? 'on' : ''}" data-act="${act}" data-id="${esc(id)}" data-kind="${kind}" ${attr} aria-pressed="${on}"${aria}>${label}</button>`;
-  return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(`Позову ${R.verb} в «Если есть силы» ${often ? often[2] : `раз в ${days(x.every)}`}: ${monthsText(x.months)}.`)}</div>
+  return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[c.tip && esc(c.tip), `Позову ${R.verb} в «Если есть силы» ${often ? often[2] : `раз в ${days(x.every)}`}: ${monthsText(x.months)}.`].filter(Boolean))}</div>
     <div class="field mt-12" role="group" aria-labelledby="lbl-every-${kind}"><label id="lbl-every-${kind}">Как часто</label><div class="chips">
       ${R.every.map(([n, label]) => chip('remind-every', `data-n="${n}"`, x.every === n, label)).join('')}</div></div>
     <div class="field" role="group" aria-labelledby="lbl-months-${kind}"><label id="lbl-months-${kind}">В какие месяцы</label><div class="chips">
@@ -124,7 +124,11 @@ function remindMore(id, kind) {
     <button class="mt-8 btn ok" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}">${I(R.icon)}${R.btn}</button>`;
 }
 // Every kind is drawn; one that doesn't fit how the plant grows (flushing clay pebbles) is hidden, and shown again by changeWay.
-const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<div class="field" id="remind-field-${kind}"${remindFits(plant(id), kind) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.name}</label>
+// A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
+const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
+const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => remindNo(id, kind)
+  ? `<div class="field" id="remind-field-${kind}"><p class="m-0"><b>${R.name}</b></p><div class="mt-6 small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div></div>`
+  : `<div class="field" id="remind-field-${kind}"${remindFits(plant(id), kind) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.name}</label>
   <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`).join('');
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
@@ -535,7 +539,7 @@ document.addEventListener('change', (e) => {
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'remind') {
     const k = el.dataset.kind;
-    const start = REMINDERS[k].start;
+    const start = remindStart(plant(id), k);
     setRemind(id, k, el.checked ? { every: start.every, months: [...start.months] } : null, el.checked ? 'on' : 'off'); // saves
     return;
   }

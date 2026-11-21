@@ -91,7 +91,10 @@ Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one 
 ## Reminders
 
 «Напоминания» in the plant card's «Настройки» has a checkbox per kind in `REMINDERS` (`state.js`):
-- **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season).
+- **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April, or in the card's `prune.months`. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season). A card's `prune` comes from the checked pruning facts:
+  - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the checkbox; a reminder already on stays.
+  - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the checkbox and before the task hint.
+  - Cards without `prune` keep the general hint: where to cut, a bleach rinse after a sick plant, and that pale stretched stems need light.
 - **«Промывка грунта»** (`rinse`): salts from fertilizer and hard water. Ticked, it starts at every 4 months, all year; «Как часто»: 4 months or half a year (4–6 months by Illinois, Maryland, Oregon State). Only in a pot whose medium has no rinse of its own (`fits`): clay pebbles and pon have theirs. The «День подкормки» hint points to it.
 
 Each, once ticked, shows:
