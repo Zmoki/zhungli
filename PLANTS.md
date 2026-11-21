@@ -64,6 +64,7 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | Watering | Check | Buttons |
 |---|---|---|
 | `top` сверху | the medium's | the medium's |
+| `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон» |
 | `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато» |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
 | `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «пора проверить» |
@@ -77,7 +78,7 @@ Drip irrigation (`fixed` in `WATERING`) waters by itself, so its checks look at 
 Water is «мутновато» when due. Water, sphagnum and a block come first among checks due the same day. A card's own `check` replaces the medium's question. A question becomes a task («Полейте, если …», «Смените воду, если …», «Сбрызните, если …»); a check written as an instruction is shown as is.
 
 Picking another way than the card's:
-- The card's `check` is dropped, and its «Как поливаю» tip gives way to the new way's. With another medium, «Субстрат» does too. The rest of the card stays.
+- The card's `check` is dropped, except between watering from above and from below (both check the soil). Its «Как поливаю» tip gives way to the new way's. With another medium, «Субстрат» does too. The rest of the card stays.
 - The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, drip irrigation at 14, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
 - Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 6 weeks.
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
