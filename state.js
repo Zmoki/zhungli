@@ -19,7 +19,7 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING);
 // watering: the medium's usual watering when it isn't from above (clay pebbles stand on a reservoir).
 // Only WATERING: fixed: the plant waters itself (drip irrigation): checks look at the system, their interval
-// is the person's pick (`every` options) and doesn't learn, and a check doesn't make the plant «напоено»;
+// is the person's pick from `picks` (days) and doesn't learn, and a check doesn't make the plant «напоено»;
 // icons: the check buttons' icons; recheck: days to the next check after the second answer.
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
@@ -85,7 +85,7 @@ const WATERING = {
     hint: 'Не буду звать поливать, а напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
   drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'пора проверить',
-    fixed: true, every: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14, min: 7, max: 28,
+    fixed: true, picks: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14,
     recheck: (iv) => Math.max(3, Math.round(iv / 4)),
     task: 'Проверьте автополив: шланги и капельницы целы, таймер работает, грунт влажный',
     hint: 'Поливать не позову. Напомню проверить систему: шланги, капельницы, таймер.',
