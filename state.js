@@ -18,6 +18,9 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents);
 // badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING);
 // watering: the medium's usual watering when it isn't from above (clay pebbles stand on a reservoir).
+// Only WATERING: fixed: the plant waters itself (drip irrigation): checks look at the system, their interval
+// is the person's pick from `picks` (days) and doesn't learn, and a check doesn't make the plant «напоено»;
+// icons: the check buttons' icons; recheck: days to the next check after the second answer.
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
@@ -81,6 +84,12 @@ const WATERING = {
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать, а напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
+  drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'пора проверить',
+    fixed: true, picks: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14,
+    recheck: (iv) => Math.max(3, Math.round(iv / 4)),
+    task: 'Проверьте автополив: шланги и капельницы целы, таймер работает, грунт влажный',
+    hint: 'Поливать не позову. Напомню проверить систему: шланги, капельницы, таймер.',
+    water: 'Осмотреть шланги и капельницы: нет ли протечек и засоров. Проверить таймер и батарейку в нём. Грунт у корней влажный, но не мокрый. Забитые капельницы промыть.' },
 };
 // Kinds of per-plant bonus tasks, for cleaning up after a plant is removed.
 const BONUS_KINDS = ['dust', 'rotate', ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
@@ -117,7 +126,8 @@ function careOf(d, r) {
   // A card's own tips for another medium it's often grown in (`ways`), before the medium's general ones.
   // Its check question and watering tip are for watering from above; a wick or reservoir has its own.
   const alt = (!sameMedium && d.ways && d.ways[k]) || {};
-  const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, m.feedTip].filter(Boolean).join(' ');
+  // feedTip speaks of top-ups (a wick, a reservoir); drip irrigation gets the way's own hint about fertilizer.
+  const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, WATERING[w].act === 'top' && m.feedTip].filter(Boolean).join(' ');
   const check = own ? d.check : (fromAbove && alt.check) || '';
   return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
 }
@@ -143,9 +153,13 @@ const TYPE_NAMES = Object.fromEntries(Object.entries(MEDIA).map(([k, g]) => [k, 
 const ACT_WORDS = {
   pour: { title: 'Полив', last: 'Последний полив', none: 'Поливов ещё не было', due: 'Пора проверить сегодня', next: 'Следующая проверка', btn: 'Записать полив', done: 'Полив записан 💧', sub: 'полив' },
   top: { title: 'Долив', last: 'Последний долив', none: 'Доливов ещё не было', due: 'Пора проверить уровень сегодня', next: 'Проверить уровень', btn: 'Записать долив', done: 'Долив записан 💧', sub: 'долив' },
+  system: { title: 'Автополив', last: 'Последняя проверка', none: 'Проверок ещё не было', due: 'Пора проверить систему сегодня', next: 'Следующая проверка', btn: 'Записать проверку', done: 'Проверка записана ✅', sub: 'проверка' },
   change: { title: 'Вода', last: 'Последняя смена воды', none: 'Воду ещё не меняли', due: 'Пора проверить воду сегодня', next: 'Следующая проверка', btn: 'Записать смену воды', done: 'Смена воды записана 💧', sub: 'смена воды' },
 };
 const actWords = (p) => ACT_WORDS[wayOf(p).act || 'pour'];
+// How often a fixed way is checked: «раз в 2 недели», «раз в 10 дней».
+const weeks = (n) => (n === 7 ? 'неделю' : `${n / 7} ${plural(n / 7, 'неделю', 'недели', 'недель')}`);
+const everyText = (n) => `раз в ${n % 7 ? days(n) : weeks(n)}`;
 
 let booting = true;
 // On Android and computers the browser and the installed app share storage, so another window can
@@ -367,7 +381,7 @@ const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.l
 function states(p) {
   const t = today(), out = [];
   const known = (p.hist && p.hist.length) || p.lastWater || p.nextCheck < t;
-  if (p.lastWater === t) out.push('watered');
+  if (p.lastWater === t && !wayOf(p).fixed) out.push('watered');
   else if (p.nextCheck <= t && known && !wayOf(p).noChecks) out.push('need');
   const ls = lightStatus(p);
   if (ls === 'low') out.push('dim');
@@ -398,6 +412,8 @@ const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.
 const bySpot = (a, b) => spotIdx(a.spot) - spotIdx(b.spot) || a.title.localeCompare(b.title, 'ru');
 
 /* ---------- Tasks ---------- */
+// Answers to a check in the day log (and plant history): watering, still moist; a system works, was fixed.
+const CHECK_ANSWERS = ['water', 'wet', 'ok', 'fix'];
 function priority(p) {
   const overdue = diff(p.nextCheck, today());
   const thirsty = wayOf(p).first || p.interval <= 3 ? 0.3 : 0;
@@ -465,6 +481,7 @@ function snapshot() {
 
 function actWater(id, silent) {
   const r = S.plants[id], d = def(id), t = today();
+  if (wayOf(plant(id)).fixed) { actSystem(id, false, silent); return; }
   if (r.lastWater && r.lastWater !== t) {
     const measured = diff(r.lastWater, t);
     // After "still wet" answers, the real interval is about the measured one.
@@ -481,7 +498,19 @@ function actWater(id, silent) {
   if (!silent) logToday({ id, a: 'water' });
 }
 
+// A check of a system that waters by itself: «Работает» waits the whole interval, «Поправлено» looks again
+// soon to see the fix holds. The interval stays the person's pick. lastWater holds the last check.
+function actSystem(id, fixed, silent) {
+  const r = S.plants[id], t = today(), g = wayOf(plant(id));
+  r.lastWater = t;
+  r.wet = 0;
+  r.nextCheck = addDays(t, fixed ? g.recheck(r.interval) : Math.max(1, Math.round(r.interval)));
+  hist(r, fixed ? 'fix' : 'ok');
+  if (!silent) logToday({ id, a: fixed ? 'fix' : 'ok' });
+}
+
 function actWet(id) {
+  if (wayOf(plant(id)).fixed) { actSystem(id, true); return; }
   const r = S.plants[id];
   r.wet += 1;
   r.nextCheck = addDays(today(), Math.max(1, Math.round(r.interval * 0.25)));
@@ -497,7 +526,7 @@ function actLater(id) {
 // What «Сегодня» shows: checks within the daily limit, greenhouses to vent, progress.
 function todayPlan() {
   const log = S.log[today()] || [];
-  const doneChecks = log.filter((e) => e.a === 'water' || e.a === 'wet').length;
+  const doneChecks = log.filter((e) => CHECK_ANSWERS.includes(e.a)).length;
   const due = dueChecks();
   const room = showAll ? due.length : Math.max(0, S.settings.limit - doneChecks);
   const shown = due.slice(0, room).sort(bySpot);

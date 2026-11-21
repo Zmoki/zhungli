@@ -248,11 +248,11 @@ function viewToday() {
   });
 
   shown.forEach((p) => {
-    const [yes, no] = labelsOf(p);
+    const [yes, no] = labelsOf(p), g = wayOf(p), [yi, ni] = g.icons || ['droplet'];
     html += taskCard({
       p, subHtml: plantSubHtml(p, p.lastWater ? `${actWords(p).sub} ${rel(p.lastWater)}` : ''), quip: quipOf(p), task: waterTask(p),
-      buttons: `<button class="btn water" data-act="water" data-id="${esc(p.id)}">${I('droplet')}${yes}</button>
-        <button class="btn" data-act="wet" data-id="${esc(p.id)}">${no}</button>`,
+      buttons: `<button class="btn ${g.fixed ? 'ok' : 'water'}" data-act="water" data-id="${esc(p.id)}">${I(yi)}${yes}</button>
+        <button class="btn" data-act="wet" data-id="${esc(p.id)}">${ni ? I(ni) : ''}${no}</button>`,
       hint: p.water,
       after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button>`,
     });
@@ -290,7 +290,7 @@ function viewToday() {
 
   const doneRows = log.filter((e) => e.a !== 'later');
   if (doneRows.length) {
-    const label = { water: 'полито', wet: 'ещё влажно', vent: 'проветрено', bonus: 'сделано' };
+    const label = { water: 'полито', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', vent: 'проветрено', bonus: 'сделано' };
     html += `<details><summary class="group-title">Уже сделано сегодня · ${doneRows.length}</summary>`;
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
@@ -330,7 +330,7 @@ function spotGroups(ps, room) {
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
       html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}${growBadges(p)}</span></div>
-        <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${I('droplet')}<span class="sr-only">проверка полива</span> ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
+        <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
   });
@@ -576,11 +576,11 @@ const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧'
 Object.assign(ACTS, {
   water(el, id) {
     const undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', ...kindOf(id) });
-    afterTask(WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo);
+    afterTask(wayOf(plant(id)).fixed ? 'Автополив работает ✅' : WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo);
   },
   wet(el, id) {
     const undo = snapshot(); actWet(id); track('plant_checked', { answer: 'wet', ...kindOf(id) });
-    afterTask(`Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo);
+    afterTask(wayOf(plant(id)).fixed ? `Отлично! Проверю систему ещё раз ${rel(S.plants[id].nextCheck)} 🔧` : `Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo);
   },
   later(el, id) {
     const undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭︎', undo);

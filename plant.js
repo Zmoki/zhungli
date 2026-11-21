@@ -67,7 +67,7 @@ function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
   if (g.noChecks) return `<div class="info water"><b>${g.name}</b>Поливать не нужно, корни в воде аквариума.</div>`;
   return `<div class="info water"><b>${w.title || g.name}</b>${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
-    <button class="water-now btn water wide" data-act="water-now" data-id="${esc(p.id)}">${I('droplet')}${w.btn}</button>`;
+    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
 // «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
 // watered, and what that means. All options are chips, nothing hidden in a dropdown.
@@ -95,6 +95,21 @@ function repotHint(p) {
 const ghHint = (on) => (on ? hintLines('Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.')
   : hintLines('<b>Если отметить:</b> каждый день напомню проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не напоминаю.'));
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
+// How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
+// with the way's options (it doesn't learn). Redrawn alone when the way changes.
+const everyLabel = (n) => (n === 7 ? 'Неделя' : `${n / 7} недели`);
+function intBox(p) {
+  const g = wayOf(p), iv = Math.round(p.interval);
+  if (g.fixed) {
+    return `<label id="lbl-int">Проверять систему</label><div class="chips">
+      ${g.picks.map((n) => `<button class="chip ${iv === n ? 'on' : ''}" data-act="int-pick" data-id="${esc(p.id)}" data-n="${n}" aria-pressed="${iv === n}">${everyLabel(n)}</button>`).join('')}</div>
+      <p class="mt-6 small muted" id="int-hint">Сам не меняется: проверю систему так часто, как вы выберете.</p>`;
+  }
+  return `<label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
+    <button data-act="int-minus" data-id="${esc(p.id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(iv)}</b>
+    <button data-act="int-plus" data-id="${esc(p.id)}" aria-label="Реже">${I('plus')}</button></div>
+    <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p>`;
+}
 
 // The plant card's picture and its photo buttons; heroPhotoChanged() redraws them alone.
 function heroPic(p, mc) {
@@ -120,32 +135,40 @@ function heroPhotoChanged(id) {
 function glanceHtml(p) {
   const tr = tempRange(p), g = wayOf(p);
   return `<ul class="glance" aria-label="Коротко">
-    ${g.noChecks ? '' : `<li>${I('droplet')}<span>раз в ~${days(Math.round(p.interval))}</span></li>`}
+    ${g.noChecks ? '' : g.fixed ? `<li>${I('calendar-check')}<span>проверка ${everyText(Math.round(p.interval))}</span></li>` : `<li>${I('droplet')}<span>раз в ~${days(Math.round(p.interval))}</span></li>`}
     <li>${I('sun')}<span>${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</span></li>
     ${tr ? `<li>${I('thermometer')}<span>${tr[0]}–${tr[1]} °C</span></li>` : ''}
     <li>${I('shovel')}<span>${esc(MEDIA[p.type].name.toLowerCase())}</span></li>
     ${WATERING[p.watering]?.badge ? `<li>${I(WATERING[p.watering].badge[0])}<span>${WATERING[p.watering].badge[1]}</span></li>` : ''}</ul>`;
 }
 // Answers in history. Neutral words: an entry doesn't say which way the plant grew then.
-const HIST_WORDS = { water: 'полив', wet: 'ещё влажно' };
+const HIST_WORDS = { water: 'полив', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено' };
+// Dots: a watering or a working system is full, the other answer is light.
+const HIST_DOTS = { water: 'w', ok: 'w', wet: 'd', fix: 'd' };
+// The legend's words: the kinds shown in the strip (`shown`), else the current way's: a system's checks, or waterings.
+const legendHtml = (p, plan, shown) => {
+  const keys = shown && shown.size ? Object.keys(HIST_DOTS).filter((k) => shown.has(k)) : wayOf(p).fixed ? ['ok', 'fix'] : ['water', 'wet'];
+  return `<p class="small legend" aria-hidden="true">${plan ? '<span><i class="plan"></i>проверка</span>' : ''}${keys.map((k) => `<span><i class="${HIST_DOTS[k]}"></i>${HIST_WORDS[k]}</span>`).join('')}</p>`;
+};
 const histWord = (a) => HIST_WORDS[a] || HIST_WORDS.wet; // anything but a watering reads as «ещё влажно», as before
 // The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
 // legend are hidden from screen readers: the average and the list below say the same.
 // The average counts only waterings in these 4 weeks.
 function rhythmHtml(p) {
-  const byDay = {};
-  p.hist.forEach((h) => { if (byDay[h.d] !== 'water') byDay[h.d] = h.a; });
+  const byDay = {}, from = addDays(today(), -27), shown = new Set();
+  // Only answers to checks get a dot; other kinds in the history are only in the list.
+  p.hist.forEach((h) => {
+    if (!HIST_DOTS[h.a] || h.d < from) return;
+    shown.add(h.a);
+    if (byDay[h.d] !== 'w') byDay[h.d] = HIST_DOTS[h.a];
+  });
   const cells = [];
-  for (let i = 27; i >= 0; i--) {
-    const d = addDays(today(), -i), a = byDay[d];
-    cells.push(`<li class="${a === 'water' ? 'w' : a === 'wet' ? 'd' : ''}${i ? '' : ' now'}"></li>`);
-  }
-  const from = addDays(today(), -27);
+  for (let i = 27; i >= 0; i--) cells.push(`<li class="${byDay[addDays(today(), -i)] || ''}${i ? '' : ' now'}"></li>`);
   const waters = [...new Set(p.hist.filter((h) => h.a === 'water' && h.d >= from).map((h) => h.d))].sort();
   const gaps = waters.slice(1).map((d, i) => diff(waters[i], d));
   const avg = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 0;
   return `<ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
-    <p class="small legend" aria-hidden="true"><span><i class="w"></i>${HIST_WORDS.water}</span><span><i class="d"></i>${HIST_WORDS.wet}</span></p>
+    ${legendHtml(p, false, shown)}
     ${avg ? `<p class="small muted m-0">В среднем раз в ${days(avg)}.${wayOf(p).noChecks ? '' : ` Проверка сейчас: раз в ${days(Math.round(p.interval))}.`}</p>` : ''}`;
 }
 
@@ -159,8 +182,8 @@ function plannedHtml(p) {
   for (let i = 0; i < 28; i++) cells.push(`<li class="${plan.has(addDays(today(), i)) ? 'plan' : ''}${i ? '' : ' now'}"></li>`);
   return `<section class="group" aria-labelledby="g-soon"><h3 id="g-soon">Ближайшие 4 недели</h3>
     <ol class="rhythm" aria-hidden="true">${cells.join('')}</ol>
-    <p class="small legend" aria-hidden="true"><span><i class="plan"></i>проверка</span><span><i class="w"></i>${HIST_WORDS.water}</span><span><i class="d"></i>${HIST_WORDS.wet}</span></p>
-    <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше примерно раз в ${days(Math.round(p.interval))}. Ваши ответы появятся здесь.</p></section>`;
+    ${legendHtml(p, true)}
+    <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше ${wayOf(p).fixed ? everyText(Math.round(p.interval)) : `примерно раз в ${days(Math.round(p.interval))}`}. Ваши ответы появятся здесь.</p></section>`;
 }
 
 // Tabs of the plant card. The card opens on «Заметки»; a redraw of the same open card keeps the tab.
@@ -239,10 +262,7 @@ function plantCardHtml(id) {
 
       <section class="group" aria-labelledby="g-way"><h3 id="g-way">Как растёт</h3>
         <div id="way-box">${wayBox(p, def(id))}</div>
-        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}><label id="lbl-int">Проверять примерно каждые</label><div class="stepper">
-          <button data-act="int-minus" data-id="${esc(id)}" aria-label="Чаще">${I('minus')}</button><b id="int-val">${days(Math.round(p.interval))}</b>
-          <button data-act="int-plus" data-id="${esc(id)}" aria-label="Реже">${I('plus')}</button></div>
-          <p class="mt-6 small muted" id="int-hint">${intHint(p)}</p></div>
+        <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}>${intBox(p)}</div>
 </section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
     ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
@@ -300,9 +320,14 @@ function setWay(id, medium, watering) {
   r.medium = medium; // kept even when it's the card's, so a later change of the card doesn't move the plant
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
   const base = r.soilInterval || d.every;
-  if (isCardWay(r, d)) { r.interval = base; delete r.soilInterval; } else r.interval = (wayOf({ type: medium, watering }).start || ((b) => b))(base);
+  // Drip irrigation moved to another medium keeps the person's pick and its next check: neither is the card's.
+  if (!(WATERING[from.watering]?.fixed && WATERING[watering]?.fixed)) {
+    if (isCardWay(r, d)) { r.interval = base; delete r.soilInterval; } else r.interval = (wayOf({ type: medium, watering }).start || ((b) => b))(base);
+    r.nextCheck = addDays(today(), Math.round(r.interval));
+  }
   r.wet = 0;
-  r.nextCheck = addDays(today(), Math.round(r.interval));
+  // Drip irrigation keeps its last check in lastWater: a watering isn't a check of the system, nor the other way round.
+  if (!!WATERING[from.watering]?.fixed !== !!WATERING[watering]?.fixed) r.lastWater = null;
   // Roots moved out of soil into a mineral medium, water or air need time: like after repotting, no feeding meanwhile.
   const settle = !!MEDIA[from.medium].organic && !MEDIA[medium].organic;
   if (settle) r.repotted = today();
@@ -343,7 +368,8 @@ function setCard(id, key) {
   r.medium = medium;
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
   const onWay = isCardWay(r, d), g = wayOf({ type: medium, watering }), before = Math.round(r.interval);
-  if (!r.lastWater) r.interval = onWay ? d.every : (g.start || ((b) => b))(d.every);
+  // Drip irrigation keeps the person's pick.
+  if (!r.lastWater && !g.fixed) r.interval = onWay ? d.every : (g.start || ((b) => b))(d.every);
   else if (onWay) r.interval = clamp(r.interval, ...cardBounds(d, g));
   // A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
   const iv = Math.round(r.interval), putOff = (S.log[today()] || []).some((e) => e.id === id && e.a === 'later');
@@ -418,8 +444,7 @@ function changeWay(id, f, value) {
   $('#way-note').innerHTML = wayNote(p, d);
   $('#water-box').innerHTML = waterBox(p);
   $('#int-field').hidden = !!wayOf(p).noChecks;
-  $('#int-val').textContent = days(Math.round(r.interval));
-  $('#int-hint').textContent = intHint(p);
+  $('#int-field').innerHTML = intBox(p);
   $('#glance').innerHTML = glanceHtml(p);
   $('#repot-field').hidden = !feedsOnDay(p);
   if (res.settle) {
@@ -546,6 +571,20 @@ Object.assign(ACTS, {
   },
   'int-minus': stepInterval,
   'int-plus': stepInterval,
+  'int-pick'(el, id) {
+    const r = S.plants[id], n = Number(el.dataset.n);
+    if (!r || !wayOf(plant(id)).picks?.includes(n)) return;
+    r.interval = n;
+    // From the last check, but not before today; never checked yet: from today.
+    const next = addDays(r.lastWater || today(), n);
+    r.nextCheck = next < today() ? today() : next;
+    save();
+    el.parentElement.querySelectorAll('.chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
+    const p = plant(id);
+    $('#glance').innerHTML = glanceHtml(p);
+    $('#water-box').innerHTML = waterBox(p);
+    track('check_interval_set', { days: n, ...kindOf(id) });
+  },
   delete(el, id) {
     if (confirm(`Убрать «${plant(id).title}» из коллекции?`)) {
       delete S.plants[id];
