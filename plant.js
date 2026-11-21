@@ -100,7 +100,7 @@ const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(
 const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
-  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
+  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно: с марта по сентябрь, раз в 2 недели.');
 }
 // «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
@@ -558,7 +558,7 @@ document.addEventListener('change', (e) => {
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
-  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
+  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
   if (f === 'remind') {
     const k = el.dataset.kind;
