@@ -20,7 +20,7 @@ Record fields:
 | `interval` | Learned days between checks. |
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
-| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed). |
+| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`). |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
 | `medium` | What the roots are in. Catalog plants keep it from the day they're added, so a card's new `type` doesn't move them. |
@@ -28,6 +28,7 @@ Record fields:
 | `soilInterval` | The card's interval, kept while the plant grows another way. |
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
+| `remind` | Reminders turned on in «Напоминания»: `{ prune: { every, months } }`, days and months 1–12. See [Reminders](#reminders). |
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
@@ -85,6 +86,15 @@ Picking another way than the card's:
 - The drawing stays the card's: a dracaena moved into water is still drawn as a dracaena.
 
 Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one (`badge` in `MEDIA`, `WATERING`; looks in [DESIGN.md](DESIGN.md)): words in the plant card, one icon on grid cards. The badge is left out when the plant's name or species already says it («Черенки в воде»), and a medium's usual watering (clay pebbles on a reservoir) gets none. A tillandsia's own `mount` gets no badge or chip (`noBadge`): it may hang or sit on a shelf. The Plants filter has a chip for each way that has plants, the plants whose name says it included.
+
+## Reminders
+
+«Напоминания» in the plant card's «Настройки» has a checkbox per kind in `REMINDERS` (`state.js`); for now only «Обрезка». Ticked, it starts at «Раз в год» in March and April, and shows:
+- «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season);
+- «В какие месяцы»: 12 chips, at least one stays on;
+- the last time, and «Обрезано сегодня» to note a pruning done without the reminder.
+
+It comes as a bonus task on «Сегодня» (see [TASKS.md](TASKS.md#bonus-tasks)). A pruning, from there or the card, goes to the history as «обрезано»; the dots in «Последние 4 недели» show only checks. A new kind (feeding per plant) needs only an entry in `REMINDERS`.
 
 ## How the interval learns
 

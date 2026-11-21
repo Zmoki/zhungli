@@ -91,8 +91,27 @@ const WATERING = {
     hint: 'Поливать не позову. Напомню проверить систему: шланги, капельницы, таймер.',
     water: 'Осмотреть шланги и капельницы: нет ли протечек и засоров. Проверить таймер и батарейку в нём. Грунт у корней влажный, но не мокрый. Забитые капельницы промыть.' },
 };
+// Per-plant reminders the person turns on in the plant card: r.remind[kind] = { every, months }.
+// They come as bonus tasks (`<kind>:<id>`, the date in S.bonus as for dusting) in the active months (1–12),
+// `every` days after the last time, at once if never. «Готово» also goes to the plant's history as `kind`.
+// every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
+// start: what ticking the box sets. Feeding per plant can be another kind here.
+const REMINDERS = {
+  prune: { name: 'Обрезка', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️',
+    hint: 'Чистым острым секатором или ножницами. Убрать сухие и вытянутые побеги, длинные укоротить.',
+    every: [[14, '2 недели', 'раз в 2 недели'], [30, 'Месяц', 'раз в месяц'], [60, '2 месяца', 'раз в 2 месяца'], [300, 'Раз в год', 'раз в год']],
+    start: { every: 300, months: [3, 4] } },
+};
+// A plant's reminder of one kind, or null when it's off (or malformed, say from an edited backup).
+function remindOf(r, kind) {
+  const x = r && r.remind && r.remind[kind];
+  return REMINDERS[kind] && x && x.every > 0 && Array.isArray(x.months) && x.months.length ? x : null;
+}
+// Answers to checks in a plant's history: reminders done (a pruning) aren't checks.
+const checksOf = (p) => (p.hist || []).filter((h) => !REMINDERS[h.a]);
+const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 // Kinds of per-plant bonus tasks, for cleaning up after a plant is removed.
-const BONUS_KINDS = ['dust', 'rotate', ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
+const BONUS_KINDS = ['dust', 'rotate', ...Object.keys(REMINDERS), ...new Set(Object.values(MEDIA).map((m) => m.care && m.care.kind).filter(Boolean))];
 const mediumIn = (r, d) => (MEDIA[r.medium] ? r.medium : MEDIA[d.type] ? d.type : 'soil');
 // Watering of a potted plant (null when the medium isn't in a pot). Older plants keep wick watering in r.wick.
 const cardWatering = (d) => (MEDIA[d.type] && MEDIA[d.type].pot ? (WATERING[d.watering] ? d.watering : 'top') : null);
@@ -380,7 +399,7 @@ const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.l
 // A plant nobody has answered about yet isn't called dry on its first check day: we don't know yet.
 function states(p) {
   const t = today(), out = [];
-  const known = (p.hist && p.hist.length) || p.lastWater || p.nextCheck < t;
+  const known = checksOf(p).length || p.lastWater || p.nextCheck < t;
   if (p.lastWater === t && !wayOf(p).fixed) out.push('watered');
   else if (p.nextCheck <= t && known && !wayOf(p).noChecks) out.push('need');
   const ls = lightStatus(p);
@@ -433,8 +452,17 @@ function bonusTasks() {
   const t = today();
   const out = [];
   const snoozed = (k) => S.snooze[k] && S.snooze[k] > t;
-  const cares = {};
+  const cares = {}, month = new Date().getMonth() + 1;
+  // Reminders the person turned on: one comes first (they asked for it), the rest after the other tasks.
+  const own = [];
   allPlants().forEach((p) => {
+    Object.keys(p.remind || {}).forEach((kind) => {
+      const R = REMINDERS[kind], x = remindOf(p, kind), k = `${kind}:${p.id}`;
+      if (!x || !x.months.includes(month) || snoozed(k)) return;
+      // Cutting is when sap gets on skin: plants with irritating sap get the card's gloves warning.
+      const gloves = p.toxic ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
+      if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: R.hint + gloves });
+    });
     const dk = 'dust:' + p.id;
     if (p.big && S.bonus[dk] && diff(S.bonus[dk], t) >= 21 && !snoozed(dk)) {
       out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, task: 'Протрите листья', hint: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
@@ -452,7 +480,6 @@ function bonusTasks() {
     out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, hint: care.hint }
       : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, who: ps.map((p) => p.title), hint: care.hint });
   });
-  const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     // Fed on the day: soil-like media, plus flowering succulents (dry with `feed`). The rest get fertilizer with every watering, or none.
     const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p));
@@ -467,7 +494,19 @@ function bonusTasks() {
     out.push({ key: 'feedback', icon: 'smile', title: 'Как вам Жунгли?', task: 'Расскажите, что нравится и что мешает',
       hint: 'Пара слов Зареме в Телеграм @zmoki. Она читает всё и часто обновляет приложение.', contact: true });
   }
-  return out.slice(0, 2);
+  return [...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
+}
+// A bonus task done: today's date for each key it stands for; a reminder also goes to the plant's history.
+function bonusDone(key) {
+  bonusKeys(key).forEach((k) => { const [kind, id] = k.split(':'); if (REMINDERS[kind]) remindDone(id, kind); else S.bonus[k] = today(); });
+}
+// A reminder done (from «Сегодня» or the plant card): the date for the next one, and a line in the history.
+function remindDone(id, kind) {
+  const r = S.plants[id];
+  if (!r || !REMINDERS[kind]) return;
+  S.bonus[`${kind}:${id}`] = today();
+  delete S.snooze[`${kind}:${id}`];
+  hist(r, kind);
 }
 
 // A bonus task's key → the dates it stands for: «roots:a,b» is «roots:a» and «roots:b».

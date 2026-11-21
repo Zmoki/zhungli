@@ -597,7 +597,7 @@ Object.assign(ACTS, {
   'bonus-done'(el) {
     const undo = snapshot();
     const b = bonusTasks().find((x) => x.key === el.dataset.key);
-    bonusKeys(el.dataset.key).forEach((k) => { S.bonus[k] = today(); });
+    bonusDone(el.dataset.key);
     track('bonus_done', { kind: el.dataset.key.split(':')[0] });
     logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
     afterTask('Бонус засчитан ✨', undo);
