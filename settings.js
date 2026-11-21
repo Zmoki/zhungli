@@ -144,7 +144,7 @@ $('#import-input').addEventListener('change', (e) => {
   if (f) doImport(f);
 });
 
-// «Банный день»: off, or how often the whole collection gets its soil rinsed on one day. Redrawn alone.
+// «Банный день»: off, or how often each plant gets bathed (its soil rinsed); a bath day offers only dry pots. Redrawn alone.
 function bathBox() {
   const n = bathEvery(), last = S.bonus.bath;
   const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="bath-every" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;

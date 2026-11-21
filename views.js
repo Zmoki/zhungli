@@ -240,6 +240,8 @@ function bathHtml(bp) {
     buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Не сегодня</button>`,
     hint: 'Промываем грунт от солей удобрений и жёсткой воды. Купаем только тех, у кого грунт подсох: мокрый пролить насквозь значит залить.' });
 }
+// The page is drawn anew on each step: focus goes to the step's main button, not back to the top.
+function bathRender(sel) { render(); document.querySelector(sel)?.focus(); }
 const nameList = (ps) => (ps.length <= 3 ? ps.map((p) => p.title).join(', ') : `${ps.slice(0, 3).map((p) => p.title).join(', ')} и ещё ${ps.length - 3}`);
 
 // «Species · place» under a plant's name on task cards, as HTML; `extra` adds app text, e.g. the last watering.
@@ -337,7 +339,7 @@ function viewToday() {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
         // «День подкормки»: a tick per plant, all on; «Готово» notes the ticked ones, the rest come back in a few days.
-        pick: b.pick ? `<fieldset class="feed-who"><legend class="sr-only">${b.pickLegend}</legend>${b.pick.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>` : '',
+        pick: b.pick ? pickList(b.pick, b.pickLegend) : '',
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
@@ -664,19 +666,20 @@ Object.assign(ACTS, {
       const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
     }
   },
-  'bath-yes'() { bathStep = 1; render(); track('bath_day_started'); },
-  'bath-cancel'() { bathStep = 0; render(); },
+  'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
+  'bath-cancel'() { bathStep = 0; bathRender('[data-act="bath-yes"]'); },
   'bath-go'(el) {
     bathPicked = [...el.closest('.task').querySelectorAll('[data-pick]')].filter((x) => x.checked).map((x) => x.dataset.pick);
     if (!bathPicked.length) { toast('Отметьте, кого купаем'); return; }
-    bathStep = 2; render();
+    bathStep = 2; bathRender('[data-act="bath-done"]');
   },
-  'bath-back'() { bathStep = 1; render(); },
+  'bath-back'() { bathStep = 1; bathRender('[data-act="bath-go"]'); },
   'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bonus_skipped', { kind: 'bath' }); toast('Ок, через пару дней 🙂'); },
   // A rinse is a thorough watering: it counts as one, and the plant's rinse restarts.
   'bath-done'() {
     const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
-    ids.forEach((id) => { actWater(id, true); remindDone(id, 'rinse'); });
+    // Logged as waterings, so they count on «Сегодня» like a check answered; one watered meanwhile isn't watered twice.
+    ids.forEach((id) => { if (S.plants[id].lastWater !== today()) actWater(id); remindDone(id, 'rinse'); });
     S.bonus.bath = today();
     bathStep = 0; bathPicked = [];
     logToday({ a: 'bonus:bath', title: 'Банный день' });
