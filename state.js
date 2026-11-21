@@ -22,6 +22,7 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // is the person's pick from `picks` (days) and doesn't learn, and a check doesn't make the plant «напоено»;
 // icons: the check buttons' icons; recheck: days to the next check after the second answer;
 // soilCheck: the soil is checked as for watering from above, so the card's check question still fits.
+// bog: only for bog plants (a Venus flytrap stands in water): offered only where the card or the plant has it.
 const MEDIA = {
   soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
@@ -87,6 +88,11 @@ const WATERING = {
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать, а напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
+  tray: { name: 'В поддоне с водой', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, bog: true,
+    badge: ['droplets', 'в поддоне'], start: () => 3, min: 1,
+    task: 'Загляните в поддон и долейте воды, если её мало',
+    hint: 'Не буду звать поливать, а напомню заглянуть в поддон, есть ли вода.',
+    water: 'Горшок всё время стоит в поддоне с 1–2 см воды. Так растут болотные растения, обычным комнатным вода в поддоне вредна.' },
   drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'пора проверить',
     fixed: true, picks: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14,
     recheck: (iv) => Math.max(3, Math.round(iv / 4)),
@@ -112,7 +118,8 @@ const REMINDERS = {
     hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
     every: [[120, '4 месяца', 'раз в 4 месяца'], [180, 'Полгода', 'раз в полгода']],
     start: { every: 120, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-    fits: (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care },
+    // Watered only with distilled water (carnivorous plants), the pot gathers no salts.
+    fits: (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care && !p.distilled },
 };
 // A card's word on a reminder: `prune: { no }` (not pruned, and why), or `prune: { months, tip }`.
 const remindCard = (p, kind) => (kind === 'prune' && p.prune) || {};
@@ -157,6 +164,7 @@ function wayOf(p) {
 const labelsOf = (p) => wayOf(p).labels;
 // Watering from below checks the soil as from above: a card's question for either fits the other.
 const soilCheck = (w) => !w || w === 'top' || !!WATERING[w].soilCheck;
+const DISTILLED = 'Только дистиллированная вода, вода обратного осмоса или чистая дождевая.';
 // The card's care for how the plant grows. Grown another way than the card says, the card's check
 // question and its watering tip don't fit, nor its substrate tip with another medium: that way's own tips stand in.
 function careOf(d, r) {
@@ -168,7 +176,9 @@ function careOf(d, r) {
   // feedTip speaks of top-ups (a wick, a reservoir); drip irrigation gets the way's own hint about fertilizer.
   const waterTip = fromAbove ? alt.water || m.water : [WATERING[w].water, WATERING[w].act === 'top' && m.feedTip].filter(Boolean).join(' ');
   const check = own ? d.check : !soilCheck(w) ? '' : sameMedium ? (soilCheck(cardWatering(d)) && d.check) || '' : alt.check || '';
-  return { ...d, check, water: (own && d.water) || waterTip, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
+  // Carnivorous plants need water without salts whichever way it gets to them.
+  const water = (own && d.water) || [waterTip, d.distilled && DISTILLED].filter(Boolean).join(' ');
+  return { ...d, check, water, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").

@@ -232,7 +232,7 @@ const showAddBar = (bar, btn, n) => { setAddButton(btn, n, ''); bar.hidden = !n;
 const updatePickBar = () => showAddBar($('#pick-bar'), $('#pick-add'), picked.size);
 // Picker groups go by care, from the most common plants; generic types close the list.
 const CAT_ORDER = ['Лианы и ампельные', 'Декоративно-лиственные', 'Пальмы, драцены и деревья', 'Ароидные', 'Влаголюбивые',
-  'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Общие типы'];
+  'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Хищные растения', 'Общие типы'];
 // A category missing from CAT_ORDER (a typo in plants.js) still shows, just before the generic types, and warns.
 const catRank = (c) => {
   const r = CAT_ORDER.indexOf(c);

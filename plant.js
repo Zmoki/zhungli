@@ -72,13 +72,15 @@ function waterBox(p) {
 // «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
 // watered, and what that means. All options are chips, nothing hidden in a dropdown.
 function wayBox(p, d) {
+  // A bog way (a tray of standing water) only where the card or the plant uses it: it rots ordinary roots.
+  const ways = Object.fromEntries(Object.entries(WATERING).filter(([k, w]) => !w.bog || k === p.watering || k === cardWatering(d)));
   const chips = (field, label, list, value, attrs = '') => `<div class="field" role="group" aria-labelledby="lbl-${field}" aria-describedby="way-hint"${attrs}>
     <label id="lbl-${field}">${label}</label><div class="chips">
     ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}">${x.name}</button>`).join('')}</div></div>`;
   return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
     <div class="field" id="repot-field"${feedsOnDay(p) ? '' : ' hidden'}><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}> Недавно пересажено</label>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>
-    ${chips('watering', 'Как поливаю', WATERING, p.watering || 'top', ` id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}`)}
+    ${chips('watering', 'Как поливаю', ways, p.watering || 'top', ` id="watering-field"${MEDIA[p.type].pot ? '' : ' hidden'}`)}
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
