@@ -20,9 +20,17 @@ const ghBadge = (p, words) => (!p.greenhouse ? ''
 const newBadge = (p, words) => (!isNew(p) ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('search')}на карантине</span>`
     : `<span class="gh" title="На карантине">${I('search')}<span class="sr-only">на карантине</span></span>`) + restBadge(p, words);
+// With pets at home: a paw on the plant. The plant card says toxic or safe; grid cards mark only the toxic.
+const petBadge = (p, words) => {
+  const v = petsOn() && petsOf(p);
+  if (!v || (!words && v !== 'toxic')) return '';
+  const label = v === 'toxic' ? 'ядовито для питомцев' : 'безопасно для питомцев';
+  return words ? `<span class="mood hero-mood pets ${v}">${I('paw-print')}${label}</span>`
+    : `<span class="gh pets ${v}" title="Ядовито для питомцев">${I('paw-print')}<span class="sr-only">${label}</span></span>`;
+};
 const restBadge = (p, words) => (!resting(p) ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('moon')}отдыхает</span>`
-    : `<span class="gh" title="Отдыхает">${I('moon')}<span class="sr-only">отдыхает</span></span>`);
+    : `<span class="gh" title="Отдыхает">${I('moon')}<span class="sr-only">отдыхает</span></span>`) + (words ? '' : petBadge(p));
 
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
@@ -383,7 +391,7 @@ function stateFilter(ps) {
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
     ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'greenhouse') : ''}
     ${n.new ? chip('new', `${I('search')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
-    ${n.pets ? chip('pets', `${I('triangle-alert')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'way') : ''}
+    ${n.pets ? chip('pets', `${I('paw-print')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
 

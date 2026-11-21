@@ -31,17 +31,19 @@ function cheatHtml(id) {
   if (noteEdit !== 'new') html += `<button class="chip" data-act="note-edit" data-id="${esc(id)}" data-key="new">${I('plus')}заметка</button>`;
   const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
   if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
-  if (p.toxic) html += `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>`;
-  if (petsOn()) html += petsHtml(p);
+  // Warnings sit apart from the notes and their «+ заметка».
+  const warns = (p.toxic ? `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>` : '') + (petsOn() ? petsHtml(p) : '');
+  if (warns) html += `<div class="card-warns">${warns}</div>`;
   if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по вашим ответам.</p>`;
   return html;
 }
 // With «Дома есть кошка или собака» on: what the plant means for them, by ASPCA.
 function petsHtml(p) {
   const v = petsOf(p);
-  if (v === 'toxic') return `<div class="info warn"><b>${I('triangle-alert')}Ядовито для кошек и собак</b>${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.</div>`;
-  if (v === 'safe') return `<p class="small muted">${I('check')}Безопасно для кошек и собак по базе ASPCA.</p>`;
-  return `<p class="small muted">${p.generic ? 'Опасно ли для кошек и собак, зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : 'Опасно ли для кошек и собак, данных нет.'}</p>`;
+  // One block for every answer, colored by it: red toxic, green safe, plain when nothing is known.
+  if (v === 'toxic') return `<div class="info warn"><b>${I('paw-print')}Ядовито для кошек и собак</b>${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.</div>`;
+  if (v === 'safe') return `<div class="info safe"><b>${I('paw-print')}Безопасно для кошек и собак</b>По базе ASPCA.</div>`;
+  return `<div class="info"><b>${I('paw-print')}Для кошек и собак: нет данных</b>${p.generic ? 'Зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : 'Надёжных сведений о том, ядовито ли растение, нет.'}</div>`;
 }
 function refreshCheat(id) {
   const box = $('#cheat');
@@ -318,7 +320,7 @@ function plantCardHtml(id) {
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="hero"><div class="hero-pic">${heroPic(p, mc)}</div>
       <div class="hero-acts">${heroActs(id)}</div>
-      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}</span></div>
+      <span class="hero-badges">${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}${petBadge(p, true)}</span></div>
     <div class="sheet-main">
     <div class="hero-text"><h2 class="m-0" id="sh-title">${typedHtml(p.title)}</h2><div class="muted small" id="sh-species">${typedHtml(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
@@ -525,7 +527,7 @@ function heroChanged(id) {
   const badges = $('.hero-badges');
   if (!badges) return;
   const p = plant(id);
-  badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}`;
+  badges.innerHTML = `${stateChips(p, true)}${ghBadge(p, true)}${growBadges(p, true)}${petBadge(p, true)}`;
   const pic = $('.hero-pic');
   if (pic && !photoOf(id)) pic.innerHTML = plantSvg(p, mood(p)[2]);
 }
