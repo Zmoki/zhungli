@@ -40,6 +40,8 @@ sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); }
 // The «yes» button submits the form, so Enter in the field means yes.
 const askBox = $('#ask');
 function ask({ title, text = '', ok, cancel = 'Отмена', danger = false, input = null }) {
+  // One question at a time: a second one while the first is open counts as cancelled.
+  if (askBox.open) return Promise.resolve(input ? null : false);
   return new Promise((resolve) => {
     askBox.setAttribute('role', input ? 'dialog' : 'alertdialog');
     if (text) askBox.setAttribute('aria-describedby', 'ask-text'); else askBox.removeAttribute('aria-describedby');
