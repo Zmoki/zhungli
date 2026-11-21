@@ -328,7 +328,9 @@ function viewToday() {
     html += `<button class="more" data-act="show-all">${I('moon')}Ещё ${waiting} ${plural(waiting, 'растение подождёт', 'растения подождут', 'растений подождут')} до завтра.<br>Есть силы? Показать</button>`;
   }
 
-  const bonus = bonusTasks(), bp = bathPlan(), bathCard = bp && bp.shown ? bathHtml(bp) : '';
+  const bonus = bonusTasks(), bp = bathPlan();
+  if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; } // a bath day put off or over starts from the question next time
+  const bathCard = bp && bp.shown ? bathHtml(bp) : '';
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
