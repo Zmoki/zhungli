@@ -278,6 +278,14 @@ function prepare(raw) {
   if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
   s.v = 4;
+  // A personal «don't feed» from the first collection's notes (own.noFeed) had no setting to undo it: it becomes
+  // «Не кормлю» in «Подкормка», where it shows and can be changed.
+  Object.values(s.plants).forEach((r) => {
+    if (!r.own || !('noFeed' in r.own)) return;
+    if (r.own.noFeed) r.feedEvery = 0;
+    delete r.own.noFeed;
+    if (!Object.keys(r.own).length) delete r.own;
+  });
   // Per-plant «Промывка грунта» reminders became «Банный день»: whoever had one gets it with the same interval.
   const rinses = Object.values(s.plants).map((r) => r.remind && r.remind.rinse).filter(Boolean);
   if (rinses.length) {
@@ -297,8 +305,9 @@ function migrateV1(s) {
   Object.entries(LEGACY_NOTES).forEach(([id, n]) => {
     const r = s.plants[id];
     if (!r) return;
-    const { species, ...own } = n;
+    const { species, feedEvery, ...own } = n;
     if (species && !r.species) r.species = species;
+    if (feedEvery !== undefined && r.feedEvery === undefined) r.feedEvery = feedEvery;
     if (Object.keys(own).length) r.own = { ...own, ...(r.own || {}) };
   });
   const k = s.plants.kolya;
