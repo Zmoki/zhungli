@@ -216,13 +216,14 @@ const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filt
 // Every task card on «Сегодня» has one layout: picture and name, the plant's words, the task,
 // the buttons, then how to do it. `p` is the plant (or `icon` and `name` for tasks without one).
 // `sub` is app text; `subHtml` is a ready line from plantSubHtml().
-function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, buttons, who, hint, after = '' }) {
+// `pick`: HTML between the task and the buttons, such as the feeding day's ticks.
+function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = '', buttons, who, hint, after = '' }) {
   const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
   const line = subHtml ?? (p && sub === undefined ? plantSubHtml(p) : esc(sub ?? ''));
   return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${p ? typedHtml(p.title) : esc(name)}</div>
     ${line ? `<div class="task-sub">${line}</div>` : ''}</div></div>
     ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
-    <div class="question">${esc(task)}</div>
+    <div class="question">${esc(task)}</div>${pick}
     <div class="btns">${buttons}</div>
     ${who || hint ? `<div class="hint">${who ? `Кого: ${who.map(typedHtml).join(', ')}. ` : ''}${esc(hint)}</div>` : ''}${after}</div>`;
 }
@@ -302,6 +303,8 @@ function viewToday() {
     bonus.forEach((b) => {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
+        // «День подкормки»: a tick per plant, all on; «Готово» notes the ticked ones, the rest come back in a few days.
+        pick: b.feed ? `<fieldset class="feed-who"><legend class="sr-only">Кого подкормили</legend>${b.feed.map((p) => `<label class="toggle"><input type="checkbox" data-feed="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>` : '',
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
@@ -313,7 +316,7 @@ function viewToday() {
 
   const doneRows = log.filter((e) => e.a !== 'later');
   if (doneRows.length) {
-    const label = { water: 'полито', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', vent: 'проветрено', bonus: 'сделано' };
+    const label = { water: 'полито', wet: 'ещё влажно', ok: 'работает', fix: 'поправлено', vent: 'проветрено', inspect: 'осмотрено', bonus: 'сделано' };
     html += `<details><summary class="group-title">Уже сделано сегодня · ${doneRows.length}</summary>`;
     doneRows.forEach((e) => {
       const p = e.id ? plant(e.id) : null;
@@ -630,6 +633,17 @@ Object.assign(ACTS, {
   },
   'bonus-done'(el) {
     const undo = snapshot();
+    if (el.dataset.key.startsWith('feed:')) {
+      const boxes = [...el.closest('.task').querySelectorAll('[data-feed]')];
+      const fed = boxes.filter((x) => x.checked).map((x) => x.dataset.feed);
+      if (!fed.length) { toast('Отметьте, кого подкормили'); return; }
+      fed.forEach(feedDone);
+      boxes.filter((x) => !x.checked).forEach((x) => { S.snooze['feed:' + x.dataset.feed] = addDays(today(), 3); });
+      track('feeding_logged', { from: 'day', n: fed.length, of: boxes.length });
+      logToday({ a: 'bonus:feed', title: 'День подкормки' });
+      afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);
+      return;
+    }
     const b = bonusTasks().find((x) => x.key === el.dataset.key);
     bonusDone(el.dataset.key);
     track('bonus_done', { kind: el.dataset.key.split(':')[0] });

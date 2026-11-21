@@ -80,12 +80,15 @@ On every event:
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none |
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
 | `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
+| `feeding_logged` | plants noted as fed | `from`: `day` («Готово» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
+| `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `0` |
+| `feed_lamp_toggled` | «Зимой под лампой» | `on` |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
 | `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
-| `bonus_done` | bonus task done | `kind`: `dust` / `rotate` / `feed` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune`, `rinse` (reminders turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
+| `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune`, `rinse` (reminders turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
 | `reminder_changed` | a reminder in the plant card's «Напоминания» changed | `kind`: `prune` / `rinse`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300` for `prune`, `120` / `180` for `rinse`) and `months` (how many are on), unless off |
 | `reminder_logged` | «Обрезано сегодня» or «Промыто сегодня» in the plant card | `kind`: `prune` / `rinse`; `from`: `card` |
 | `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
