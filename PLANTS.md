@@ -54,7 +54,7 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | `soil` грунт | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
 | `dry` грунт для суккулентов | dry almost to the bottom? | «Полито» / «Ещё влажно» | none, unless the card has `feed` |
 | `sphagnum` сфагнум | dried inside? (phalaenopsis: on top) | «Полито» / «Ещё влажно» | «День подкормки» |
-| `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | none |
+| `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | «День подкормки»; orchid cards add «половинная доза» (`feedNote`, ORC-COND-49) |
 | `coco` кокос | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
 | `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте субстрат» every 30 days |
 | `leca` керамзит | bottom dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте керамзит» every 45 days |

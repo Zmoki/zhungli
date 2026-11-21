@@ -36,7 +36,8 @@ const MEDIA = {
     hint: 'Позову проверить, подсох ли сфагнум.',
     water: 'Когда сфагнум внутри подсох; не давать пересохнуть совсем.',
     soil: 'Живой или сухой сфагнум, не утрамбовывать.' },
-  bark: { name: 'Кора', pot: true, feed: 'none', organic: true, labels: ['Полито', 'Ещё рано'],
+  // Orchids on bark are fed weakly and regularly (orchid facts ORC-COND-49, 50): on «День подкормки», a half dose.
+  bark: { name: 'Кора', pot: true, feed: 'day', organic: true, labels: ['Полито', 'Ещё рано'],
     hint: 'Позову проверить, подсохла ли кора и посеребрели ли корни.',
     water: 'Когда кора почти сухая и корни серебристые: пролить насквозь или погрузить в воду, потом дать стечь. Воду из кашпо слить.',
     soil: 'Крупная кора, прозрачный горшок с отверстиями.' },
@@ -545,9 +546,11 @@ function bonusTasks() {
   // «День подкормки»: the plants due by their own schedule (feedDue), each ticked off on its own.
   const fed = allPlants().filter((p) => feedDue(p) && !snoozed('feed:' + p.id));
   if (fed.length) {
+    // A card's own word on the dose (orchids: half a dose of orchid fertilizer), once per word.
+    const notes = [...new Set(fed.map((p) => p.feedNote).filter(Boolean))].join(' ');
     out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили',
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-      hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
+      hint: `${notes ? notes + ' ' : ''}${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
