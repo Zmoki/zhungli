@@ -94,6 +94,46 @@ function repotHint(p) {
 }
 const ghHint = (on) => (on ? hintLines('Каждый день напомню проветрить. Снимите галочку, когда растение переедет из теплицы.')
   : hintLines('<b>Если отметить:</b> каждый день напомню проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не напоминаю.'));
+// «Напоминания» in «Настройки»: a checkbox per kind; ticked, how often, in which months, and «done today».
+// Only the part under the checkbox is redrawn, so the checkbox keeps focus.
+const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+// Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
+// A run may cross the new year («ноябрь–февраль»): the list starts after a month that's off.
+function monthsText(ms) {
+  const on = new Set(ms), runs = [];
+  if (on.size === 12) return 'весь год';
+  const start = [...Array(12).keys()].map((i) => i + 1).find((m) => !on.has(m));
+  for (let i = 1; i <= 12; i++) {
+    const m = ((start - 1 + i) % 12) + 1, last = runs[runs.length - 1];
+    if (!on.has(m)) continue;
+    if (last && last[last.length - 1] % 12 === m - 1) last.push(m); else runs.push([m]);
+  }
+  return runs.flatMap((r) => (r.length >= 3 ? [`${MONTHS[r[0] - 1]}–${MONTHS[r[r.length - 1] - 1]}`] : r.map((m) => MONTHS[m - 1]))).join(', ');
+}
+function remindMore(id, kind) {
+  const R = REMINDERS[kind], x = remindOf(S.plants[id], kind), last = S.bonus[`${kind}:${id}`];
+  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(`<b>Если отметить:</b> позову ${R.verb} в «Если есть силы» в выбранные месяцы.`, `<b>Сейчас</b> не напоминаю.`)}</div>`;
+  const often = R.every.find(([n]) => n === x.every);
+  const chip = (act, attr, on, label, aria = '') => `<button class="chip ${on ? 'on' : ''}" data-act="${act}" data-id="${esc(id)}" data-kind="${kind}" ${attr} aria-pressed="${on}"${aria}>${label}</button>`;
+  return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(`Позову ${R.verb} в «Если есть силы» ${often ? often[2] : `раз в ${days(x.every)}`}: ${monthsText(x.months)}.`)}</div>
+    <div class="field mt-12" role="group" aria-labelledby="lbl-every-${kind}"><label id="lbl-every-${kind}">Как часто</label><div class="chips">
+      ${R.every.map(([n, label]) => chip('remind-every', `data-n="${n}"`, x.every === n, label)).join('')}</div></div>
+    <div class="field" role="group" aria-labelledby="lbl-months-${kind}"><label id="lbl-months-${kind}">В какие месяцы</label><div class="chips">
+      ${MONTH_CHIPS.map((m, i) => chip('remind-month', `data-m="${i + 1}"`, x.months.includes(i + 1), m, ` aria-label="${MONTHS[i]}"`)).join('')}</div></div>
+    <p class="small muted m-0" id="remind-last-${kind}">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
+    <button class="mt-8 btn ok" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}">${I('scissors')}${R.btn}</button>`;
+}
+const remindBox = (id) => Object.entries(REMINDERS).map(([kind, R]) => `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${R.name}</label>
+  <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`).join('');
+// Sets one reminder: null turns it off. Reports the change.
+function setRemind(id, kind, x, action) {
+  const r = S.plants[id];
+  if (x) r.remind = { ...(r.remind || {}), [kind]: x };
+  else if (r.remind) { delete r.remind[kind]; if (!Object.keys(r.remind).length) delete r.remind; }
+  save();
+  $(`#remind-${kind}`).innerHTML = remindMore(id, kind);
+  track('reminder_changed', { kind, action, ...(x ? { every: x.every, months: x.months.length } : {}) });
+}
 const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
 // How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
 // with the way's options (it doesn't learn). Redrawn alone when the way changes.
@@ -150,7 +190,8 @@ const legendHtml = (p, plan, shown) => {
   const keys = shown && shown.size ? Object.keys(HIST_DOTS).filter((k) => shown.has(k)) : wayOf(p).fixed ? ['ok', 'fix'] : ['water', 'wet'];
   return `<p class="small legend" aria-hidden="true">${plan ? '<span><i class="plan"></i>проверка</span>' : ''}${keys.map((k) => `<span><i class="${HIST_DOTS[k]}"></i>${HIST_WORDS[k]}</span>`).join('')}</p>`;
 };
-const histWord = (a) => HIST_WORDS[a] || HIST_WORDS.wet; // anything but a watering reads as «ещё влажно», as before
+// A reminder done reads as its own word («обрезано»); anything else but a watering as «ещё влажно», as before.
+const histWord = (a) => HIST_WORDS[a] || (REMINDERS[a] && REMINDERS[a].done) || HIST_WORDS.wet;
 // The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
 // legend are hidden from screen readers: the average and the list below say the same.
 // The average counts only waterings in these 4 weeks.
@@ -186,6 +227,17 @@ function plannedHtml(p) {
     <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше ${wayOf(p).fixed ? everyText(Math.round(p.interval)) : `примерно раз в ${days(Math.round(p.interval))}`}. Ваши ответы появятся здесь.</p></section>`;
 }
 
+// «История»: the last 4 weeks of checks as dots (or the next 4 weeks before the first one), then the list,
+// reminders done included. Redrawn alone after «Обрезано сегодня».
+function historyHtml(p) {
+  const checks = checksOf(p); // reminders done (a pruning) are only in the list
+  const list = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)}: ${histWord(h.a)}`).join('<br>');
+  const top = checks.length ? (checks.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : '')
+    : list && wayOf(p).noChecks ? '' : plannedHtml(p);
+  return `${top}${list ? `<p class="history">${list}</p>` : ''}`;
+}
+const refreshHistory = (id) => { const box = $('#cp-history'); if (box && sheet.open && cardFor === id) box.innerHTML = historyHtml(plant(id)); };
+
 // Tabs of the plant card. The card opens on «Заметки»; a redraw of the same open card keeps the tab.
 const CARD_TABS = [['notes', 'Заметки'], ['settings', 'Настройки'], ['history', 'История']];
 let cardTab = 'notes', cardFor = null;
@@ -214,7 +266,6 @@ function plantCardHtml(id) {
   const p = plant(id);
   const mc = mood(p)[2];
   const ls = lightStatus(p);
-  const histHtml = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)}: ${histWord(h.a)}`).join('<br>');
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
   // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
@@ -264,9 +315,10 @@ function plantCardHtml(id) {
         <div id="way-box">${wayBox(p, def(id))}</div>
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field"${wayOf(p).noChecks ? ' hidden' : ''}>${intBox(p)}</div>
 </section>
+
+      <section class="group" aria-labelledby="g-remind"><h3 id="g-remind">Напоминания</h3>${remindBox(id)}</section>
       <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`)}
-    ${panel('history', histHtml ? `${p.hist.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : ''}
-      <p class="history">${histHtml}</p>` : plannedHtml(p))}
+    ${panel('history', historyHtml(p))}
     </div>`;
 }
 
@@ -479,6 +531,12 @@ document.addEventListener('change', (e) => {
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
   if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); }
+  if (f === 'remind') {
+    const k = el.dataset.kind;
+    const start = REMINDERS[k].start;
+    setRemind(id, k, el.checked ? { every: start.every, months: [...start.months] } : null, el.checked ? 'on' : 'off'); // saves
+    return;
+  }
   if (f === 'greenhouse') { r.greenhouse = el.checked; $('#gh-hint').innerHTML = ghHint(el.checked); track('greenhouse_toggled', { on: el.checked }); }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
@@ -568,6 +626,33 @@ Object.assign(ACTS, {
     if (r.own && !Object.keys(r.own).length) delete r.own;
     track('note_changed', { action: 'restore', note: 'catalog' });
     save(); refreshCheat(id);
+  },
+  'remind-every'(el, id) {
+    const k = el.dataset.kind, x = remindOf(S.plants[id], k), n = Number(el.dataset.n);
+    if (!x || x.every === n) return;
+    setRemind(id, k, { ...x, every: n }, 'every');
+    $(`[data-act="remind-every"][data-kind="${k}"][data-n="${n}"]`).focus();
+  },
+  'remind-month'(el, id) {
+    const k = el.dataset.kind, x = remindOf(S.plants[id], k), m = Number(el.dataset.m);
+    if (!x) return;
+    const months = x.months.includes(m) ? x.months.filter((v) => v !== m) : [...x.months, m].sort((a, b) => a - b);
+    if (!months.length) { announce('Нужен хотя бы один месяц'); return; }
+    setRemind(id, k, { ...x, months }, 'months');
+    $(`[data-act="remind-month"][data-kind="${k}"][data-m="${m}"]`).focus();
+  },
+  'remind-done'(el, id) {
+    const k = el.dataset.kind, undo = snapshot();
+    remindDone(id, k);
+    save();
+    $(`#remind-last-${k}`).textContent = 'Последний раз: сегодня.';
+    refreshHistory(id);
+    track('reminder_logged', { kind: k, from: 'card' });
+    // Undo also redraws the reminder and the history in the card, if it's still open.
+    toast(REMINDERS[k].toast, () => {
+      undo();
+      if (sheet.open && cardFor === id && $(`#remind-${k}`)) { $(`#remind-${k}`).innerHTML = remindMore(id, k); refreshHistory(id); }
+    });
   },
   'int-minus': stepInterval,
   'int-plus': stepInterval,
