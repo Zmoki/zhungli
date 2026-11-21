@@ -32,8 +32,16 @@ function cheatHtml(id) {
   const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
   if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
   if (p.toxic) html += `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>`;
+  if (petsOn()) html += petsHtml(p);
   if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по вашим ответам.</p>`;
   return html;
+}
+// With «Дома есть кошка или собака» on: what the plant means for them, by ASPCA.
+function petsHtml(p) {
+  const v = petsOf(p);
+  if (v === 'toxic') return `<div class="info warn"><b>${I('triangle-alert')}Ядовито для кошек и собак</b>${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.</div>`;
+  if (v === 'safe') return `<p class="small muted">${I('check')}Безопасно для кошек и собак по базе ASPCA.</p>`;
+  return `<p class="small muted">${p.generic ? 'Опасно ли для кошек и собак, зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : 'Опасно ли для кошек и собак, данных нет.'}</p>`;
 }
 function refreshCheat(id) {
   const box = $('#cheat');

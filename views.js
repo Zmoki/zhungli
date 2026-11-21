@@ -341,7 +341,7 @@ function spotGroups(ps, room) {
 // The chips also teach which face means what.
 let plantSt = '';
 // Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
-const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...growKeys(p)];
+const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
 function stateFilter(ps) {
   const n = {};
   const due = [];
@@ -355,6 +355,7 @@ function stateFilter(ps) {
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
+    ${n.pets ? chip('pets', `${I('triangle-alert')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'way') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
 
