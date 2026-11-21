@@ -50,6 +50,10 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked; their text reads like a chip's.
 
+## Nothing disappears
+
+A plant's «Настройки» never hide a section or a switch that doesn't apply to it: it stays in place, disabled and greyed out, with a short line saying why (`.why-not`, `whyNot()` in `plant.js`). Examples: «Подкормка» for a plant in pon («удобрение добавляют в каждый полив»), «Как поливаю» for a plant in water, «Покой» for a plant that doesn't rest. A section that silently disappears reads as a bug («у меня нет кнопки…»).
+
 ## Questions
 
 Never the browser's `confirm()` or `prompt()`: they ignore the theme and text size and look foreign in the home-screen app. `ask()` in `app.js` opens a small card in the middle of the screen, over the sheet too: a title as the question, a line on what happens, an optional text field, and two buttons, «Отмена» first. Undoing actions (removing, erasing, replacing) have a red button and start with focus on «Отмена»; a name starts in the field, and Enter saves it.
