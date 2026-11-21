@@ -528,12 +528,6 @@ function bonusTasks() {
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
       hint: `${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Промывка грунта».` });
   }
-  // «Банный день»: the whole collection's soil rinsed on one day, as people with many plants do it.
-  const bath = bathEvery(), bathers = bath ? allPlants().filter((p) => remindFits(p, 'rinse')) : [];
-  if (bathers.length && (!S.bonus.bath || diff(S.bonus.bath, t) >= bath) && !snoozed('bath')) {
-    out.push({ key: 'bath', icon: 'droplets', title: 'Банный день', sub: plantsN(bathers.length), pick: bathers, pickLegend: 'Кого промыли',
-      task: 'Промойте грунт у всех растений', hint: REMINDERS.rinse.hint });
-  }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
   if (!S.bonus.feedback && days >= 5) {
@@ -542,10 +536,21 @@ function bonusTasks() {
   }
   return [...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
 }
-// «Банный день» in the app's settings (S.settings.bath: days between bath days, or none): every plant that can be
-// rinsed (see REMINDERS.rinse.fits) on one day. Ticked plants count as rinsed, so their own rinse reminder restarts.
+// «Банный день» (S.settings.bath: days between a plant's rinses, or none). Rinsing a whole collection on one day
+// would flush pots that are still wet, so a bath day offers only plants due a rinse whose soil is dry today
+// (their soil check is due); the rest wait for a later bath day. Offered at most once a week (S.bonus.bath).
 const BATH_EVERY = [[60, '2 месяца'], [120, '4 месяца'], [180, 'Полгода']];
 const bathEvery = () => (S.settings && S.settings.bath > 0 ? S.settings.bath : 0);
+function bathPlan() {
+  const every = bathEvery(), t = today();
+  if (!every) return null;
+  const last = (p) => S.bonus['rinse:' + p.id];
+  const due = allPlants().filter((p) => remindFits(p, 'rinse') && !resting(p) && !settling(p) && (!last(p) || diff(last(p), t) >= every));
+  // Dry today: a soil check (from above or below) that's due.
+  const ready = due.filter((p) => p.nextCheck <= t && soilCheck(p.watering) && !wayOf(p).noChecks);
+  const rested = S.bonus.bath && diff(S.bonus.bath, t) < 7, snoozed = S.snooze.bath && S.snooze.bath > t;
+  return { due, ready, shown: ready.length > 0 && !rested && !snoozed };
+}
 // Feeding per plant (`fed`: the last date, `feedEvery`: days, 0 = not fed, `lamp`: fed in winter under a grow light).
 // Sources (the content repo's feeding facts): fed while growing, March to September; in winter without a lamp the
 // plant barely grows, so no reminders; under a lamp once a month and weaker. A feeding can be noted any day.

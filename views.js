@@ -219,6 +219,29 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
     'Тропическим растениям зимой не нужен покой, им не хватает света. Подвиньте их ближе к окну или к лампе, поливайте реже и не кормите, пока нет роста. В тепле без света побеги вытягиваются.',
     '<button class="btn" data-act="winter-ok">Понятно</button>'));
 
+// «Банный день» as a few steps in one card: are we bathing today, who, how, done. Only plants due a rinse
+// whose soil is dry today are offered (bathPlan); the step and the picks live here until the card is done.
+let bathStep = 0, bathPicked = [];
+const pickList = (ps, legend) => `<fieldset class="feed-who"><legend class="sr-only">${legend}</legend>${ps.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>`;
+function bathHtml(bp) {
+  const base = { cls: 'bonus', icon: 'droplets', name: 'Банный день' };
+  const later = bp.due.length - bp.ready.length;
+  if (bathStep === 1) {
+    return taskCard({ ...base, sub: plantsN(bp.ready.length), task: 'Кого купаем?', pick: pickList(bp.ready, 'Кого купаем'),
+      buttons: `<button class="btn ok" data-act="bath-go">${I('droplets')}Пошли купать!</button><button class="btn ghost" data-act="bath-cancel">Отмена</button>`,
+      hint: later ? `У остальных (${plantsN(later)}) грунт ещё влажный: их позову в другой банный день.` : '' });
+  }
+  if (bathStep === 2) {
+    const ps = bathPicked.map(plant).filter(Boolean);
+    return taskCard({ ...base, sub: ps.map((p) => p.title).join(', '), task: 'Пошли купать!', hint: REMINDERS.rinse.hint,
+      buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
+  }
+  return taskCard({ ...base, sub: `${plantsN(bp.ready.length)} с подсохшим грунтом`, task: 'Устраиваем сегодня банный день?',
+    buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Не сегодня</button>`,
+    hint: 'Промываем грунт от солей удобрений и жёсткой воды. Купаем только тех, у кого грунт подсох: мокрый пролить насквозь значит залить.' });
+}
+const nameList = (ps) => (ps.length <= 3 ? ps.map((p) => p.title).join(', ') : `${ps.slice(0, 3).map((p) => p.title).join(', ')} и ещё ${ps.length - 3}`);
+
 // «Species · place» under a plant's name on task cards, as HTML; `extra` adds app text, e.g. the last watering.
 const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filter(Boolean).map(typedHtml), ...extra.filter(Boolean).map(esc)].join(' · ');
 // Every task card on «Сегодня» has one layout: picture and name, the plant's words, the task,
@@ -305,9 +328,9 @@ function viewToday() {
     html += `<button class="more" data-act="show-all">${I('moon')}Ещё ${waiting} ${plural(waiting, 'растение подождёт', 'растения подождут', 'растений подождут')} до завтра.<br>Есть силы? Показать</button>`;
   }
 
-  const bonus = bonusTasks();
-  if (bonus.length) {
-    html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>`;
+  const bonus = bonusTasks(), bp = bathPlan(), bathCard = bp && bp.shown ? bathHtml(bp) : '';
+  if (bonus.length || bathCard) {
+    html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
@@ -639,19 +662,28 @@ Object.assign(ACTS, {
       const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
     }
   },
+  'bath-yes'() { bathStep = 1; render(); track('bath_day_started'); },
+  'bath-cancel'() { bathStep = 0; render(); },
+  'bath-go'(el) {
+    bathPicked = [...el.closest('.task').querySelectorAll('[data-pick]')].filter((x) => x.checked).map((x) => x.dataset.pick);
+    if (!bathPicked.length) { toast('Отметьте, кого купаем'); return; }
+    bathStep = 2; render();
+  },
+  'bath-back'() { bathStep = 1; render(); },
+  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bonus_skipped', { kind: 'bath' }); toast('Ок, через пару дней 🙂'); },
+  // A rinse is a thorough watering: it counts as one, and the plant's rinse restarts.
+  'bath-done'() {
+    const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
+    ids.forEach((id) => { actWater(id, true); remindDone(id, 'rinse'); });
+    S.bonus.bath = today();
+    bathStep = 0; bathPicked = [];
+    logToday({ a: 'bonus:bath', title: 'Банный день' });
+    const left = bathPlan().due;
+    track('bath_day_done', { n: ids.length, left: left.length });
+    afterTask(left.length ? `Все чистые 🛁 В следующий раз: ${nameList(left)}` : 'Все чистые 🛁 До следующего круга', undo);
+  },
   'bonus-done'(el) {
     const undo = snapshot();
-    if (el.dataset.key === 'bath') {
-      const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')];
-      const done = boxes.filter((x) => x.checked).map((x) => x.dataset.pick);
-      if (!done.length) { toast('Отметьте, кого промыли'); return; }
-      done.forEach((id) => remindDone(id, 'rinse'));
-      S.bonus.bath = today();
-      track('bath_day_done', { n: done.length, of: boxes.length });
-      logToday({ a: 'bonus:bath', title: 'Банный день' });
-      afterTask(done.length === boxes.length ? 'Все чистые 🛁' : `Промыто: ${plantsN(done.length)} 🛁`, undo);
-      return;
-    }
     if (el.dataset.key.startsWith('feed:')) {
       const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')];
       const fed = boxes.filter((x) => x.checked).map((x) => x.dataset.pick);

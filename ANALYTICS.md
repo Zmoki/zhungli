@@ -84,7 +84,8 @@ On every event:
 | `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `0` |
 | `feed_lamp_toggled` | «Зимой под лампой» | `on` |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` |
-| `bath_day_done` | «Готово» on «Банный день» | `n` rinsed of `of` listed |
+| `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none |
+| `bath_day_done` | «Покупали!» on the bath day card | `n` bathed; `left`: plants still due a rinse |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
 | `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |
@@ -93,7 +94,7 @@ On every event:
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune`, `rinse` (reminders turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
 | `reminder_changed` | «Звать на обрезку» / «Звать на промывку» or their options changed in the plant card | `kind`: `prune` / `rinse`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300` for `prune`, `120` / `180` for `rinse`) and `months` (how many are on), unless off |
 | `reminder_logged` | «Обрезано сегодня» or «Промыто сегодня» in the plant card | `kind`: `prune` / `rinse`; `from`: `card` |
-| `bonus_skipped` | bonus task snoozed, or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
+| `bonus_skipped` | bonus task snoozed («Не сегодня» on the bath day too: `kind`: `bath`), or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
 | `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added), both straight to the last story / `return` (back in the app to stories still open: not a way in, see `left` in `stories_closed`) |
 | `stories_closed` | the stories closed | `from`: as in `stories_opened` for this run of them (`return` never: the first open's); `reached`: the furthest story seen (1–6); `seen`: how many stories were shown (opened on the last one: 1, unless they went back); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `restore` («Восстановить копию» in the iPhone home-screen app) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open) / `followed` (left the app from a last story with steps out of here: to Safari, or to the home screen after «На экран Домой») / `left` (left the app with them open anywhere else). Leaving the app may be the last event, so it's sent then (after the Telegram button as `telegram`); coming back sends `stories_opened` `return`, so each open has one close and a device can have several: count its last one; `ending`, if the last story was seen: `tiles` / `telegram` / `in_app` / `ios_26` (Safari 26 steps) / `ios_old` (older Safari steps) / `ios_other` (text steps: iPad, other browsers); `ticked`: tiles ticked there but not added |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
