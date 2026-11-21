@@ -98,13 +98,24 @@ const WATERING = {
 // They come as bonus tasks (`<kind>:<id>`, the date in S.bonus as for dusting) in the active months (1–12),
 // `every` days after the last time, at once if never. «Готово» also goes to the plant's history as `kind`.
 // every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
-// start: what ticking the box sets. Feeding per plant can be another kind here.
+// start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
+// gloves: the card's sap warning goes with the task; fits(p): shown and asked only for such plants.
+// Feeding per plant can be another kind here.
 const REMINDERS = {
-  prune: { name: 'Обрезка', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️',
+  prune: { name: 'Обрезка', task: 'Обрежьте', verb: 'обрезать', done: 'обрезано', btn: 'Обрезано сегодня', toast: 'Обрезка записана ✂️', icon: 'scissors', gloves: true,
     hint: 'Чистым острым секатором или ножницами. Убрать сухие и вытянутые побеги, длинные укоротить.',
     every: [[14, '2 недели', 'раз в 2 недели'], [30, 'Месяц', 'раз в месяц'], [60, '2 месяца', 'раз в 2 месяца'], [300, 'Раз в год', 'раз в год']],
     start: { every: 300, months: [3, 4] } },
+  // Salts from fertilizer and hard water stay in the pot. A medium with its own rinse (clay pebbles, pon) has it already.
+  rinse: { name: 'Промывка грунта', task: 'Промойте грунт', verb: 'промыть грунт', done: 'промыто', btn: 'Промыто сегодня', toast: 'Промывка записана 🚿', icon: 'droplets',
+    why: 'Соли от удобрений и жёсткой воды копятся в горшке: белая корка на грунте, бурые кончики листьев.',
+    hint: 'В ванне или раковине, без поддона. Белую корку снять вместе с верхним слоем грунта и подсыпать свежий. Пролить тепловатой водой в 2–3 объёма горшка в несколько приёмов, давая стечь.',
+    every: [[120, '4 месяца', 'раз в 4 месяца'], [180, 'Полгода', 'раз в полгода']],
+    start: { every: 120, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+    fits: (p) => !!MEDIA[p.type].pot && !MEDIA[p.type].care },
 };
+// Whether a plant gets a kind of reminder at all (flushing isn't for clay pebbles, nor for a plant in water).
+const remindFits = (p, kind) => !REMINDERS[kind].fits || REMINDERS[kind].fits(p);
 // A plant's reminder of one kind, or null when it's off (or malformed, say from an edited backup).
 function remindOf(r, kind) {
   const x = r && r.remind && r.remind[kind];
@@ -463,9 +474,9 @@ function bonusTasks() {
   allPlants().forEach((p) => {
     Object.keys(p.remind || {}).forEach((kind) => {
       const R = REMINDERS[kind], x = remindOf(p, kind), k = `${kind}:${p.id}`;
-      if (!x || !x.months.includes(month) || snoozed(k)) return;
+      if (!x || !x.months.includes(month) || snoozed(k) || !remindFits(p, kind)) return;
       // Cutting is when sap gets on skin: plants with irritating sap get the card's gloves warning.
-      const gloves = p.toxic ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
+      const gloves = p.toxic && R.gloves ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
       if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: R.hint + gloves });
     });
     const dk = 'dust:' + p.id;
@@ -490,7 +501,7 @@ function bonusTasks() {
     const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-        who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите.' });
+        who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».' });
     }
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.

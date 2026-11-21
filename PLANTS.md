@@ -20,7 +20,7 @@ Record fields:
 | `interval` | Learned days between checks. |
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
-| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`). |
+| `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
 | `medium` | What the roots are in. Catalog plants keep it from the day they're added, so a card's new `type` doesn't move them. |
@@ -28,7 +28,7 @@ Record fields:
 | `soilInterval` | The card's interval, kept while the plant grows another way. |
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
-| `remind` | Reminders turned on in «Напоминания»: `{ prune: { every, months } }`, days and months 1–12. See [Reminders](#reminders). |
+| `remind` | Reminders turned on in «Напоминания»: `{ prune: { every, months }, rinse: … }`, days and months 1–12. See [Reminders](#reminders). |
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
@@ -90,12 +90,15 @@ Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one 
 
 ## Reminders
 
-«Напоминания» in the plant card's «Настройки» has a checkbox per kind in `REMINDERS` (`state.js`); for now only «Обрезка». Ticked, it starts at «Раз в год» in March and April, and shows:
-- «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season);
-- «В какие месяцы»: 12 chips, at least one stays on;
-- the last time, and «Обрезано сегодня» to note a pruning done without the reminder.
+«Напоминания» in the plant card's «Настройки» has a checkbox per kind in `REMINDERS` (`state.js`):
+- **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season).
+- **«Промывка грунта»** (`rinse`): salts from fertilizer and hard water. Ticked, it starts at every 4 months, all year; «Как часто»: 4 months or half a year (4–6 months by Illinois, Maryland, Oregon State). Only in a pot whose medium has no rinse of its own (`fits`): clay pebbles and pon have theirs. The «День подкормки» hint points to it.
 
-It comes as a bonus task on «Сегодня» (see [TASKS.md](TASKS.md#bonus-tasks)). A pruning, from there or the card, goes to the history as «обрезано»; the dots in «Последние 4 недели» show only checks. A new kind (feeding per plant) needs only an entry in `REMINDERS`.
+Each, once ticked, shows:
+- «В какие месяцы»: 12 chips, at least one stays on;
+- the last time, and «Обрезано сегодня» / «Промыто сегодня» to note it done without the reminder.
+
+It comes as a bonus task on «Сегодня» (see [TASKS.md](TASKS.md#bonus-tasks)). A pruning or a rinse, from there or the card, goes to the history as «обрезано» / «промыто»; the dots in «Последние 4 недели» show only checks. A new kind (feeding per plant) needs only an entry in `REMINDERS`.
 
 ## How the interval learns
 

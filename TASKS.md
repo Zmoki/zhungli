@@ -57,6 +57,7 @@ Every plant marked «В теплице» gets an airing task each day until it's
 | `dust:<id>` | Plants with big leaves (`big`) | 21 days after the last wipe. |
 | `rotate:<id>` | Plants that lean to the light (`rotate`) | 14 days after the last turn. |
 | `prune:<id>` | Plants with «Обрезка» on in «Напоминания» (`remind` in the record), in its months | `every` days after the last pruning (2 weeks, a month, 2 months, or 300 days for «Раз в год»); at once in its months if never. One turned-on reminder comes first; more wait behind the other bonus tasks. Plants with irritating sap (`toxic`) get a gloves warning. |
+| `rinse:<id>` | Plants with «Промывка грунта» on, in a pot without the medium's own rinse | Same as `prune`: every 4 months or half a year, at once if never. |
 | `feed` | Everyone fed, from March to September | 14 days after the last feeding. |
 | `feedback` | Anyone with answers on 5 different days | Never: once. «Как вам Жунгли?» with «Написать» (opens Telegram @zmoki) and «Не нужно» instead of «Готово» / «Не сегодня»; both put it away for good. |
 
