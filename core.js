@@ -83,6 +83,11 @@ const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
 // «Недавно пересажено» holds the date it was ticked and lapses after 6 weeks.
 const REPOT_DAYS = 42;
 const repotted = (p) => !!p.repotted && diff(p.repotted, today()) < REPOT_DAYS;
+// «Недавно купили» holds the date it was ticked: 6 weeks of quarantine with a look for pests once a week
+// (Clemson), the first 4 of them settling in: no feeding, pruning, moving or repotting (UF/IFAS, for ficus).
+const NEW_DAYS = 42, SETTLE_DAYS = 28;
+const isNew = (p) => !!p.bought && diff(p.bought, today()) < NEW_DAYS;
+const settling = (p) => !!p.bought && diff(p.bought, today()) < SETTLE_DAYS;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 function plural(n, one, few, many) {

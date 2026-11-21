@@ -482,6 +482,10 @@ function dueChecks() {
 function ventDue() {
   return allPlants().filter((p) => p.greenhouse && p.ventLast !== today());
 }
+// New plants to look over for pests: on the day they're marked, then once a week while in quarantine.
+function inspectDue() {
+  return allPlants().filter((p) => isNew(p) && (!p.inspected || diff(p.inspected, today()) >= 7));
+}
 
 function bonusTasks() {
   const t = today();
@@ -494,6 +498,7 @@ function bonusTasks() {
     Object.keys(p.remind || {}).forEach((kind) => {
       const R = REMINDERS[kind], x = remindOf(p, kind), k = `${kind}:${p.id}`;
       if (!x || !x.months.includes(month) || snoozed(k) || !remindFits(p, kind)) return;
+      if (kind === 'prune' && settling(p)) return; // a new plant has enough to get over
       // Cutting is when sap gets on skin: plants with irritating sap get the card's gloves warning.
       const gloves = p.toxic && R.gloves ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
       if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: [remindCard(p, kind).tip, R.hint].filter(Boolean).join(' ') + gloves });
@@ -517,7 +522,7 @@ function bonusTasks() {
   });
   if (month >= 3 && month <= 9 && diff(S.bonus.feed, t) >= 14 && !snoozed('feed')) {
     // Fed on the day: soil-like media, plus flowering succulents (dry with `feed`). The rest get fertilizer with every watering, or none.
-    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p));
+    const who = allPlants().filter((p) => feedsOnDay(p) && !repotted(p) && !settling(p));
     if (who.length) {
       out.push({ key: 'feed', icon: 'utensils', title: 'День подкормки', sub: plantsN(who.length), task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
         who: who.map((p) => p.title), hint: 'Недавно пересаженных и больных не кормите. От солей удобрения помогает промывка грунта: «Настройки» растения → «Напоминания».' });
@@ -604,10 +609,10 @@ function todayPlan() {
   const due = dueChecks();
   const room = showAll ? due.length : Math.max(0, S.settings.limit - doneChecks);
   const shown = due.slice(0, room).sort(bySpot);
-  const vents = ventDue();
-  const pending = shown.length + vents.length;
+  const vents = ventDue(), inspects = inspectDue();
+  const pending = shown.length + vents.length + inspects.length;
   const doneMain = log.filter((e) => e.a !== 'later' && !String(e.a).startsWith('bonus')).length;
-  return { log, shown, vents, pending, doneMain, waiting: due.length - shown.length, total: pending + doneMain };
+  return { log, shown, vents, inspects, pending, doneMain, waiting: due.length - shown.length, total: pending + doneMain };
 }
 const pendingCount = () => todayPlan().pending;
 

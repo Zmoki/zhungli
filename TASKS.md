@@ -50,6 +50,8 @@ A check card has:
 
 Every plant marked «В теплице» gets an airing task each day until it's aired. It's outside the daily limit. «Проветрено» stores the date. «Без теплицы» asks first, then turns the greenhouse off.
 
+A plant marked «Недавно купили» (`bought`, the date) is in quarantine for 6 weeks (`NEW_DAYS`, Clemson): «Осмотрите на вредителей» on the day it's marked, then every 7 days, outside the daily limit. «Осмотрено» stores `inspected`; the last one in the period says the quarantine is over. «Уже не новое» clears `bought`. For the first 4 weeks (`SETTLE_DAYS`, UF/IFAS for ficus) it isn't called to the feeding day or to pruning. The plant gets a «на карантине» badge and a filter chip. A card's `settle` adds its own line (the weeping fig drops leaves after buying).
+
 ## Bonus tasks
 
 | Key | For | Comes back |
@@ -71,7 +73,7 @@ The card follows the check card (all task cards come from `taskCard` in `views.j
 
 ## Progress and the day log
 
-`S.log[date]` holds entries `{ id, a, title }`, where `a` is `water`, `wet`, `ok`, `fix` (drip irrigation checks), `later`, `vent` or `bonus:<key>`. It's kept for 7 days.
+`S.log[date]` holds entries `{ id, a, title }`, where `a` is `water`, `wet`, `ok`, `fix` (drip irrigation checks), `later`, `vent`, `inspect` or `bonus:<key>`. It's kept for 7 days.
 
 - **Pending:** the checks shown plus airings not done.
 - **Done:** everything in today's log except `later` and bonus tasks.

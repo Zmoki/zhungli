@@ -15,7 +15,11 @@ function greeting() {
 // Greenhouse badge: a round icon on grid cards, a worded chip like the status ones in the plant card.
 const ghBadge = (p, words) => (!p.greenhouse ? ''
   : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
-    : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`);
+    : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`) + newBadge(p, words);
+// A new plant in quarantine: the same kind of badge, in the plant card only as words.
+const newBadge = (p, words) => (!isNew(p) ? ''
+  : words ? `<span class="mood hero-mood greenhouse">${I('search')}на карантине</span>`
+    : `<span class="gh" title="На карантине">${I('search')}<span class="sr-only">на карантине</span></span>`);
 
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
@@ -215,7 +219,7 @@ function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, buttons, 
 
 function viewToday() {
   const t = today();
-  const { log, shown, vents, pending, doneMain, waiting, total } = todayPlan();
+  const { log, shown, vents, inspects, pending, doneMain, waiting, total } = todayPlan();
   const pct = total ? Math.round((doneMain / total) * 100) : 100;
   const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -237,6 +241,15 @@ function viewToday() {
     html += `<div class="progress"><div class="head-row"><b>${pending ? `Осталось ${pending} ${plural(pending, 'дело', 'дела', 'дел')}` : 'Всё на сегодня!'}</b>
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
+
+  inspects.forEach((p) => {
+    html += taskCard({
+      p, task: 'Осмотрите на вредителей',
+      buttons: `<button class="btn ok" data-act="inspect-done" data-id="${esc(p.id)}">${I('search')}Осмотрено</button>
+        <button class="btn" data-act="inspect-off" data-id="${esc(p.id)}">Уже не новое</button>`,
+      hint: `Нижнюю сторону листьев, пазухи и молодые листья, удобно с лупой. Пока держите его отдельно от других растений. Нашли вредителей: не ставьте к остальным и обмойте листья тёплой водой.`,
+    });
+  });
 
   vents.forEach((v) => {
     html += taskCard({
@@ -341,7 +354,7 @@ function spotGroups(ps, room) {
 // The chips also teach which face means what.
 let plantSt = '';
 // Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
-const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
+const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(isNew(p) ? ['new'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
 function stateFilter(ps) {
   const n = {};
   const due = [];
@@ -355,6 +368,7 @@ function stateFilter(ps) {
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
+    ${n.new ? chip('new', `${I('search')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
     ${n.pets ? chip('pets', `${I('triangle-alert')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'way') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
@@ -590,6 +604,13 @@ Object.assign(ACTS, {
   'vent-done'(el, id) {
     const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
     afterTask('Свежий воздух! 🌬️', undo);
+  },
+  'inspect-done'(el, id) {
+    const undo = snapshot(); S.plants[id].inspected = today(); logToday({ id, a: 'inspect' }); track('quarantine_checked');
+    afterTask(isNew(plant(id)) && diff(S.plants[id].bought, today()) + 7 >= NEW_DAYS ? 'Карантин позади: можно ставить к остальным 🌿' : 'Осмотрено 🔍 Загляну через неделю', undo);
+  },
+  'inspect-off'(el, id) {
+    const undo = snapshot(); S.plants[id].bought = false; track('quarantine_toggled', { on: false, from: 'task' }); afterTask('Хорошо, больше не напоминаю осматривать', undo);
   },
   async 'vent-off'(el, id) {
     if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не буду напоминать проветривать.', ok: 'Не нужна' })) {
