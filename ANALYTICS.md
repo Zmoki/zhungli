@@ -1,6 +1,6 @@
 # Analytics
 
-Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US cloud), [dashboard](https://us.posthog.com/project/720394/dashboard/2321614).
+Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US cloud), dashboards [«boring stuff»](https://us.posthog.com/project/720394/dashboard/2333552) (standard app metrics) and [«first run»](https://us.posthog.com/project/720394/dashboard/2379017) (the first minutes of new people).
 
 ## How it works
 
