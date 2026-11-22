@@ -596,7 +596,7 @@ function showImport(text, ext, fail) {
     importItems = [];
     importPicked = new Set();
     box.innerHTML = res.error === 'backup'
-      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить копию».</p>'
+      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
       : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений. Похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
       <p class="small muted" data-from="import">Всё равно не выходит? Пришлите файл Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}, она разберётся и починит.</p>`;
     track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });

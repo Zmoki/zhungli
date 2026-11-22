@@ -145,7 +145,7 @@ function currentHint() {
         `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
     }
     return hintCard('triangle-alert', 'Растения здесь могут потеряться',
-      'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить копию» там.',
+      'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: сохраните копию здесь в «Настройках», а там нажмите «Восстановить копию».',
       `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
   if (IN_APP && !S.hideInstall && !gated) {

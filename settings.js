@@ -79,7 +79,7 @@ function openSettings() {
       <button class="chip" data-act="spot-add">${I('plus')}место</button></div>
     <h2>Резервная копия</h2>
     <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
-    <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить копию</button></div>
+    <div class="btns"><button class="btn ok" data-act="export">Сохранить</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
     <h2>Чистый лист</h2>
     <p class="small muted">Сотрёт все растения, комнаты, места, заметки, фото и настройки ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
