@@ -646,6 +646,13 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* Sticks to the screen's bottom edge: room below the button for its floor and the iPhone home bar */
 .pick-bar { position: sticky; bottom: 0; margin: 0 -16px; padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); background: linear-gradient(transparent, var(--sheet-solid) 30%); }
 .pick-bar .btn:disabled { opacity: .5; }
+/* AI import, one step at a time: more room under the last button, away from the phone's bottom corners */
+.imp-flow { padding-bottom: 28px; }
+.imp-flow .pick-bar { padding-bottom: calc(env(safe-area-inset-bottom) + 32px); }
+.imp-ok { display: flex; gap: 8px; align-items: center; font-weight: 800; }
+/* A drawn button inside a sentence («Под ответом нажмите [⧉]») */
+.kbd { display: inline-flex; vertical-align: -4px; padding: 2px 6px; border: 1.5px solid var(--edge); border-radius: 8px; }
+.kbd .ic { width: 16px; height: 16px; }
 .linkish { border: 0; background: none; padding: 0; color: var(--green); font: inherit; font-weight: 800; text-decoration: underline; }
 .credit { text-align: center; margin-top: 20px; }
 .credit a { color: var(--green); }
