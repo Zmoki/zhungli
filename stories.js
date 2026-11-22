@@ -269,7 +269,7 @@ function cardStory(slide) {
     cardTab = key;
     try { return tame(`<div class="st-card-sheet">${plantCardHtml('sample3')}</div>`); } finally { cardTab = own; }
   });
-  const f = phone(card('notes'), '');
+  const f = phone(card('settings'), '');
   slide.append(f);
   const scr = f.querySelector('.screen');
   // Scrolls the screen so `el` sits near its top (the screen is scaled: rects are divided back).
@@ -283,7 +283,7 @@ function cardStory(slide) {
     [1300, (now) => { if (!now) tapAt(f, tabBtn(name)); }],
     [LAND, () => { const top = scr.scrollTop; setScreen(f, card(key)); scr.scrollTop = top; }],
   ];
-  return [[1300, (now) => scrollTo(f.querySelector('.seg'), now)], ...open('settings', 'Настройки'), ...open('history', 'История')];
+  return [[1300, (now) => scrollTo(f.querySelector('.seg'), now)], ...open('notes', 'Заметки'), ...open('history', 'История')];
 }
 // 4. «Свет»: a reading goes in, and the row's tag appears.
 function lightStory(slide) {

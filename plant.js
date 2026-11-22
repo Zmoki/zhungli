@@ -31,11 +31,16 @@ function cheatHtml(id) {
   if (noteEdit !== 'new') html += `<button class="chip" data-act="note-edit" data-id="${esc(id)}" data-key="new">${I('plus')}заметка</button>`;
   const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
   if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
-  // Warnings sit apart from the notes and their «+ заметка».
-  const warns = (p.toxic ? `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>` : '') + (petsOn() ? petsHtml(p) : '');
-  if (warns) html += `<div class="card-warns">${warns}</div>`;
+  // Warnings are above the tabs (warnsHtml); what pets may know when the plant isn't toxic to them stays here.
+  if (petsOn() && petsOf(p) !== 'toxic') html += `<div class="card-warns">${petsHtml(p)}</div>`;
   if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по вашим ответам.</p>`;
   return html;
+}
+// Warnings never hide behind a tab: the sap that irritates skin, and toxic to pets (with «Дома есть кошка или собака» on).
+function warnsHtml(p) {
+  const w = (p.toxic ? `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>` : '')
+    + (petsOn() && petsOf(p) === 'toxic' ? petsHtml(p) : '');
+  return w ? `<div class="card-warns">${w}</div>` : '';
 }
 // With «Дома есть кошка или собака» on: what the plant means for them, by ASPCA.
 function petsHtml(p) {
@@ -351,9 +356,10 @@ function historyHtml(p) {
 }
 const refreshHistory = (id) => { const box = $('#cp-history'); if (box && sheet.open && cardFor === id) box.innerHTML = historyHtml(plant(id)); };
 
-// Tabs of the plant card. The card opens on «Заметки»; a redraw of the same open card keeps the tab.
-const CARD_TABS = [['notes', 'Заметки'], ['settings', 'Настройки'], ['history', 'История']];
-let cardTab = 'notes', cardFor = null;
+// Tabs of the plant card. The card opens on «Настройки»; a redraw of the same open card keeps the tab.
+// «Настройки» first: people switch to it after about half of card opens (PostHog, November 2026), and rarely back.
+const CARD_TABS = [['settings', 'Настройки'], ['notes', 'Заметки'], ['history', 'История']];
+let cardTab = 'settings', cardFor = null;
 function showCardTab(k, focus) {
   cardTab = k;
   CARD_TABS.forEach(([t]) => {
@@ -427,7 +433,7 @@ function openPlant(id, tabKey, rows) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
-  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
+  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
   if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
@@ -496,10 +502,11 @@ function plantCardHtml(id) {
     <div id="glance">${glanceHtml(p)}</div>
     <div id="water-box">${waterBox(p)}</div>
     ${resting(p) ? restBox(p) : ''}
+    ${warnsHtml(p)}
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
-    ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('settings', `${settingsHtml(id, p, ls, spots)}`)}
+    ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('history', historyHtml(p))}
     </div>`;
 }
