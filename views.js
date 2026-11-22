@@ -225,9 +225,9 @@ let bathStep = 0, bathPicked = [], bathOff = new Set();
 // A plant's photo, or its silhouette in today's mood.
 const picOf = (p) => (photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]));
 const bathRow = (p) => {
-  const on = !bathOff.has(p.id);
+  const on = !bathOff.has(p.id), sub = plantSubHtml(p);
   return `<button class="pick${on ? ' on' : ''}" data-act="bath-pick" data-pick="${esc(p.id)}" aria-pressed="${on}">
-    <span class="pe" aria-hidden="true">${picOf(p)}</span><span class="pt"><b>${typedHtml(p.title)}</b>${plantSubHtml(p) ? `<small>${plantSubHtml(p)}</small>` : ''}</span>
+    <span class="pe" aria-hidden="true">${picOf(p)}</span><span class="pt"><b>${typedHtml(p.title)}</b>${sub ? `<small>${sub}</small>` : ''}</span>
     <span class="pc" aria-hidden="true">${I(on ? 'check' : 'plus')}</span></button>`;
 };
 const pickList = (ps, legend) => `<fieldset class="feed-who"><legend class="sr-only">${legend}</legend>${ps.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>`;
@@ -248,7 +248,7 @@ function bathHtml(bp) {
       pick: `<div class="bath-pics" role="img" aria-label="${esc(ps.map((p) => p.title).join(', '))}">${ps.map((p) => `<span class="bath-pic">${picOf(p)}</span>`).join('')}</div>`,
       buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
   }
-  return taskCard({ ...base, sub: `${plantsN(bp.offer.length)} с подсохшим грунтом`, task: 'Устраиваем сегодня банный день?',
+  return taskCard({ ...base, sub: `${plantsN(bp.offer.length)} на сегодня`, task: 'Устраиваем сегодня банный день?',
     buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Не сегодня</button>`,
     hint: 'Промываем грунт от солей удобрений и жёсткой воды. Купаем только тех, у кого грунт подсох: мокрый пролить насквозь значит залить.' });
 }
@@ -679,7 +679,7 @@ Object.assign(ACTS, {
     }
   },
   'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
-  'bath-cancel'() { bathStep = 0; bathRender('[data-act="bath-yes"]'); },
+  'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },
   'bath-pick'(el) {
     const id = el.dataset.pick, on = bathOff.has(id);
     if (on) bathOff.delete(id); else bathOff.add(id);

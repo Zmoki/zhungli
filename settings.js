@@ -150,7 +150,7 @@ function bathBox() {
   const n = bathEvery(), last = S.bonus.bath;
   const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="bath-every" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;
   return `<label class="toggle"><input type="checkbox" id="bath-on" aria-describedby="bath-hint" ${n ? 'checked' : ''}> Банный день</label>
-    <div class="mt-6 small muted hint" id="bath-hint"><p>Купать растения: промывать грунт от солей удобрений и жёсткой воды. Позову, когда у кого-то подсохнет грунт, и спрошу, кого купаем. Остальных в другой банный день.</p>
+    <div class="mt-6 small muted hint" id="bath-hint"><p>Купать растения: промывать грунт от солей удобрений и жёсткой воды. Позову, когда у кого-то подсохнет грунт, и спрошу, кого купаем. За раз не больше ${BATH_MAX}, остальных в другой банный день.</p>
       <p>${n ? `Каждое растение раз в ${BATH_EVERY.find(([d]) => d === n)?.[1].toLowerCase() || `${n} дней`}. ${last ? `Последний банный день: ${esc(rel(last))}.` : 'Ещё не устраивали.'}` : '<b>Сейчас</b> не зову.'}</p></div>
     ${n ? `<div class="field mt-12" role="group" aria-labelledby="lbl-bath"><label id="lbl-bath">Как часто купать каждое растение</label><div class="chips">${BATH_EVERY.map(chip).join('')}</div></div>` : ''}`;
 }
