@@ -470,7 +470,22 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .hint p { margin: 0; } .hint p + p { margin-top: 8px; } /* a checkbox's hint: one idea per line */
 .toggle input:active { transform: translateY(3px); box-shadow: none; }
 @media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
-.history { font-size: 0.882rem; color: var(--muted); }
+/* «История» list: grouped by month, an icon in the action's color, the date under the word, «×» on the newest answer */
+.hl-month { font-size: 0.882rem; color: var(--muted); font-weight: 900; margin: 20px 0 8px; }
+.hl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hl { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 18px; padding: 8px 8px 8px 10px; min-height: 56px; }
+.hl-ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 14px; background: var(--green-soft); color: var(--on-color); }
+.hl-ic .ic { width: 22px; height: 22px; }
+.hl:is(.water, .rinse) .hl-ic { background: var(--sky); }
+.hl.wet .hl-ic { background: var(--line); color: var(--ink); }
+.hl.feed .hl-ic { background: var(--beige); }
+.hl:is(.ok, .prune) .hl-ic { background: var(--leafy); }
+.hl.fix .hl-ic { background: var(--sun); }
+.hl-w { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.hl-w small { color: var(--muted); font-size: 0.824rem; }
+.hl-x { width: 44px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); }
+.hl-iv { display: flex; align-items: center; gap: 8px; padding: 2px 10px; color: var(--blue); font-weight: 800; font-size: 0.882rem; }
+.hl-iv .ic { width: 18px; height: 18px; flex: none; }
 
 /* Plant card: short facts, tabs, setting groups, the 4-week rhythm */
 .glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }

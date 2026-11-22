@@ -277,8 +277,6 @@ const legendHtml = (p, plan, shown) => {
   const keys = shown && shown.size ? Object.keys(HIST_DOTS).filter((k) => shown.has(k)) : wayOf(p).fixed ? ['ok', 'fix'] : ['water', 'wet'];
   return `<p class="small legend" aria-hidden="true">${plan ? '<span><i class="plan"></i>проверка</span>' : ''}${keys.map((k) => `<span><i class="${HIST_DOTS[k]}"></i>${HIST_WORDS[k]}</span>`).join('')}</p>`;
 };
-// A reminder done reads as its own word («обрезано»); anything else but a watering as «ещё влажно», as before.
-const histWord = (a) => HIST_WORDS[a] || (REMINDERS[a] && REMINDERS[a].done) || HIST_WORDS.wet;
 // The last 4 weeks as dots: watered, still moist, nothing. Today has a ring. The dots and their
 // legend are hidden from screen readers: the average and the list below say the same.
 // The average counts only waterings in these 4 weeks.
@@ -314,14 +312,42 @@ function plannedHtml(p) {
     <p class="small muted m-0">Отметок пока нет. Первая проверка ${esc(rel(first))}, дальше ${wayOf(p).fixed ? everyText(Math.round(p.interval)) : `примерно раз в ${days(Math.round(p.interval))}`}. Ваши ответы появятся здесь.</p></section>`;
 }
 
+// The list in «История»: each entry with its icon and the word from its button («Полито», «Долито», «Подкормлено»).
+const HIST_ICONS = { water: 'droplet', wet: 'droplet-off', ok: 'check', fix: 'wrench', feed: 'utensils', rinse: 'droplets' };
+function histDone(p, a) {
+  const g = wayOf(p);
+  if (a === 'water' || a === 'wet') return g.fixed ? (a === 'water' ? 'Полито' : 'Ещё влажно') : g.labels[a === 'water' ? 0 : 1];
+  const fixed = { ok: 'Работает', fix: 'Поправлено', feed: 'Подкормлено', rinse: 'Промыто' }[a];
+  return fixed || (REMINDERS[a] ? REMINDERS[a].btn.replace(' сегодня', '') : 'Ещё влажно');
+}
+// Grouped by month, newest first. A line marks where the learned interval changed («Проверка теперь раз в 6 дней»):
+// entries since v152 carry it (`iv`). The newest check answer has «×» to take it back (undoAnswer).
+function historyList(p) {
+  const newest = p.hist.findIndex((h) => CHECK_ANSWERS.includes(h.a)), year = new Date().getFullYear();
+  let out = '', month = '';
+  p.hist.forEach((h, i) => {
+    const dt = parse(h.d);
+    const m = dt.toLocaleDateString('ru-RU', dt.getFullYear() === year ? { month: 'long' } : { month: 'long', year: 'numeric' });
+    if (m !== month) { out += `${month ? '</ol>' : ''}<h3 class="hl-month">${esc(m[0].toUpperCase() + m.slice(1))}</h3><ol class="hl-list">`; month = m; }
+    const older = p.hist.slice(i + 1).find((x) => x.iv !== undefined);
+    if (h.iv !== undefined && older && Math.round(older.iv) !== Math.round(h.iv)) {
+      out += `<li class="hl-iv">${I('timer')}<span>Проверка теперь раз в ${days(Math.round(h.iv))}</span></li>`;
+    }
+    const word = histDone(p, h.a), date = dt.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+    out += `<li class="hl ${esc(h.a)}"><span class="hl-ic" aria-hidden="true">${I(HIST_ICONS[h.a] || (REMINDERS[h.a] && REMINDERS[h.a].icon) || 'check')}</span>
+      <span class="hl-w"><b>${esc(word)}</b><small>${esc(date)}</small></span>
+      ${i === newest ? `<button class="hl-x" data-act="hist-undo" data-id="${esc(p.id)}" aria-label="Убрать отметку «${esc(word)}», ${esc(date)}">${I('x')}</button>` : ''}</li>`;
+  });
+  return out ? `${out}</ol>` : '';
+}
 // «История»: the last 4 weeks of checks as dots (or the next 4 weeks before the first one), then the list,
 // reminders done included. Redrawn alone after «Обрезано сегодня».
 function historyHtml(p) {
   const checks = checksOf(p); // reminders done (a pruning) are only in the list
-  const list = p.hist.slice(0, 8).map((h) => `${shortDate(h.d)}: ${histWord(h.a)}`).join('<br>');
+  const list = historyList(p);
   const top = checks.length ? (checks.some((h) => h.d >= addDays(today(), -27)) ? `<section class="group" aria-labelledby="g-weeks"><h3 id="g-weeks">Последние 4 недели</h3>${rhythmHtml(p)}</section>` : '')
     : list && wayOf(p).noChecks ? '' : plannedHtml(p);
-  return `${top}${list ? `<p class="history">${list}</p>` : ''}`;
+  return `${top}${list}`;
 }
 const refreshHistory = (id) => { const box = $('#cp-history'); if (box && sheet.open && cardFor === id) box.innerHTML = historyHtml(plant(id)); };
 
@@ -457,7 +483,7 @@ function plantCardHtml(id) {
   const ls = lightStatus(p);
   const spots = [...new Set([...S.spots, ...allPlants().map((x) => x.spot).filter(Boolean)])];
   const tab = ([k, name]) => `<button role="tab" class="seg-tab" id="ct-${k}" aria-controls="cp-${k}" aria-selected="${k === cardTab}" tabindex="${k === cardTab ? 0 : -1}" data-act="card-${k}">${name}</button>`;
-  // «История» has no controls, so the panel itself takes focus, as in the ARIA tabs pattern.
+  // «История» may have no controls (its only one is «×» on the newest answer), so the panel itself takes focus, as in the ARIA tabs pattern.
   const panel = (k, html) => `<div role="tabpanel" class="card-panel" id="cp-${k}" aria-labelledby="ct-${k}"${k === 'history' ? ' tabindex="0"' : ''}${k === cardTab ? '' : ' hidden'}>${html}</div>`;
   return `
     <div class="hero-bar"><button class="icon-btn hero-close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
@@ -794,6 +820,18 @@ Object.assign(ACTS, {
       track('photo_removed');
       toast('Фото убрано');
     }
+  },
+  // «×» on the newest answer in «История»: asks, takes it back, and the card stays on «История».
+  async 'hist-undo'(el, id) {
+    const h = S.plants[id].hist.find((x) => CHECK_ANSWERS.includes(x.a));
+    if (!h) return;
+    const word = histDone(plant(id), h.a);
+    if (!(await ask({ title: `Убрать отметку «${word}»?`, text: h.was ? 'Следующая проверка и интервал станут как до этой отметки.' : 'Отметка уйдёт из истории.', ok: 'Убрать', danger: true }))) return;
+    const undo = snapshot();
+    undoAnswer(id);
+    track('answer_undone', { answer: h.a, restored: !!h.was, ...kindOf(id) });
+    save(); render(); openPlant(id, 'history'); $('#cp-history')?.focus();
+    toast('Отметка убрана', () => { undo(); if (sheet.open && cardFor === id) openPlant(id, 'history'); });
   },
   'water-now'(el, id) {
     const undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', from: 'card', ...kindOf(id) }); save(); closeSheet(); toast(actWords(plant(id)).done, undo);
