@@ -4,7 +4,7 @@
 
 // Cheat sheet: catalog tips (edits and removals go to r.own, '' = removed)
 // plus the user's own notes in r.notes.
-const NOTE_KEYS = [['water', 'Как поливать'], ['soil', 'Субстрат'], ['cond', 'Условия'], ['tip', 'Важно']];
+const NOTE_KEYS = [['water', 'Как поливать'], ['soil', 'Грунт'], ['cond', 'Условия'], ['tip', 'Важно']];
 const NOTE_ICONS = { water: 'droplet', soil: 'shovel', cond: 'thermometer', tip: 'lightbulb' };
 let noteEdit = null; // key of the note being edited: 'water' … 'tip', 'n0' … or 'new'
 const isCustom = (id) => !!S.custom[(S.plants[id] && S.plants[id].def) || id];
@@ -31,11 +31,16 @@ function cheatHtml(id) {
   if (noteEdit !== 'new') html += `<button class="chip" data-act="note-edit" data-id="${esc(id)}" data-key="new">${I('plus')}заметка</button>`;
   const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
   if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
-  // Warnings sit apart from the notes and their «+ заметка».
-  const warns = (p.toxic ? `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>` : '') + (petsOn() ? petsHtml(p) : '');
-  if (warns) html += `<div class="card-warns">${warns}</div>`;
+  // Warnings are under the tabs (warnsHtml); what pets may know when the plant isn't toxic to them stays here.
+  if (petsOn() && petsOf(p) !== 'toxic') html += `<div class="card-warns">${petsHtml(p)}</div>`;
   if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по вашим ответам.</p>`;
   return html;
+}
+// Warnings never hide behind a tab: under all of them, the sap that irritates skin and toxic to pets (with «Дома есть кошка или собака» on).
+function warnsHtml(p) {
+  const w = (p.toxic ? `<div class="info warn"><b>${I('triangle-alert')}Осторожно</b>Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.</div>` : '')
+    + (petsOn() && petsOf(p) === 'toxic' ? petsHtml(p) : '');
+  return w ? `<div class="card-warns">${w}</div>` : '';
 }
 // With «Дома есть кошка или собака» on: what the plant means for them, by ASPCA.
 function petsHtml(p) {
@@ -73,16 +78,23 @@ function setNote(id, key, text) {
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
 // Watering block in the plant card: last watering, next check and the button; for a reservoir, the top-ups.
+// «Полив», on top of «Уход» in «Настройки»: not a folding row but always open, since «Полито сегодня» is used after
+// about 1 in 5 card opens. Two marks (the last watering and the next check), then the button.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
-  if (g.noChecks) return `<div class="info water"><b>${g.name}</b>Поливать не нужно, корни в воде аквариума.</div>`;
-  return `<div class="info water"><b>${w.title || g.name}</b>${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
-    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
+  const head = '<span class="srow-t">Полив</span>';
+  if (g.noChecks) return `${head}${whyNot('Поливать не нужно, корни в воде аквариума.')}`;
+  const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
+  const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
+  // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
+  const done = p.lastWater === today();
+  return `${head}<p class="wmarks"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
+    <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
 const whyNot = (text, id = '') => `<p class="small muted why-not"${id ? ` id="${id}"` : ''}>${text}</p>`;
-const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральном субстрате', leca: 'в керамзите', water: 'в воде',
+const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральной смеси', leca: 'в керамзите', water: 'в воде',
   mount: 'на блоке', terrarium: 'в закрытом террариуме', aquarium: 'в аквариуме' };
 const upFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 // Why a plant isn't on «День подкормки».
@@ -91,7 +103,7 @@ function feedWhyNot(p) {
   if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды; черенкам до корней не нужно.';
   if (MEDIA[p.type].feed === 'each') return `${upFirst(WHERE[p.type])} удобрение в слабой дозе добавляют в каждый полив: отдельного дня подкормки нет.`;
   if (p.noFeed) return 'Для этого растения подкормки нет.';
-  return `Для растений ${WHERE[p.type] || 'с таким субстратом'} день подкормки не назначаю.`;
+  return `Для растений ${WHERE[p.type] || 'с таким грунтом'} день подкормки не назначаю.`;
 }
 const waterWhyNot = (p) => `Растение ${WHERE[p.type]}, не в горшке: способ полива не выбирается.`;
 // «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
@@ -197,7 +209,7 @@ function rinseBox(p) {
   if (!rinseFits(p)) {
     const care = MEDIA[p.type].care;
     const note = p.type === 'water' ? 'В воде грунта нет: соли уходят со сменой воды.'
-      : care && ['flush', 'leach'].includes(care.kind) ? `У этого субстрата своя промывка: позову отдельно («${care.task}»).`
+      : care && ['flush', 'leach'].includes(care.kind) ? `Здесь своя промывка: позову отдельно («${care.task}»).`
         : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.'
           : p.type === 'terrarium' ? 'В закрытом террариуме промывать нельзя: воде некуда стечь.'
             : p.type === 'aquarium' ? 'Корни в аквариуме: грунта для промывки нет.' : 'На блоке грунта для промывки нет.';
@@ -351,9 +363,10 @@ function historyHtml(p) {
 }
 const refreshHistory = (id) => { const box = $('#cp-history'); if (box && sheet.open && cardFor === id) box.innerHTML = historyHtml(plant(id)); };
 
-// Tabs of the plant card. The card opens on «Заметки»; a redraw of the same open card keeps the tab.
-const CARD_TABS = [['notes', 'Заметки'], ['settings', 'Настройки'], ['history', 'История']];
-let cardTab = 'notes', cardFor = null;
+// Tabs of the plant card. The card opens on «Настройки»; a redraw of the same open card keeps the tab.
+// «Настройки» first: people switch to it after about half of card opens (PostHog, November 2026), and rarely back.
+const CARD_TABS = [['settings', 'Настройки'], ['notes', 'Заметки'], ['history', 'История']];
+let cardTab = 'settings', cardFor = null;
 function showCardTab(k, focus) {
   cardTab = k;
   CARD_TABS.forEach(([t]) => {
@@ -427,7 +440,7 @@ function openPlant(id, tabKey, rows) {
   const p = plant(id);
   if (!p) return;
   noteEdit = null;
-  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'notes';
+  if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
   if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
@@ -461,7 +474,8 @@ function settingsHtml(id, p, ls, spots) {
     + row('gh', `<div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
-    row('way', `<div id="way-box">${wayBox(p, def(id))}</div>
+    `<div class="srow water-row" id="water-box">${waterBox(p)}</div>`
+    + row('way', `<div id="way-box">${wayBox(p, def(id))}</div>
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
     + row('prune', remindBody(id, 'prune'))
@@ -494,13 +508,13 @@ function plantCardHtml(id) {
     <div class="hero-text"><h2 class="m-0" id="sh-title">${typedHtml(p.title)}</h2><div class="muted small" id="sh-species">${typedHtml(p.species)}</div></div>
     <p class="quip">${esc(quipOf(p))}</p>
     <div id="glance">${glanceHtml(p)}</div>
-    <div id="water-box">${waterBox(p)}</div>
     ${resting(p) ? restBox(p) : ''}
 
     <div class="seg" role="tablist" aria-label="Растение">${CARD_TABS.map(tab).join('')}</div>
-    ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('settings', `${settingsHtml(id, p, ls, spots)}`)}
+    ${panel('notes', `<div id="cheat">${cheatHtml(id)}</div>`)}
     ${panel('history', historyHtml(p))}
+    ${warnsHtml(p)}
     </div>`;
 }
 
