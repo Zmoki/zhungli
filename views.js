@@ -223,6 +223,7 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 // «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
 // `bathOff` and `feedOff` keep the unticked ones across redraws.
 let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
+let bathShownOn = ''; // the day bath_day_shown went out in this launch
 // True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
 let sampleDraw = false;
 const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
@@ -359,6 +360,8 @@ function viewToday() {
     if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
   }
   const bathCard = bp && bp.shown ? bathHtml(bp) : '';
+  // The funnel's first step: the card's question was on screen (once per launch and day).
+  if (bathCard && !sampleDraw && bathStep === 0 && bathShownOn !== t) { bathShownOn = t; track('bath_day_shown', { count: bp.offer.length }); }
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
