@@ -152,7 +152,7 @@
     },
     "bonus_done": {
       "area": "care", "since": 7,
-      "when": "bonus task done (the feeding day is `feeding_logged`)",
+      "when": "bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`)",
       "props": {
         "kind": { "type": "enum", "values": {
           "dust": "", "rotate": "",

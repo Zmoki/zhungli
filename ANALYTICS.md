@@ -74,7 +74,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `greenhouse_vented` | «Проветрено» on the vent card | none | v7 |
 | `greenhouse_removed` | greenhouse removed from the vent card | none | v7 |
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none | v131 |
-| `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») | v7 |
+| `bonus_done` | bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») | v7 |
 | `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162) | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` / `bath` (the bath day, up to v159) / `feed` (the feeding day, up to v161) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
 | `feed_day_shown` | the «День подкормки» card drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: plants on the card (due by their own schedule) | v162 |
 | `feed_day_finished` | «Подкормлено» on the «День подкормки» card | `count`: plants ticked as fed<br>`of`: plants on the card; the unticked ones come back in 3 days | v162 |
