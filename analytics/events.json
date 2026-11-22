@@ -797,7 +797,7 @@
 
     "answer_undone": {
       "area": "care", "since": 152, "removed": 159,
-      "when": "«×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words)",
+      "when": "«×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type`",
       "use": ["plant"],
       "props": {
         "answer": { "type": "enum", "values": { "water": "", "wet": "", "ok": "", "fix": "" } },

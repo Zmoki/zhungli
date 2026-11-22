@@ -882,7 +882,7 @@ Object.assign(ACTS, {
     if (!(await ask({ title: `Убрать отметку «${word}»?`, text: h.was ? 'Следующая проверка и интервал станут как до этой отметки.' : 'Отметка уйдёт из истории.', ok: 'Убрать', danger: true }))) return;
     const undo = snapshot();
     undoAnswer(id);
-    track('check_undone', { answer: UNDO_ANSWER[h.a], restored: !!h.was, ...kindOf(id) });
+    track('check_undone', { answer: UNDO_ANSWER[h.a] || h.a, restored: !!h.was, ...kindOf(id) });
     save(); render(); openPlant(id, 'history'); $('#cp-history')?.focus();
     toast('Отметка убрана', () => { undo(); if (sheet.open && cardFor === id) openPlant(id, 'history'); });
   },

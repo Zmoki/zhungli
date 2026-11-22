@@ -209,7 +209,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
-| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words) | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
+| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
 | `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed` | `on` | v69–v75 |
 
