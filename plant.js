@@ -120,7 +120,12 @@ function wayBox(p, d) {
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // «Недавно пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
-const repotBox = (p) => `<div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Пересажено за последние 6 недель</label>
+// «Да» / «Нет» for a row whose title is the question («Недавно купили»): chips, like every other choice.
+const yesNo = (field, id, on, dis = false) => ['1', '0'].map((v) => {
+  const sel = (v === '1') === on;
+  return `<button class="chip ${sel ? 'on' : ''}" data-act="yes-no" data-field="${field}" data-id="${esc(id)}" data-v="${v}" aria-pressed="${sel}"${dis ? ' disabled' : ''}>${v === '1' ? 'Да' : 'Нет'}</button>`;
+}).join('');
+const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Недавно пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
 // Redrawn alone on a change, so the tapped chip keeps focus.
@@ -131,8 +136,8 @@ const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(
 const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (!feedsOnDay(p)) return hintLines('Влияет только на подкормку, а у этого растения дня подкормки нет.');
-  if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
-  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно, по расписанию в «Подкормке».');
+  if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом станет «Нет» само.`);
+  return hintLines('<b>Если «Да»:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно, по расписанию в «Подкормке».');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
 // Redrawn alone, so a chip or the checkbox keeps focus.
@@ -160,7 +165,7 @@ const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${pa
 // «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  if (!isNew(p)) return hintLines('<b>Если отметить:</b> 6 недель раз в неделю позову осмотреть на вредителей, а первые 4 недели не позову подкормить и обрезать.', '<b>Сейчас</b> растение не новое.');
+  if (!isNew(p)) return hintLines('<b>Если «Да»:</b> 6 недель раз в неделю позову осмотреть на вредителей, а первые 4 недели не позову подкормить и обрезать.', '<b>Сейчас</b> растение не новое.');
   return hintLines(...[`Карантин до ${day(NEW_DAYS)}: держите отдельно от других растений, раз в неделю позову осмотреть.`,
     settling(p) ? `До ${day(SETTLE_DAYS)} растение привыкает: лучше не переставлять, не обрезать и не пересаживать, на подкормку не позову.` : '',
     p.settle && settling(p) ? esc(p.settle) : ''].filter(Boolean));
@@ -481,7 +486,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('prune', remindBody(id, 'prune'))
     + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Куплено за последние 6 недель</label>
+    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Недавно купили" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', resting(p) ? whyNot('Растение сейчас в покое: вернуть обычный уход можно в блоке «Покой» над вкладками.')
@@ -698,10 +703,8 @@ function changeWay(id, f, value) {
   $('#rinse-wrap').innerHTML = rinseBox(p);
   $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
-  $('#f-repotted').disabled = !feedsOnDay(p);
-  // The hint follows both the box (a settle ticks it) and whether the plant is fed on the day at all.
-  if (res.settle) { const box = $('[data-field="repotted"]'); if (box) box.checked = true; }
-  $('#repot-hint').innerHTML = repotHint(p);
+  // «Недавно пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
+  const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
   if (res.settle) {
     // Only plants called on «День подкормки» notice it.
     if (feedsOnDay(p)) toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
@@ -732,8 +735,6 @@ document.addEventListener('change', (e) => {
   }
   if (f === 'nobath') { r.noBath = el.checked || undefined; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('[data-field="nobath"]').focus(); track('bath_opt_out', { on: el.checked }); return; }
   if (f === 'lamp') { r.lamp = el.checked; save(); $('#feed-box').innerHTML = feedBox(plant(id)); $('#f-lamp').focus(); track('feed_lamp_toggled', { on: el.checked }); return; }
-  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
-  if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); }
   if (f === 'remind') {
     const k = el.dataset.kind;
     const start = remindStart(plant(id), k);
@@ -747,7 +748,7 @@ document.addEventListener('change', (e) => {
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
-  if (sheet.open && ['greenhouse', 'bought', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
+  if (sheet.open && ['greenhouse', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
@@ -836,6 +837,17 @@ Object.assign(ACTS, {
     }
   },
   // «×» on the newest answer in «История»: asks, takes it back, and the card stays on «История».
+  // «Да» / «Нет» in «Недавно купили» and «Недавно пересажено».
+  'yes-no'(el, id) {
+    const f = el.dataset.field, on = el.dataset.v === '1', r = S.plants[id];
+    if (f === 'bought') { if (on === isNew(plant(id))) return; r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
+    if (f === 'repotted') { if (on === !!repotted(plant(id))) return; r.repotted = on ? today() : false; }
+    save();
+    el.parentElement.querySelectorAll('.chip').forEach((c) => { const sel = c === el; c.classList.toggle('on', sel); c.setAttribute('aria-pressed', sel); });
+    const p = plant(id);
+    $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
+    if (f === 'bought') heroChanged(id);
+  },
   async 'hist-undo'(el, id) {
     const h = S.plants[id].hist.find((x) => CHECK_ANSWERS.includes(x.a));
     if (!h) return;
