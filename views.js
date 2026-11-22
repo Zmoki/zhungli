@@ -518,9 +518,9 @@ function lightIdeas() {
 // Empty screens: tap the plants you have and add them in one go. Anything else is one tap away. Six, so the add
 // button stays near them: the most searched care in Yandex («<растение> уход»), with one-word names so tiles read
 // at a glance. «Фикус» leads the searches: its tile adds the genus card, and «Сменить карточку» picks the
-// species once it's known. Crassula goes by «Крассула», its most searched name.
+// species once it's known. «Кактус» is the general type: one tile for every cactus, and a drawing no other tile has.
 // Begonia's searches include garden ones, but even half of them would beat the next plant, so it stays.
-const QUICK = [['phal', 'Орхидея'], ['ficus-genus', 'Фикус'], ['calathea', 'Калатея'], ['crassula', 'Крассула'],
+const QUICK = [['phal', 'Орхидея'], ['ficus-genus', 'Фикус'], ['calathea', 'Калатея'], ['g-cactus', 'Кактус'],
   ['anth', 'Антуриум'], ['begonia', 'Бегония']];
 let qsPicked = new Set();
 let qsReported = false;
