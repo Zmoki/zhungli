@@ -56,7 +56,7 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | `sphagnum` сфагнум | dried inside? (phalaenopsis: on top) | «Полито» / «Ещё влажно» | «День подкормки» |
 | `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | «День подкормки»; orchid cards add «половинная доза» (`feedNote`, ORC-COND-49) |
 | `coco` кокос | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
-| `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте субстрат» every 30 days |
+| `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте смесь» every 30 days |
 | `leca` керамзит | bottom dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте керамзит» every 45 days |
 | `water` вода | time to change the water? | «Вода сменена» / «Вода ещё чистая» | none |
 | `mount` на блоке | roots silvery? (from 3 days, at most 14) | «Полито» / «Ещё рано» | none |
@@ -87,7 +87,7 @@ Picking another way than the card's:
 - The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, drip irrigation at 14, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
 - Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 6 weeks.
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
-- Own edits of the tips that no longer fit («Как поливать», and «Субстрат» with another medium) become notes, so nothing typed is lost.
+- Own edits of the tips that no longer fit («Как поливать», and «Грунт» with another medium) become notes, so nothing typed is lost.
 - The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.
 - The drawing stays the card's: a dracaena moved into water is still drawn as a dracaena.
 

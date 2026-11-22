@@ -7,6 +7,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Playful and calm.** Plants are characters: a face on the pot, their own words in green bubbles, emoji for mood (see below).
 - **No guilt.** No red overdue items or backlog counters. A skipped plant waits until tomorrow. A finished day gets «Джунгли довольны!», a quiet one «Сегодня отдыхаем».
 - **Short and warm text.** One idea per line, buttons of one or two words.
+- **Plain words in care texts.** One idea per sentence, no «;». «Грунт», not «субстрат» (for pon and other mineral media, «смесь»). A term only when nothing simpler fits, with the reason in the same sentence («рыхлая смесь торфа, перлита и коры, чтобы вода быстро уходила»), not «с дренажом».
 
 ## Ground and layers
 

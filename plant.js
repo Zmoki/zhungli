@@ -4,7 +4,7 @@
 
 // Cheat sheet: catalog tips (edits and removals go to r.own, '' = removed)
 // plus the user's own notes in r.notes.
-const NOTE_KEYS = [['water', 'Как поливать'], ['soil', 'Субстрат'], ['cond', 'Условия'], ['tip', 'Важно']];
+const NOTE_KEYS = [['water', 'Как поливать'], ['soil', 'Грунт'], ['cond', 'Условия'], ['tip', 'Важно']];
 const NOTE_ICONS = { water: 'droplet', soil: 'shovel', cond: 'thermometer', tip: 'lightbulb' };
 let noteEdit = null; // key of the note being edited: 'water' … 'tip', 'n0' … or 'new'
 const isCustom = (id) => !!S.custom[(S.plants[id] && S.plants[id].def) || id];
@@ -82,7 +82,7 @@ function waterBox(p) {
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
 const whyNot = (text, id = '') => `<p class="small muted why-not"${id ? ` id="${id}"` : ''}>${text}</p>`;
-const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральном субстрате', leca: 'в керамзите', water: 'в воде',
+const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральной смеси', leca: 'в керамзите', water: 'в воде',
   mount: 'на блоке', terrarium: 'в закрытом террариуме', aquarium: 'в аквариуме' };
 const upFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 // Why a plant isn't on «День подкормки».
@@ -91,7 +91,7 @@ function feedWhyNot(p) {
   if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды; черенкам до корней не нужно.';
   if (MEDIA[p.type].feed === 'each') return `${upFirst(WHERE[p.type])} удобрение в слабой дозе добавляют в каждый полив: отдельного дня подкормки нет.`;
   if (p.noFeed) return 'Для этого растения подкормки нет.';
-  return `Для растений ${WHERE[p.type] || 'с таким субстратом'} день подкормки не назначаю.`;
+  return `Для растений ${WHERE[p.type] || 'с таким грунтом'} день подкормки не назначаю.`;
 }
 const waterWhyNot = (p) => `Растение ${WHERE[p.type]}, не в горшке: способ полива не выбирается.`;
 // «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
@@ -197,7 +197,7 @@ function rinseBox(p) {
   if (!rinseFits(p)) {
     const care = MEDIA[p.type].care;
     const note = p.type === 'water' ? 'В воде грунта нет: соли уходят со сменой воды.'
-      : care && ['flush', 'leach'].includes(care.kind) ? `У этого субстрата своя промывка: позову отдельно («${care.task}»).`
+      : care && ['flush', 'leach'].includes(care.kind) ? `Здесь своя промывка: позову отдельно («${care.task}»).`
         : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.'
           : p.type === 'terrarium' ? 'В закрытом террариуме промывать нельзя: воде некуда стечь.'
             : p.type === 'aquarium' ? 'Корни в аквариуме: грунта для промывки нет.' : 'На блоке грунта для промывки нет.';
