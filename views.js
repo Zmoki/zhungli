@@ -53,8 +53,7 @@ const growBadges = (p, words) => growKeys(p).filter((k) => !saysWay(p, k)).slice
 }).join('');
 
 function ava(p, cls = 'ava') {
-  const inner = photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]);
-  return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${inner}</button>`;
+  return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${picOf(p)}</button>`;
 }
 
 // Hint cards on «Сегодня»: same layout, usually one at a time. Priority: Telegram's browser, another app's browser
@@ -220,23 +219,36 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
     '<button class="btn" data-act="winter-ok">Понятно</button>'));
 
 // «Банный день» as a few steps in one card: are we bathing today, who, how, done. Only plants due a rinse
-// whose soil is dry today are offered (bathPlan); the step and the picks live here until the card is done.
-let bathStep = 0, bathPicked = [];
+// whose soil is dry today are offered, at most BATH_MAX (bathPlan); the step and the picks live here until the card is done.
+// «Кого купаем?» is a list of rows like the catalog's, all ticked; `bathOff` keeps the unticked ones across redraws.
+let bathStep = 0, bathPicked = [], bathOff = new Set();
+// A plant's photo, or its silhouette in today's mood.
+const picOf = (p) => (photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]));
+const bathRow = (p) => {
+  const on = !bathOff.has(p.id), sub = plantSubHtml(p);
+  return `<button class="pick${on ? ' on' : ''}" data-act="bath-pick" data-pick="${esc(p.id)}" aria-pressed="${on}">
+    <span class="pe" aria-hidden="true">${picOf(p)}</span><span class="pt"><b>${typedHtml(p.title)}</b>${sub ? `<small>${sub}</small>` : ''}</span>
+    <span class="pc" aria-hidden="true">${I(on ? 'check' : 'plus')}</span></button>`;
+};
 const pickList = (ps, legend) => `<fieldset class="feed-who"><legend class="sr-only">${legend}</legend>${ps.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>`;
 function bathHtml(bp) {
   const base = { cls: 'bonus', icon: 'droplets', name: 'Банный день' };
-  const later = bp.due.length - bp.ready.length;
+  const later = bp.due.length - bp.offer.length, wet = bp.due.length - bp.ready.length;
   if (bathStep === 1) {
-    return taskCard({ ...base, sub: plantsN(bp.ready.length), task: 'Кого купаем?', pick: pickList(bp.ready, 'Кого купаем'),
+    const why = [bp.ready.length > bp.offer.length ? `за раз купаем не больше ${BATH_MAX}` : '', wet ? `у ${wet === later ? 'них' : 'кого-то'} грунт ещё влажный` : ''].filter(Boolean).join(', а ');
+    return taskCard({ ...base, sub: plantsN(bp.offer.length), task: 'Кого купаем?',
+      pick: `<div class="bath-who" role="group" aria-label="Кого купаем">${bp.offer.map(bathRow).join('')}</div>`,
       buttons: `<button class="btn ok" data-act="bath-go">${I('droplets')}Пошли купать!</button><button class="btn ghost" data-act="bath-cancel">Отмена</button>`,
-      hint: later ? `У остальных (${plantsN(later)}) грунт ещё влажный: их позову в другой банный день.` : '' });
+      hint: later ? `Остальных (${plantsN(later)}) позову в другой банный день: ${why}.` : '' });
   }
   if (bathStep === 2) {
     const ps = bathPicked.map(plant).filter(Boolean);
-    return taskCard({ ...base, sub: ps.map((p) => p.title).join(', '), task: 'Пошли купать!', hint: RINSE.hint,
+    // The pictures say who: no names on screen, but screen readers get them.
+    return taskCard({ ...base, sub: plantsN(ps.length), task: 'Пошли купать!', hint: RINSE.hint,
+      pick: `<div class="bath-pics" role="img" aria-label="${esc(ps.map((p) => p.title).join(', '))}">${ps.map((p) => `<span class="bath-pic">${picOf(p)}</span>`).join('')}</div>`,
       buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
   }
-  return taskCard({ ...base, sub: `${plantsN(bp.ready.length)} с подсохшим грунтом`, task: 'Устраиваем сегодня банный день?',
+  return taskCard({ ...base, sub: `${plantsN(bp.offer.length)} на сегодня`, task: 'Устраиваем сегодня банный день?',
     buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Не сегодня</button>`,
     hint: 'Промываем грунт от солей удобрений и жёсткой воды. Купаем только тех, у кого грунт подсох: мокрый пролить насквозь значит залить.' });
 }
@@ -331,7 +343,7 @@ function viewToday() {
   }
 
   const bonus = bonusTasks(), bp = bathPlan();
-  if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; } // a bath day put off or over starts from the question next time
+  if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
   const bathCard = bp && bp.shown ? bathHtml(bp) : '';
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
@@ -667,9 +679,15 @@ Object.assign(ACTS, {
     }
   },
   'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
-  'bath-cancel'() { bathStep = 0; bathRender('[data-act="bath-yes"]'); },
+  'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },
+  'bath-pick'(el) {
+    const id = el.dataset.pick, on = bathOff.has(id);
+    if (on) bathOff.delete(id); else bathOff.add(id);
+    el.classList.toggle('on', on); el.setAttribute('aria-pressed', on);
+    el.querySelector('.pc').innerHTML = I(on ? 'check' : 'plus');
+  },
   'bath-go'(el) {
-    bathPicked = [...el.closest('.task').querySelectorAll('[data-pick]')].filter((x) => x.checked).map((x) => x.dataset.pick);
+    bathPicked = [...el.closest('.task').querySelectorAll('[data-pick]')].filter((x) => x.getAttribute('aria-pressed') === 'true').map((x) => x.dataset.pick);
     if (!bathPicked.length) { toast('Отметьте, кого купаем'); return; }
     bathStep = 2; bathRender('[data-act="bath-done"]');
   },
@@ -681,7 +699,7 @@ Object.assign(ACTS, {
     // Logged as waterings, so they count on «Сегодня» like a check answered; one watered meanwhile isn't watered twice.
     ids.forEach((id) => { if (S.plants[id].lastWater !== today()) actWater(id); rinseDone(id); });
     S.bonus.bath = today();
-    bathStep = 0; bathPicked = [];
+    bathStep = 0; bathPicked = []; bathOff = new Set();
     logToday({ a: 'bonus:bath', title: 'Банный день' });
     const left = bathPlan().due;
     track('bath_day_done', { n: ids.length, left: left.length });
