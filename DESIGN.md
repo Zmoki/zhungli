@@ -58,6 +58,7 @@ The same action has the same word everywhere, so people don't have to wonder whe
 - **Done:** the action's past form, as on the check card's «Полито»: «Подкормлено», «Промыто», «Протёрто», «Повёрнуто», «Обрезано», «Проветрено», «Осмотрено». In the plant card it gets «сегодня» («Полито сегодня»). Never a generic «Готово».
 - **Later:** the button says when the task comes back: «Завтра» (checks), «Через 3 дня» (bonus tasks, bath day). Its toast says the same.
 - **Never:** «Не нужно».
+- **Under a heading:** a button under a heading or title that names the thing drops the noun: «Сохранить» and «Восстановить» under «Резервная копия». Elsewhere it keeps it («Сохранить копию»).
 - **Buttons and links:** an infinitive or a noun («Перенести из чата с ИИ», «Сохранить копию»), never an imperative. The task line above the buttons is the imperative («Полейте…»).
 - **Removing:** «Убрать» for a plant, photo, place or room; «Удалить» for a note; «Стереть» for all data.
 - **Steps:** a task of several steps says where you are: «Шаг 2 из 3».
