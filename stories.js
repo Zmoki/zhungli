@@ -214,7 +214,7 @@ const STORIES = [
   { h: 'Отмечайте дела на сегодня', p: 'По вашим ответам Жунгли подстроят полив под каждое растение.', build: todayStory },
   { h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
   { h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
-  { h: 'Кому темно, кому ярко', p: 'По замеру Жунгли подскажут, кому темно и кого переставить.', build: lightStory },
+  { h: 'Кому темно, кому ярко', p: 'По замеру Жунгли покажут, кому темно, а кому слишком ярко.', build: lightStory },
   { h: 'Температура и влажность', p: 'По датчику Жунгли подскажут, кому некомфортно и что сделать.', build: roomStory },
   { build: endStory },
 ];
@@ -284,7 +284,7 @@ function cardStory(slide) {
   ];
   return [[1300, (now) => scrollTo(f.querySelector('.seg'), now)], ...open('settings', 'Настройки'), ...open('history', 'История')];
 }
-// 4. «Свет»: a reading goes in, and the tips appear.
+// 4. «Свет»: a reading goes in, and the row's tag appears.
 function lightStory(slide) {
   const first = tame(onSample(sampleGarden(), viewLight), mark({ 'st-lux': 'input[data-id="sample0"]' }));
   const f = phone(first, 'light');

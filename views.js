@@ -266,7 +266,8 @@ const plantSubHtml = (p, ...extra) => [...[p.name ? p.species : '', p.spot].filt
 // the buttons, then how to do it. `p` is the plant (or `icon` and `name` for tasks without one).
 // `sub` is app text; `subHtml` is a ready line from plantSubHtml().
 // `pick`: HTML between the task and the buttons, such as the feeding day's ticks.
-function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = '', buttons, who, hint, after = '' }) {
+// `fold`: the hint folds under «Как?», next to `after` («Завтра»): { id, open, water } (water: «Как?» in the watering blue).
+function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = '', buttons, who, hint, after = '', fold }) {
   const pic = p ? ava(p) : `<div class="ava" aria-hidden="true">${I(icon)}</div>`;
   const line = subHtml ?? (p && sub === undefined ? plantSubHtml(p) : esc(sub ?? ''));
   return `<div class="task${cls ? ' ' + cls : ''}"><div class="task-top">${pic}<div><div class="task-name">${p ? typedHtml(p.title) : esc(name)}</div>
@@ -274,8 +275,12 @@ function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = ''
     ${quip ? `<p class="quip">${esc(quip)}</p>` : ''}
     <div class="question">${esc(task)}</div>${pick}
     <div class="btns">${buttons}</div>
-    ${who || hint ? `<div class="hint">${who ? `Кого: ${who.map(typedHtml).join(', ')}. ` : ''}${esc(hint)}</div>` : ''}${after}</div>`;
+    ${fold ? `<div class="task-links"><button class="later how${fold.water ? ' water' : ''}" data-act="how" data-id="${esc(fold.id)}" aria-expanded="${fold.open}" aria-controls="how-${esc(fold.id)}">${I('circle-help')}Как?</button>${after}</div>
+    <div class="hint" id="how-${esc(fold.id)}"${fold.open ? '' : ' hidden'}>${esc(hint)}</div></div>`
+    : `${who || hint ? `<div class="hint">${who ? `Кого: ${who.map(typedHtml).join(', ')}. ` : ''}${esc(hint)}</div>` : ''}${after}</div>`}`;
 }
+// «Как?» on check cards: open for a plant's first checks (HOW_OPEN answers), folded after; a tap keeps its choice for the session.
+const HOW_OPEN = 3, howOpen = new Map();
 
 function viewToday() {
   const t = today();
@@ -327,6 +332,7 @@ function viewToday() {
       buttons: `<button class="btn ${g.fixed ? 'ok' : 'water'}" data-act="water" data-id="${esc(p.id)}">${I(yi)}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${ni ? I(ni) : ''}${no}</button>`,
       hint: resting(p) && p.rest ? p.rest.water : p.water,
+      fold: (resting(p) && p.rest ? p.rest.water : p.water) ? { id: p.id, open: howOpen.get(p.id) ?? checksOf(p).length < HOW_OPEN, water: !g.fixed } : null,
       after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Завтра</button>`,
     });
   });
@@ -475,44 +481,21 @@ document.addEventListener('input', (e) => {
 /* ---------- Light ---------- */
 const LUX_SCALE = 40000;
 
+// Thousands without «тыс»: «8–18 тыс люксов».
+const kNum = (n) => (n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 });
+// A row: the picture beside the name, what it needs and the reading («?» while empty; the tag once measured), then the bar.
 function lightRow(p) {
   const ls = lightStatus(p);
   const [a, b] = p.luxRange;
   const left = (Math.min(a, LUX_SCALE) / LUX_SCALE) * 100;
   const width = ((Math.min(b, LUX_SCALE) - Math.min(a, LUX_SCALE)) / LUX_SCALE) * 100;
   const dot = p.lux ? `<i class="dot ${ls}" data-l="${clamp((p.lux / LUX_SCALE) * 100, 0, 100)}"></i>` : '';
-  const state = ls ? `<span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '<span class="small muted">ещё не замерено</span>';
+  const state = ls ? `<span class="tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '';
   return `<div class="lux-row" id="lux-${esc(p.id)}"><span class="nm-pl lux-pic">${photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2])}</span>
-    <div class="nm">${typedHtml(p.title)}</div><div class="lux-state">${state}</div>
-    <input class="input" type="number" inputmode="numeric" placeholder="лк" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}">
-    <div class="need">нужно ${kLux(a)}–\u2060${kLux(b)}${p.spot ? ' · ' + typedHtml(p.spot) : ''}</div>
+    <div class="nm">${typedHtml(p.title)}</div>
+    <div class="need">нужно ${kNum(a)}–\u2060${kNum(b)}\u00a0тыс люксов${p.spot ? ' · ' + typedHtml(p.spot) : ''}</div>
+    <div class="lux-read"><input class="input" type="number" inputmode="numeric" placeholder="?" aria-label="Замер для ${esc(p.title)}, люкс" data-field="lux" data-id="${esc(p.id)}" value="${p.lux ?? ''}"><span class="unit" aria-hidden="true">лк</span><span class="lux-state">${state}</span></div>
     <div class="lux-bar"><i class="range" data-l="${left}" data-w="${width}"></i>${dot}</div></div>`;
-}
-
-function lightIdeas() {
-  const ps = allPlants().filter((p) => p.lux);
-  const lows = ps.filter((p) => lightStatus(p) === 'low').sort((x, y) => (y.luxRange[0] - y.lux) - (x.luxRange[0] - x.lux));
-  const highs = ps.filter((p) => lightStatus(p) === 'high');
-  const used = new Set();
-  const out = [];
-  lows.forEach((L) => {
-    const H = ps
-      .filter((h) => h.id !== L.id && !used.has(h.id) && h.lux >= L.luxRange[0] && h.luxRange[0] <= L.lux)
-      .sort((x, y) => (y.lux - y.luxRange[0]) - (x.lux - x.luxRange[0]))[0];
-    if (H) {
-      used.add(H.id); used.add(L.id);
-      out.push(['swap', `${I('arrow-left-right')}<b>Поменяйте местами: ${typedHtml(L.title)} ⇄ ${typedHtml(H.title)}</b><br>
-        ${typedHtml(L.title)}: сейчас ${kLux(L.lux)} ${LK}, нужно от ${kLux(L.luxRange[0])}.<br>
-        ${typedHtml(H.title)}: сейчас ${kLux(H.lux)} ${LK}, хватит и ${kLux(L.lux)}.`]);
-    } else {
-      out.push(['low', `${I('sun-dim')}<b>${typedHtml(L.title)}</b>: темновато, ${kLux(L.lux)} ${LK}, а нужно от ${kLux(L.luxRange[0])}. Подвиньте ближе к окну или лампе или добавьте часов досветки.`]);
-    }
-  });
-  highs.forEach((H) => {
-    if (!used.has(H.id)) out.push(['high', `${I('sun')}<b>${typedHtml(H.title)}</b>: очень ярко, ${kLux(H.lux)} ${LK}, а нужно до ${kLux(H.luxRange[1])}. Отодвиньте от лампы или прямого солнца, чтобы не обжечь листья.`]);
-  });
-  if (!out.length) return ps.length ? '<p class="muted">Света всем хватает 🌞</p>' : '';
-  return out.map(([kind, t]) => `<div class="idea ${kind}">${t}</div>`).join('');
 }
 
 // Empty screens: tap the plants you have and add them in one go. Anything else is one tap away. Six, so the add
@@ -575,8 +558,7 @@ function viewLight() {
       ${emptyCard('Свет для каждого растения', 'Добавьте растения, и я покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.', { short: 'Добавьте растения, и я покажу, кому сколько света нужно.' })}`;
   }
   return `<header class="hello head-row"><div><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></div>${headButtons()}</header>
-    <p class="small muted">Замеряйте люксметром у листьев днём, при обычном свете. Впишите цифру, и я подскажу, кому темно, а кого лучше переставить. Нет люксметра? Подойдёт приложение-люксметр для телефона, оно меряет примерно.</p>
-    <div id="ideas">${lightIdeas()}</div>
+    <p class="small muted">Замеряйте люксметром у листьев днём. Подойдёт и приложение для телефона.</p>
     <h2>От самых светолюбивых</h2>
     ${ps.map(lightRow).join('')}`;
 }
@@ -687,6 +669,13 @@ Object.assign(ACTS, {
     if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не позову проветривать.', ok: 'Не нужна' })) {
       const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
     }
+  },
+  how(el, id) {
+    const open = el.getAttribute('aria-expanded') !== 'true';
+    document.getElementById('how-' + id).hidden = !open;
+    el.setAttribute('aria-expanded', open);
+    howOpen.set(id, open);
+    if (open) track('how_opened', kindOf(id));
   },
   'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
   'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },

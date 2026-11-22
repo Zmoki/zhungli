@@ -43,8 +43,8 @@ A check card has:
 - the plant's quip of the day;
 - the task, made from the check question;
 - the two answers;
-- the card's watering tip (not for wick watering);
-- «Завтра», which doesn't use up the limit.
+- «Как?» under the first answer, with the card's watering tip (not for wick watering). It's open for a plant's first 3 checks (`HOW_OPEN`), then folded; a tap opens or folds it for the session. «Как?» takes the main button's color: blue on watering;
+- «Завтра» under the second answer, which doesn't use up the limit.
 
 ## Greenhouse airing
 
