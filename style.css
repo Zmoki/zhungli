@@ -538,6 +538,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* Room around the action buttons in a row: away from the text above, and their floor clear of the row's edge */
 /* Every action button in a row: full width (.wide), centered, with its floor, 16px under the text above */
 .srow-body .btn.wide, .srow-body .btns { margin-top: 16px; }
+/* The last time an action was done: a quiet line under its button */
+.last-done { margin: 10px 0 0; text-align: center; }
 .srow-body > .field:last-child, .srow-body > div:last-child > .field:last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .srow-head .ic { transition: none; } }
 .group > .field:last-child, .group > div:last-child > .field:last-child { margin-bottom: 0; }

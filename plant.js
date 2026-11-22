@@ -158,8 +158,8 @@ function feedBox(p) {
     <p class="mt-6 small muted" id="feed-when">${when}</p></div>
     <div class="field">${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && n && !off), !(n && !off))}
       <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : !n ? 'Сначала выберите, как часто кормить.' : p.lamp ? `Зимой позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой не зову: без лампы растение почти не растёт.'}</p></div>
-    ${last ? `<p class="small muted m-0">Последний раз: ${esc(rel(last))}.</p>` : ''}
-    <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>`;
+    <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
+    ${last ? `<p class="small muted last-done">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -200,8 +200,8 @@ function remindMore(id, kind) {
       ${R.every.map(([n, label]) => chip('remind-every', `data-n="${n}"`, x.every === n, label)).join('')}</div></div>
     <div class="field" role="group" aria-labelledby="lbl-months-${kind}"><label id="lbl-months-${kind}">В какие месяцы</label><div class="chips">
       ${MONTH_CHIPS.map((m, i) => chip('remind-month', `data-m="${i + 1}"`, x.months.includes(i + 1), m, ` aria-label="${MONTHS[i]}"`)).join('')}</div></div>
-    ${last ? `<p class="small muted m-0" id="remind-last-${kind}">Последний раз: ${esc(rel(last))}.</p>` : ''}
-    <button class="btn ok wide" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}"${last === today() ? ' disabled' : ''}>${I(R.icon)}${R.btn}</button>`;
+    <button class="btn ok wide" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}"${last === today() ? ' disabled' : ''}>${I(R.icon)}${R.btn}</button>
+    ${last ? `<p class="small muted last-done" id="remind-last-${kind}">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
 // A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
@@ -229,8 +229,8 @@ function rinseBox(p) {
   return box(`<div class="small muted hint">${hintLines(RINSE.why)}</div>
     <div class="field mt-12">${askYesNo('Звать в банный день?', 'bath', p.id, !!(n && !p.noBath), !n)}
       <div class="mt-6 small muted hint" id="rinse-hint">${hintLines(how)}</div></div>
-    ${last ? `<p class="small muted m-0">Последний раз: ${esc(rel(last))}.</p>` : ''}
-    <button class="btn ok wide" data-act="rinse-done" data-id="${esc(p.id)}"${last === today() ? ' disabled' : ''}>${I('droplets')}Промыто сегодня</button>`);
+    <button class="btn ok wide" data-act="rinse-done" data-id="${esc(p.id)}"${last === today() ? ' disabled' : ''}>${I('droplets')}Промыто сегодня</button>
+    ${last ? `<p class="small muted last-done">Последний раз: ${esc(rel(last))}.</p>` : ''}`);
 }
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
