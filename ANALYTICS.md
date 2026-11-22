@@ -49,6 +49,7 @@ On every event:
 | `custom_opened` | own plant form opened | `from`: `button` («Своё растение» under «Не нашли своё?») / `search_miss` («Добавить как своё» after a catalog search found nothing) |
 | `quick_abandoned` | tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app | `picked` (how many ticked); `then`: `catalog` / `import` / `restore` / `left_app` (what they turned to instead of «Добавить»; they may still add there) |
 | `import_opened` | AI import sheet opened | `restored`, `step`: it opened where an unfinished import stopped (kept on the device for 3 hours) |
+| `import_clipboard` | «Вставить ответ» on import step 3 | `result`: `ok` / `empty` (nothing copied) / `denied` (the browser refused, or the person didn't tap the system «Вставить») |
 | `import_step` | AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть») | `step`: 1–4; `via`: `paste` / `file` (steps 3 and 4) |
 | `name_help_opened` | «Как узнать, что за растение» opened | `from`: `search` (link under the catalog search), `not_found` (search found nothing), `empty` (first screen with no plants) |
 | `catalog_searched` | catalog search typed (1.2 s pause, no search text sent) | `found`; `typo: true` when only the typo-forgiving pass found something |
