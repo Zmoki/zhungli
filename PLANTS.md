@@ -114,9 +114,9 @@ A new plant starts with the card's `every`. Plants added together get their firs
 
 | Answer | What changes |
 |---|---|
-| «Полито» (or «Записать полив» in the card) | The interval moves toward the measured days since the last watering: halfway after «Ещё влажно» answers, and only down (×0.95) when the soil was already dry. Bounds: `every × 0.4`…`every × 3`; grown another way than the card's, 1…45 days (a wick or reservoir 2…45, a block 1…14, a terrarium 7…60). Next check: today + interval. |
+| «Полито» (or «Полито сегодня» in the card) | The interval moves toward the measured days since the last watering: halfway after «Ещё влажно» answers, and only down (×0.95) when the soil was already dry. Bounds: `every × 0.4`…`every × 3`; grown another way than the card's, 1…45 days (a wick or reservoir 2…45, a block 1…14, a terrarium 7…60). Next check: today + interval. |
 | «Ещё влажно» | Next check in a quarter of the interval, at least 1 day. The interval itself waits for the next «Полито». |
-| «Не сейчас, завтра» | Next check tomorrow. Nothing is learned. |
+| «Завтра» | Next check tomorrow. Nothing is learned. |
 | Stepper in the card | ±1 day, 1…60. The next check moves to last watering + interval, but not before today. |
 
 ## Statuses

@@ -46,13 +46,13 @@ const MEDIA = {
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый субстрат или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
   mineral: { name: 'Минеральный: пон, пемза, цеолит', pot: true, feed: 'each', badge: ['mountain', 'на минералке'], start: (b) => Math.max(2, Math.round(b * 0.7)),
-    care: { kind: 'leach', every: 30, task: 'Промойте субстрат', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
+    care: { kind: 'leach', every: 30, task: 'Промойте субстрат', done: 'Промыто', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
     hint: 'Позову проверить, подсох ли субстрат.', careHint: 'Раз в месяц напомню промыть субстрат от солей.',
     water: 'Когда подсох верхний слой: минеральный субстрат сохнет быстрее грунта. В каждый полив добавлять удобрение в слабой дозе, своего питания в субстрате нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе добавлять в каждый долив.' },
   leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true, badge: ['grip', 'в керамзите'], watering: 'reservoir',
-    care: { kind: 'flush', every: 45, task: 'Промойте керамзит', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
+    care: { kind: 'flush', every: 45, task: 'Промойте керамзит', done: 'Промыто', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
     hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в полтора месяца напомню промыть керамзит.',
     water: 'Поливать раствором, когда нижний слой подсох; лишнее сливать. Удобрение для гидропоники добавлять в каждый полив.',
     soil: 'Керамзит или другой наполнитель. Раз в 1–2 месяца промыть и сменить раствор целиком.',
@@ -72,7 +72,7 @@ const MEDIA = {
     water: 'Почти не поливать. Сбрызнуть, если стёкла сухие несколько дней подряд. Если на стёклах много капель, приоткрыть на пару часов.',
     soil: 'Дренаж, сетка, грунт и мох в закрытой ёмкости. Протирать стёкла, подрезать разросшееся, убирать опавшие листья.' },
   aquarium: { name: 'Аквариум', feed: 'none', noChecks: true, wet: true, badge: ['fish', 'в аквариуме'],
-    care: { kind: 'roots', every: 30, task: 'Осмотрите корни в аквариуме', hint: 'Тёмные мягкие корни обрежьте. Листья и стебель должны быть над водой.' },
+    care: { kind: 'roots', every: 30, task: 'Осмотрите корни в аквариуме', done: 'Осмотрено', hint: 'Тёмные мягкие корни обрежьте. Листья и стебель должны быть над водой.' },
     hint: 'Поливать не нужно. Раз в месяц напомню осмотреть корни.',
     water: 'Поливать не нужно: корни в воде аквариума. Не удобрять, потому что удобрения вредны рыбам.',
     soil: 'В воде только корни, листья и стебель над водой: на держателе у стекла или в плавающей корзинке. Перед посадкой корни отмыть от грунта.' },
@@ -103,7 +103,7 @@ const WATERING = {
 };
 // Per-plant reminders the person turns on in the plant card: r.remind[kind] = { every, months }.
 // They come as bonus tasks (`<kind>:<id>`, the date in S.bonus as for dusting) in the active months (1–12),
-// `every` days after the last time, at once if never. «Готово» also goes to the plant's history as `kind`.
+// `every` days after the last time, at once if never. Its done button also goes to the plant's history as `kind`.
 // every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
 // toggle: the checkbox in the kind's own section of the plant card; start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
 // gloves: the card's sap warning goes with the task; fits(p): shown and asked only for such plants.
@@ -212,10 +212,10 @@ function waterTask(p) {
 const TYPE_NAMES = Object.fromEntries(Object.entries(MEDIA).map(([k, g]) => [k, g.name]));
 // Words for what a check records: a watering, a top-up of a reservoir, or fresh water.
 const ACT_WORDS = {
-  pour: { title: 'Полив', last: 'Последний полив', none: 'Поливов ещё не было', due: 'Пора проверить сегодня', next: 'Следующая проверка', btn: 'Записать полив', done: 'Полив записан 💧', sub: 'полив' },
-  top: { title: 'Долив', last: 'Последний долив', none: 'Доливов ещё не было', due: 'Пора проверить уровень сегодня', next: 'Проверить уровень', btn: 'Записать долив', done: 'Долив записан 💧', sub: 'долив' },
-  system: { title: 'Автополив', last: 'Последняя проверка', none: 'Проверок ещё не было', due: 'Пора проверить систему сегодня', next: 'Следующая проверка', btn: 'Записать проверку', done: 'Проверка записана ✅', sub: 'проверка' },
-  change: { title: 'Вода', last: 'Последняя смена воды', none: 'Воду ещё не меняли', due: 'Пора проверить воду сегодня', next: 'Следующая проверка', btn: 'Записать смену воды', done: 'Смена воды записана 💧', sub: 'смена воды' },
+  pour: { title: 'Полив', last: 'Последний полив', none: 'Поливов ещё не было', due: 'Пора проверить сегодня', next: 'Следующая проверка', btn: 'Полито сегодня', done: 'Полив записан 💧', sub: 'полив' },
+  top: { title: 'Долив', last: 'Последний долив', none: 'Доливов ещё не было', due: 'Пора проверить уровень сегодня', next: 'Проверить уровень', btn: 'Долито сегодня', done: 'Долив записан 💧', sub: 'долив' },
+  system: { title: 'Автополив', last: 'Последняя проверка', none: 'Проверок ещё не было', due: 'Пора проверить систему сегодня', next: 'Следующая проверка', btn: 'Проверено сегодня', done: 'Проверка записана ✅', sub: 'проверка' },
+  change: { title: 'Вода', last: 'Последняя смена воды', none: 'Воду ещё не меняли', due: 'Пора проверить воду сегодня', next: 'Следующая проверка', btn: 'Вода сменена сегодня', done: 'Смена воды записана 💧', sub: 'смена воды' },
 };
 const actWords = (p) => ACT_WORDS[wayOf(p).act || 'pour'];
 // How often a fixed way is checked: «раз в 2 недели», «раз в 10 дней».
@@ -510,6 +510,7 @@ function inspectDue() {
   return allPlants().filter((p) => isNew(p) && (!p.inspected || diff(p.inspected, today()) >= 7));
 }
 
+const BACKUP_EVERY = 30; // days between the backup task's calls
 function bonusTasks() {
   const t = today();
   const out = [];
@@ -524,15 +525,15 @@ function bonusTasks() {
       if (kind === 'prune' && settling(p)) return; // a new plant has enough to get over
       // Cutting is when sap gets on skin: plants with irritating sap get the card's gloves warning.
       const gloves = p.toxic && R.gloves ? ` Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}, работайте в перчатках.` : '';
-      if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, hint: [remindCard(p, kind).tip, R.hint].filter(Boolean).join(' ') + gloves });
+      if (!S.bonus[k] || diff(S.bonus[k], t) >= x.every) own.push({ key: k, p, title: `${R.task}: ${p.title}`, task: R.task, done: R.btn.replace(' сегодня', ''), hint: [remindCard(p, kind).tip, R.hint].filter(Boolean).join(' ') + gloves });
     });
     const dk = 'dust:' + p.id;
     if (p.big && S.bonus[dk] && diff(S.bonus[dk], t) >= 21 && !snoozed(dk)) {
-      out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, task: 'Протрите листья', hint: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
+      out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, task: 'Протрите листья', done: 'Протёрто', hint: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
     }
     const rk = 'rotate:' + p.id;
     if (p.rotate && S.bonus[rk] && diff(S.bonus[rk], t) >= 14 && !snoozed(rk)) {
-      out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
+      out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', done: 'Повёрнуто', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
     }
     const care = wayOf(p).care, ck = care && `${care.kind}:${p.id}`;
     if (care && S.bonus[ck] && diff(S.bonus[ck], t) >= care.every && !snoozed(ck)) (cares[care.kind] ||= { care, ps: [] }).ps.push(p);
@@ -540,17 +541,22 @@ function bonusTasks() {
   // One task per kind of care: all the aquarium's plants at once, not a card each.
   Object.values(cares).forEach(({ care, ps }) => {
     const key = `${care.kind}:${ps.map((p) => p.id).join(',')}`;
-    out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, hint: care.hint }
-      : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, who: ps.map((p) => p.title), hint: care.hint });
+    out.push(ps.length === 1 ? { key, p: ps[0], title: `${care.task}: ${ps[0].title}`, task: care.task, done: care.done, hint: care.hint }
+      : { key, icon: 'droplets', title: care.task, sub: plantsN(ps.length), task: care.task, done: care.done, who: ps.map((p) => p.title), hint: care.hint });
   });
   // «День подкормки»: the plants due by their own schedule (feedDue), each ticked off on its own.
   const fed = allPlants().filter((p) => feedDue(p) && !snoozed('feed:' + p.id));
   if (fed.length) {
     // A card's own word on the dose (orchids: half a dose of orchid fertilizer), once per word.
     const notes = [...new Set(fed.map((p) => p.feedNote).filter(Boolean))].join(' ');
-    out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили',
+    out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили', done: 'Подкормлено',
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
       hint: `${notes ? notes + ' ' : ''}${winterNow() ? 'Зимой под лампой: не чаще раза в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
+  }
+  // A month after the last backup (or since the start), while there are plants: everything lives on this device.
+  if (allPlants().length && diff(S.backupAt || S.created || t, t) >= BACKUP_EVERY && !snoozed('backup')) {
+    out.push({ key: 'backup', icon: 'save', title: 'Резервная копия', task: 'Сохраните копию растений', backup: true,
+      hint: MINI_APP ? 'Растения хранятся и в облаке Телеграма, но фото там уменьшенные. Сохраните копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Сохраните копию в файлы или отправьте себе в Телеграм.' });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;

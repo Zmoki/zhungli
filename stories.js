@@ -492,6 +492,8 @@ function storiesYield() {
 }
 Object.assign(ACTS, {
   // «Показать, как» on the install card or the iPhone hint: straight to the last story, the way to the home screen.
+  // Settings keep a way back to them, in the same place every time.
+  'stories-help'() { closeSheet(); openStories('settings'); },
   'stories-install'(el) { openStories(el.dataset.from || 'install_card', STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },

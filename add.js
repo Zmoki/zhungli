@@ -114,7 +114,7 @@ function openAdd(back = false) {
     <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
+      <span class="pt"><b>Много растений? Перенести из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <h3 class="sec-title">Каталог</h3>
     ${catalogHtml()}
@@ -482,7 +482,7 @@ function openImport(back = '') {
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
     ${subHead('Импорт из чата с ИИ', back)}
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
+    <div class="info"><b>Шаг 1 из 2</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
@@ -490,7 +490,7 @@ function openImport(back = '') {
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
-    <div class="info"><b>Шаг 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
+    <div class="info"><b>Шаг 2 из 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
     <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
@@ -596,7 +596,7 @@ function showImport(text, ext, fail) {
     importItems = [];
     importPicked = new Set();
     box.innerHTML = res.error === 'backup'
-      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
+      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить копию».</p>'
       : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений. Похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
       <p class="small muted" data-from="import">Всё равно не выходит? Пришлите файл Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}, она разберётся и починит.</p>`;
     track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });

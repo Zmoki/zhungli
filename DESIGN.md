@@ -50,6 +50,21 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 
 Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked; their text reads like a chip's.
 
+## Action words
+
+The same action has the same word everywhere, so people don't have to wonder whether two buttons do the same thing (W3C COGA: same name for the same thing).
+
+- **Done:** the action's past form, as on the check card's «Полито»: «Подкормлено», «Промыто», «Протёрто», «Повёрнуто», «Обрезано», «Проветрено», «Осмотрено». In the plant card it gets «сегодня» («Полито сегодня»). Never a generic «Готово».
+- **Later:** the button says when the task comes back: «Завтра» (checks), «Через 3 дня» (bonus tasks, bath day). Its toast says the same.
+- **Never:** «Не нужно».
+- **Buttons and links:** an infinitive or a noun («Перенести из чата с ИИ», «Сохранить копию»), never an imperative. The task line above the buttons is the imperative («Полейте…»).
+- **Removing:** «Убрать» for a plant, photo, place or room; «Удалить» for a note; «Стереть» for all data.
+- **Steps:** a task of several steps says where you are: «Шаг 2 из 3».
+
+## Help
+
+«Как работают Жунгли» is the first button in settings, so help is always in the same place (WCAG 2.2, 3.2.6).
+
 ## Search
 
 Search fields have a magnifier on the left and, once something is typed, an ✕ on the right that empties the field (`searchX()` in `core.js`). Safari on iPhone draws no clear button of its own, and the browser's own one is hidden where it exists.
