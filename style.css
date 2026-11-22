@@ -444,7 +444,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .note-links .linkish, .copy-help .linkish, .name-help .linkish { min-height: 44px; }
 .linkish.danger-link { color: var(--red); }
 .field { margin-bottom: 32px; }
-.field label { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
+/* Every text that names a setting looks the same: field labels and yes-no questions */
+.field label, .yn-q { display: block; font-size: 0.882rem; font-weight: 800; color: var(--muted); margin: 0 0 8px; }
 .input {
   width: 100%; border: 2px solid var(--edge); border-radius: 16px; padding: 12px 14px; background: var(--field);
   font-size: 1rem;
