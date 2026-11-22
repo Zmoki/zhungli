@@ -531,7 +531,7 @@ function endQuick(then) {
   qsReported = true;
 }
 // «Добавить» under the tiles. The word after the number can hide on a narrow screen with large text (style.css).
-const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Отметьте, что есть');
+const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Ничего не выбрано');
 function quickStart() {
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);

@@ -122,7 +122,7 @@ function openAdd(back = false) {
       <button class="import-cta mini" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
         <span class="pt"><b>Своё растение</b><small>Название и на что похоже, уход подберу</small></span>
         <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button></div>
-    <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+    <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Ничего не выбрано</button></div>`;
   catalogSearch();
   picked.forEach((k) => {
     const b = $(`#sheet .pick[data-key="${k}"]`);
@@ -493,7 +493,7 @@ function openImport(back = '') {
     <div class="info"><b>Шаг 2 из 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
-    <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
+    <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button></div>`;
   openSheet();
 }
 // Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the

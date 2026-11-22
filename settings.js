@@ -60,7 +60,7 @@ function openSettings() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><h2 class="m-0">Настройки</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <button class="btn wide" data-act="stories-help">${I('circle-help')}Как работают Жунгли</button>
+    <button class="btn primary wide" data-act="stories-help">${I('circle-help')}Как работают Жунгли</button>
     <div class="field mt-20" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра, а первыми покажу тех, кому нужнее.</p></div>
@@ -112,9 +112,10 @@ async function doExport() {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  backedUp();
+  // Telegram's and other apps' browsers may drop a blob download without a word: there the backup task stays.
+  if (!IN_TELEGRAM && !IN_APP) backedUp();
 }
-// A backup sent or saved: the backup task waits another month.
+// A backup shared or downloaded: the backup task waits another month.
 function backedUp() { S.backupAt = today(); save(); render(); }
 
 async function doImport(file) {

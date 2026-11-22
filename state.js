@@ -553,9 +553,11 @@ function bonusTasks() {
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
       hint: `${notes ? notes + ' ' : ''}${winterNow() ? 'Зимой под лампой: не чаще раза в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
   }
-  // A month after the last backup (or since the start), while there are plants: everything lives on this device.
-  if (allPlants().length && diff(S.backupAt || S.created || t, t) >= BACKUP_EVERY && !snoozed('backup')) {
-    out.push({ key: 'backup', icon: 'save', title: 'Резервная копия', task: 'Сохраните ваши растения и фото в файл', backup: true,
+  // A month after the last backup, or after the oldest answer still in the plants' history (so not before
+  // there's something to save). It goes first: plant tasks that wait every day would otherwise keep it out.
+  const first = [], since = S.backupAt || allPlants().flatMap((p) => (p.hist || []).map((h) => h.d)).sort()[0];
+  if (since && diff(since, t) >= BACKUP_EVERY && !snoozed('backup')) {
+    first.push({ key: 'backup', icon: 'save', title: 'Резервная копия', task: 'Сохраните ваши растения и фото в файл', backup: true,
       hint: MINI_APP ? 'Облако Телеграма хранит только уменьшенные фото, а в файле они целиком.' : 'Сейчас всё хранится только на этом устройстве, а файл можно держать в облаке или в Телеграме.' });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
@@ -564,7 +566,7 @@ function bonusTasks() {
     out.push({ key: 'feedback', icon: 'smile', title: 'Как вам Жунгли?', task: 'Расскажите, что нравится и что мешает',
       hint: 'Пара слов Зареме в Телеграм @zmoki. Она читает всё и часто обновляет приложение.', contact: true });
   }
-  return [...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
+  return [...first, ...own.slice(0, 1), ...out, ...own.slice(1)].slice(0, 2);
 }
 // «Банный день» (S.settings.bath: days between a plant's rinses, or none). Rinsing a whole collection on one day
 // would flush pots that are still wet, so a bath day offers only plants due a rinse whose soil is dry today
