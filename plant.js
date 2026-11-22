@@ -384,7 +384,7 @@ function setRow(key, body, vals, opened) {
     <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
     <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
 }
-const setGroup = (title, rows) => `<h3 class="group-title">${title}</h3><div class="srows">${rows}</div>`;
+const setGroup = (key, title, rows) => `<section class="srows" aria-labelledby="sg-${key}"><h3 class="srows-title" id="sg-${key}">${title}</h3>${rows}</section>`;
 // After any change in the settings, the row values catch up (the handlers redraw only their own bodies).
 function refreshRows() {
   if (!sheet.open || !cardFor || !$('#cp-settings')) return;
@@ -412,14 +412,14 @@ function settingsHtml(id, p, ls, spots) {
   // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
   const opened = openRowsFor === id ? openRows : new Set();
   const row = (key, body) => setRow(key, body, v, opened);
-  return `${setGroup('Растение',
+  return `${setGroup('plant', 'Растение',
     row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
           ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>`)
     + row('card', isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="mt-8 btn" disabled>${I('arrow-left-right')}Сменить карточку</button>`
       : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
           <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`))}
-    ${setGroup('Где живёт',
+    ${setGroup('where', 'Где живёт',
     row('place', `${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
           ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
         <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
@@ -432,13 +432,13 @@ function settingsHtml(id, p, ls, spots) {
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>`)
     + row('gh', `<div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
-    ${setGroup('Уход',
+    ${setGroup('care', 'Уход',
     row('way', `<div id="way-box">${wayBox(p, def(id))}</div>
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
     + row('prune', remindBody(id, 'prune'))
     + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`))}
-    ${setGroup('Сейчас',
+    ${setGroup('now', 'Сейчас',
     row('bought', `<div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
