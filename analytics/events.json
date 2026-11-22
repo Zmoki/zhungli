@@ -1,0 +1,804 @@
+{
+  "about": "Tracking plan: every analytics event, its props and history. The source for ANALYTICS.md, the old-name translation in functions/ingest/batch.js and the PostHog event descriptions. Edit here, then run node tools/events.js --write. Types: int, number, bool, enum (has values), catalog_id (a catalog id or custom), catalog_ids (a list of them), code (a name from the app's code, never typed by the user), text (may hold text from outside the app's code; needs why). since / removed: app version. was: old names, translated by the ingest function.",
+  "areas": {
+    "app": "Launch, tabs and pages",
+    "care": "Today: checks and tasks",
+    "plant": "Plant card and the plants list",
+    "add": "Adding plants",
+    "import": "AI import",
+    "stories": "«Как работают Жунгли»",
+    "install": "Home screen",
+    "telegram": "Telegram",
+    "settings": "Settings",
+    "room": "Room tab",
+    "health": "Errors and speed",
+    "ui": "Every tap and field"
+  },
+  "values": {
+    "medium": {
+      "soil": "", "dry": "", "sphagnum": "", "bark": "", "coco": "", "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": ""
+    },
+    "watering": {
+      "top": "", "bottom": "", "wick": "", "reservoir": "", "tray": "", "drip": "", "none": "not in a pot"
+    },
+    "tab": {
+      "today": "", "plants": "", "light": "", "room": ""
+    },
+    "install_where": {
+      "ios": "browser on iPhone or iPad",
+      "ios_added": "same, after «Уже добавили»",
+      "in_app": "another app's browser",
+      "telegram_browser": ""
+    },
+    "import_via": {
+      "paste": "", "file": ""
+    },
+    "file_ext": {
+      "json": "", "txt": "", "other": ""
+    }
+  },
+  "groups": {
+    "plant": {
+      "plant_kind": { "type": "catalog_id", "desc": "catalog id or `custom`" },
+      "plant_type": { "type": "enum", "values": "medium", "desc": "the plant's medium now" },
+      "watering": { "type": "enum", "values": "watering" },
+      "generic": { "type": "bool", "desc": "a generic catalog card" }
+    }
+  },
+  "common": {
+    "distinct_id": { "type": "code", "desc": "random UUID in `localStorage['zhungli.anon']`, one per device; its first 8 characters are shown in settings so a user can ask to delete their data" },
+    "$geoip_country_code": { "type": "code", "desc": "country from Cloudflare, added by the proxy" },
+    "app_version": { "type": "code", "desc": "`?v=` of the app scripts" },
+    "plants_total": { "type": "int", "desc": "number of plants on the device" },
+    "standalone": { "type": "bool", "desc": "`true` when opened from the home screen" },
+    "in_telegram": { "type": "bool", "desc": "`true` when opened inside Telegram's own browser (detectable on Android, often not on iOS)" },
+    "mini_app": { "type": "bool", "desc": "`true` when opened as the Telegram mini app (`/tg`, @ZhungliPlantsBot)" },
+    "tg_version": { "type": "code", "desc": "mini app: Telegram's Bot API version" },
+    "tg_platform": { "type": "code", "desc": "mini app: Telegram's client (ios, macos, tdesktop…)" },
+    "$os": { "type": "code", "desc": "parsed from the user agent" },
+    "$device_type": { "type": "code", "desc": "parsed from the user agent" },
+    "$host": { "type": "code", "desc": "page origin" },
+    "$current_url": { "type": "code", "desc": "page path" },
+    "$lib": { "type": "code", "desc": "`zhungli`" },
+    "$process_person_profile": { "type": "bool", "desc": "`false`, no person profiles" }
+  },
+  "events": {
+    "app_opened": {
+      "area": "app", "since": 7,
+      "when": "app starts, or returns after 30+ min in background",
+      "props": {
+        "tasks_due": { "type": "int", "desc": "tasks waiting on Today at that moment (watering checks shown and greenhouse vents, not «Если есть силы»)" },
+        "how": { "type": "enum", "values": {
+          "start": "",
+          "resume": "",
+          "privacy_return": "reloaded on the way back from the privacy page, within 30 min; not a new launch",
+          "retry": "reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch"
+        } },
+        "ready_ms": { "type": "int", "desc": "ms from navigation start until the first screen is built; not for `resume`, nor when started in background" },
+        "$referring_domain": { "type": "code", "desc": "`start` only, once per arrival (a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself)" }
+      }
+    },
+    "tab_viewed": {
+      "area": "app", "since": 7,
+      "when": "tab switch",
+      "props": { "tab": { "type": "enum", "values": "tab" } }
+    },
+    "news_opened": {
+      "area": "app", "since": 10,
+      "when": "«Что нового» opened (header ✨ or settings)",
+      "props": { "had_new": { "type": "bool", "desc": "there were unseen changes" } }
+    },
+    "settings_opened": {
+      "area": "app", "since": 88,
+      "when": "settings opened from the header"
+    },
+    "privacy_opened": {
+      "area": "app", "since": 88,
+      "when": "link to the privacy page tapped",
+      "props": { "from": { "type": "enum", "values": { "stats_notice": "", "settings": "", "news": "", "other": "no `data-from` around the link" } } }
+    },
+    "author_link_clicked": {
+      "area": "app", "since": 8,
+      "when": "author link in settings, «Что нового» or a failed AI import",
+      "props": {
+        "target": { "type": "enum", "values": { "website": "", "telegram": "", "threads": "Polina's profile" } },
+        "from": { "type": "enum", "values": { "settings": "", "news": "", "import": "", "catalog": "search found nothing", "feedback_task": "", "other": "no `data-from` around the link" } }
+      }
+    },
+
+    "plant_checked": {
+      "area": "care", "since": 7,
+      "when": "answer on a check card, or «Полито сегодня» in the plant card",
+      "use": ["plant"],
+      "props": {
+        "answer": { "type": "enum", "desc": "drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "", "wet": "", "later": "" } },
+        "from": { "type": "enum", "values": { "card": "plant card only" } }
+      }
+    },
+    "how_opened": {
+      "area": "care", "since": 151,
+      "when": "«Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks)",
+      "use": ["plant"]
+    },
+    "answer_undone": {
+      "area": "care", "since": 152,
+      "when": "«×» on the newest answer in the plant card's «История», confirmed",
+      "use": ["plant"],
+      "props": {
+        "answer": { "type": "enum", "values": { "water": "", "wet": "", "ok": "", "fix": "" } },
+        "restored": { "type": "bool", "desc": "the entry had the state before it (since v152), so the interval and next check went back" }
+      }
+    },
+    "day_completed": {
+      "area": "care", "since": 7,
+      "when": "last check of the day done",
+      "props": { "done_today": { "type": "int" } }
+    },
+    "show_all_clicked": {
+      "area": "care", "since": 7,
+      "when": "«show all» on Today"
+    },
+    "greenhouse_vented": {
+      "area": "care", "since": 7,
+      "when": "«Проветрено» on the vent card"
+    },
+    "greenhouse_removed": {
+      "area": "care", "since": 7,
+      "when": "greenhouse removed from the vent card"
+    },
+    "quarantine_checked": {
+      "area": "care", "since": 131,
+      "when": "«Осмотрено» on a new plant's pest check"
+    },
+    "bonus_done": {
+      "area": "care", "since": 7,
+      "when": "bonus task done (the feeding day is `feeding_logged`)",
+      "props": {
+        "kind": { "type": "enum", "values": {
+          "dust": "", "rotate": "",
+          "flush": "clay pebbles",
+          "leach": "mineral medium",
+          "roots": "aquarium",
+          "prune": "a reminder turned on in the plant card",
+          "feedback": "«Написать» on «Как вам Жунгли?»"
+        } }
+      }
+    },
+    "bonus_skipped": {
+      "area": "care", "since": 7,
+      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?»",
+      "props": {
+        "kind": { "type": "enum", "values": {
+          "dust": "", "rotate": "", "flush": "", "leach": "", "roots": "", "prune": "",
+          "bath": "the bath day",
+          "backup": "the backup task",
+          "feedback": "«Не нужно» on «Как вам Жунгли?»"
+        } }
+      }
+    },
+    "feeding_logged": {
+      "area": "care", "since": 133,
+      "when": "plants noted as fed",
+      "props": {
+        "from": { "type": "enum", "values": { "day": "«Подкормлено» on «День подкормки»", "card": "«Подкормлено сегодня»" } },
+        "n": { "type": "int", "desc": "how many fed" },
+        "of": { "type": "int", "desc": "`day` only: how many were listed" }
+      }
+    },
+    "bath_day_started": {
+      "area": "care", "since": 137,
+      "when": "«Да!» on «Устраиваем сегодня банный день?»"
+    },
+    "bath_day_done": {
+      "area": "care", "since": 137,
+      "when": "«Промыто» on the bath day card",
+      "props": {
+        "n": { "type": "int", "desc": "bathed" },
+        "left": { "type": "int", "desc": "plants still due a rinse" }
+      }
+    },
+    "reminder_logged": {
+      "area": "care", "since": 120,
+      "when": "«Обрезано сегодня» in the plant card",
+      "props": {
+        "kind": { "type": "enum", "values": { "prune": "" } },
+        "from": { "type": "enum", "values": { "card": "" } }
+      }
+    },
+    "rinse_logged": {
+      "area": "care", "since": 137,
+      "when": "«Промыто сегодня» in the plant card's «Промывка грунта»",
+      "props": { "from": { "type": "enum", "values": { "card": "" } } }
+    },
+    "winter_hint_hidden": {
+      "area": "care", "since": 132,
+      "when": "«Понятно» on the winter light hint on «Сегодня»"
+    },
+
+    "plant_opened": {
+      "area": "plant", "since": 88,
+      "when": "plant card opened by a tap",
+      "use": ["plant"]
+    },
+    "settings_row_opened": {
+      "area": "plant", "since": 142,
+      "when": "a row of the plant card's «Настройки» opened",
+      "props": {
+        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "way": "", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
+      }
+    },
+    "plant_named": {
+      "area": "plant", "since": 7,
+      "when": "nickname set"
+    },
+    "plant_deleted": {
+      "area": "plant", "since": 7,
+      "when": "plant deleted"
+    },
+    "photo_added": {
+      "area": "plant", "since": 7,
+      "when": "photo added to a plant"
+    },
+    "photo_removed": {
+      "area": "plant", "since": 75,
+      "when": "photo removed from a plant (back to the drawing)"
+    },
+    "note_changed": {
+      "area": "plant", "since": 9,
+      "when": "cheat sheet note changed in the plant card",
+      "props": {
+        "action": { "type": "enum", "values": { "add": "", "edit": "", "remove": "", "reset": "back to catalog", "restore": "removed tips back" } },
+        "note": { "type": "enum", "values": { "water": "", "soil": "", "cond": "", "tip": "", "own": "", "catalog": "" } }
+      }
+    },
+    "lux_entered": {
+      "area": "plant", "since": 7,
+      "when": "lux reading saved",
+      "props": { "from": { "type": "enum", "values": { "light_tab": "", "card": "" } } }
+    },
+    "spot_added": {
+      "area": "plant", "since": 94,
+      "when": "a spot typed in the plant card's new spot field and added (empty field: nothing)",
+      "note": "Never the spot's name.",
+      "props": {
+        "how": { "type": "enum", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
+        "new_spot": { "type": "bool", "desc": "not in the spot list before" }
+      }
+    },
+    "grow_changed": {
+      "area": "plant", "since": 76,
+      "when": "«В чём растёт» or «Как поливаю» changed in the plant card",
+      "props": {
+        "medium": { "type": "enum", "values": "medium" },
+        "from_medium": { "type": "enum", "values": "medium" },
+        "watering": { "type": "enum", "values": "watering" },
+        "from_watering": { "type": "enum", "values": "watering" },
+        "settle": { "type": "bool", "desc": "counted as repotting" }
+      }
+    },
+    "check_interval_set": {
+      "area": "plant", "since": 119,
+      "when": "an interval chip tapped in the plant card (drip irrigation, which doesn't learn)",
+      "use": ["plant"],
+      "props": { "days": { "type": "enum", "values": { "7": "", "14": "", "21": "", "28": "" } } }
+    },
+    "card_changed": {
+      "area": "plant", "since": 106,
+      "when": "a plant moved to another catalog card («Сменить карточку» in the plant card)",
+      "props": {
+        "from_card": { "type": "catalog_id" },
+        "to_card": { "type": "catalog_id" },
+        "from_generic": { "type": "bool" },
+        "to_generic": { "type": "bool" },
+        "same_medium": { "type": "bool", "desc": "the plant's medium is the new card's" },
+        "notes_moved": { "type": "bool", "desc": "edited tips turned into notes" },
+        "searched": { "type": "bool", "desc": "something was typed in the search; searches there send no `catalog_searched`" }
+      }
+    },
+    "greenhouse_toggled": {
+      "area": "plant", "since": 7,
+      "when": "«Стоит в теплице или под колпаком?» in the plant card",
+      "props": { "on": { "type": "bool" } }
+    },
+    "quarantine_toggled": {
+      "area": "plant", "since": 131,
+      "when": "«Недавно купили» in the plant card, or «Уже не новое» on the task",
+      "props": {
+        "on": { "type": "bool" },
+        "from": { "type": "enum", "values": { "card": "", "task": "" } }
+      }
+    },
+    "repot_toggled": {
+      "area": "plant", "since": 154,
+      "when": "«Недавно пересажено» in the plant card",
+      "props": { "on": { "type": "bool" } }
+    },
+    "rest_started": {
+      "area": "plant", "since": 132,
+      "when": "«Сбросила листья» / «Ушла в зимний покой» in the plant card",
+      "use": ["plant"]
+    },
+    "rest_ended": {
+      "area": "plant", "since": 132,
+      "when": "«Появился новый лист» / «Пошли новые ловушки»",
+      "use": ["plant"],
+      "props": { "days": { "type": "int", "desc": "days at rest" } }
+    },
+    "feed_schedule_changed": {
+      "area": "plant", "since": 133,
+      "when": "«Как часто» in the plant card's «Подкормка»",
+      "props": { "every": { "type": "enum", "values": { "14": "", "30": "", "90": "", "0": "off" } } }
+    },
+    "feed_lamp_toggled": {
+      "area": "plant", "since": 133,
+      "when": "«Зимой стоит под лампой?» in the plant card",
+      "props": { "on": { "type": "bool" } }
+    },
+    "reminder_changed": {
+      "area": "plant", "since": 120,
+      "when": "«Звать на обрезку?» or its options changed in the plant card",
+      "props": {
+        "kind": { "type": "enum", "values": { "prune": "" } },
+        "action": { "type": "enum", "values": { "on": "", "off": "", "every": "", "months": "" } },
+        "every": { "type": "enum", "desc": "days, unless off", "values": { "14": "", "30": "", "60": "", "300": "" } },
+        "months": { "type": "int", "desc": "how many months are on, unless off" }
+      }
+    },
+    "bath_opt_out": {
+      "area": "plant", "since": 137,
+      "when": "«Звать в банный день?» in the plant card",
+      "props": { "on": { "type": "bool", "desc": "`true` for «Нет»" } }
+    },
+    "plants_filtered": {
+      "area": "plant", "since": 68,
+      "when": "a status or way-of-growing chip tapped under the Plants search",
+      "props": {
+        "status": { "type": "enum", "values": {
+          "all": "", "need": "", "dim": "", "hot": "", "watered": "", "fine": "", "greenhouse": "",
+          "new": "in quarantine", "rest": "at rest", "pets": "toxic to pets",
+          "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
+          "wick": "", "reservoir": "", "tray": "", "drip": ""
+        } }
+      }
+    },
+    "plants_searched": {
+      "area": "plant", "since": 67,
+      "when": "search on the Plants tab typed (1.2 s pause, no search text sent)",
+      "props": { "found": { "type": "int" } }
+    },
+
+    "add_opened": {
+      "area": "add", "since": 23,
+      "when": "«Добавить растения» sheet opened",
+      "props": { "from": { "type": "enum", "values": "tab", "desc": "tab it was opened from" } }
+    },
+    "plants_added": {
+      "area": "add", "since": 7,
+      "when": "plants added from the picker, the custom form or AI import",
+      "props": {
+        "count": { "type": "int" },
+        "source": { "type": "enum", "values": {
+          "catalog": "",
+          "quick": "tiles on an empty screen",
+          "stories": "tiles in the last story",
+          "custom": "",
+          "import": ""
+        } },
+        "generic_count": { "type": "int", "desc": "how many are generic catalog cards" },
+        "catalog_ids": { "type": "catalog_ids", "desc": "catalog, quick and stories picks; import: plants matched to catalog cards" },
+        "via": { "type": "enum", "desc": "import", "values": { "paste": "", "file": "", "both": "" } },
+        "parts": { "type": "int", "desc": "import: pastes and files that added plants (an answer in several messages or continued)" },
+        "cut": { "type": "bool", "desc": "import: the last part broke off mid-list" },
+        "repaired": { "type": "bool", "desc": "import: the answer needed fixing (quotes, spaced numbers, comments)" },
+        "unread": { "type": "int", "desc": "import: plants written so badly they were skipped, summed over the parts that added plants" },
+        "file_ext": { "type": "enum", "values": "file_ext", "desc": "import, when a file was used" },
+        "own_count": { "type": "int", "desc": "import: not in the catalog (own plants like a generic type)" },
+        "found": { "type": "int", "desc": "import: rows in the list" },
+        "already": { "type": "int", "desc": "import: rows already in the collection, so unticked at first; `found` minus `count` is what was left out" },
+        "guess_count": { "type": "int", "desc": "import: the AI said the species is a guess from a photo" },
+        "with_room": { "type": "int", "desc": "import: how many came with a room (no names sent)" },
+        "with_spot": { "type": "int", "desc": "import: how many came with a place (no names sent)" },
+        "rooms_created": { "type": "int", "desc": "import" },
+        "plant_type": { "type": "enum", "values": "medium", "desc": "custom" },
+        "like": { "type": "catalog_id", "desc": "custom: the generic type it was based on" },
+        "tuned": { "type": "bool", "desc": "custom: light, interval, type or tip changed by hand in «Тонкая настройка»" }
+      }
+    },
+    "custom_opened": {
+      "area": "add", "since": 23,
+      "when": "own plant form opened",
+      "props": { "from": { "type": "enum", "values": { "button": "«Своё растение» under «Не нашли своё?»", "search_miss": "«Добавить как своё» after a catalog search found nothing" } } }
+    },
+    "quick_abandoned": {
+      "area": "add", "since": 70,
+      "when": "tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app",
+      "props": {
+        "picked": { "type": "int", "desc": "how many ticked" },
+        "then": { "type": "enum", "desc": "what they turned to instead of «Добавить»; they may still add there", "values": { "catalog": "", "import": "", "restore": "", "left_app": "" } }
+      }
+    },
+    "name_help_opened": {
+      "area": "add", "since": 124,
+      "when": "«Как узнать, что за растение» opened",
+      "props": { "from": { "type": "enum", "values": { "search": "link under the catalog search", "not_found": "search found nothing", "empty": "first screen with no plants" } } }
+    },
+    "catalog_searched": {
+      "area": "add", "since": 23,
+      "when": "catalog search typed (1.2 s pause, no search text sent)",
+      "props": {
+        "found": { "type": "bool" },
+        "typo": { "type": "bool", "desc": "`true` when only the typo-forgiving pass found something" }
+      }
+    },
+    "catalog_missed": {
+      "area": "add", "since": 70,
+      "when": "the add sheet closed after a search that found nothing: once, with the last such search (a fixed typo or a later hit clears it)",
+      "note": "To learn which plants the catalog lacks.",
+      "props": {
+        "query": { "type": "text", "desc": "what was typed, up to 40 characters", "why": "to learn which plants the catalog lacks; told to users in privacy.html" },
+        "added": { "type": "bool", "desc": "whether plants were added in the end" }
+      }
+    },
+    "add_abandoned": {
+      "area": "add", "since": 23,
+      "when": "add sheet closed without adding",
+      "props": {
+        "sheet": { "type": "enum", "desc": "last one shown", "values": { "catalog": "", "custom": "", "import": "", "help": "" } },
+        "searched": { "type": "bool" },
+        "no_results": { "type": "bool", "desc": "last search found nothing" },
+        "picked": { "type": "int" },
+        "step": { "type": "int", "desc": "import: the step it was left on" },
+        "left_app": { "type": "bool", "desc": "the app went to background with the sheet open; not reported when the import prompt was copied or the file picker is open, since going to the AI chat or to Files is expected" }
+      }
+    },
+
+    "import_opened": {
+      "area": "import", "since": 23,
+      "when": "AI import sheet opened",
+      "props": {
+        "restored": { "type": "bool", "desc": "it opened where an unfinished import stopped (kept on the device for 3 hours)" },
+        "step": { "type": "int", "desc": "with `restored`" }
+      }
+    },
+    "import_step": {
+      "area": "import", "since": 157,
+      "when": "AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение»)",
+      "props": {
+        "step": { "type": "int", "desc": "1–4" },
+        "from": { "type": "int", "desc": "the step left (lower: «Назад»)" },
+        "via": { "type": "enum", "values": "import_via", "desc": "steps 3 and 4" },
+        "how": { "type": "enum", "values": { "more": "«Вставить ещё часть»", "continue": "«Вставить продолжение», the answer broke off" } }
+      }
+    },
+    "import_prompt_copied": {
+      "area": "import", "since": 12,
+      "when": "«Скопировать запрос» in AI import, or «Скопировать ещё раз» under the shown prompt",
+      "props": {
+        "how": { "type": "enum", "values": {
+          "exec": "select-and-copy worked",
+          "clipboard": "only the Clipboard API worked; it can still fail silently on iPhone",
+          "failed": "both refused, or copying hung for 5 s: the prompt is shown to copy by hand",
+          "none": "no way to copy"
+        } },
+        "from": { "type": "enum", "values": { "again": "the button under the shown prompt" } }
+      }
+    },
+    "import_prompt_shown": {
+      "area": "import", "since": 80,
+      "when": "«Не вставляется? Показать запрос» in AI import: copying didn't reach the AI chat"
+    },
+    "import_read": {
+      "area": "import", "since": 157,
+      "when": "a pasted answer or a picked file had plants (import step 3)",
+      "props": {
+        "via": { "type": "enum", "values": "import_via" },
+        "how": { "type": "enum", "values": { "paste": "pasted into the field", "button": "«Найти растения» after typing or editing", "file": "" } },
+        "found": { "type": "int", "desc": "new plants" },
+        "total": { "type": "int", "desc": "in the list now" },
+        "repeated": { "type": "int", "desc": "already read from an earlier part" },
+        "matched": { "type": "int", "desc": "new ones with a catalog card" },
+        "unread": { "type": "int" },
+        "cut": { "type": "bool", "desc": "the answer broke off" },
+        "repaired": { "type": "bool" },
+        "file_ext": { "type": "enum", "values": "file_ext", "desc": "files" }
+      }
+    },
+    "import_failed": {
+      "area": "import", "since": 12,
+      "when": "a pasted answer or a picked file has no plant list",
+      "note": "No text or file content is sent.",
+      "props": {
+        "via": { "type": "enum", "values": "import_via" },
+        "how": { "type": "enum", "desc": "as in `import_read`", "values": { "paste": "", "button": "", "file": "" } },
+        "length": { "type": "int", "desc": "of the text" },
+        "file_ext": { "type": "enum", "values": "file_ext", "desc": "files only, never the name" },
+        "reason": { "type": "enum", "values": {
+          "empty": "",
+          "unreadable": "couldn't be opened",
+          "too_big": "over 1 MB",
+          "backup": "a Жунгли backup, not an AI answer",
+          "no_list": "no braces",
+          "bad_json": "could not be read even after repairs",
+          "no_plants": "read, but no plant had a name"
+        } },
+        "has_code_fence": { "type": "bool" },
+        "has_curly_quotes": { "type": "bool" },
+        "has_spaced_numbers": { "type": "bool" },
+        "unread": { "type": "int", "desc": "with `bad_json`: how many `{…}` couldn't be read" }
+      }
+    },
+    "import_clipboard": {
+      "area": "import", "since": 154, "removed": 156,
+      "when": "only in preview builds of AI import (v154–155), never on main",
+      "props": { "result": { "type": "code" } }
+    },
+
+    "stories_opened": {
+      "area": "stories", "since": 115,
+      "when": "«Как работают Жунгли» opened: by itself on the first launch, by «Показать, как», or from settings",
+      "props": {
+        "from": { "type": "enum", "values": {
+          "auto": "",
+          "settings": "«Как работают Жунгли» at the top of settings",
+          "home_icon": "first launch of the iPhone home-screen app: opens on the last story",
+          "install_card": "no plants yet, straight to the last story",
+          "install_hint": "iPhone, plants already added, straight to the last story",
+          "return": "back in the app to stories still open: not a way in, see `left` in `stories_closed`"
+        } }
+      }
+    },
+    "stories_closed": {
+      "area": "stories", "since": 115,
+      "when": "the stories closed",
+      "note": "Leaving the app may be the last event, so it's sent then (after the Telegram button as `telegram`); coming back sends `stories_opened` `return`, so each open has one close and a device can have several: count its last one.",
+      "props": {
+        "from": { "type": "enum", "desc": "as in `stories_opened` for this run of them (`return` never: the first open's)", "values": { "auto": "", "settings": "", "home_icon": "", "install_card": "", "install_hint": "" } },
+        "reached": { "type": "int", "desc": "the furthest story seen (1–6)" },
+        "seen": { "type": "int", "desc": "how many stories were shown (opened on the last one: 1, unless they went back)" },
+        "how": { "type": "enum", "values": {
+          "close": "× or Esc",
+          "add": "plants added from the last story's tiles",
+          "catalog": "", "import": "",
+          "restore": "before v151: links under the last story's tiles",
+          "telegram": "went to the mini app",
+          "restored": "the mini app got plants from Telegram's cloud while they were open",
+          "followed": "left the app from a last story with steps out of here: to Safari, or to the home screen after «На экран Домой»",
+          "left": "left the app with them open anywhere else"
+        } },
+        "ending": { "type": "enum", "desc": "if the last story was seen", "values": {
+          "tiles": "", "telegram": "", "in_app": "",
+          "ios_26": "Safari 26 steps",
+          "ios_old": "older Safari steps",
+          "ios_other": "text steps: iPad, other browsers"
+        } },
+        "ticked": { "type": "int", "desc": "tiles ticked there but not added" }
+      }
+    },
+
+    "install_first_shown": {
+      "area": "install", "since": 92,
+      "when": "no plants yet, and the plant picker is replaced by the way to install (once per launch)",
+      "note": "On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device.",
+      "props": { "where": { "type": "enum", "values": "install_where" } }
+    },
+    "install_declined": {
+      "area": "install", "since": 92,
+      "when": "«Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows",
+      "props": { "where": { "type": "enum", "values": "install_where" } }
+    },
+    "install_hint_hidden": {
+      "area": "install", "since": 7,
+      "when": "home screen hint closed",
+      "props": {
+        "kind": { "type": "enum", "values": {
+          "ios_added": "iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon",
+          "ios_empty": "older versions: «Уже на экране» there",
+          "ios_move": "iPhone, move with a backup: «Уже на экране»",
+          "ios_icon_move": "same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку»",
+          "ios_moved": "iPhone, after the backup",
+          "install": "Android or computer",
+          "telegram": "mini app",
+          "in_app": "another app's browser on iPhone or Android"
+        } }
+      }
+    },
+    "install_prompt": {
+      "area": "install", "since": 85,
+      "when": "Android or computer: «Установить» on the install hint, after the browser's dialog",
+      "props": { "outcome": { "type": "enum", "values": { "accepted": "", "dismissed": "" } } }
+    },
+    "app_installed": {
+      "area": "install", "since": 85,
+      "when": "the browser reports Жунгли was installed (from the hint or the browser's own menu)"
+    },
+
+    "tg_home_screen_tapped": {
+      "area": "telegram", "since": 32,
+      "when": "mini app: «Добавить» on the home screen hint (Telegram's own dialog)"
+    },
+    "cloud_checked": {
+      "area": "telegram", "since": 36,
+      "when": "mini app: first cloud check after launch",
+      "props": {
+        "result": { "type": "enum", "values": { "restored": "", "uploaded": "", "same": "", "both_empty": "", "damaged": "", "error": "" } },
+        "cloud_plants": { "type": "int" },
+        "local_plants": { "type": "int" }
+      }
+    },
+    "cloud_error": {
+      "area": "telegram", "since": 36,
+      "when": "mini app: Telegram CloudStorage refused a read or write (once per kind per launch)",
+      "props": {
+        "op": { "type": "enum", "values": { "read": "", "write": "", "parse": "", "photo_read": "", "photo_write": "", "photo_parse": "" } },
+        "error": { "type": "text", "desc": "Telegram's error text, up to 80 characters", "why": "to fix sync; it comes from Telegram, never from the user" }
+      }
+    },
+    "photos_synced": {
+      "area": "telegram", "since": 37,
+      "when": "mini app: photos synced through Telegram's cloud (only when something happened)",
+      "props": {
+        "uploaded": { "type": "int" },
+        "downloaded": { "type": "int" },
+        "removed": { "type": "int", "desc": "of removed plants or removed photos" },
+        "skipped": { "type": "int", "desc": "didn't fit the 1024-key limit" }
+      }
+    },
+    "cloud_restored": {
+      "area": "telegram", "since": 30,
+      "when": "mini app: plants restored from Telegram CloudStorage on this phone",
+      "props": {
+        "plants": { "type": "int" },
+        "tasks_due": { "type": "int", "desc": "as in `app_opened`: the launch event went out before the restore" }
+      }
+    },
+    "mini_app_link_clicked": {
+      "area": "telegram", "since": 33,
+      "when": "«Открыть» on the Telegram-browser hint (opens the mini app)",
+      "props": { "has_plants": { "type": "bool" } }
+    },
+    "telegram_hint_hidden": {
+      "area": "telegram", "since": 23,
+      "when": "«Понятно» on the Telegram hint"
+    },
+
+    "limit_changed": {
+      "area": "settings", "since": 7,
+      "when": "plants-per-day limit changed",
+      "props": { "limit": { "type": "int" } }
+    },
+    "pets_toggled": {
+      "area": "settings", "since": 130,
+      "when": "«Дома есть кошка или собака» in settings",
+      "props": { "on": { "type": "bool" } }
+    },
+    "bath_day_changed": {
+      "area": "settings", "since": 137,
+      "when": "«Банный день» in the app's settings turned on, off, or its interval changed",
+      "props": { "every": { "type": "enum", "values": { "0": "off", "60": "", "120": "", "180": "" } } }
+    },
+    "backup_exported": {
+      "area": "settings", "since": 7,
+      "when": "backup downloaded",
+      "props": {
+        "from": { "type": "enum", "desc": "absent from Settings", "values": {
+          "task": "the «Резервная копия» bonus task",
+          "install_hint": "the iPhone «add to home screen» hint, to move plants into the home-screen app",
+          "in_app_hint": "another app's browser, to move plants to Safari or the browser"
+        } }
+      }
+    },
+    "backup_imported": {
+      "area": "settings", "since": 7,
+      "when": "backup restored"
+    },
+    "data_reset": {
+      "area": "settings", "since": 90,
+      "when": "«Начать с чистого листа» confirmed in settings",
+      "note": "`plants_total` is how many were erased."
+    },
+    "stats_enabled": {
+      "area": "settings", "since": 7,
+      "when": "stats switched back on"
+    },
+
+    "room_saved": {
+      "area": "room", "since": 7,
+      "when": "room temperature and humidity saved",
+      "props": {
+        "temp": { "type": "int", "desc": "rounded" },
+        "humidity": { "type": "int", "desc": "rounded" },
+        "rooms": { "type": "int", "desc": "how many rooms" }
+      }
+    },
+    "room_added": {
+      "area": "room", "since": 67,
+      "when": "a room added on the Room tab (no room name sent)",
+      "props": { "rooms": { "type": "int" } }
+    },
+    "room_removed": {
+      "area": "room", "since": 67,
+      "when": "a room removed (no room name sent)",
+      "props": { "rooms": { "type": "int" } }
+    },
+
+    "js_error": {
+      "area": "health", "since": 23,
+      "when": "script error, at most 5 per page load",
+      "props": {
+        "message": { "type": "text", "desc": "150 chars", "why": "to fix errors; the browser's error message, from the app's code" },
+        "source": { "type": "code", "desc": "file (one file per part of the app since v89; before that, mostly `app.js`)" },
+        "line": { "type": "int" }
+      }
+    },
+    "start_retried": {
+      "area": "health", "since": 89,
+      "when": "the page reloaded itself once because a script or the stylesheet failed to load, or a script didn't fit the others (usually a flaky network on the first launch of a new version); sent after the reload",
+      "props": {
+        "reason": { "type": "enum", "values": { "script_failed": "", "style_failed": "", "SyntaxError": "", "ReferenceError": "" } },
+        "file": { "type": "code", "desc": "the app script or stylesheet" },
+        "started": { "type": "bool", "desc": "the first screen was built anyway, but some buttons would do nothing or it had no styles" },
+        "ok": { "type": "bool", "desc": "the reload fixed it" }
+      }
+    },
+    "$web_vitals": {
+      "area": "health", "since": 86,
+      "when": "app goes to background or closes, with the values that changed since the last report",
+      "note": "INP leaves out the time a native `prompt`/`confirm` was open, so it can be lower than in CrUX. From the browser's own timings: FCP everywhere; LCP, INP and CLS where supported.",
+      "props": {
+        "$web_vitals_FCP_value": { "type": "number", "desc": "ms" },
+        "$web_vitals_LCP_value": { "type": "number", "desc": "ms" },
+        "$web_vitals_INP_value": { "type": "number", "desc": "ms" },
+        "$web_vitals_CLS_value": { "type": "number" },
+        "$pathname": { "type": "code" },
+        "visit": { "type": "code", "desc": "random id; a visit starts at launch or with `app_opened` `resume`, and INP starts over with it; a visit can report several times, so take its last values" }
+      }
+    },
+    "slow_tap": {
+      "area": "health", "since": 86,
+      "when": "a tap or key press took 200+ ms until the next frame, at most 10 per visit. The time a native `prompt`/`confirm` was open is taken out (it's the user's)",
+      "props": {
+        "target": { "type": "code", "desc": "the control's `data-act`, `tab-<tab>`, `open-plant` or static element id" },
+        "event": { "type": "code", "desc": "the one whose handlers ran longest: `pointerup`, `click`, `keydown`…" },
+        "duration": { "type": "int", "desc": "ms" },
+        "input_delay": { "type": "int", "desc": "ms" },
+        "processing": { "type": "int", "desc": "ms" },
+        "presentation": { "type": "int", "desc": "ms" }
+      }
+    },
+    "viewport_stuck": {
+      "area": "health", "since": 74,
+      "when": "iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch",
+      "props": {
+        "before": { "type": "int", "desc": "height when stuck, CSS pixels" },
+        "full": { "type": "int", "desc": "tallest height seen at this width" },
+        "after": { "type": "int", "desc": "height 0.3 s after the re-measure" }
+      }
+    },
+    "tab_synced": {
+      "area": "health", "since": 90,
+      "when": "a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead"
+    },
+
+    "ui_clicked": {
+      "area": "ui", "since": 91,
+      "when": "any tap on a button, link or other control (fields are `field_changed`); also arrow keys on the plant card's tabs (`card-<tab>`)",
+      "props": { "target": { "type": "code", "desc": "the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>`" } }
+    },
+    "field_changed": {
+      "area": "ui", "since": 91,
+      "when": "any input, select or textarea changed (text fields on leaving them)",
+      "note": "Never the value.",
+      "props": {
+        "field": { "type": "code", "desc": "static id or name" },
+        "type": { "type": "code" },
+        "checked": { "type": "bool", "desc": "checkboxes" }
+      }
+    },
+
+    "wick_toggled": {
+      "area": "plant", "since": 69, "removed": 76,
+      "when": "«Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed`",
+      "props": { "on": { "type": "bool" } }
+    }
+  }
+}
