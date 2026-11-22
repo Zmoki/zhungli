@@ -652,8 +652,7 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .stories .st-btn { border-radius: 99px; min-height: 54px; font-weight: 900; box-shadow: none; transform: none; background: var(--st-ink); color: var(--st-bg); border: 2px solid var(--st-ink); text-decoration: none; }
 .stories .st-btn.ghost { background: transparent; color: var(--st-ink); border-color: rgba(255, 246, 234, .8); }
 .stories .st-btn:disabled { opacity: .6; }
-.stories .linkish, .stories .st-more { color: var(--st-ink); }
-.st-more { text-align: center; } .st-more .st-btn { margin-top: 10px; width: 100%; }
+.stories .linkish { color: var(--st-ink); }
 /* A phone with a screen of the app, scaled down by fitPhones() */
 .phone { position: relative; flex: none; height: min(68dvh, 660px); aspect-ratio: 375 / 812; max-width: 100%; margin: 0 auto; border-radius: 20px; border: 5px solid var(--st-ink); overflow: hidden; background: var(--bg); color: var(--ink); box-shadow: 0 20px 40px rgba(0, 0, 0, .35); }
 .phone .blob { position: absolute; right: -60px; top: -50px; width: 200px; height: 200px; border-radius: 50%; background: var(--blob-1); }
