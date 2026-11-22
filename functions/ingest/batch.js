@@ -25,8 +25,8 @@ export async function onRequestPost({ request }) {
   for (const ev of data.batch) {
     ev.properties = { ...(ev.properties || {}), $geoip_disable: true, $ip: null };
     if (country && country !== 'XX' && country !== 'T1') ev.properties.$geoip_country_code = country;
-    if (RENAMED[ev.event]) ev.event = RENAMED[ev.event];
-    for (const [from, to] of Object.entries(RENAMED_PROPS[ev.event] || {})) {
+    if (Object.hasOwn(RENAMED, ev.event)) ev.event = RENAMED[ev.event];
+    for (const [from, to] of Object.entries(Object.hasOwn(RENAMED_PROPS, ev.event) ? RENAMED_PROPS[ev.event] : {})) {
       if (from in ev.properties && !(to in ev.properties)) { ev.properties[to] = ev.properties[from]; delete ev.properties[from]; }
     }
   }
