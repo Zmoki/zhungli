@@ -185,6 +185,12 @@
         "of": { "type": "int", "desc": "`day` only: how many were listed" }
       }
     },
+    "bath_day_shown": {
+      "area": "care", "since": 161,
+      "when": "the bath day card's step 1 («Устраиваем сегодня банный день?») drawn on «Сегодня», once per launch and day",
+      "note": "The funnel's first step: count devices.",
+      "props": { "count": { "type": "int", "desc": "plants offered today (at most `BATH_MAX`)" } }
+    },
     "bath_day_started": {
       "area": "care", "since": 137,
       "when": "step 1 of the bath day card: «Да!» on «Устраиваем сегодня банный день?»"
