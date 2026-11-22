@@ -341,6 +341,13 @@ function showCardTab(k, focus) {
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
 let openRows = new Set(), openRowsFor = null;
 const dayMonth = (iso) => parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+// Why feeding waits now, as feedDue skips it: rest, a recent repot or purchase (until the later date), winter without a lamp.
+function feedPause(p) {
+  if (resting(p)) return 'пауза, пока в покое';
+  const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
+  if (until) return `пауза до ${dayMonth(until)}`;
+  return winterNow() && !p.lamp ? 'зимой пауза' : '';
+}
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
@@ -354,7 +361,7 @@ function rowValues(p) {
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
     way: [`${MEDIA[p.type].name.toLowerCase()}${pot ? ', ' + (WATERING[p.watering] || WATERING.top).name.toLowerCase() : ''}`, false],
-    feed: !fed ? [feedOff, true] : [{ 14: 'раз в 2 недели', 30: 'раз в месяц', 0: 'не кормлю' }[feedEvery(p)] + (p.lamp && feedEvery(p) ? ', под лампой' : ''), false],
+    feed: !fed ? [feedOff, true] : [[{ 14: 'раз в 2 недели', 30: 'раз в месяц', 0: 'не кормлю' }[feedEvery(p)], feedEvery(p) && p.lamp ? 'под лампой' : '', feedEvery(p) ? feedPause(p) : ''].filter(Boolean).join(', '), false],
     prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
     bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
