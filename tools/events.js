@@ -238,9 +238,10 @@ function renames() {
 // ---- PostHog ----
 
 function posthog() {
+  const sentence = (s) => s[0].toUpperCase() + s.slice(1) + (/[.!?…]$/.test(s) ? '' : '.');
   return Object.entries(plan.events).map(([name, e]) => ({
     name,
-    description: `${e.when}${e.note ? `. ${e.note}` : ''}`.replace(/\.\.$/, '.') + (e.removed != null ? ` Removed in v${e.removed}.` : ` Since v${e.since}.`),
+    description: [e.when, e.note].filter(Boolean).map(sentence).join(' ') + (e.removed != null ? ` Removed in v${e.removed}.` : ` Since v${e.since}.`),
     tags: [e.area],
     hidden: e.removed != null,
     verified: e.removed == null,
