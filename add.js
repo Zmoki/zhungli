@@ -356,7 +356,7 @@ function repairJson(src) {
   return src
     .replace(/^\s*\/\/.*$/gm, '') // line comments
     .replace(/[“”„‟″]/g, '"').replace(/[‘’]/g, "'") // typographic quotes
-    .replace(/(\d)[   ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
+    .replace(/(\d)[\u00a0\u202f ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
     .replace(/,\s*([\]}])/g, '$1'); // trailing commas
 }
 // Where the `{…}` starting at `a` closes (braces in strings don't count), or -1 if it never does:
@@ -374,10 +374,10 @@ function objectEnd(t, a) {
 }
 // Every plant object in the text, one by one, so text around them, code fences, a missing [ ] or a broken
 // plant don't lose the rest. `tail`: an unclosed plant at the end, to join with the next part of the answer.
-// `cut`: the answer stops before its list closes.
+// `cut`: the answer stops before its list closes. `bad`: closed `{…}` that couldn't be read even after repairs.
 function importObjects(t) {
   const objs = [];
-  let parsed = false, repaired = false, tail = '', first = -1, last = -1;
+  let parsed = false, repaired = false, tail = '', first = -1, last = -1, bad = 0;
   for (let a = t.indexOf('{'); a !== -1;) {
     const b = objectEnd(t, a);
     if (b < 0) { tail = t.slice(a); a = t.indexOf('{', a + 1); continue; }
@@ -385,7 +385,7 @@ function importObjects(t) {
     for (const [src, fix] of [[t.slice(a, b + 1), false], [repairJson(t.slice(a, b + 1)), true]]) {
       try { v = JSON.parse(src); repaired ||= fix; break; } catch (e) { /* try the repaired text, then move on */ }
     }
-    if (!v) { a = t.indexOf('{', a + 1); continue; }
+    if (!v) { bad++; a = t.indexOf('{', a + 1); continue; }
     parsed = true; tail = ''; last = b;
     if (first < 0) first = a;
     // A wrapper like {"plants": […]} holds the list; a plant itself has a name.
@@ -395,7 +395,7 @@ function importObjects(t) {
   }
   // A list opened before the first plant but never closed after the last one.
   const cut = !!tail || (first > 0 && t.lastIndexOf('[', first) >= 0 && t.indexOf(']', last) < 0);
-  return { objs, parsed, repaired, tail, cut };
+  return { objs, parsed, repaired, tail, cut, bad };
 }
 // The plants in a pasted answer or a file. `carry`: the unclosed end of the previous part, for an answer
 // that came in several messages or was continued after «Продолжи».
@@ -403,14 +403,14 @@ function parseImport(text, carry = '') {
   const t = String(text || '').trim();
   if (!t) return { error: 'empty' };
   // What the text looked like, without any of its content.
-  const diag = { has_code_fence: t.includes('```'), has_curly_quotes: /[“”„]/.test(t), has_spaced_numbers: /\d[   ]\d{3}\b/.test(t) };
+  const diag = { has_code_fence: t.includes('```'), has_curly_quotes: /[“”„]/.test(t), has_spaced_numbers: /\d[\u00a0\u202f ]\d{3}\b/.test(t) };
   const read = (s) => { const r = importObjects(s); return { ...r, items: r.objs.map(normImport).filter(Boolean) }; };
   let res = read(t);
   // This part may carry on the plant the last one broke off, or start over: whichever reads more plants.
   if (carry) { const joined = read(carry + t); if (joined.items.length > res.items.length) res = joined; }
-  if (res.items.length) return { items: res.items, repaired: res.repaired, cut: res.cut, tail: res.tail };
+  if (res.items.length) return { items: res.items, repaired: res.repaired, cut: res.cut, tail: res.tail, bad: res.bad };
   if (!t.includes('{')) return { error: 'no_list', diag };
-  return { error: res.parsed ? 'no_plants' : 'bad_json', diag };
+  return { error: res.parsed ? 'no_plants' : 'bad_json', diag: { ...diag, unread: res.bad } };
 }
 // Common off-format answers: 'succulent', 'orchid', 'грунт'… Not said: ''.
 function importType(x) {
@@ -459,15 +459,25 @@ function normImport(o) {
   };
 }
 // The catalog card for a plant the AI named. A card fits when every word of its name, or of one of its `aka`
-// names, is among the AI's words: the Russian name and the Latin one, read as Russian like in the catalog search,
-// with endings trimmed and small typos forgiven. The card covering most of the AI's words wins, so «Фикус
-// Бенджамина» gets its own card, not «Фикус», and «Традесканция зебрина» isn't taken for an alocasia
-// (whose `aka` has «зебрина» too). Ties go to a card matched by its own name, then a specific card over a generic one,
-// then catalog order. No card: null.
-const matchWords = (s) => norm(s).split(/[^a-zа-я0-9]+/).filter(Boolean)
-  .map((w) => looseSound(searchStem(/[a-z]/.test(w) ? fromLatin(w) : w)));
-const wordFits = (w, t) => w === t || (Math.min(w.length, t.length) >= 4 && (t.startsWith(w) || w.startsWith(t)))
-  || (w.length >= 8 && nearStart(w, t, w.length >= 11 ? 2 : 1));
+// names, is among the AI's words: the Russian name and the Latin one, read as Russian like in the catalog search.
+// Short words (up to 4 letters: «Роза», «Хойя») must match whole, so «Роза» isn't «розан» (a hibiscus);
+// longer ones may differ in their ending (2 letters at most: «basil» and «базилик») or by a small typo. Prepositions and 1–2 letter words
+// don't count, so «Традесканция в воде» doesn't go to «Черенки в воде». The card covering most of the AI's words
+// wins, so «Фикус Бенджамина» gets its own card, not «Фикус». Ties go to a card matched by its own name, then
+// a specific card over a generic one, then catalog order. No card: null.
+const MATCH_SKIP = new Set(['для', 'под', 'без', 'или', 'над', 'при']);
+const matchWords = (s) => norm(s).split(/[^a-zа-я0-9]+/).filter((w) => w.length > 2 && !MATCH_SKIP.has(w)).map((w) => {
+  const ru = /[a-z]/.test(w) ? fromLatin(w) : w;
+  return { raw: looseSound(ru), stem: looseSound(searchStem(ru)) };
+});
+function wordFits(w, t) {
+  if (w.raw === t.raw) return true;
+  if (w.raw.length < 5 || t.raw.length < 5) return false;
+  if (w.stem === t.stem) return true;
+  const [a, b] = w.stem.length <= t.stem.length ? [w.stem, t.stem] : [t.stem, w.stem];
+  if (b.startsWith(a) && b.length - a.length <= 2) return true;
+  return w.stem.length >= 8 && Math.abs(t.stem.length - w.stem.length) <= 2 && nearStart(w.stem, t.stem, w.stem.length >= 11 ? 2 : 1);
+}
 let catalogNames = null;
 function catalogCard(it) {
   catalogNames ||= PLANTS.filter((d) => !d.hidden)
@@ -554,7 +564,7 @@ const clearImport = () => { try { localStorage.removeItem(IMPORT_KEY); } catch (
 function openImport(back = '') {
   startAddFlow('import');
   const kept = loadImport();
-  imp = kept || { step: 1, copied: false, via: '', found: 0, items: [], picked: new Set(), carry: '', info: { via: new Set(), parts: 0, cut: false, repaired: false, ext: '' } };
+  imp = kept || { step: 1, copied: false, via: '', found: 0, items: [], picked: new Set(), carry: '', info: { via: new Set(), parts: 0, cut: false, repaired: false, unread: 0, ext: '' } };
   imp.back = back;
   imp.found = 0;
   track('import_opened', kept ? { restored: true, step: imp.step } : {});
@@ -712,7 +722,7 @@ async function importFile(f) {
   const ext = { json: 'json', txt: 'txt' }[dot < 0 ? '' : f.name.slice(dot + 1).toLowerCase()] || 'other';
   if (f.size > IMPORT_MAX) { readImport(null, 'file', ext, 'too_big'); return; }
   let text = null;
-  try { text = (await f.text()).replace(/^﻿/, ''); } catch (e) { /* unreadable */ }
+  try { text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
   readImport(text, 'file', ext);
 }
 // Reads what's in the answer field.
@@ -749,14 +759,20 @@ function readImport(text, via, ext = '', fail = '') {
   }
   imp.carry = res.tail || '';
   imp.info.via.add(via);
-  imp.info.parts++;
   imp.info.cut = res.cut;
   imp.info.repaired ||= res.repaired;
   if (via === 'file') imp.info.ext = ext;
-  // The same plant from a part pasted twice, or repeated by the AI when it carried on, is listed once.
+  // A plant from a part pasted twice, or repeated by the AI when it carried on, is listed once: a plant already
+  // read from an earlier part is skipped, as many times as it was there. Repeats inside one part stay, since two
+  // unnamed aloes can share a windowsill.
   const key = (it) => [it.species, it.name, it.room, it.spot].map(norm).join('|');
-  const listed = new Set(imp.items.map(key));
-  const fresh = res.items.filter((it) => !listed.has(key(it)) && listed.add(key(it)));
+  const earlier = new Map();
+  imp.items.forEach((it) => earlier.set(key(it), (earlier.get(key(it)) || 0) + 1));
+  const fresh = res.items.filter((it) => {
+    const n = earlier.get(key(it));
+    if (n) earlier.set(key(it), n - 1);
+    return !n;
+  });
   // Plants already in the collection (same species and name) start unticked.
   const have = new Set(allPlants().map((p) => `${norm(p.species)}|${norm(p.name)}`));
   fresh.forEach((it) => {
@@ -765,11 +781,18 @@ function readImport(text, via, ext = '', fail = '') {
     imp.items.push(it);
   });
   imp.found = fresh.length;
+  // A part pasted again adds nothing: it isn't another part, and its unreadable plants were counted already.
+  if (fresh.length) {
+    imp.info.parts++;
+    imp.info.unread = (imp.info.unread || 0) + res.bad;
+  }
   saveImport();
   const first = imp.items.length === fresh.length;
   const said = !fresh.length ? 'Эти растения уже в списке' : first ? `Нашлось ${plantsN(fresh.length)}` : `Нашлось ещё ${fresh.length}, всего ${plantsN(imp.items.length)}`;
-  note.innerHTML = `<p class="mt-10 imp-ok">${I('check')}${said}</p>`;
-  announce(said);
+  // A plant the AI wrote with a mistake is skipped, and said so: the person can ask the AI for it again.
+  const lost = res.bad ? `${plantsN(res.bad)} ${plural(res.bad, 'не прочиталось', 'не прочитались', 'не прочиталось')}. Попросите ИИ прислать ${res.bad === 1 ? 'его' : 'их'} ещё раз.` : '';
+  note.innerHTML = `<p class="mt-10 imp-ok">${I('check')}${said}</p>${lost ? `<p class="mt-6 m-0 small">${lost}</p>` : ''}`;
+  announce(`${said}. ${lost}`.trim());
   go.disabled = false;
   // Found: «Проверить список» is the one main button now.
   document.querySelectorAll('#sheet [data-act="import-clip"], #sheet [data-act="import-file"]').forEach((b) => b.classList.remove('ok'));
@@ -860,7 +883,7 @@ function addImported() {
     count: list.length, generic_count: carded.filter((it) => it.card.generic).length, catalog_ids: carded.map((it) => it.card.id),
     own_count: list.length - carded.length, guess_count: list.filter((it) => it.guess).length,
     source: 'import', via: imp.info.via.size > 1 ? 'both' : [...imp.info.via][0], parts: imp.info.parts, cut: imp.info.cut,
-    repaired: imp.info.repaired, ...(imp.info.ext && { file_ext: imp.info.ext }),
+    repaired: imp.info.repaired, unread: imp.info.unread || 0, ...(imp.info.ext && { file_ext: imp.info.ext }),
     with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
   });
   clearImport();

@@ -201,6 +201,8 @@ Object.assign(ACTS, {
         fresh.statsNotice = S.statsNotice;
         localStorage.setItem(KEY, JSON.stringify(fresh));
       } else localStorage.removeItem(KEY);
+      // An unfinished AI import would bring its plants and rooms back into the empty app.
+      clearImport();
       (window.cloudClear ? window.cloudClear() : Promise.resolve())
         .then(() => idbReq((st) => st.clear(), 'readwrite'))
         .finally(() => location.reload());
