@@ -22,7 +22,8 @@ const SAMPLE_RICH = [['mon-del', 'Подоконник', 0], ['ficus-lyrata', '�
   ['cuttings', 'Полка', 4], ['zz', 'Стол', 3, { lux: 800 }], ['phal', 'Стол', 4, { lux: 30000 }], ['spath', 'Стол', 2]];
 function sampleGarden(list = SAMPLE) {
   const s = prepare(null);
-  Object.assign(s, { statsNotice: true, hideInstall: true, hideTelegram: true, stayBrowser: today(), spots: ['Подоконник', 'Полка', 'Стол'] });
+  // No hint cards above the tasks: the install, Telegram, stats and winter hints count as seen.
+  Object.assign(s, { statsNotice: true, hideInstall: true, hideTelegram: true, stayBrowser: today(), winterSeen: winterOf(), spots: ['Подоконник', 'Полка', 'Стол'] });
   list.forEach(([k, spot, inDays, own], i) => {
     const d = PLANTS.find((x) => x.id === k);
     const watered = addDays(today(), -8);
