@@ -45,9 +45,9 @@ const MEDIA = {
     hint: 'Позову проверить, подсох ли верхний слой.',
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый грунт или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
-  mineral: { name: 'Минеральный: пон, пемза, цеолит', pot: true, feed: 'each', badge: ['mountain', 'на минералке'], start: (b) => Math.max(2, Math.round(b * 0.7)),
+  mineral: { name: 'Минеральный', pot: true, feed: 'each', badge: ['mountain', 'на минералке'], start: (b) => Math.max(2, Math.round(b * 0.7)),
     care: { kind: 'leach', every: 30, task: 'Промойте смесь', done: 'Промыто', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
-    hint: 'Позову проверить, подсохла ли смесь.', careHint: 'Раз в месяц напомню промыть смесь от солей.',
+    hint: 'Пон, пемза, цеолит и другие минеральные смеси. Позову проверить, подсохла ли смесь.', careHint: 'Раз в месяц напомню промыть смесь от солей.',
     water: 'Когда подсох верхний слой: минеральная смесь сохнет быстрее грунта. В каждый полив добавлять удобрение в слабой дозе: своего питания в смеси нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе добавлять в каждый долив.' },
@@ -105,7 +105,7 @@ const WATERING = {
 // They come as bonus tasks (`<kind>:<id>`, the date in S.bonus as for dusting) in the active months (1–12),
 // `every` days after the last time, at once if never. Its done button also goes to the plant's history as `kind`.
 // every: the options, [days, chip, words]; «Раз в год» is 300 days, so it comes back at the start of next season.
-// toggle: the checkbox in the kind's own section of the plant card; start: what ticking the box sets; icon: on the «… сегодня» button; why: a line before it's on;
+// toggle: the yes-no question in the kind's own row of the plant card («?» is added there); start: what «Да» sets; icon: on the «… сегодня» button; why: a line before it's on;
 // gloves: the card's sap warning goes with the task; fits(p): shown and asked only for such plants.
 // Feeding (feedDue) and the soil rinse (RINSE, «Банный день») have their own logic.
 const REMINDERS = {

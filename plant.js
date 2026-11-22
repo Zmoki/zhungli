@@ -82,14 +82,14 @@ const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 // about 1 in 5 card opens. Two marks (the last watering and the next check), then the button.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
-  const head = '<span class="srow-t">Полив</span>';
-  if (g.noChecks) return `${head}${whyNot('Поливать не нужно, корни в воде аквариума.')}`;
+  const head = '<div class="water-head"><span class="srow-t">Полив</span></div>';
+  if (g.noChecks) return `${head}<div class="srow-body">${whyNot('Поливать не нужно, корни в воде аквариума.')}</div>`;
   const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
   const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
   // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
   const done = p.lastWater === today();
-  return `${head}<p class="wmarks"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
-    <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
+  return `${head}<div class="srow-body"><p class="wmarks"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
+    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button></div>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
@@ -120,38 +120,46 @@ function wayBox(p, d) {
     <div class="field" id="way-note">${wayNote(p, d)}</div>`;
 }
 // «Недавно пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
-const repotBox = (p) => `<div class="field" id="repot-field"><label class="toggle"><input type="checkbox" id="f-repotted" data-field="repotted" data-id="${esc(p.id)}" aria-describedby="repot-hint" ${repotted(p) ? 'checked' : ''}${feedsOnDay(p) ? '' : ' disabled'}> Недавно пересажено</label>
+// «Да» / «Нет» for a row whose title is the question («Недавно купили»): chips, like every other choice.
+const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
+  const sel = (v === '1') === on;
+  return `<button class="chip ${sel ? 'on' : ''}" data-act="yes-no" data-field="${field}" data-id="${esc(id)}"${kind ? ` data-kind="${kind}"` : ''} data-v="${v}" aria-pressed="${sel}"${dis ? ' disabled' : ''}>${v === '1' ? 'Да' : 'Нет'}</button>`;
+}).join('');
+// A yes-no setting inside a row: a short question, then «Да» / «Нет» (no checkboxes in «Настройки»).
+const askYesNo = (q, field, id, on, dis = false, kind = '') => `<div class="yn" role="group" aria-labelledby="q-${field}${kind}"><p class="yn-q" id="q-${field}${kind}">${q}</p>
+  <div class="chips">${yesNo(field, id, on, dis, kind)}</div></div>`;
+const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Недавно пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
 // Redrawn alone on a change, so the tapped chip keeps focus.
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
   ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
-// Under each checkbox: ticked, what it does; unticked, what ticking would do, then what happens now.
+// Under each yes-no question: what the current answer does, so trying «Да» and «Нет» shows how each works.
 // Repotting only matters for plants called on «День подкормки»; for the rest it's greyed out, with why.
-const hintLines = (...lines) => lines.map((l) => `<p>${l}</p>`).join('');
+const hintLines = (...lines) => lines.filter(Boolean).map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (!feedsOnDay(p)) return hintLines('Влияет только на подкормку, а у этого растения дня подкормки нет.');
-  if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом галочка снимется сама.`);
-  return hintLines('<b>Если отметить:</b> 6 недель не позову на подкормку, пока приживаются корни.', settling(p) ? '<b>Сейчас</b> не зову на подкормку: растение недавно купили.' : '<b>Сейчас</b> подкормка как обычно, по расписанию в «Подкормке».');
+  if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом станет «Нет» само.`);
+  return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно купили.' : 'Подкормка как обычно.');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
-// Redrawn alone, so a chip or the checkbox keeps focus.
+// Redrawn alone; the tapped chip or answer gets focus back.
 function feedBox(p) {
   const n = feedEvery(p), last = p.fed, off = !feedsOnDay(p), dis = off ? ' disabled' : '';
   const chip = ([d, label]) => `<button class="chip ${!off && n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${!off && n === d}"${dis}>${label}</button>`;
   const when = off ? '' : !n ? 'Не позову на «День подкормки».'
     : feedDue(p) ? 'Позову в «Если есть силы» сегодня.'
       : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
-        : winterNow() && !p.lamp ? 'Зимой без лампы не зову: растение почти не растёт. Позову с марта.'
+        : winterNow() && !p.lamp ? 'Позову в марте.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
   // «Weakly and regularly» is the orchid facts' advice; a card fed rarely by default (zamioculcas) doesn't get it.
   const regular = (def(p.id).feedEvery ?? 14) <= 30 ? ' Слабо и регулярно лучше, чем крепко и редко.' : '';
   return `${off ? whyNot(feedWhyNot(p)) : p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)}${regular}</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p></div>
-    <div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp && n && !off ? 'checked' : ''}${n && !off ? '' : ' disabled'}> Зимой под лампой</label>
-      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : n ? `Под лампой растение растёт и зимой: позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Сначала выберите, как часто кормить.'}</p></div>
-    ${off && !last ? '' : `<p class="small muted m-0">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>`}
-    <button class="mt-8 btn ok" data-act="feed-done" data-id="${esc(p.id)}"${dis}>${I('utensils')}Подкормлено сегодня</button>`;
+    <div class="field">${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && n && !off), !(n && !off))}
+      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : !n ? 'Сначала выберите, как часто кормить.' : p.lamp ? `Зимой позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой не зову: без лампы растение почти не растёт.'}</p></div>
+    <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
+    ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -160,15 +168,14 @@ const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${pa
 // «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  if (!isNew(p)) return hintLines('<b>Если отметить:</b> 6 недель раз в неделю позову осмотреть на вредителей, а первые 4 недели не позову подкормить и обрезать.', '<b>Сейчас</b> растение не новое.');
+  if (!isNew(p)) return hintLines('Обычный уход, без карантина.');
   return hintLines(...[`Карантин до ${day(NEW_DAYS)}: держите отдельно от других растений, раз в неделю позову осмотреть.`,
     settling(p) ? `До ${day(SETTLE_DAYS)} растение привыкает: лучше не переставлять, не обрезать и не пересаживать, на подкормку не позову.` : '',
     p.settle && settling(p) ? esc(p.settle) : ''].filter(Boolean));
 }
-const ghHint = (on) => (on ? hintLines('Каждый день позову проветрить. Снимите галочку, когда растение переедет из теплицы.')
-  : hintLines('<b>Если отметить:</b> каждый день позову проветрить. Для колпака или мини-теплицы.', '<b>Сейчас</b> проветривать не зову.'));
-// «Обрезка», «Промывка грунта» in «Настройки»: a section per kind (like «Теплица») with a checkbox; ticked, how often, in which months, and «done today».
-// Only the part under the checkbox is redrawn, so the checkbox keeps focus.
+const ghHint = (on) => hintLines(on ? 'Каждый день позову проветрить.' : 'Проветривать не зову.');
+// «Обрезка» in «Настройки»: a row per kind (like «Теплица») with a yes-no question; on «Да», how often, in which months, and «done today».
+// Only the part under the question is redrawn, so the tapped answer keeps focus.
 const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 // Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
 // A run may cross the new year («ноябрь–февраль»): the list starts after a month that's off.
@@ -185,7 +192,7 @@ function monthsText(ms) {
 }
 function remindMore(id, kind) {
   const R = REMINDERS[kind], x = remindOf(S.plants[id], kind), last = S.bonus[`${kind}:${id}`], c = remindCard(plant(id), kind);
-  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, c.tip && esc(c.tip), `<b>Если отметить:</b> позову ${R.verb} в «Если есть силы»${c.months ? `: ${monthsText(c.months)}` : ' в выбранные месяцы'}.`, `<b>Сейчас</b> не зову.`].filter(Boolean))}</div>`;
+  if (!x) return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[R.why, c.tip && esc(c.tip), `Не зову ${R.verb}.`].filter(Boolean))}</div>`;
   const often = R.every.find(([n]) => n === x.every);
   const chip = (act, attr, on, label, aria = '') => `<button class="chip ${on ? 'on' : ''}" data-act="${act}" data-id="${esc(id)}" data-kind="${kind}" ${attr} aria-pressed="${on}"${aria}>${label}</button>`;
   return `<div class="mt-6 small muted hint" id="remind-hint-${kind}">${hintLines(...[c.tip && esc(c.tip), `Позову ${R.verb} в «Если есть силы» ${often ? often[2] : `раз в ${days(x.every)}`}: ${monthsText(x.months)}.`].filter(Boolean))}</div>
@@ -193,14 +200,14 @@ function remindMore(id, kind) {
       ${R.every.map(([n, label]) => chip('remind-every', `data-n="${n}"`, x.every === n, label)).join('')}</div></div>
     <div class="field" role="group" aria-labelledby="lbl-months-${kind}"><label id="lbl-months-${kind}">В какие месяцы</label><div class="chips">
       ${MONTH_CHIPS.map((m, i) => chip('remind-month', `data-m="${i + 1}"`, x.months.includes(i + 1), m, ` aria-label="${MONTHS[i]}"`)).join('')}</div></div>
-    <p class="small muted m-0" id="remind-last-${kind}">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>
-    <button class="mt-8 btn ok" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}">${I(R.icon)}${R.btn}</button>`;
+    <button class="btn ok wide" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}"${last === today() ? ' disabled' : ''}>${I(R.icon)}${R.btn}</button>
+    ${last ? `<p class="small muted last-done" tabindex="-1" id="remind-last-${kind}">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
-// A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
+// A card that isn't pruned says so instead of the question, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
 const remindBody = (id, kind) => (remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
-  : `<div class="field"><label class="toggle"><input type="checkbox" data-field="remind" data-kind="${kind}" data-id="${esc(id)}" aria-describedby="remind-hint-${kind}" ${remindOf(S.plants[id], kind) ? 'checked' : ''}> ${REMINDERS[kind].toggle}</label>
+  : `<div class="field">${askYesNo(`${REMINDERS[kind].toggle}?`, 'remind', id, !!remindOf(S.plants[id], kind), false, kind)}
   <div id="remind-${kind}">${remindMore(id, kind)}</div></div>`);
 // «Промывка грунта» in the plant card: done on «Банный день», so here only how it goes for this plant, the last
 // time, «Промыто сегодня» and a way to leave it out. Without soil to rinse, why not; nothing for a block or terrarium.
@@ -213,15 +220,17 @@ function rinseBox(p) {
         : p.distilled ? 'Поливают только дистиллированной водой: солям неоткуда взяться.'
           : p.type === 'terrarium' ? 'В закрытом террариуме промывать нельзя: воде некуда стечь.'
             : p.type === 'aquarium' ? 'Корни в аквариуме: грунта для промывки нет.' : 'На блоке грунта для промывки нет.';
-    return box(`${whyNot(note)}<button class="mt-8 btn ok" disabled>${I('droplets')}Промыто сегодня</button>`);
+    return box(`${whyNot(note)}<button class="btn ok wide" disabled>${I('droplets')}Промыто сегодня</button>`);
   }
   const n = bathEvery(), last = S.bonus['rinse:' + p.id];
   const how = !n ? 'Промывать удобнее всех сразу: включите «Банный день» в «Настройках» приложения.'
-    : p.noBath ? 'В банный день не позову.'
-      : `В банный день позову, когда подсохнет грунт: раз в ${(BATH_EVERY.find(([d]) => d === n)?.[1] || `${n} дней`).toLowerCase()}.`;
-  return box(`<div class="small muted hint" id="rinse-hint">${hintLines(RINSE.why, how, last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не промывали.')}</div>
-    <div class="field mt-12"><label class="toggle"><input type="checkbox" data-field="nobath" data-id="${esc(p.id)}" ${n && p.noBath ? 'checked' : ''}${n ? '' : ' disabled'}> Не купать это растение</label></div>
-    <button class="mt-8 btn ok" data-act="rinse-done" data-id="${esc(p.id)}">${I('droplets')}Промыто сегодня</button>`);
+    : p.noBath ? 'В банный день не зову.'
+      : `Позову в банный день раз в ${(BATH_EVERY.find(([d]) => d === n)?.[1] || `${n} дней`).toLowerCase()}.`;
+  return box(`<div class="small muted hint">${hintLines(RINSE.why)}</div>
+    <div class="field mt-12">${askYesNo('Звать в банный день?', 'bath', p.id, !!(n && !p.noBath), !n)}
+      <div class="mt-6 small muted hint" id="rinse-hint">${hintLines(how)}</div></div>
+    <button class="btn ok wide" data-act="rinse-done" data-id="${esc(p.id)}"${last === today() ? ' disabled' : ''}>${I('droplets')}Промыто сегодня</button>
+    ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`);
 }
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
@@ -232,7 +241,7 @@ function setRemind(id, kind, x, action) {
   $(`#remind-${kind}`).innerHTML = remindMore(id, kind);
   track('reminder_changed', { kind, action, ...(x ? { every: x.every, months: x.months.length } : {}) });
 }
-const intHint = (p) => `Подстраивается само, когда на «Сегодня» вы отвечаете «${labelsOf(p)[0]}» или «${labelsOf(p)[1]}».`;
+const intHint = (p) => `Подстраивается по вашим ответам «${labelsOf(p)[0]}» и «${labelsOf(p)[1]}».`;
 // How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
 // with the way's options (it doesn't learn). Redrawn alone when the way changes.
 const everyLabel = (n) => (n === 7 ? 'Неделя' : `${n / 7} недели`);
@@ -457,13 +466,13 @@ function settingsHtml(id, p, ls, spots) {
     row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
           ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>`)
-    + row('card', isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="mt-8 btn" disabled>${I('arrow-left-right')}Сменить карточку</button>`
-      : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и интервал полива. Если карточка не та, смените её: имя, фото, заметки и история останутся.</p>
-          <button class="mt-8 btn" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`))}
+    + row('card', isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="btn primary wide" disabled>${I('arrow-left-right')}Сменить карточку</button>`
+      : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и полив. При смене карточки имя, фото, заметки и история останутся.</p>
+          <button class="btn primary wide" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`))}
     ${setGroup('where', 'Где живёт',
     row('place', `${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
           ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
-        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Место</label><div class="chips" id="spot-chips">
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot"${S.rooms.length > 1 ? '' : ' class="sr-only"'}>${S.rooms.length > 1 ? 'Где стоит' : 'Место'}</label><div class="chips" id="spot-chips">
           ${spots.map((sp) => spotChip(id, sp, p.spot === sp)).join('')}
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
           <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
@@ -471,7 +480,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром, нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}</label>
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}">
           ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}</div>`)
-    + row('gh', `<div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
+    + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse)}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
     `<div class="srow water-row" id="water-box">${waterBox(p)}</div>`
@@ -481,13 +490,13 @@ function settingsHtml(id, p, ls, spots) {
     + row('prune', remindBody(id, 'prune'))
     + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field"><label class="toggle"><input type="checkbox" id="f-bought" data-field="bought" data-id="${esc(id)}" aria-describedby="new-hint" ${isNew(p) ? 'checked' : ''}> Недавно купили</label>
+    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Недавно купили" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', resting(p) ? whyNot('Растение сейчас в покое: вернуть обычный уход можно в блоке «Покой» над вкладками.')
-      : p.rest ? `<p class="small muted m-0">Отмечайте, когда растение ушло в покой: позову проверять вдвое реже и не позову подкормить.</p>
-        <button class="mt-8 btn wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button>`
-        : `${whyNot('Для этого растения покой не отмечается: в его карточке покоя нет.')}<button class="mt-8 btn wide" disabled>${I('moon')}Ушло в покой</button>`))}
+      : p.rest ? `<p class="small muted m-0">В покое позову проверять вдвое реже и не позову подкормить.</p>
+        <button class="btn primary wide" data-act="rest-start" data-id="${esc(id)}">${I('moon')}${esc(p.rest.start)}</button>`
+        : `${whyNot('Для этого растения покой не отмечается: в его карточке покоя нет.')}<button class="btn primary wide" disabled>${I('moon')}Ушло в покой</button>`))}
     <button class="mt-20 btn danger wide" data-act="delete" data-id="${esc(id)}">Убрать из коллекции</button>`;
 }
 // The plant card's markup on the current `cardTab`; the stories draw it for a sample plant too.
@@ -698,10 +707,8 @@ function changeWay(id, f, value) {
   $('#rinse-wrap').innerHTML = rinseBox(p);
   $('#feed-box').innerHTML = feedBox(p);
   $('#glance').innerHTML = glanceHtml(p);
-  $('#f-repotted').disabled = !feedsOnDay(p);
-  // The hint follows both the box (a settle ticks it) and whether the plant is fed on the day at all.
-  if (res.settle) { const box = $('[data-field="repotted"]'); if (box) box.checked = true; }
-  $('#repot-hint').innerHTML = repotHint(p);
+  // «Недавно пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
+  const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
   if (res.settle) {
     // Only plants called on «День подкормки» notice it.
     if (feedsOnDay(p)) toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
@@ -730,24 +737,13 @@ document.addEventListener('change', (e) => {
     $('#sh-title').innerHTML = typedHtml(p.title);
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
-  if (f === 'nobath') { r.noBath = el.checked || undefined; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('[data-field="nobath"]').focus(); track('bath_opt_out', { on: el.checked }); return; }
-  if (f === 'lamp') { r.lamp = el.checked; save(); $('#feed-box').innerHTML = feedBox(plant(id)); $('#f-lamp').focus(); track('feed_lamp_toggled', { on: el.checked }); return; }
-  if (f === 'bought') { r.bought = el.checked ? today() : false; delete r.inspected; $('#new-hint').innerHTML = newHint(plant(id)); $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); track('quarantine_toggled', { on: el.checked, from: 'card' }); }
-  if (f === 'repotted') { r.repotted = el.checked ? today() : false; $('#repot-hint').innerHTML = repotHint(plant(id)); $('#feed-box').innerHTML = feedBox(plant(id)); }
-  if (f === 'remind') {
-    const k = el.dataset.kind;
-    const start = remindStart(plant(id), k);
-    setRemind(id, k, el.checked ? { every: start.every, months: [...start.months] } : null, el.checked ? 'on' : 'off'); // saves
-    return;
-  }
-  if (f === 'greenhouse') { r.greenhouse = el.checked; $('#gh-hint').innerHTML = ghHint(el.checked); track('greenhouse_toggled', { on: el.checked }); }
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
     if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
-  if (sheet.open && ['greenhouse', 'bought', 'lux', 'name', 'species'].includes(f)) heroChanged(id);
+  if (sheet.open && ['lux', 'name', 'species'].includes(f)) heroChanged(id);
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
@@ -778,11 +774,11 @@ Object.assign(ACTS, {
     rinseDone(id); save();
     $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
     $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
-    $('[data-act="rinse-done"]').focus();
+    $('#rinse-wrap .last-done')?.focus();
     track('rinse_logged', { from: 'card' });
     toast('Промывка записана 🚿', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); $('[data-act="rinse-done"]')?.focus(); }
     });
   },
   'feed-every'(el, id) {
@@ -796,11 +792,11 @@ Object.assign(ACTS, {
     const undo = snapshot();
     feedDone(id); save();
     $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
-    $('[data-act="feed-done"]').focus();
+    $('#feed-box .last-done')?.focus();
     track('feeding_logged', { from: 'card', n: 1 });
     toast('Подкормка записана 🍽️', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
     });
   },
   // Rest: checks twice as rare (the interval comes back after), no feeding day, until new growth.
@@ -834,6 +830,25 @@ Object.assign(ACTS, {
       track('photo_removed');
       toast('Фото убрано');
     }
+  },
+  // «Да» / «Нет» in «Настройки»: greenhouse, winter lamp, pruning reminder, bath day, just bought, just repotted.
+  'yes-no'(el, id) {
+    const f = el.dataset.field, k = el.dataset.kind, on = el.dataset.v === '1', r = S.plants[id], p0 = plant(id);
+    const now = { bought: isNew(p0), repotted: !!repotted(p0), greenhouse: !!r.greenhouse, lamp: !!r.lamp, bath: !r.noBath, remind: !!(k && remindOf(r, k)) }[f];
+    if (on === now) return;
+    el.parentElement.querySelectorAll('.chip').forEach((c) => { const sel = c === el; c.classList.toggle('on', sel); c.setAttribute('aria-pressed', sel); });
+    // Boxes redrawn with the chips inside get the focus back on the same answer.
+    const refocus = () => $(`[data-act="yes-no"][data-field="${f}"]${k ? `[data-kind="${k}"]` : ''}[data-v="${el.dataset.v}"]`)?.focus();
+    if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); return; } // saves
+    if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('feed_lamp_toggled', { on }); return; }
+    if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_opt_out', { on: !on }); return; }
+    if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on }); return; }
+    if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
+    if (f === 'repotted') { r.repotted = on ? today() : false; track('repot_toggled', { on }); }
+    save();
+    const p = plant(id);
+    $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
+    if (f === 'bought') heroChanged(id);
   },
   // «×» on the newest answer in «История»: asks, takes it back, and the card stays on «История».
   async 'hist-undo'(el, id) {
@@ -919,13 +934,14 @@ Object.assign(ACTS, {
     const k = el.dataset.kind, undo = snapshot();
     remindDone(id, k);
     save();
-    $(`#remind-last-${k}`).textContent = 'Последний раз: сегодня.';
+    $(`#remind-${k}`).innerHTML = remindMore(id, k);
+    $(`#remind-${k} .last-done`)?.focus();
     refreshHistory(id);
     track('reminder_logged', { kind: k, from: 'card' });
     // Undo also redraws the reminder and the history in the card, if it's still open.
     toast(REMINDERS[k].toast, () => {
       undo();
-      if (sheet.open && cardFor === id && $(`#remind-${k}`)) { $(`#remind-${k}`).innerHTML = remindMore(id, k); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $(`#remind-${k}`)) { $(`#remind-${k}`).innerHTML = remindMore(id, k); refreshHistory(id); $(`[data-act="remind-done"][data-kind="${k}"]`)?.focus(); }
     });
   },
   'int-minus': stepInterval,

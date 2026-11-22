@@ -32,7 +32,7 @@ Record fields:
 | `own` | Edited catalog tips. `''` hides a tip. |
 | `notes` | Own notes. |
 | `remind` | Reminders turned on in «Обрезка»: `{ prune: { every, months } }`, days and months 1–12. See [Reminders](#reminders). |
-| `noBath` | «Не купать это растение»: left out of «Банный день». |
+| `noBath` | «Нет» to «Звать в банный день?»: left out of «Банный день». |
 
 Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
@@ -95,12 +95,12 @@ Plants that aren't in an ordinary pot get a teal badge, like the greenhouse one 
 
 ## Reminders
 
-The plant card's «Настройки» has a row per kind in `REMINDERS` (`state.js`) under «Уход», like «Теплица»: its name as the title and, opened, a checkbox «Звать на обрезку» (`toggle`). There's no «Напоминания» heading: the app has no notifications, it calls people in «Если есть силы».
-- **«Обрезка»** (`prune`): ticked, it starts at «Раз в год» in March and April, or in the card's `prune.months`. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season). A card's `prune` comes from the checked pruning facts:
-  - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the checkbox; a reminder already on stays.
-  - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the checkbox and before the task hint.
+The plant card's «Настройки» has a row per kind in `REMINDERS` (`state.js`) under «Уход», like «Теплица»: its name as the title and, opened, the question «Звать на обрезку?» (`toggle` plus «?») with «Да» / «Нет». There's no «Напоминания» heading: the app has no notifications, it calls people in «Если есть силы».
+- **«Обрезка»** (`prune`): on «Да», it starts at «Раз в год» in March and April, or in the card's `prune.months`. «Как часто»: 2 weeks, a month, 2 months, «Раз в год» (300 days, so it comes back at the start of next season). A card's `prune` comes from the checked pruning facts:
+  - `{ no }`: not pruned (palms, orchids, ZZ, most succulents, strelitzia, chlorophytum). The reason stands in place of the question; a reminder already on stays.
+  - `{ months, tip }`: its own start months (spring for dracaena, yucca, ficus, February–March for coleus, hoya, begonia) and a tip shown under the question and before the task hint.
   - Cards without `prune` keep the general hint: where to cut, a bleach rinse after a sick plant, and that pale stretched stems need light.
-- **«Промывка грунта»** is not a reminder: the soil rinse is done on «Банный день» (see [TASKS.md](TASKS.md#bonus-tasks)). Its section in the plant card says how it goes for this plant, the last time (`rinse:<id>` in `S.bonus`), «Промыто сегодня» and, with the bath day on, «Не купать это растение» (`noBath`). Without soil to rinse it says why (water, clay pebbles and pon with their own rinse, distilled water only, a closed terrarium, an aquarium, a block). Per-plant rinse reminders from v126 to v136 turn into «Банный день» with the same interval.
+- **«Промывка грунта»** is not a reminder: the soil rinse is done on «Банный день» (see [TASKS.md](TASKS.md#bonus-tasks)). Its section in the plant card says how it goes for this plant, the last time (`rinse:<id>` in `S.bonus`), «Промыто сегодня» and, with the bath day on, «Звать в банный день?» («Нет» sets `noBath`). Without soil to rinse it says why (water, clay pebbles and pon with their own rinse, distilled water only, a closed terrarium, an aquarium, a block). Per-plant rinse reminders from v126 to v136 turn into «Банный день» with the same interval.
 
 Each, once ticked, shows:
 - «В какие месяцы»: 12 chips, at least one stays on;
