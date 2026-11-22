@@ -363,7 +363,7 @@ function viewToday() {
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
-          : `${b.backup ? `<button class="btn ok" data-act="export" data-from="task">${I('save')}Сохранить копию</button>`
+          : `${b.backup ? `<button class="btn ok" data-act="export" data-from="task">${I('save')}Сохранить</button>`
             : `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}${esc(b.done)}</button>`}
           <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Через 3 дня</button>`,
       });

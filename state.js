@@ -555,7 +555,7 @@ function bonusTasks() {
   }
   // A month after the last backup (or since the start), while there are plants: everything lives on this device.
   if (allPlants().length && diff(S.backupAt || S.created || t, t) >= BACKUP_EVERY && !snoozed('backup')) {
-    out.push({ key: 'backup', icon: 'save', title: 'Резервная копия', task: 'Сохраните растения и фото в файл', backup: true,
+    out.push({ key: 'backup', icon: 'save', title: 'Резервная копия', task: 'Сохраните ваши растения и фото в файл', backup: true,
       hint: MINI_APP ? 'Облако Телеграма хранит только уменьшенные фото, а в файле они целиком.' : 'Сейчас всё хранится только на этом устройстве, а файл можно держать в облаке или в Телеграме.' });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
