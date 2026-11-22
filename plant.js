@@ -341,6 +341,20 @@ function showCardTab(k, focus) {
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
 let openRows = new Set(), openRowsFor = null;
 const dayMonth = (iso) => parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+// How feeding goes now, as feedDue decides: the schedule (monthly in winter under a lamp), then why it waits: rest,
+// a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
+// waits until March.
+const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 || m > 9; };
+function feedValue(p) {
+  const n = feedEvery(p);
+  if (!n) return 'не кормлю';
+  const every = winterNow() && p.lamp ? 'зимой раз в месяц' : { 14: 'раз в 2 недели', 30: 'раз в месяц' }[n];
+  const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
+  const pause = resting(p) ? 'пауза, пока в покое'
+    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${dayMonth(until)}`)
+      : winterNow() && !p.lamp ? 'зимой пауза' : '';
+  return [every, p.lamp ? 'под лампой' : '', pause].filter(Boolean).join(', ');
+}
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
@@ -354,7 +368,7 @@ function rowValues(p) {
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
     way: [`${MEDIA[p.type].name.toLowerCase()}${pot ? ', ' + (WATERING[p.watering] || WATERING.top).name.toLowerCase() : ''}`, false],
-    feed: !fed ? [feedOff, true] : [{ 14: 'раз в 2 недели', 30: 'раз в месяц', 0: 'не кормлю' }[feedEvery(p)] + (p.lamp && feedEvery(p) ? ', под лампой' : ''), false],
+    feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
     bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
