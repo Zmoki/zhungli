@@ -844,7 +844,7 @@ Object.assign(ACTS, {
     if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_opt_out', { on: !on }); return; }
     if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on }); return; }
     if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
-    if (f === 'repotted') r.repotted = on ? today() : false;
+    if (f === 'repotted') { r.repotted = on ? today() : false; track('repot_toggled', { on }); }
     save();
     const p = plant(id);
     $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);

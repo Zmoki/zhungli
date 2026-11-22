@@ -79,6 +79,7 @@ On every event:
 | `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing) | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone); `new_spot`: not in the spot list before. Never the spot's name |
 | `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card | `on` |
 | `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`; `from`: `card` / `task` |
+| `repot_toggled` | «Недавно пересажено» in the plant card | `on` |
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none |
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
 | `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
