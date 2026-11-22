@@ -31,7 +31,7 @@ function cheatHtml(id) {
   if (noteEdit !== 'new') html += `<button class="chip" data-act="note-edit" data-id="${esc(id)}" data-key="new">${I('plus')}заметка</button>`;
   const removed = NOTE_KEYS.filter(([k]) => d[k] && r.own && r.own[k] === '').length;
   if (removed) html += `<p class="small"><button class="linkish" data-act="note-restore" data-id="${esc(id)}">Вернуть удалённые советы (${removed})</button></p>`;
-  // Warnings are above the tabs (warnsHtml); what pets may know when the plant isn't toxic to them stays here.
+  // Warnings are under the tabs (warnsHtml); what pets may know when the plant isn't toxic to them stays here.
   if (petsOn() && petsOf(p) !== 'toxic') html += `<div class="card-warns">${petsHtml(p)}</div>`;
   if (p.generic) html += `<p class="small muted">Это общий тип, советы примерные. Интервал полива подстроится по вашим ответам.</p>`;
   return html;
