@@ -778,7 +778,7 @@ Object.assign(ACTS, {
     track('rinse_logged', { from: 'card' });
     toast('Промывка записана 🚿', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); $('[data-act="rinse-done"]')?.focus(); }
     });
   },
   'feed-every'(el, id) {
@@ -796,7 +796,7 @@ Object.assign(ACTS, {
     track('feeding_logged', { from: 'card', n: 1 });
     toast('Подкормка записана 🍽️', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
     });
   },
   // Rest: checks twice as rare (the interval comes back after), no feeding day, until new growth.
@@ -941,7 +941,7 @@ Object.assign(ACTS, {
     // Undo also redraws the reminder and the history in the card, if it's still open.
     toast(REMINDERS[k].toast, () => {
       undo();
-      if (sheet.open && cardFor === id && $(`#remind-${k}`)) { $(`#remind-${k}`).innerHTML = remindMore(id, k); refreshHistory(id); }
+      if (sheet.open && cardFor === id && $(`#remind-${k}`)) { $(`#remind-${k}`).innerHTML = remindMore(id, k); refreshHistory(id); $(`[data-act="remind-done"][data-kind="${k}"]`)?.focus(); }
     });
   },
   'int-minus': stepInterval,
