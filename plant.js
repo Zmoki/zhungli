@@ -817,7 +817,7 @@ Object.assign(ACTS, {
     feedDone(id); save();
     $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
     $('#feed-box .last-done')?.focus();
-    track('feeding_logged', { from: 'card', count: 1 });
+    track('feed_logged');
     toast('Подкормка записана 🍽️', () => {
       undo();
       if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }

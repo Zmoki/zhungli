@@ -152,7 +152,7 @@
     },
     "bonus_done": {
       "area": "care", "since": 7,
-      "when": "bonus task done (the feeding day is `feeding_logged`)",
+      "when": "bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`)",
       "props": {
         "kind": { "type": "enum", "values": {
           "dust": "", "rotate": "",
@@ -166,24 +166,35 @@
     },
     "bonus_skipped": {
       "area": "care", "since": 7,
-      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160)",
+      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162)",
       "props": {
         "kind": { "type": "enum", "values": {
           "dust": "", "rotate": "", "flush": "", "leach": "", "roots": "", "prune": "",
           "bath": "the bath day, up to v159",
+          "feed": "the feeding day, up to v161",
           "backup": "the backup task",
           "feedback": "«Не нужно» on «Как вам Жунгли?»"
         } }
       }
     },
-    "feeding_logged": {
-      "area": "care", "since": 133,
-      "when": "plants noted as fed",
+    "feed_day_shown": {
+      "area": "care", "since": 162,
+      "when": "the «День подкормки» card drawn on «Сегодня», once per launch and day, while the app is on screen",
+      "note": "The funnel's first step: count devices.",
+      "props": { "count": { "type": "int", "desc": "plants on the card (due by their own schedule)" } }
+    },
+    "feed_day_finished": {
+      "area": "care", "since": 162,
+      "when": "«Подкормлено» on the «День подкормки» card",
       "props": {
-        "from": { "type": "enum", "values": { "day": "«Подкормлено» on «День подкормки»", "card": "«Подкормлено сегодня»" } },
-        "count": { "type": "int", "desc": "how many fed", "was": ["n"] },
-        "of": { "type": "int", "desc": "`day` only: how many were listed" }
+        "count": { "type": "int", "desc": "plants ticked as fed" },
+        "of": { "type": "int", "desc": "plants on the card; the unticked ones come back in 3 days" }
       }
+    },
+    "feed_day_snoozed": {
+      "area": "care", "since": 162,
+      "when": "«Через 3 дня» on the «День подкормки» card (before v162: `bonus_skipped` `kind: feed`)",
+      "props": { "count": { "type": "int", "desc": "plants on the card" } }
     },
     "bath_day_shown": {
       "area": "care", "since": 161,
@@ -352,6 +363,10 @@
       "area": "plant", "since": 133,
       "when": "«Зимой стоит под лампой?» in the plant card",
       "props": { "on": { "type": "bool" } }
+    },
+    "feed_logged": {
+      "area": "plant", "since": 162,
+      "when": "«Подкормлено сегодня» in the plant card's «Подкормка» (before v162: `feeding_logged` `from: card`)"
     },
     "reminder_changed": {
       "area": "plant", "since": 120,
@@ -819,6 +834,15 @@
       }
     },
 
+    "feeding_logged": {
+      "area": "care", "since": 133, "removed": 162,
+      "when": "plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`)",
+      "props": {
+        "from": { "type": "enum", "values": { "day": "«Подкормлено» on «День подкормки»", "card": "«Подкормлено сегодня»" } },
+        "count": { "type": "int", "desc": "how many fed", "was": ["n"] },
+        "of": { "type": "int", "desc": "`day` only: how many were listed" }
+      }
+    },
     "bath_day_changed": {
       "area": "settings", "since": 137, "removed": 160,
       "when": "«Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either)",
