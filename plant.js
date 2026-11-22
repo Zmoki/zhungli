@@ -143,7 +143,7 @@ function repotHint(p) {
   return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно купили.' : 'Подкормка как обычно.');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
-// Redrawn alone, so a chip or the checkbox keeps focus.
+// Redrawn alone; the tapped chip or answer gets focus back.
 function feedBox(p) {
   const n = feedEvery(p), last = p.fed, off = !feedsOnDay(p), dis = off ? ' disabled' : '';
   const chip = ([d, label]) => `<button class="chip ${!off && n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${!off && n === d}"${dis}>${label}</button>`;
@@ -159,7 +159,7 @@ function feedBox(p) {
     <div class="field">${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && n && !off), !(n && !off))}
       <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : !n ? 'Сначала выберите, как часто кормить.' : p.lamp ? `Зимой позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой не зову: без лампы растение почти не растёт.'}</p></div>
     <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
-    ${last ? `<p class="small muted last-done">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
+    ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -174,8 +174,8 @@ function newHint(p) {
     p.settle && settling(p) ? esc(p.settle) : ''].filter(Boolean));
 }
 const ghHint = (on) => hintLines(on ? 'Каждый день позову проветрить.' : 'Проветривать не зову.');
-// «Обрезка», «Промывка грунта» in «Настройки»: a section per kind (like «Теплица») with a checkbox; ticked, how often, in which months, and «done today».
-// Only the part under the checkbox is redrawn, so the checkbox keeps focus.
+// «Обрезка» in «Настройки»: a row per kind (like «Теплица») with a yes-no question; on «Да», how often, in which months, and «done today».
+// Only the part under the question is redrawn, so the tapped answer keeps focus.
 const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 // Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
 // A run may cross the new year («ноябрь–февраль»): the list starts after a month that's off.
@@ -201,10 +201,10 @@ function remindMore(id, kind) {
     <div class="field" role="group" aria-labelledby="lbl-months-${kind}"><label id="lbl-months-${kind}">В какие месяцы</label><div class="chips">
       ${MONTH_CHIPS.map((m, i) => chip('remind-month', `data-m="${i + 1}"`, x.months.includes(i + 1), m, ` aria-label="${MONTHS[i]}"`)).join('')}</div></div>
     <button class="btn ok wide" data-act="remind-done" data-id="${esc(id)}" data-kind="${kind}"${last === today() ? ' disabled' : ''}>${I(R.icon)}${R.btn}</button>
-    ${last ? `<p class="small muted last-done" id="remind-last-${kind}">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
+    ${last ? `<p class="small muted last-done" tabindex="-1" id="remind-last-${kind}">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
 // Every kind is drawn; `fits` (none today) would hide one that doesn't fit how the plant grows, and changeWay shows it again.
-// A card that isn't pruned says so instead of the checkbox, unless the reminder is already on.
+// A card that isn't pruned says so instead of the question, unless the reminder is already on.
 const remindNo = (id, kind) => !remindOf(S.plants[id], kind) && remindCard(plant(id), kind).no;
 const remindBody = (id, kind) => (remindNo(id, kind) ? `<div class="small muted hint">${hintLines(esc(remindCard(plant(id), kind).no))}</div>`
   : `<div class="field">${askYesNo(`${REMINDERS[kind].toggle}?`, 'remind', id, !!remindOf(S.plants[id], kind), false, kind)}
@@ -230,7 +230,7 @@ function rinseBox(p) {
     <div class="field mt-12">${askYesNo('Звать в банный день?', 'bath', p.id, !!(n && !p.noBath), !n)}
       <div class="mt-6 small muted hint" id="rinse-hint">${hintLines(how)}</div></div>
     <button class="btn ok wide" data-act="rinse-done" data-id="${esc(p.id)}"${last === today() ? ' disabled' : ''}>${I('droplets')}Промыто сегодня</button>
-    ${last ? `<p class="small muted last-done">Последний раз: ${esc(rel(last))}.</p>` : ''}`);
+    ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`);
 }
 // Sets one reminder: null turns it off. Reports the change.
 function setRemind(id, kind, x, action) {
@@ -774,7 +774,7 @@ Object.assign(ACTS, {
     rinseDone(id); save();
     $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
     $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
-    $('[data-act="rinse-done"]').focus();
+    $('#rinse-wrap .last-done')?.focus();
     track('rinse_logged', { from: 'card' });
     toast('Промывка записана 🚿', () => {
       undo();
@@ -792,7 +792,7 @@ Object.assign(ACTS, {
     const undo = snapshot();
     feedDone(id); save();
     $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
-    $('[data-act="feed-done"]').focus();
+    $('#feed-box .last-done')?.focus();
     track('feeding_logged', { from: 'card', n: 1 });
     toast('Подкормка записана 🍽️', () => {
       undo();
@@ -831,8 +831,6 @@ Object.assign(ACTS, {
       toast('Фото убрано');
     }
   },
-  // «×» on the newest answer in «История»: asks, takes it back, and the card stays on «История».
-  // «Да» / «Нет» in «Недавно купили» and «Недавно пересажено».
   // «Да» / «Нет» in «Настройки»: greenhouse, winter lamp, pruning reminder, bath day, just bought, just repotted.
   'yes-no'(el, id) {
     const f = el.dataset.field, k = el.dataset.kind, on = el.dataset.v === '1', r = S.plants[id], p0 = plant(id);
@@ -852,6 +850,7 @@ Object.assign(ACTS, {
     $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
     if (f === 'bought') heroChanged(id);
   },
+  // «×» on the newest answer in «История»: asks, takes it back, and the card stays on «История».
   async 'hist-undo'(el, id) {
     const h = S.plants[id].hist.find((x) => CHECK_ANSWERS.includes(x.a));
     if (!h) return;
@@ -936,6 +935,7 @@ Object.assign(ACTS, {
     remindDone(id, k);
     save();
     $(`#remind-${k}`).innerHTML = remindMore(id, k);
+    $(`#remind-${k} .last-done`)?.focus();
     refreshHistory(id);
     track('reminder_logged', { kind: k, from: 'card' });
     // Undo also redraws the reminder and the history in the card, if it's still open.

@@ -77,14 +77,14 @@ On every event:
 | `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back); `note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` |
 | `lux_entered` | lux reading saved | `from`: `light_tab` / `card` |
 | `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing) | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone); `new_spot`: not in the spot list before. Never the spot's name |
-| `greenhouse_toggled` | greenhouse switch in the plant card | `on` |
+| `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card | `on` |
 | `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`; `from`: `card` / `task` |
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none |
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
 | `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
 | `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
 | `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `90` / `0` |
-| `feed_lamp_toggled` | «Зимой под лампой» | `on` |
+| `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card | `on` |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` |
 | `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none |
 | `bath_day_done` | «Промыто» on the bath day card | `n` bathed; `left`: plants still due a rinse |
@@ -93,10 +93,10 @@ On every event:
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |
-| `reminder_changed` | «Звать на обрезку» or its options changed in the plant card | `kind`: `prune`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300`) and `months` (how many are on), unless off |
+| `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card | `kind`: `prune`; `action`: `on` / `off` / `every` / `months`; `every` (days: `14` / `30` / `60` / `300`) and `months` (how many are on), unless off |
 | `reminder_logged` | «Обрезано сегодня» in the plant card | `kind`: `prune`; `from`: `card` |
 | `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` |
-| `bath_opt_out` | «Не купать это растение» in the plant card | `on` |
+| `bath_opt_out` | «Звать в банный день?» in the plant card (`on` true for «Нет») | `on` |
 | `settings_row_opened` | a row of the plant card's «Настройки» opened | `row`: `name` / `card` / `place` / `light` / `gh` / `way` / `feed` / `prune` / `rinse` / `bought` / `repot` / `rest` |
 | `bonus_skipped` | bonus task snoozed («Через 3 дня»; on the bath day too: `kind`: `bath`; the backup task: `backup`), or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
 | `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, by «Показать, как», or from settings | `from`: `auto` / `settings` («Как работают Жунгли» at the top of settings) / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added), both straight to the last story / `return` (back in the app to stories still open: not a way in, see `left` in `stories_closed`) |
