@@ -223,7 +223,7 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 // «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
 // `bathOff` and `feedOff` keep the unticked ones across redraws.
 let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
-let bathShownOn = ''; // the day bath_day_shown went out in this launch
+let bathShownOn = '', feedShownOn = ''; // the day bath_day_shown / feed_day_shown went out in this launch
 // True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
 let sampleDraw = false;
 const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
@@ -363,6 +363,8 @@ function viewToday() {
   // The funnel's first step: the card's question was on screen (once per launch and day; a hidden start waits for
   // the render on becoming visible).
   if (bathCard && !sampleDraw && !document.hidden && bathStep === 0 && bathShownOn !== t) { bathShownOn = t; track('bath_day_shown', { count: bp.offer.length }); }
+  const feedTask = bonus.find((b) => b.key.startsWith('feed:'));
+  if (feedTask && !sampleDraw && !document.hidden && feedShownOn !== t) { feedShownOn = t; track('feed_day_shown', { count: feedTask.pick.length }); }
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
@@ -720,7 +722,7 @@ Object.assign(ACTS, {
       fed.forEach(feedDone);
       boxes.filter((x) => !on(x)).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
       feedOff = new Set();
-      track('feeding_logged', { from: 'day', count: fed.length, of: boxes.length });
+      track('feed_day_finished', { count: fed.length, of: boxes.length });
       logToday({ a: 'bonus:feed', title: 'День подкормки' });
       afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);
       return;
@@ -732,7 +734,8 @@ Object.assign(ACTS, {
     afterTask('Бонус засчитан ✨', undo);
   },
   'bonus-skip'(el) {
-    track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
+    if (el.dataset.key.startsWith('feed:')) track('feed_day_snoozed', { count: bonusKeys(el.dataset.key).length });
+    else track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
     bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через 3 дня 🙂');
   },
   // The feedback task asks once: «Написать» (the link opens Telegram) and «Не нужно» both put it away for good.
