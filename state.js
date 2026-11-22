@@ -425,10 +425,15 @@ function logToday(entry) {
 // Called on «День подкормки»: soil-like media, plus flowering succulents (dry with `feed`), unless the card says no.
 const feedsOnDay = (p) => !p.noFeed && (wayOf(p).feed === 'day' || (p.type === 'dry' && !!p.feed));
 
-function hist(p, a) {
-  p.hist.unshift({ d: today(), a });
-  p.hist.length = Math.min(p.hist.length, 20);
+const HIST_MAX = 60; // entries kept per plant: a few months of answers and care
+// `extra` on a check answer: `was`, the state before it, and `iv` / `nc`, the interval and next check it set,
+// so «×» in «История» can take it back (undoAnswer) and the list can show when the interval changed.
+function hist(p, a, extra) {
+  p.hist.unshift({ d: today(), a, ...extra });
+  p.hist.length = Math.min(p.hist.length, HIST_MAX);
 }
+const checkState = (r) => ({ iv: r.interval, lw: r.lastWater, nc: r.nextCheck, wet: r.wet });
+const answerSet = (r, was) => ({ was, iv: r.interval, nc: r.nextCheck });
 
 // The same pick all day for a plant, a new one tomorrow.
 function pickDaily(id, list) {
@@ -633,6 +638,7 @@ function snapshot() {
 function actWater(id, silent) {
   const r = S.plants[id], d = def(id), t = today();
   if (wayOf(plant(id)).fixed) { actSystem(id, false, silent); return; }
+  const was = checkState(r);
   if (r.lastWater && r.lastWater !== t) {
     const measured = diff(r.lastWater, t);
     // After "still wet" answers, the real interval is about the measured one.
@@ -645,28 +651,47 @@ function actWater(id, silent) {
   r.lastWater = t;
   r.wet = 0;
   r.nextCheck = addDays(t, Math.max(1, Math.round(r.interval)));
-  hist(r, 'water');
+  hist(r, 'water', answerSet(r, was));
   if (!silent) logToday({ id, a: 'water' });
 }
 
 // A check of a system that waters by itself: «Работает» waits the whole interval, «Поправлено» looks again
 // soon to see the fix holds. The interval stays the person's pick. lastWater holds the last check.
 function actSystem(id, fixed, silent) {
-  const r = S.plants[id], t = today(), g = wayOf(plant(id));
+  const r = S.plants[id], t = today(), g = wayOf(plant(id)), was = checkState(r);
   r.lastWater = t;
   r.wet = 0;
   r.nextCheck = addDays(t, fixed ? g.recheck(r.interval) : Math.max(1, Math.round(r.interval)));
-  hist(r, fixed ? 'fix' : 'ok');
+  hist(r, fixed ? 'fix' : 'ok', answerSet(r, was));
   if (!silent) logToday({ id, a: fixed ? 'fix' : 'ok' });
 }
 
 function actWet(id) {
   if (wayOf(plant(id)).fixed) { actSystem(id, true); return; }
-  const r = S.plants[id];
+  const r = S.plants[id], was = checkState(r);
   r.wet += 1;
   r.nextCheck = addDays(today(), Math.max(1, Math.round(r.interval * 0.25)));
-  hist(r, 'wet');
+  hist(r, 'wet', answerSet(r, was));
   logToday({ id, a: 'wet' });
+}
+
+// Takes back a plant's newest check answer («×» in «История»). With the state saved in the entry, the interval and the
+// next check go back unless something else changed them since (an interval chip, rest); an older entry only loses
+// its record, and the last watering falls back to the one before. Its line in that day's log goes too.
+function undoAnswer(id) {
+  const r = S.plants[id], i = (r.hist || []).findIndex((h) => CHECK_ANSWERS.includes(h.a));
+  if (i < 0) return null;
+  const [h] = r.hist.splice(i, 1);
+  if (h.was) {
+    if (r.interval === h.iv) r.interval = h.was.iv;
+    if (r.nextCheck === h.nc) r.nextCheck = h.was.nc;
+    r.lastWater = h.was.lw ?? null;
+    r.wet = h.was.wet ?? 0;
+  } else if (h.a === 'wet') r.wet = Math.max(0, (r.wet || 0) - 1);
+  else r.lastWater = r.hist.find((x) => CHECK_ANSWERS.includes(x.a) && x.a !== 'wet')?.d || null;
+  const log = S.log[h.d], j = log ? log.findIndex((e) => e.id === id && e.a === h.a) : -1;
+  if (j >= 0) log.splice(j, 1);
+  return h;
 }
 
 function actLater(id) {
