@@ -100,7 +100,7 @@ const upFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 // Why a plant isn't on «День подкормки».
 function feedWhyNot(p) {
   if (p.distilled) return 'Хищные растения не удобряют в грунт.';
-  if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды; черенкам до корней не нужно.';
+  if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды. Черенкам до корней не нужно.';
   if (MEDIA[p.type].feed === 'each') return `${upFirst(WHERE[p.type])} удобрение в слабой дозе добавляют в каждый полив: отдельного дня подкормки нет.`;
   if (p.noFeed) return 'Для этого растения подкормки нет.';
   return `Для растений ${WHERE[p.type] || 'с таким грунтом'} день подкормки не назначаю.`;
