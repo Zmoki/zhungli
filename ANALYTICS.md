@@ -88,7 +88,6 @@ On every event:
 | `bath_day_done` | «Покупали!» on the bath day card | `n` bathed; `left`: plants still due a rinse |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
-| `catalog_pets_filtered` | «Безопасно для питомцев» chip in the catalog | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
 | `greenhouse_removed` | greenhouse removed from the vent card | — |
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») |

@@ -75,7 +75,7 @@ function pickRow(d, changeFor, nowId) {
   const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? `<span class="pet-tag ${petsOf(d)}">${I('paw-print')}${pets}</span> · ` : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
   const now = !!changeFor && nowId === d.id;
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
-  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-pets="${petsOf(d)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
+  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
     <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${now ? 'сейчас · ' : ''}${meta}</small></span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
@@ -100,18 +100,9 @@ function catalogHtml(changeFor) {
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
     ${changeFor ? '' : nameHelpLink('search', 'Не знаете, как называется растение?')}
-    ${petsOn() && !changeFor ? `<div class="chips mt-8"><button class="chip" data-act="pick-pets" aria-pressed="false">${I('paw-print')}Безопасно для питомцев</button></div>
-      <p id="pick-pets-none" class="mt-8 small muted" role="status" hidden>Среди безопасных для питомцев такого нет. Снимите фильтр, чтобы увидеть все растения.</p>` : ''}
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
       ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
-}
-// With «Безопасно для питомцев» on, a search may leave only toxic plants: say so instead of an empty list.
-function petsNone() {
-  const note = $('#pick-pets-none');
-  if (!note) return;
-  const only = $('#sheet-body').classList.contains('pets-only');
-  note.hidden = !only || [...document.querySelectorAll('#sheet .pick[data-pets="safe"]')].some((b) => !b.hidden && !b.closest('[hidden]'));
 }
 // `back`: returning from «Своё растение» or AI import, so the ticks stay and it isn't a new opening.
 function openAdd(back = false) {
@@ -133,7 +124,6 @@ function openAdd(back = false) {
         <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button></div>
     <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
   catalogSearch();
-  $('#pick-q').addEventListener('input', petsNone); // after the search's own handler
   picked.forEach((k) => {
     const b = $(`#sheet .pick[data-key="${k}"]`);
     if (b) { b.classList.add('on'); b.querySelector('.pc').innerHTML = I('check'); }
@@ -689,14 +679,6 @@ Object.assign(ACTS, {
   'add-plant'() { endQuick('catalog'); openAdd(); },
   // From inside the add sheet, the next sheet gets a way back to it.
   'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
-  // With pets at home: only plants safe for cats and dogs, on top of the search (CSS hides the rest).
-  'pick-pets'(el) {
-    const on = el.getAttribute('aria-pressed') !== 'true';
-    el.setAttribute('aria-pressed', on); el.classList.toggle('on', on);
-    $('#sheet-body').classList.toggle('pets-only', on);
-    petsNone();
-    track('catalog_pets_filtered', { on });
-  },
   'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
   // From the add sheet the way back keeps the search; from the empty screen the sheet only closes.
   'name-help'(el) {
