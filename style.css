@@ -537,7 +537,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srow-body :is(.small, .hint) { line-height: 1.5; }
 /* Room around the action buttons in a row: away from the text above, and their floor clear of the row's edge */
 /* Every action button in a row: full width (.wide), centered, with its floor, 16px under the text above */
-.srow-body > .btn, .srow-body > div > .btn, .srow-body .btns { margin-top: 16px; }
+.srow-body .btn.wide, .srow-body .btns { margin-top: 16px; }
 .srow-body > .field:last-child, .srow-body > div:last-child > .field:last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .srow-head .ic { transition: none; } }
 .group > .field:last-child, .group > div:last-child > .field:last-child { margin-bottom: 0; }
