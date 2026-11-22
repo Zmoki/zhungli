@@ -22,7 +22,7 @@ Record fields:
 | `wet` | «Ещё влажно» answers since the last watering. |
 | `hist` | Last 20 answers, `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
-| `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14 if missing, 30, 0 = not fed); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
+| `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14 if missing, 30, 90, 0 = not fed; a card's `feedEvery` is its default); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
 | `bought`, `inspected` | «Недавно купили» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
 | `resting` | `{ since, iv }` while at rest: the date and the interval to come back to. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |

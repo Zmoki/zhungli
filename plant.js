@@ -132,10 +132,12 @@ function feedBox(p) {
       : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
         : winterNow() && !p.lamp ? 'Зимой без лампы не зову: растение почти не растёт. Позову с марта.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
-  return `${off ? whyNot(feedWhyNot(p)) : p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)} Слабо и регулярно лучше, чем крепко и редко.</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
+  // «Weakly and regularly» is the orchid facts' advice; a card fed rarely by default (zamioculcas) doesn't get it.
+  const regular = (def(p.id).feedEvery ?? 14) <= 30 ? ' Слабо и регулярно лучше, чем крепко и редко.' : '';
+  return `${off ? whyNot(feedWhyNot(p)) : p.feedNote ? `<p class="small muted mt-0">${esc(p.feedNote)}${regular}</p>` : ''}<div class="field" role="group" aria-labelledby="lbl-feed"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p></div>
     <div class="field"><label class="toggle"><input type="checkbox" id="f-lamp" data-field="lamp" data-id="${esc(p.id)}" aria-describedby="lamp-hint" ${p.lamp && n && !off ? 'checked' : ''}${n && !off ? '' : ' disabled'}> Зимой под лампой</label>
-      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : n ? 'Под лампой растение растёт и зимой: позову раз в месяц, удобрение слабее, чем летом.' : 'Сначала выберите, как часто кормить.'}</p></div>
+      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : n ? `Под лампой растение растёт и зимой: позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Сначала выберите, как часто кормить.'}</p></div>
     ${off && !last ? '' : `<p class="small muted m-0">${last ? `Последний раз: ${esc(rel(last))}.` : 'Ещё не отмечали.'}</p>`}
     <button class="mt-8 btn ok" data-act="feed-done" data-id="${esc(p.id)}"${dis}>${I('utensils')}Подкормлено сегодня</button>`;
 }
@@ -348,7 +350,7 @@ const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 ||
 function feedValue(p) {
   const n = feedEvery(p);
   if (!n) return 'не кормлю';
-  const every = winterNow() && p.lamp ? 'зимой раз в месяц' : { 14: 'раз в 2 недели', 30: 'раз в месяц' }[n];
+  const every = winterNow() && p.lamp && n < 30 ? 'зимой раз в месяц' : FEED_WORDS[n];
   const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
   const pause = resting(p) ? 'пауза, пока в покое'
     : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${dayMonth(until)}`)

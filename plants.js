@@ -412,6 +412,8 @@ const PLANTS = [
   },
   {
     id: 'zz', species: 'Замиокулькас', cat: 'Декоративно-лиственные', emoji: '🐫',
+    // Fed rarely, at half a dose: overfeeding is worse than underfeeding (zhungli-content ZAM-SOIL-27, 29, 33).
+    feed: true, feedEvery: 90, feedNote: 'Замиокулькасу: половина дозы, перекормить опаснее, чем недокормить.',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { no: 'Обрезка не нужна: каждая «ветка» это один лист, растущий из клубня. Увядшие листья срезать у земли.' },
     aka: 'долларовое дерево, zz, замиокулькас, zamioculcas',

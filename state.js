@@ -550,7 +550,7 @@ function bonusTasks() {
     const notes = [...new Set(fed.map((p) => p.feedNote).filter(Boolean))].join(' ');
     out.push({ key: `feed:${fed.map((p) => p.id).join(',')}`, icon: 'utensils', title: 'День подкормки', sub: plantsN(fed.length), pick: fed, pickLegend: 'Кого подкормили',
       task: 'Подкормите по инструкции к удобрению, в мокрый грунт',
-      hint: `${notes ? notes + ' ' : ''}${winterNow() ? 'Зимой под лампой: раз в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
+      hint: `${notes ? notes + ' ' : ''}${winterNow() ? 'Зимой под лампой: не чаще раза в месяц и слабее, чем летом. ' : ''}Недавно пересаженных и больных не кормите. От солей удобрения помогает «Банный день»: «Настройки» приложения.` });
   }
   // Once, after answers on 5 different days: someone who keeps coming back has something to tell.
   const days = new Set(allPlants().flatMap((p) => (p.hist || []).map((h) => h.d))).size;
@@ -577,8 +577,10 @@ function bathPlan() {
 }
 // Feeding per plant (`fed`: the last date, `feedEvery`: days, 0 = not fed, `lamp`: fed in winter under a grow light).
 // Sources (the content repo's feeding facts): fed while growing, March to September; in winter without a lamp the
-// plant barely grows, so no reminders; under a lamp once a month and weaker. A feeding can be noted any day.
-const FEED_EVERY = [[14, '2 недели'], [30, 'Месяц'], [0, 'Не кормлю']];
+// plant barely grows, so no reminders; under a lamp once a month (or rarer, if picked) and weaker. A feeding can be
+// noted any day. «3 месяца» is for slow growers that need little (zamioculcas: 1–2 times a season, ZAM-SOIL-29).
+const FEED_EVERY = [[14, '2 недели'], [30, 'Месяц'], [90, '3 месяца'], [0, 'Не кормлю']];
+const FEED_WORDS = { 14: 'раз в 2 недели', 30: 'раз в месяц', 90: 'раз в 3 месяца' };
 const feedEvery = (p) => (Number.isFinite(p.feedEvery) ? p.feedEvery : 14);
 const winterNow = () => { const m = new Date().getMonth() + 1; return m < 3 || m > 9; };
 function feedDue(p) {
