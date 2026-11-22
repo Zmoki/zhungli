@@ -78,13 +78,15 @@ function setNote(id, key, text) {
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
 // Watering block in the plant card: last watering, next check and the button; for a reservoir, the top-ups.
-// «Полив», the first row of «Уход» in «Настройки»: the last watering, the next check and «Полито сегодня»
-// (used after about 1 in 5 card opens, so the row opens with the card).
+// «Полив», on top of «Уход» in «Настройки»: not a folding row but always open, since «Полито сегодня» is used after
+// about 1 in 5 card opens. Two marks (the last watering and the next check), then the button.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
-  if (g.noChecks) return whyNot('Поливать не нужно, корни в воде аквариума.');
-  // The next check is the row's value; here only the last watering, as plain text, and the button.
-  return `<p class="m-0">${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}.</p>
+  const head = '<span class="srow-t">Полив</span>';
+  if (g.noChecks) return `${head}${whyNot('Поливать не нужно, корни в воде аквариума.')}`;
+  const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
+  const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
+  return `${head}<p class="wmarks"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
     <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
@@ -411,10 +413,9 @@ function rowValues(p) {
     bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
     repot: !fed ? ['не влияет', true] : [repotted(p) ? `без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
     rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не отмечается', true],
-    water: wayOf(p).noChecks ? ['не нужен', true] : [p.nextCheck <= today() ? 'проверка сегодня' : `проверка ${esc(rel(p.nextCheck))}`, false],
   };
 }
-const ROW_TITLES = { water: 'Полив', name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', way: 'Как растёт',
+const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', way: 'Как растёт',
   feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
@@ -438,8 +439,7 @@ function openPlant(id, tabKey, rows) {
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
-  // «Полив» opens with the card, unless the caller asks for other rows (a plant just added: name and place).
-  if (openRowsFor !== id || rows) { openRows = new Set(rows || ['water']); openRowsFor = id; }
+  if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
@@ -472,7 +472,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('gh', `<div class="field"><label class="toggle"><input type="checkbox" id="f-greenhouse" data-field="greenhouse" data-id="${esc(id)}" aria-describedby="gh-hint" ${p.greenhouse ? 'checked' : ''}> В теплице</label>
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
-    row('water', `<div id="water-box">${waterBox(p)}</div>`)
+    `<div class="srow water-row" id="water-box">${waterBox(p)}</div>`
     + row('way', `<div id="way-box">${wayBox(p, def(id))}</div>
         <div class="field" role="group" aria-labelledby="lbl-int" id="int-field">${intBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)

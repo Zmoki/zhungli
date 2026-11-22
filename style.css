@@ -475,6 +475,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .toggle input:active { transform: translateY(3px); box-shadow: none; }
 @media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 /* «История» list: grouped by month, an icon in the action's color, the date under the word, «×» on the newest answer */
+/* «Полив» on top of «Уход»: a plain block (title, two marks, the button), not a folding row */
+.water-row { padding: 14px 16px; }
+.wmarks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0 0; font-size: 0.882rem; color: var(--muted); }
+.wmarks span { display: inline-flex; align-items: center; gap: 6px; }
+.wmarks .ic { width: 18px; height: 18px; flex: none; }
 .hl-month { font-size: 0.882rem; color: var(--muted); font-weight: 900; margin: 20px 0 8px; }
 .hl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .hl { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 18px; padding: 8px 8px 8px 10px; min-height: 56px; }
