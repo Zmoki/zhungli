@@ -562,7 +562,9 @@ function bonusTasks() {
 }
 // «Банный день» (S.settings.bath: days between a plant's rinses, or none). Rinsing a whole collection on one day
 // would flush pots that are still wet, so a bath day offers only plants due a rinse whose soil is dry today
-// (their soil check is due); the rest wait for a later bath day. Offered at most once a week (S.bonus.bath).
+// (their soil check is due); the rest wait for a later bath day. At most BATH_MAX plants a time, the longest
+// unrinsed first, so a big collection isn't one exhausting day. Offered at most once a week (S.bonus.bath).
+const BATH_MAX = 5;
 const BATH_EVERY = [[60, '2 месяца'], [120, '4 месяца'], [180, 'Полгода']];
 const bathEvery = () => (S.settings && S.settings.bath > 0 ? S.settings.bath : 0);
 function bathPlan() {
@@ -572,8 +574,10 @@ function bathPlan() {
   const due = allPlants().filter((p) => rinseFits(p) && !p.noBath && !resting(p) && !settling(p) && (!last(p) || diff(last(p), t) >= every));
   // Dry today: a soil check (from above or below) that's due.
   const ready = due.filter((p) => p.nextCheck <= t && soilCheck(p.watering) && !wayOf(p).noChecks);
+  // Never rinsed first, then the oldest rinse, then the longest dry.
+  const offer = [...ready].sort((a, b) => (last(a) || '').localeCompare(last(b) || '') || a.nextCheck.localeCompare(b.nextCheck)).slice(0, BATH_MAX);
   const rested = S.bonus.bath && diff(S.bonus.bath, t) < 7, snoozed = S.snooze.bath && S.snooze.bath > t;
-  return { due, ready, shown: ready.length > 0 && !rested && !snoozed };
+  return { due, ready, offer, shown: ready.length > 0 && !rested && !snoozed };
 }
 // Feeding per plant (`fed`: the last date, `feedEvery`: days, 0 = not fed, `lamp`: fed in winter under a grow light).
 // Sources (the content repo's feeding facts): fed while growing, March to September; in winter without a lamp the
