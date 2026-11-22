@@ -653,7 +653,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .imp-actions { margin-top: auto; padding-top: 16px; }
 .imp-actions:not(.pick-bar) { padding-bottom: 28px; }
 /* Room for «Нашлось 5 растений» or a two-line error under the answer field, kept before either shows up */
-#imp-note { min-height: 4.6rem; }
+#imp-note { display: flow-root; min-height: 5.4rem; } /* flow-root: the message's top margin stays inside the kept room */
 .imp-help { margin: 28px 0 0; text-align: center; }
 /* Step 4's bar reaches the sheet's bottom edge (over #sheet-body's own padding), so no strip shows under it,
    and its help line sits where the other steps have theirs. */
