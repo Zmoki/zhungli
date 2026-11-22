@@ -428,7 +428,20 @@ const feedsOnDay = (p) => !p.noFeed && (wayOf(p).feed === 'day' || (p.type === '
 const HIST_MAX = 60; // entries kept per plant: a few months of answers and care
 // `extra` on a check answer: `was`, the state before it, and `iv` / `nc`, the interval and next check it set,
 // so «×» in «История» can take it back (undoAnswer) and the list can show when the interval changed.
+// Only the newest answer can be taken back, so a new one makes the one before it small again: no `was` or `nc`,
+// and its interval in whole days, kept only where it changed. The state syncs to Telegram's cloud, which is small.
 function hist(p, a, extra) {
+  if (extra && extra.was) {
+    const prev = p.hist.find((h) => h.was);
+    if (prev) {
+      delete prev.was; delete prev.nc;
+      if (prev.iv !== undefined) {
+        prev.iv = Math.round(prev.iv);
+        const older = p.hist.slice(p.hist.indexOf(prev) + 1).find((h) => h.iv !== undefined);
+        if (older && Math.round(older.iv) === prev.iv) delete prev.iv;
+      }
+    }
+  }
   p.hist.unshift({ d: today(), a, ...extra });
   p.hist.length = Math.min(p.hist.length, HIST_MAX);
 }

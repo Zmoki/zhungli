@@ -20,7 +20,7 @@ Record fields:
 | `interval` | Learned days between checks. |
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
-| `hist` | Last 60 entries (`HIST_MAX`), answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix', was, iv, nc }`, with `was` the state before (`iv`, `lw`, `nc`, `wet`) and `iv` / `nc` the interval and next check the answer set (since v152; `undoAnswer` uses them for «×» in «История») (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). |
+| `hist` | Last 60 entries (`HIST_MAX`), answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix', was, iv, nc }`, with `was` the state before (`iv`, `lw`, `nc`, `wet`) and `iv` / `nc` the interval and next check the answer set (since v152; `undoAnswer` uses them for «×» in «История»). Only the newest answer keeps `was` and `nc`; older ones keep `iv` in whole days, and only where it changed, so the state stays small for Telegram's cloud (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). |
 | `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
 | `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14 if missing, 30, 90, 0 = not fed; a card's `feedEvery` is its default); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
 | `bought`, `inspected` | «Недавно купили» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
