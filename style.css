@@ -655,7 +655,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* Room for «Нашлось 5 растений» or a two-line error under the answer field, kept before either shows up */
 #imp-note { min-height: 4.6rem; }
 .imp-help { margin: 28px 0 0; text-align: center; }
-.imp-flow .pick-bar { padding-bottom: calc(env(safe-area-inset-bottom) + 32px); }
+.imp-flow .pick-bar { padding-bottom: calc(env(safe-area-inset-bottom) + 24px); }
+.pick-bar .imp-help { margin-top: 18px; }
 .imp-ok { display: flex; gap: 8px; align-items: center; font-weight: 800; }
 /* A drawn button inside a sentence («Под ответом нажмите [⧉]») */
 .kbd { display: inline-flex; vertical-align: -4px; padding: 2px 6px; border: 1.5px solid var(--edge); border-radius: 8px; }

@@ -604,8 +604,8 @@ function importStep(n, moved = true) {
     actions = `<button class="btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
   } else {
     body = `<div id="imp-head"></div><div id="imp-list"></div>
-      <button class="mt-12 btn wide" data-act="import-more" id="imp-more">${I('plus')}Вставить ещё часть</button>${help}
-      <div class="pick-bar" id="imp-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button></div>`;
+      <button class="mt-12 btn wide" data-act="import-more" id="imp-more">${I('plus')}Вставить ещё часть</button>
+      <div class="pick-bar" id="imp-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button>${help}</div>`;
   }
   $('#sheet-body').innerHTML = `${subHead('Перенести из чата с ИИ', imp.back)}<div class="imp-flow${n < 4 ? ' imp-fixed' : ''}"><div>
     <p class="small muted m-0">Шаг ${n} из 4</p><h3 class="sec-title mt-6" id="imp-q" tabindex="-1">${q}</h3>${body}</div>
