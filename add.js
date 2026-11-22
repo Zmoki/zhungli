@@ -571,7 +571,10 @@ function importStep(n, moved = true) {
   const q = ['Скопируйте запрос для ИИ', 'Как ИИ прислал ответ?', imp.via === 'file' ? 'Выберите файл от ИИ' : 'Вставьте ответ ИИ', 'Проверьте список'][n - 1];
   const back = (to) => `<button class="mt-8 btn ghost wide" data-act="import-step" data-to="${to}">Назад</button>`;
   const help = `<p class="mt-14 small muted" data-from="import">Не получается? Напишите ${outLink('telegram', '@zmoki', 'linkish')}</p>`;
-  let body = '';
+  // Steps 1–3: what the step says on top, its buttons at the bottom of a sheet of the same height on every step.
+  // What appears after a tap («Скопировано», «Нашлось 5 растений», an error) takes the free room between them,
+  // so nothing on the screen moves and the buttons stay where the finger is.
+  let body = '', actions = '';
   if (n === 1) {
     body = `<p class="m-0">И отправьте в DeepSeek, GigaChat, Алису или ChatGPT. Можно приложить фото растений.</p>
       <button class="mt-14 btn${imp.copied ? '' : ' ok'} wide" data-act="import-copy">${imp.copied ? `${I('check')}Скопировано` : `${I('copy')}Скопировать запрос`}</button>
@@ -580,29 +583,30 @@ function importStep(n, moved = true) {
       <div id="imp-prompt-box" hidden><p class="mt-8 small muted" id="imp-prompt-hint">${PROMPT_HINT}</p>
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
-      <button class="mt-14 btn${imp.copied ? ' ok' : ''} wide" data-act="import-step" data-to="2" id="imp-next"${imp.copied ? '' : ' disabled'}>Отправлено, дальше${I('chevron-right')}</button>
       <p class="sr-only" id="imp-status" role="status"></p>`;
+    actions = `<button class="btn${imp.copied ? ' ok' : ''} wide" data-act="import-step" data-to="2" id="imp-next"${imp.copied ? '' : ' disabled'}>Отправлено, дальше${I('chevron-right')}</button>`;
   } else if (n === 2) {
     const way = (via, icon, label) => `<button class="import-cta mini mt-10" data-act="import-via" data-via="${via}"><span class="pe" aria-hidden="true">${I(icon)}</span>
       <span class="pt"><b>${label}</b></span><span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>`;
     body = `${way('paste', 'bot', 'Текстом в чате')}${way('file', 'file-up', 'Файлом')}
-      <p class="mt-12 small muted">Видите значок файла или «Скачать»? Это файл.</p>${back(1)}`;
+      <p class="mt-12 small muted">Видите значок файла или «Скачать»? Это файл.</p>`;
+    actions = back(1);
   } else if (n === 3 && imp.via === 'file') {
-    body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p>
-      <button class="mt-14 btn ok wide" data-act="import-file" id="imp-go">${I('file-up')}Выбрать файл</button>
-      <div id="imp-note"></div>${back(2)}${help}`;
+    body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p><div id="imp-note"></div>`;
+    actions = `<button class="btn ok wide" data-act="import-file" id="imp-go">${I('file-up')}Выбрать файл</button>${back(2)}${help}`;
   } else if (n === 3) {
     body = `<p class="m-0">Под ответом нажмите <span class="kbd" role="img" aria-label="«Копировать»">${I('copy')}</span> и вставьте сюда.</p>
-      <textarea class="mt-10 input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Ответ ИИ" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
-      <div id="imp-note"></div>
-      <button class="mt-10 btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
+      <textarea class="mt-10 input" id="imp-text" rows="4" aria-label="Ответ ИИ" placeholder="Ответ ИИ" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+      <div id="imp-note"></div>`;
+    actions = `<button class="btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
   } else {
     body = `<div id="imp-head"></div><div id="imp-list"></div>
       <button class="mt-12 btn wide" data-act="import-more" id="imp-more">${I('plus')}Вставить ещё часть</button>
       <div class="pick-bar" id="imp-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button></div>`;
   }
-  $('#sheet-body').innerHTML = `${subHead('Перенести из чата с ИИ', imp.back)}<div class="imp-flow">
-    <p class="small muted m-0">Шаг ${n} из 4</p><h3 class="sec-title mt-6" id="imp-q" tabindex="-1">${q}</h3>${body}</div>`;
+  $('#sheet-body').innerHTML = `${subHead('Перенести из чата с ИИ', imp.back)}<div class="imp-flow${n < 4 ? ' imp-fixed' : ''}"><div>
+    <p class="small muted m-0">Шаг ${n} из 4</p><h3 class="sec-title mt-6" id="imp-q" tabindex="-1">${q}</h3>${body}</div>
+    ${actions ? `<div class="imp-actions">${actions}</div>` : ''}</div>`;
   const ta = $('#imp-text');
   if (ta) {
     // A paste is read right away; typed or edited text waits for «Найти растения», which works once there's text.
