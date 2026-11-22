@@ -86,8 +86,10 @@ function waterBox(p) {
   if (g.noChecks) return `${head}${whyNot('Поливать не нужно, корни в воде аквариума.')}`;
   const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
   const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
+  // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
+  const done = p.lastWater === today();
   return `${head}<p class="wmarks"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
-    <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
+    <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
