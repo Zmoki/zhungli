@@ -323,13 +323,12 @@ function endStory(slide) {
   const box = document.createElement('div');
   box.className = 'st-end';
   if (kind === 'tiles') {
+    // Only the tiles: the button comes with the first tick. Other ways to add (catalog, AI chat, a backup) wait on the empty «Сегодня».
     const n = ticked.size;
     box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, что есть, а остальное найдём в каталоге.</p>
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
-      <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Ничего не выбрано'}</button>
-      <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>
-      ${IOS && navigator.standalone ? '<p class="m-0 st-more">Сохранили копию в браузере? <button class="linkish" data-act="story-restore">Восстановить копию</button></p>' : ''}`;
+      ${n ? `<button class="btn st-btn wide" data-act="story-add">${I('plus')}Добавить ${plantsN(n)}</button>` : ''}`;
   } else if (kind === 'ios') {
     // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
     // other browsers) and with reduced motion, the list is shown as is.
@@ -510,10 +509,7 @@ Object.assign(ACTS, {
     closeStories('add');
     addFromCatalog(keys, 'stories');
   },
-  'story-catalog'() { closeStories('catalog'); openAdd(); },
-  'story-import'() { closeStories('import'); openImport(); },
   // Plants saved as a copy in Safari, on the way to the home-screen app (the hint there says to restore it here).
-  'story-restore'() { closeStories('restore'); ACTS.import(); },
 });
 // The Telegram button in the last story opens Telegram and leaves the stories open: they close as `telegram` when
 // the app hides (see storiesLeft above) or, if it doesn't, whenever they're closed.
