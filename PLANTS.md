@@ -143,7 +143,7 @@ Where statuses show:
 
 ## Light
 
-Light status needs a reading in the card or on the Light tab. The tab sorts plants from the most light-hungry. Each row: the picture (3:4) beside the name, what it needs («нужно 8–18 тыс люксов») and the reading field («?» while empty, «лк» beside it); the status tag appears once there's a reading; the bar shows the need and the reading. No separate tips: the tag says who is too dark or too bright.
+Light status needs a reading in the card or on the Light tab. The tab sorts plants from the most light-hungry. Each row: the picture (3:4) beside the name, what it needs («нужно 8–18 тыс люксов») and the reading field («?» while empty, «лк» beside it); the status tag, one word («темновато», «ярковато», «отлично»), appears once there's a reading; the bar shows the need and the reading. No separate tips: the tag says who is too dark or too bright.
 
 ## Rooms and spots
 
