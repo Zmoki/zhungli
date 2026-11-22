@@ -323,10 +323,10 @@ function endStory(slide) {
   box.className = 'st-end';
   if (kind === 'tiles') {
     const n = ticked.size;
-    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Остальное найдём в каталоге.</p>
+    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, что есть, а остальное найдём в каталоге.</p>
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
-      <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Отметьте, что есть'}</button>
+      <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Ничего не выбрано'}</button>
       <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>
       ${IOS && navigator.standalone ? '<p class="m-0 st-more">Сохранили копию в браузере? <button class="linkish" data-act="story-restore">Восстановить копию</button></p>' : ''}`;
   } else if (kind === 'ios') {
@@ -492,6 +492,8 @@ function storiesYield() {
 }
 Object.assign(ACTS, {
   // «Показать, как» on the install card or the iPhone hint: straight to the last story, the way to the home screen.
+  // Settings keep a way back to them, in the same place every time.
+  'stories-help'() { closeSheet(); openStories('settings'); },
   'stories-install'(el) { openStories(el.dataset.from || 'install_card', STORIES.length - 1); },
   'story-next'() { goStory(1); },
   'story-prev'() { goStory(-1); },

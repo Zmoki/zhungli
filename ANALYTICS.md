@@ -37,7 +37,7 @@ On every event:
 | --- | --- | --- |
 | `app_opened` | app starts, or returns after 30+ min in background | `tasks_due`: tasks waiting on Today at that moment (watering checks shown and greenhouse vents, not «Если есть силы»); `how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch); `ready_ms` (not for `resume`, nor when started in background): ms from navigation start until the first screen is built; `$referring_domain` (`start` only, once per arrival: a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself) |
 | `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` |
-| `plant_checked` | answer on a check card, or «Записать полив» in the plant card | `answer`: `dry` / `wet` / `later` (drip irrigation: `dry` is «Работает», `wet` «Поправлено»); `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
+| `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card | `answer`: `dry` / `wet` / `later` (drip irrigation: `dry` is «Работает», `wet` «Поправлено»); `plant_kind` (catalog id or `custom`); `plant_type` (medium now), `watering` (see `grow_changed`); `generic`; `from`: `card` (plant card only) |
 | `day_completed` | last check of the day done | `done_today` |
 | `plants_added` | plants added from the picker, the custom form or AI import | `count`, `source`: `catalog` / `quick` (tiles on an empty screen) / `stories` (tiles in the last story) / `custom` / `import`; import: `repaired` (the file needed fixing: quotes, spaced numbers, comments), `file_ext`, `with_room` / `with_spot` (how many came with a room / place, no names sent), `rooms_created`; catalog and quick picks: `generic_count`, `catalog_ids`; custom: `plant_type`, `like` (the generic type it was based on), `tuned` (light, interval, type or tip changed by hand in «Тонкая настройка») |
 | `import_prompt_copied` | «Скопировать запрос» in AI import, or «Скопировать ещё раз» under the shown prompt | `how`: `exec` (select-and-copy worked) / `clipboard` (only the Clipboard API worked; it can still fail silently on iPhone) / `failed` (both refused, or copying hung for 5 s: the prompt is shown to copy by hand) / `none` (no way to copy); `from`: `again` (the button under the shown prompt) |
@@ -80,12 +80,12 @@ On every event:
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none |
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
 | `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
-| `feeding_logged` | plants noted as fed | `from`: `day` («Готово» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
+| `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
 | `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `90` / `0` |
 | `feed_lamp_toggled` | «Зимой под лампой» | `on` |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` |
 | `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none |
-| `bath_day_done` | «Покупали!» on the bath day card | `n` bathed; `left`: plants still due a rinse |
+| `bath_day_done` | «Промыто» on the bath day card | `n` bathed; `left`: plants still due a rinse |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` |
 | `greenhouse_vented` | «Проветрено» on the vent card | — |
@@ -96,8 +96,8 @@ On every event:
 | `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` |
 | `bath_opt_out` | «Не купать это растение» in the plant card | `on` |
 | `settings_row_opened` | a row of the plant card's «Настройки» opened | `row`: `name` / `card` / `place` / `light` / `gh` / `way` / `feed` / `prune` / `rinse` / `bought` / `repot` / `rest` |
-| `bonus_skipped` | bonus task snoozed («Не сегодня» on the bath day too: `kind`: `bath`), or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
-| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, or by «Показать, как» | `from`: `auto` / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added), both straight to the last story / `return` (back in the app to stories still open: not a way in, see `left` in `stories_closed`) |
+| `bonus_skipped` | bonus task snoozed («Через 3 дня»; on the bath day too: `kind`: `bath`; the backup task: `backup`), or «Не нужно» on «Как вам Жунгли?» (`kind`: `feedback`) | `kind` |
+| `stories_opened` | «Как работают Жунгли» opened: by itself on the first launch, by «Показать, как», or from settings | `from`: `auto` / `settings` («Как работают Жунгли» at the top of settings) / `home_icon` (first launch of the iPhone home-screen app: opens on the last story) / `install_card` (no plants yet) / `install_hint` (iPhone, plants already added), both straight to the last story / `return` (back in the app to stories still open: not a way in, see `left` in `stories_closed`) |
 | `stories_closed` | the stories closed | `from`: as in `stories_opened` for this run of them (`return` never: the first open's); `reached`: the furthest story seen (1–6); `seen`: how many stories were shown (opened on the last one: 1, unless they went back); `how`: `close` (× or Esc) / `add` (plants added from the last story's tiles) / `catalog` / `import` (went on to add another way) / `restore` («Восстановить копию» in the iPhone home-screen app) / `telegram` (went to the mini app) / `restored` (the mini app got plants from Telegram's cloud while they were open) / `followed` (left the app from a last story with steps out of here: to Safari, or to the home screen after «На экран Домой») / `left` (left the app with them open anywhere else). Leaving the app may be the last event, so it's sent then (after the Telegram button as `telegram`); coming back sends `stories_opened` `return`, so each open has one close and a device can have several: count its last one; `ending`, if the last story was seen: `tiles` / `telegram` / `in_app` / `ios_26` (Safari 26 steps) / `ios_old` (older Safari steps) / `ios_other` (text steps: iPad, other browsers); `ticked`: tiles ticked there but not added |
 | `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes |
 | `plant_opened` | plant card opened by a tap | `plant_kind`, `plant_type`, `watering`, `generic` (see `plant_checked`) |
@@ -117,7 +117,7 @@ On every event:
 | `room_saved` | room temperature and humidity saved | `temp`, `humidity` (rounded), `rooms` (how many rooms) |
 | `room_added` | a room added on the Room tab (no room name sent) | `rooms` |
 | `room_removed` | a room removed (no room name sent) | `rooms` |
-| `backup_exported` | backup downloaded | `from`: `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings |
+| `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings |
 | `backup_imported` | backup restored | — |
 | `stats_enabled` | stats switched back on | — |
 | `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile); `from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` |

@@ -145,7 +145,7 @@ function currentHint() {
         `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
     }
     return hintCard('triangle-alert', 'Растения здесь могут потеряться',
-      'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: «Настройки» → «Сохранить копию» здесь, затем «Восстановить» там.',
+      'Это встроенный браузер Телеграма. Перенесите их в приложение Телеграма: сохраните копию здесь в «Настройках», а там нажмите «Восстановить копию».',
       `${open}<button class="btn ghost" data-act="hide-telegram">Понятно</button>`);
   }
   if (IN_APP && !S.hideInstall && !gated) {
@@ -240,7 +240,7 @@ function bathHtml(bp) {
   const later = bp.due.length - bp.offer.length, wet = bp.due.length - bp.ready.length;
   if (bathStep === 1) {
     const why = [bp.ready.length > bp.offer.length ? `за раз купаем не больше ${BATH_MAX}` : '', wet ? `у ${wet === later ? 'них' : 'кого-то'} грунт ещё влажный` : ''].filter(Boolean).join(', а ');
-    return taskCard({ ...base, sub: plantsN(bp.offer.length), task: 'Кого купаем?',
+    return taskCard({ ...base, sub: `Шаг 2 из 3 · ${plantsN(bp.offer.length)}`, task: 'Кого купаем?',
       pick: pickList('bath', bp.offer, 'Кого купаем'),
       buttons: `<button class="btn ok" data-act="bath-go">${I('droplets')}Пошли купать!</button><button class="btn ghost" data-act="bath-cancel">Отмена</button>`,
       hint: later ? `Остальных (${plantsN(later)}) позову в другой банный день: ${why}.` : '' });
@@ -248,12 +248,12 @@ function bathHtml(bp) {
   if (bathStep === 2) {
     const ps = bathPicked.map(plant).filter(Boolean);
     // The pictures say who: no names on screen, but screen readers get them.
-    return taskCard({ ...base, sub: plantsN(ps.length), task: 'Пошли купать!', hint: RINSE.hint,
+    return taskCard({ ...base, sub: `Шаг 3 из 3 · ${plantsN(ps.length)}`, task: 'Пошли купать!', hint: RINSE.hint,
       pick: `<div class="bath-pics" role="img" aria-label="${esc(ps.map((p) => p.title).join(', '))}">${ps.map((p) => `<span class="bath-pic">${picOf(p)}</span>`).join('')}</div>`,
-      buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
+      buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Промыто</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
   }
-  return taskCard({ ...base, sub: `${plantsN(bp.offer.length)} на сегодня`, task: 'Устраиваем сегодня банный день?',
-    buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Не сегодня</button>`,
+  return taskCard({ ...base, sub: `Шаг 1 из 3 · ${plantsN(bp.offer.length)} на сегодня`, task: 'Устраиваем сегодня банный день?',
+    buttons: `<button class="btn ok" data-act="bath-yes">${I('check')}Да!</button><button class="btn ghost" data-act="bath-skip">Через 3 дня</button>`,
     hint: 'Промываем грунт от солей удобрений и жёсткой воды. Купаем только тех, у кого грунт подсох: мокрый пролить насквозь значит залить.' });
 }
 // The page is drawn anew on each step: focus goes to the step's main button, not back to the top.
@@ -327,7 +327,7 @@ function viewToday() {
       buttons: `<button class="btn ${g.fixed ? 'ok' : 'water'}" data-act="water" data-id="${esc(p.id)}">${I(yi)}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${ni ? I(ni) : ''}${no}</button>`,
       hint: resting(p) && p.rest ? p.rest.water : p.water,
-      after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Не сейчас, завтра</button>`,
+      after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Завтра</button>`,
     });
   });
 
@@ -357,13 +357,15 @@ function viewToday() {
     bonus.forEach((b) => {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
-        // «День подкормки»: a row per plant, all ticked; «Готово» notes the ticked ones, the rest come back in a few days.
+        // «День подкормки»: a row per plant, all ticked; «Подкормлено» notes the ticked ones, the rest come back in a few days.
         pick: b.pick ? pickList('feed', b.pick, b.pickLegend) : '',
+        // The done button names what was done («Протёрто», «Подкормлено»); the other one says when the task comes back.
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
-          : `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}Готово</button>
-          <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Не сегодня</button>`,
+          : `${b.backup ? `<button class="btn ok" data-act="export" data-from="task">${I('save')}Сохранить</button>`
+            : `<button class="btn ok" data-act="bonus-done" data-key="${esc(b.key)}">${I('check')}${esc(b.done)}</button>`}
+          <button class="btn ghost" data-act="bonus-skip" data-key="${esc(b.key)}">Через 3 дня</button>`,
       });
     });
   }
@@ -514,10 +516,11 @@ function lightIdeas() {
 }
 
 // Empty screens: tap the plants you have and add them in one go. Anything else is one tap away. Six, so the add
-// button stays near them: the most searched care in Yandex («<растение> уход») among plants with one catalog card
-// (a «Фикус» tile couldn't say which of three). Begonia's searches include garden ones, but even half of them
-// would beat the next plant, so it stays, after the plants whose demand is surer.
-const QUICK = [['phal', 'Орхидея'], ['zz', 'Замиокулькас'], ['calathea', 'Калатея'], ['crassula', 'Денежное дерево'],
+// button stays near them: the most searched care in Yandex («<растение> уход»), with one-word names so tiles read
+// at a glance. «Фикус» leads the searches: its tile adds the genus card, and «Сменить карточку» picks the
+// species once it's known. «Кактус» is the general type: one tile for every cactus, and a drawing no other tile has.
+// Begonia's searches include garden ones, but even half of them would beat the next plant, so it stays.
+const QUICK = [['phal', 'Орхидея'], ['ficus-genus', 'Фикус'], ['calathea', 'Калатея'], ['g-cactus', 'Кактус'],
   ['anth', 'Антуриум'], ['begonia', 'Бегония']];
 let qsPicked = new Set();
 let qsReported = false;
@@ -529,7 +532,7 @@ function endQuick(then) {
   qsReported = true;
 }
 // «Добавить» under the tiles. The word after the number can hide on a narrow screen with large text (style.css).
-const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Отметьте, что есть');
+const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Ничего не выбрано');
 function quickStart() {
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);
@@ -541,7 +544,7 @@ function quickStart() {
     <div class="qs-grid">${tiles}</div>
     <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${qsAddText(n)}</button>
     <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
-    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенесите из чата с ИИ</button></p>
+    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенести из чата с ИИ</button></p>
     <p class="mt-8 small muted name-help">Не знаете название? <button class="linkish" data-act="name-help" data-from="empty">Как узнать</button></p>`;
 }
 // After adding from the catalog or the quick picks: one plant opens its card, several go to «Растения».
@@ -699,7 +702,7 @@ Object.assign(ACTS, {
     bathStep = 2; bathRender('[data-act="bath-done"]');
   },
   'bath-back'() { bathStep = 1; bathRender('[data-act="bath-go"]'); },
-  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bonus_skipped', { kind: 'bath' }); toast('Ок, через пару дней 🙂'); },
+  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bonus_skipped', { kind: 'bath' }); toast('Ок, через 3 дня 🙂'); },
   // A rinse is a thorough watering: it counts as one, and the plant's rinse restarts.
   'bath-done'() {
     const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
@@ -734,7 +737,7 @@ Object.assign(ACTS, {
   },
   'bonus-skip'(el) {
     track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
-    bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через пару дней 🙂');
+    bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через 3 дня 🙂');
   },
   // The feedback task asks once: «Написать» (the link opens Telegram) and «Не нужно» both put it away for good.
   'feedback-answer'(el) {

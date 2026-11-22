@@ -114,7 +114,7 @@ function openAdd(back = false) {
     <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Много растений? Перенесите из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
+      <span class="pt"><b>Много растений? Перенести из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <h3 class="sec-title">Каталог</h3>
     ${catalogHtml()}
@@ -122,7 +122,7 @@ function openAdd(back = false) {
       <button class="import-cta mini" data-act="add-custom"><span class="pe" aria-hidden="true">${I('pencil')}</span>
         <span class="pt"><b>Своё растение</b><small>Название и на что похоже, уход подберу</small></span>
         <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button></div>
-    <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Отметьте растения</button></div>`;
+    <div class="pick-bar" id="pick-bar" hidden><button class="btn primary wide" data-act="pick-add" id="pick-add" disabled>Ничего не выбрано</button></div>`;
   catalogSearch();
   picked.forEach((k) => {
     const b = $(`#sheet .pick[data-key="${k}"]`);
@@ -482,7 +482,7 @@ function openImport(back = '') {
   importPicked = new Set();
   $('#sheet-body').innerHTML = `
     ${subHead('Импорт из чата с ИИ', back)}
-    <div class="info"><b>Шаг 1</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
+    <div class="info"><b>Шаг 1 из 2</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
@@ -490,10 +490,10 @@ function openImport(back = '') {
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
-    <div class="info"><b>Шаг 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
+    <div class="info"><b>Шаг 2 из 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
       <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
     <div id="imp-list"></div>
-    <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Отметьте растения</button></div>`;
+    <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button></div>`;
   openSheet();
 }
 // Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the

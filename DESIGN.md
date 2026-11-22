@@ -18,6 +18,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Sheet heads:** the title and ×, plus ← when there's a sheet to go back to. No icon square: it took a third of the first screen.
 - **Stories** («Как работают Жунгли»): their own look, the same in both themes. Deep leaf green (`--st-bg`) with cream text, white progress bars, flat pill buttons without the chunky floor, and the app's real screens inside in a cream phone frame. The phones are pictures (hidden from screen readers, which get the same steps as text) scaled down to fit, so their text may end up under 14px; the drawn Safari's text is in rem like the app's.
 - **Shape:** big rounded corners (`--radius`, 26px) and round chips.
+- **Space:** generous, so each card and control reads on its own (W3C COGA: use white space): 24px between cards, 20px inside a task card, 14px between buttons, 10px between chips, 12px between picker rows and info blocks, 36px above a section heading.
 
 ## Color means something
 
@@ -49,6 +50,22 @@ Status chips on pictures are white glass (`--glass-photo`) with the status color
 ## Buttons
 
 Chunky and tactile: a bright fill, a darker rim and a 4 px floor in the rim color. Pressed, the button drops onto its floor. Labels stay on one line; rows of buttons wrap instead. Checkboxes match: a chunky box on a floor, green with a dark check when ticked; their text reads like a chip's.
+
+## Action words
+
+The same action has the same word everywhere, so people don't have to wonder whether two buttons do the same thing (W3C COGA: same name for the same thing).
+
+- **Done:** the action's past form, as on the check card's «Полито»: «Подкормлено», «Промыто», «Протёрто», «Повёрнуто», «Обрезано», «Проветрено», «Осмотрено». In the plant card it gets «сегодня» («Полито сегодня»). Never a generic «Готово».
+- **Later:** the button says when the task comes back: «Завтра» (checks), «Через 3 дня» (bonus tasks, bath day). Its toast says the same.
+- **Never:** «Не нужно».
+- **Under a heading:** a button under a heading or title that names the thing drops the noun: «Сохранить» and «Восстановить» under «Резервная копия». Elsewhere it keeps it («Сохранить копию»).
+- **Buttons and links:** an infinitive or a noun («Перенести из чата с ИИ», «Сохранить копию»), never an imperative. The task line above the buttons is the imperative («Полейте…»).
+- **Removing:** «Убрать» for a plant, photo, place or room; «Удалить» for a note; «Стереть» for all data.
+- **Steps:** a task of several steps says where you are: «Шаг 2 из 3».
+
+## Help
+
+«Как работают Жунгли» is the first button in settings, so help is always in the same place (WCAG 2.2, 3.2.6).
 
 ## Search
 

@@ -60,7 +60,8 @@ function openSettings() {
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><h2 class="m-0">Настройки</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
-    <div class="field" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
+    <button class="btn primary wide" data-act="stories-help">${I('circle-help')}Как работают Жунгли</button>
+    <div class="field mt-20" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
       <p class="mt-6 small muted">Остальные спокойно подождут до завтра, а первыми покажу тех, кому нужнее.</p></div>
     <div class="field" id="bath-box">${bathBox()}</div>
@@ -78,7 +79,7 @@ function openSettings() {
       <button class="chip" data-act="spot-add">${I('plus')}место</button></div>
     <h2>Резервная копия</h2>
     <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
-    <div class="btns"><button class="btn ok" data-act="export">Сохранить копию</button><button class="btn" data-act="import">Восстановить</button></div>
+    <div class="btns"><button class="btn ok" data-act="export">Сохранить</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
     <h2>Чистый лист</h2>
     <p class="small muted">Сотрёт все растения, комнаты, места, заметки, фото и настройки ${MINI_APP ? 'здесь и в облаке Телеграма' : 'на этом устройстве'}. Если они ещё пригодятся, сначала сохраните копию.</p>
@@ -104,14 +105,18 @@ async function doExport() {
   const name = `zhungli-${today()}.json`;
   const file = new File([data], name, { type: 'application/json' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Копия Жунглей' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    try { await navigator.share({ files: [file], title: 'Копия Жунглей' }); backedUp(); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(file);
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  // Telegram's and other apps' browsers may drop a blob download without a word: there the backup task stays.
+  if (!IN_TELEGRAM && !IN_APP) backedUp();
 }
+// A backup shared or downloaded: the backup task waits another month.
+function backedUp() { S.backupAt = today(); save(); render(); }
 
 async function doImport(file) {
   try {
@@ -119,6 +124,7 @@ async function doImport(file) {
     if (data.app !== 'zhungli' || !data.state) throw new Error('bad');
     if (!(await ask({ title: 'Заменить текущие данные?', text: 'Вместо них будет копия от ' + new Date(data.at).toLocaleDateString('ru-RU') + '.', ok: 'Заменить', danger: true }))) return;
     S = prepare(data.state);
+    S.backupAt = today(); // the file restored from is a backup in hand: the backup task waits a month
     stored = readStored(); // a restore replaces data on purpose, even newer data from another window
     save();
     await idbReq((st) => st.clear(), 'readwrite');
