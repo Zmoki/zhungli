@@ -120,15 +120,18 @@ function owners(src) {
   return (n) => ({ owner: near(names, n), top: near(tops, n) });
 }
 
-// What a reader sees: tags and entities out, spaces collapsed.
-const plain = (s) => s.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&[a-z]+;/g, '').replace(/\s+/g, ' ').trim();
+// What a reader sees: tags out, entities as their characters (so «&mdash;» is checked as «—»), spaces collapsed.
+const ENTITIES = { nbsp: ' ', mdash: '—', ndash: '–', laquo: '«', raquo: '»', hellip: '…', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+const plain = (s) => s.replace(/<[^>]*>/g, ' ')
+  .replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (m, d, h, n) => (d ? String.fromCodePoint(+d) : h ? String.fromCodePoint(parseInt(h, 16)) : ENTITIES[n.toLowerCase()] ?? ''))
+  .replace(/\s+/g, ' ').trim();
 
 // The rules, each a test and what to do instead. `catalog: false`: UI only.
 const RULES = [
   // «—» in quotes is the dash itself being named («Из текстов пропали длинные тире «—»»).
   { id: 'long-dash', test: (t) => /—/.test(t.replace(/«—»/g, '')) && t.trim() !== '—', say: 'Длинное тире «—»: двоеточие, запятая, точка или скобки' },
   { id: 'ty', test: (t) => /(^|[^А-Яа-яЁё])(ты|тебя|тебе|тобой|твой|твоя|твоё|твои|твоих)(?![А-Яа-яЁё])/i.test(t), say: 'На «ты»: в приложении на «вы»' },
-  // DESIGN.md asks it of care and app texts; the privacy page is a statement, and changing it needs a «Что нового» entry.
+  // Style rules (`skip`) leave out the privacy page: it's a statement, and every change to it needs a «Что нового» entry.
   { id: 'semicolon', test: (t) => CYR.test(t) && /;\s*[А-Яа-яЁё]/.test(t), say: '«;» в тексте: одна мысль в предложении', skip: ['privacy.html'] },
   // A word in quotes is the word itself being named («грунт» вместо «субстрата»).
   { id: 'substrate', test: (t) => /субстрат/i.test(t.replace(/«[^«»]*»/g, '')), say: '«субстрат»: пишем «грунт» (или «смесь» для минеральных)' },
@@ -138,7 +141,7 @@ const RULES = [
   { id: 'space-punct', test: (t) => /[А-Яа-яЁё»] [,.:!?](\s|$)/.test(t), say: 'Пробел перед знаком препинания' },
   { id: 'double-space', test: (t) => /\S {2,}\S/.test(t), say: 'Два пробела подряд' },
   // Text in separate tags or around {…} is separate lines on screen, not one sentence.
-  { id: 'long-sentence', test: (t, raw) => raw.split(/<[^>]*>|\{…\}/).map(plain).join('\n').split(/(?<=[.!?…])\s+|\n/).some((s) => s.split(/\s+/).length > 25), say: 'Предложение длиннее 25 слов: разделить' },
+  { id: 'long-sentence', test: (t, raw) => raw.split(/<[^>]*>|\{…\}/).map(plain).join('\n').split(/(?<=[.!?…])\s+|\n/).some((s) => s.split(/\s+/).length > 25), say: 'Предложение длиннее 25 слов: разделить', skip: ['privacy.html'] },
 ];
 
 // Not for people to read in the app: the prompt goes to an AI chat (its JSON example needs straight quotes), and the
@@ -155,7 +158,7 @@ function read(file) {
 // a manifest's string values.
 function readPage(file) {
   const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
-  const lineAt = (k) => src.slice(0, k).split('\n').length;
+  let lineAt = (k) => src.slice(0, k).split('\n').length;
   const items = [];
   const add = (text, k) => { const t = plain(text); if (CYR.test(t)) items.push({ text: t, raw: text, line: lineAt(k), file, owner: '', top: '' }); };
   if (file.endsWith('.webmanifest')) {
@@ -163,8 +166,11 @@ function readPage(file) {
     walk(JSON.parse(src));
     return items;
   }
-  // Scripts, styles and comments blanked out with spaces, so positions and lines stay the same.
-  const html = src.replace(/<(script|style)\b[\s\S]*?<\/\1>|<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
+  // Scripts, styles and comments out, and inline tags too, so a paragraph with a link or bold reads as one text.
+  // Only their line breaks stay, so line numbers still match the file.
+  const html = src.replace(/<(script|style)\b[\s\S]*?<\/\1>|<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '))
+    .replace(/<\/?(?:a|b|i|em|strong|span|small|code|br)\b[^>]*>/g, (m) => m.replace(/[^\n]/g, ''));
+  lineAt = (k) => html.slice(0, k).split('\n').length;
   for (const m of html.matchAll(/>([^<]+)</g)) add(m[1], m.index + 1);
   for (const m of html.matchAll(/\b(?:aria-label|title|placeholder|alt|content)="([^"]*)"/g)) add(m[1], m.index);
   return items;
