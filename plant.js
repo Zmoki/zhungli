@@ -718,7 +718,6 @@ document.addEventListener('change', (e) => {
       for (const sel of ['.lux-pic', '.lux-state', '.lux-bar']) row.querySelector(sel).replaceWith(fresh.querySelector(sel));
       applySizes(row);
     }
-    $('#ideas').innerHTML = lightIdeas();
     document.querySelector('.hello .date').textContent = `замерено ${allPlants().filter((p) => p.lux).length} из ${allPlants().length}`;
   }
 });

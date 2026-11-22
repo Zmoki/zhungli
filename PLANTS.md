@@ -139,14 +139,11 @@ Where statuses show:
 - **Grid cards:** faces only. The word is there for screen readers.
 - **Plant card:** face and word on the photo.
 - **Filter chips:** under the search, with counts.
-- **Light tab:** a tag on each row.
+- **Light tab:** a tag on each measured row.
 
 ## Light
 
-Light status needs a reading in the card or on the Light tab. The tab sorts plants from the most light-hungry. It suggests:
-- swapping pairs, a dark plant with a bright one that can live with less;
-- moving the rest closer to the window or lamp;
-- moving too-bright plants away.
+Light status needs a reading in the card or on the Light tab. The tab sorts plants from the most light-hungry. Each row: the picture (3:4) beside the name, what it needs («нужно 8–18 тыс люксов») and the reading field («?» while empty, «лк» beside it); the status tag, one word («темновато», «ярковато», «отлично»), appears once there's a reading; the bar shows the need and the reading. No separate tips: the tag says who is too dark or too bright.
 
 ## Rooms and spots
 

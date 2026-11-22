@@ -62,6 +62,7 @@ The same action has the same word everywhere, so people don't have to wonder whe
 - **Buttons and links:** an infinitive or a noun («Перенести из чата с ИИ», «Сохранить копию»), never an imperative. The task line above the buttons is the imperative («Полейте…»).
 - **Removing:** «Убрать» for a plant, photo, place or room; «Удалить» for a note; «Стереть» for all data.
 - **Steps:** a task of several steps says where you are: «Шаг 2 из 3».
+- **How:** a check card's how-to folds under «Как?», next to «Завтра», each under one of the two answers. «Как?» takes the main button's color; warnings never fold.
 
 ## Help
 

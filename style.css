@@ -203,13 +203,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
 /* Glass: floating layers and the cards on «Сегодня» */
-.tabs, .icon-btn, .progress, .task, .celebrate, .metric, .scenario, .idea, .more {
+.tabs, .icon-btn, .progress, .task, .celebrate, .metric, .scenario, .more {
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
 }
 /* Cards sit on a plain ground: quiet shadow and a hairline, only floating layers keep the big shadow */
-.progress, .task, .celebrate, .metric, .scenario, .idea, .more { box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-soft); }
+.progress, .task, .celebrate, .metric, .scenario, .more { box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-soft); }
 /* Long lists (dozens of cards): solid white, no blur, so photos read clearly and scrolling stays smooth */
 .pcard, .lux-row { background: var(--surface); box-shadow: var(--shadow-soft); }
 
@@ -289,6 +289,11 @@ button { cursor: pointer; }
 .btn.wide { width: 100%; }
 .later { display: flex; align-items: center; gap: .4em; margin: 12px auto 0; border: 0; background: none; color: var(--muted); font-size: 0.941rem; font-weight: 800; padding: 6px 12px; min-height: 44px; }
 .hint { font-size: 0.882rem; color: var(--muted); margin-top: 8px; }
+/* «Как?» and «Завтра» under the two answers, one under each; «Как?» in the main button's color */
+.task-links { display: flex; gap: 14px; margin-top: 10px; }
+.task-links .later { margin: 0; flex: 1 1 0; justify-content: center; }
+.later.how { color: var(--green); }
+.later.how.water { color: var(--blue); }
 /* In task cards the task and the tip under the buttons are centered */
 .task .question, .task .hint { text-align: center; }
 .task .btns + .hint { margin-top: 18px; }
@@ -515,17 +520,18 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* Light */
 .lux-row {
-  border: 1px solid var(--glass-rim); border-radius: 22px; padding: 12px 14px 14px 12px; margin-bottom: 10px;
-  display: grid; grid-template-columns: 56px minmax(0, 1fr) 84px; column-gap: 10px; row-gap: 4px; align-items: center;
+  border: 1px solid var(--glass-rim); border-radius: 22px; padding: 14px; margin-bottom: 12px;
+  display: grid; grid-template-columns: 60px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; align-items: center;
 }
-/* Picture on the left, full height of the row */
-.lux-row .lux-pic { grid-column: 1; grid-row: 1 / 5; align-self: stretch; width: 56px; height: auto; min-height: 56px; margin: 0; border-radius: 18px; }
+/* The picture in the grid's 3:4, beside the name, the need and the reading */
+.lux-row .lux-pic { grid-column: 1; grid-row: 1 / 4; align-self: start; width: 60px; height: auto; aspect-ratio: 3 / 4; margin: 0; border-radius: 18px; }
 .lux-row .lux-pic svg.pl { width: 52px; height: 52px; }
 .lux-row .nm { grid-column: 2; grid-row: 1; font-weight: 900; font-size: 1rem; line-height: 1.25; }
-.lux-row .lux-state { grid-column: 2; grid-row: 2; }
-.lux-row .need { grid-column: 2; grid-row: 3; font-size: 0.882rem; color: var(--muted); }
-.lux-row input { grid-column: 3; grid-row: 1 / 4; text-align: right; padding: 10px; }
-.lux-bar { grid-column: 2 / -1; grid-row: 4; position: relative; height: 10px; background: var(--line); border-radius: 99px; margin-top: 8px; }
+.lux-row .need { grid-column: 2; grid-row: 2; font-size: 0.882rem; color: var(--muted); }
+.lux-read { grid-column: 2; grid-row: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.lux-read input { width: 96px; flex: none; text-align: right; padding: 10px; }
+.lux-read .unit { font-weight: 800; color: var(--muted); margin-right: 4px; }
+.lux-bar { grid-column: 1 / -1; grid-row: 4; position: relative; height: 10px; background: var(--line); border-radius: 99px; margin-top: 10px; }
 .lux-bar .range { position: absolute; top: 0; bottom: 0; background: var(--green-soft); border-radius: 99px; }
 /* Bright fill with a darker rim, like the buttons: fine green, too dark plum, too bright sun */
 .lux-bar .dot { position: absolute; top: -5px; width: 20px; height: 20px; border-radius: 50%; margin-left: -10px; background: var(--leafy); border: 3px solid var(--leafy-d); }
@@ -535,11 +541,6 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .tag.low { background: var(--plum); }
 .tag.high { background: var(--sun); }
 .tag.ok { background: var(--leafy); }
-.idea { border-radius: 22px; padding: 12px 16px; margin-bottom: 10px; border: 1px solid var(--glass-rim); border-left: 6px solid var(--sun); }
-.idea > .ic:first-child { margin-right: .4em; color: var(--ink); }
-/* Too dark: plum like the «темновато» status; too bright: sun; a swap fixes it: green */
-.idea.low { border-left-color: var(--plum); }
-.idea.swap { border-left-color: var(--leafy); }
 
 /* Room */
 .room { margin-top: 28px; }
@@ -651,8 +652,6 @@ dialog.stories[open] { display: flex; flex-direction: column; }
 .stories .st-btn { border-radius: 99px; min-height: 54px; font-weight: 900; box-shadow: none; transform: none; background: var(--st-ink); color: var(--st-bg); border: 2px solid var(--st-ink); text-decoration: none; }
 .stories .st-btn.ghost { background: transparent; color: var(--st-ink); border-color: rgba(255, 246, 234, .8); }
 .stories .st-btn:disabled { opacity: .6; }
-.stories .linkish, .stories .st-more { color: var(--st-ink); }
-.st-more { text-align: center; } .st-more .st-btn { margin-top: 10px; width: 100%; }
 /* A phone with a screen of the app, scaled down by fitPhones() */
 .phone { position: relative; flex: none; height: min(68dvh, 660px); aspect-ratio: 375 / 812; max-width: 100%; margin: 0 auto; border-radius: 20px; border: 5px solid var(--st-ink); overflow: hidden; background: var(--bg); color: var(--ink); box-shadow: 0 20px 40px rgba(0, 0, 0, .35); }
 .phone .blob { position: absolute; right: -60px; top: -50px; width: 200px; height: 200px; border-radius: 50%; background: var(--blob-1); }

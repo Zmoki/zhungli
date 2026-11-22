@@ -22,7 +22,8 @@ const SAMPLE_RICH = [['mon-del', 'Подоконник', 0], ['ficus-lyrata', '�
   ['cuttings', 'Полка', 4], ['zz', 'Стол', 3, { lux: 800 }], ['phal', 'Стол', 4, { lux: 30000 }], ['spath', 'Стол', 2]];
 function sampleGarden(list = SAMPLE) {
   const s = prepare(null);
-  Object.assign(s, { statsNotice: true, hideInstall: true, hideTelegram: true, stayBrowser: today(), spots: ['Подоконник', 'Полка', 'Стол'] });
+  // No hint cards above the tasks: the install, Telegram, stats and winter hints count as seen.
+  Object.assign(s, { statsNotice: true, hideInstall: true, hideTelegram: true, stayBrowser: today(), winterSeen: winterOf(), spots: ['Подоконник', 'Полка', 'Стол'] });
   list.forEach(([k, spot, inDays, own], i) => {
     const d = PLANTS.find((x) => x.id === k);
     const watered = addDays(today(), -8);
@@ -214,7 +215,7 @@ const STORIES = [
   { h: 'Отмечайте дела на сегодня', p: 'По вашим ответам Жунгли подстроят полив под каждое растение.', build: todayStory },
   { h: 'Вся коллекция по местам', p: 'Мордочки показывают, кому что нужно. Каждому можно добавить своё фото.', build: plantsStory },
   { h: 'У каждого своя карточка', p: 'Уход, история полива и ваши заметки.', build: cardStory },
-  { h: 'Кому темно, кому ярко', p: 'По замеру Жунгли подскажут, кому темно и кого переставить.', build: lightStory },
+  { h: 'Кому темно, кому ярко', p: 'По замеру Жунгли покажут, кому темно, а кому слишком ярко.', build: lightStory },
   { h: 'Температура и влажность', p: 'По датчику Жунгли подскажут, кому некомфортно и что сделать.', build: roomStory },
   { build: endStory },
 ];
@@ -284,7 +285,7 @@ function cardStory(slide) {
   ];
   return [[1300, (now) => scrollTo(f.querySelector('.seg'), now)], ...open('settings', 'Настройки'), ...open('history', 'История')];
 }
-// 4. «Свет»: a reading goes in, and the tips appear.
+// 4. «Свет»: a reading goes in, and the row's tag appears.
 function lightStory(slide) {
   const first = tame(onSample(sampleGarden(), viewLight), mark({ 'st-lux': 'input[data-id="sample0"]' }));
   const f = phone(first, 'light');
@@ -322,13 +323,12 @@ function endStory(slide) {
   const box = document.createElement('div');
   box.className = 'st-end';
   if (kind === 'tiles') {
+    // Only the tiles: the button comes with the first tick. Other ways to add (catalog, AI chat, a backup) wait on the empty «Сегодня».
     const n = ticked.size;
     box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, что есть, а остальное найдём в каталоге.</p>
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
-      <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Ничего не выбрано'}</button>
-      <p class="m-0 st-more"><button class="linkish" data-act="story-catalog">Другие растения</button> · <button class="linkish" data-act="story-import">Перенести из чата с ИИ</button></p>
-      ${IOS && navigator.standalone ? '<p class="m-0 st-more">Сохранили копию в браузере? <button class="linkish" data-act="story-restore">Восстановить копию</button></p>' : ''}`;
+      ${n ? `<button class="btn st-btn wide" data-act="story-add">${I('plus')}Добавить ${plantsN(n)}</button>` : ''}`;
   } else if (kind === 'ios') {
     // On iPhone Safari the steps play out on a drawn Safari; the full list stays for screen readers. Elsewhere (iPad,
     // other browsers) and with reduced motion, the list is shown as is.
@@ -509,10 +509,7 @@ Object.assign(ACTS, {
     closeStories('add');
     addFromCatalog(keys, 'stories');
   },
-  'story-catalog'() { closeStories('catalog'); openAdd(); },
-  'story-import'() { closeStories('import'); openImport(); },
   // Plants saved as a copy in Safari, on the way to the home-screen app (the hint there says to restore it here).
-  'story-restore'() { closeStories('restore'); ACTS.import(); },
 });
 // The Telegram button in the last story opens Telegram and leaves the stories open: they close as `telegram` when
 // the app hides (see storiesLeft above) or, if it doesn't, whenever they're closed.

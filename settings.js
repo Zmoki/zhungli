@@ -28,7 +28,7 @@ function appCard(from) {
           <button class="linkish small" data-act="news">Что нового</button>
         </div>
         <p class="m-0"><b>Идеи и баги</b></p>
-        <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку. Отвечаю быстро и часто обновляю Жунгли, так что можно поучаствовать в улучшении приложения.</p>
+        <p class="mt-6 small muted">Пишите вопросы и идеи мне в личку, отвечаю быстро.</p>
         <div class="btns">${write('Написать @zmoki')}</div>
       </section>`;
 }
@@ -63,22 +63,22 @@ function openSettings() {
     <button class="btn primary wide" data-act="stories-help">${I('circle-help')}Как работают Жунгли</button>
     <div class="field mt-20" role="group" aria-labelledby="lbl-limit"><label id="lbl-limit">Сколько растений проверять в день, максимум</label><div class="chips">
       ${[5, 7, 10, 15, 50].map((n) => `<button class="chip ${lim === n ? 'on' : ''}" data-act="limit" data-n="${n}">${n === 50 ? 'все' : n}</button>`).join('')}</div>
-      <p class="mt-6 small muted">Остальные спокойно подождут до завтра, а первыми покажу тех, кому нужнее.</p></div>
+      <p class="mt-6 small muted">Остальные подождут до завтра.</p></div>
     <div class="field" id="bath-box">${bathBox()}</div>
     <div class="field"><label class="toggle"><input type="checkbox" id="pets-on" aria-describedby="pets-hint" ${petsOn() ? 'checked' : ''}> Дома есть кошка или собака</label>
       <p class="mt-6 small muted" id="pets-hint">Покажу, какие растения для них ядовиты, а в каталоге какие безопасны. По базе ASPCA.</p></div>
     <h2>Комнаты</h2>
-    <p class="small muted">У каждой комнаты свой замер температуры и влажности. ${S.rooms.length > 1 ? 'Нажмите на комнату, чтобы убрать её. Растения из неё перейдут в первую.' : 'Нажмите, чтобы переименовать. Растения в разных комнатах? Добавьте ещё одну.'}</p>
+    <p class="small muted">У каждой комнаты свой замер температуры и влажности.</p>
     <div class="chips">${S.rooms.map((rm) => (S.rooms.length > 1
     ? `<button class="chip" data-act="room-del" data-room="${esc(rm.id)}" data-from="settings" aria-label="Убрать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('x')}</button>`
     : `<button class="chip" data-act="room-rename" data-room="${esc(rm.id)}" data-from="settings" aria-label="Переименовать комнату ${esc(rm.name)}">${typedHtml(rm.name)}${I('pencil')}</button>`)).join('')}
       <button class="chip" data-act="room-add" data-from="settings">${I('plus')}комната</button></div>
     <h2>Места</h2>
-    <p class="small muted">Где стоят растения. Нажмите на место, чтобы убрать его из списка.</p>
+    <p class="small muted">Где стоят растения.</p>
     <div class="chips">${S.spots.map((sp) => `<button class="chip" data-act="spot-del" data-spot="${esc(sp)}" aria-label="Убрать место ${esc(sp)}">${typedHtml(sp)}${I('x')}</button>`).join('')}
       <button class="chip" data-act="spot-add">${I('plus')}место</button></div>
     <h2>Резервная копия</h2>
-    <p class="small muted">${MINI_APP ? 'Растения, заметки и уменьшенные фото хранятся в облаке Телеграма. Для надёжности раз в месяц сохраняйте копию в файлы.' : 'Все отметки и фото живут только на этом устройстве. Раз в месяц сохраняйте копию в файлы или отправляйте себе в Телеграм.'}</p>
+    <p class="small muted">${MINI_APP ? 'Растения и уменьшенные фото хранятся в облаке Телеграма. Раз в месяц напомню сохранить копию в файлы.' : 'Всё хранится только на этом устройстве. Раз в месяц напомню сохранить копию.'}</p>
     <div class="btns"><button class="btn ok" data-act="export">Сохранить</button><button class="btn" data-act="import">Восстановить</button></div>
     ${installWhere() ? `<p class="mt-6 small muted">Восстанавливайте копию ${{ ios: 'в Жунгли на экране «Домой»', in_app: `в Жунгли ${PLACE.where}`, telegram_browser: 'в приложении Телеграма' }[installWhere()]}: отсюда растения туда не попадут.</p>` : ''}
     <h2>Чистый лист</h2>
@@ -156,7 +156,7 @@ function bathBox() {
   const n = bathEvery(), last = S.bonus.bath;
   const chip = ([d, label]) => `<button class="chip ${n === d ? 'on' : ''}" data-act="bath-every" data-n="${d}" aria-pressed="${n === d}">${label}</button>`;
   return `<label class="toggle"><input type="checkbox" id="bath-on" aria-describedby="bath-hint" ${n ? 'checked' : ''}> Банный день</label>
-    <div class="mt-6 small muted hint" id="bath-hint"><p>Купать растения: промывать грунт от солей удобрений и жёсткой воды. Позову, когда у кого-то подсохнет грунт, и спрошу, кого купаем. За раз не больше ${BATH_MAX}, остальных в другой банный день.</p>
+    <div class="mt-6 small muted hint" id="bath-hint"><p>Промывать грунт от солей удобрений и жёсткой воды. Позову, когда грунт подсохнет.</p><p><b>За раз</b> не больше ${plantsN(BATH_MAX)}.</p>
       <p>${n ? `Каждое растение раз в ${BATH_EVERY.find(([d]) => d === n)?.[1].toLowerCase() || `${n} дней`}. ${last ? `Последний банный день: ${esc(rel(last))}.` : 'Ещё не устраивали.'}` : '<b>Сейчас</b> не зову.'}</p></div>
     ${n ? `<div class="field mt-12" role="group" aria-labelledby="lbl-bath"><label id="lbl-bath">Как часто купать каждое растение</label><div class="chips">${BATH_EVERY.map(chip).join('')}</div></div>` : ''}`;
 }

@@ -449,7 +449,7 @@ function lightStatus(p) {
 }
 
 // Light status words, the same in the plant card, the cards grid and the Light tab.
-const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'света хватает' };
+const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'отлично' };
 // Face and word per state, from most to least urgent (also the order of the filter chips).
 // Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
 const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
