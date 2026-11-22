@@ -115,3 +115,16 @@ const shortDate = (s) => parse(s).toLocaleDateString('ru-RU', { day: 'numeric', 
 
 // Tap actions by data-act: each file adds its own, app.js calls them as (el, el.dataset.id, act).
 const ACTS = Object.create(null);
+// Search fields: an ✕ that empties the field, shown while it has text (Safari on iPhone draws none of its own).
+// Emptying fires `input`, so each field's own filter runs as if the text was deleted by hand.
+const searchX = (value) => `<button type="button" class="search-x" data-act="search-clear" aria-label="Очистить поиск"${value ? '' : ' hidden'}>${I('x')}</button>`;
+document.addEventListener('input', (e) => {
+  const x = e.target.closest && e.target.closest('.search')?.querySelector('.search-x');
+  if (x) x.hidden = !e.target.value;
+});
+ACTS['search-clear'] = (el) => {
+  const field = el.parentElement.querySelector('input');
+  field.value = '';
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  field.focus();
+};

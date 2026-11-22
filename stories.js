@@ -245,7 +245,9 @@ function todayStory(slide) {
 }
 // 2. «Растения»: the grid, then the «суховато» chip filters it.
 function plantsStory(slide) {
-  const f = phone(tame(onSample(sampleGarden(SAMPLE_RICH), viewPlants)), 'plants');
+  // Without the user's own search text, which viewPlants reads from plantQ.
+  const empty = () => { const q = plantQ; plantQ = ''; try { return viewPlants(); } finally { plantQ = q; } };
+  const f = phone(tame(onSample(sampleGarden(SAMPLE_RICH), empty)), 'plants');
   slide.append(f);
   // A chip tapped: only its plants stay, as the app's own filter does («Все» is key '').
   const chipOf = (key) => f.querySelector(`.st-chip[data-st="${key}"]`);
