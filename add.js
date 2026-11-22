@@ -461,12 +461,13 @@ function normImport(o) {
 // The catalog card for a plant the AI named. A card fits when every word of its name, or of one of its `aka`
 // names, is among the AI's words: the Russian name and the Latin one, read as Russian like in the catalog search.
 // Short words (up to 4 letters: «Роза», «Хойя») must match whole, so «Роза» isn't «розан» (a hibiscus);
-// longer ones may differ in their ending (2 letters at most: «basil» and «базилик») or by a small typo. Prepositions and 1–2 letter words
-// don't count, so «Традесканция в воде» doesn't go to «Черенки в воде». The card covering most of the AI's words
+// longer ones may differ in their ending (2 letters at most: «basil» and «базилик») or by a small typo. Prepositions and
+// 1–2 letter Russian words don't count, so «Традесканция в воде» doesn't go to «Черенки в воде». The card covering most of the AI's words
 // wins, so «Фикус Бенджамина» gets its own card, not «Фикус». Ties go to a card matched by its own name, then
 // a specific card over a generic one, then catalog order. No card: null.
 const MATCH_SKIP = new Set(['для', 'под', 'без', 'или', 'над', 'при']);
-const matchWords = (s) => norm(s).split(/[^a-zа-я0-9]+/).filter((w) => w.length > 2 && !MATCH_SKIP.has(w)).map((w) => {
+// Short Latin words stay: «ZZ» is a zamioculcas.
+const matchWords = (s) => norm(s).split(/[^a-zа-я0-9]+/).filter((w) => (w.length > 2 || /[a-z]/.test(w)) && !MATCH_SKIP.has(w)).map((w) => {
   const ru = /[a-z]/.test(w) ? fromLatin(w) : w;
   return { raw: looseSound(ru), stem: looseSound(searchStem(ru)) };
 });
@@ -548,14 +549,14 @@ function saveImport() {
     const { items, picked, info, back, ...rest } = imp;
     localStorage.setItem(IMPORT_KEY, JSON.stringify({
       ...rest, t: Date.now(), picked: [...picked], info: { ...info, via: [...info.via] },
-      items: items.map(({ card, base, dup, ...it }) => it),
+      items: items.map(({ card, base, ...it }) => it),
     }));
   } catch (e) { /* private mode or full storage: the import just starts over next time */ }
 }
 function loadImport() {
   try {
     const d = JSON.parse(localStorage.getItem(IMPORT_KEY) || 'null');
-    if (!d || Date.now() - d.t > IMPORT_KEEP || !(d.step > 1)) return null;
+    if (!d || Date.now() - d.t > IMPORT_KEEP || !(d.step > 1 || d.copied)) return null;
     d.items.forEach(importMatch);
     return { ...d, picked: new Set(d.picked), info: { ...d.info, via: new Set(d.info.via) } };
   } catch (e) { return null; }
@@ -573,11 +574,13 @@ function openImport(back = '') {
   importStep(imp.step, false);
   openSheet();
 }
-// Draws a step. `moved`: a step changed by a tap, so focus goes to its question and it's reported.
-function importStep(n, moved = true) {
+// Draws a step. `moved`: a step changed by a tap, so focus goes to its question and it's reported with the step
+// it came `from` (and `how`, for «Вставить ещё часть» and «Вставить продолжение»).
+function importStep(n, moved = true, how = '') {
+  const from = imp.step;
   imp.step = n;
   if (n === 3) imp.found = 0;
-  if (n > 1) saveImport();
+  if (n > 1 || imp.copied) saveImport();
   const q = ['Скопируйте запрос для ИИ', 'Как ИИ прислал ответ?', imp.via === 'file' ? 'Выберите файл от ИИ' : 'Вставьте ответ ИИ', 'Проверьте список'][n - 1];
   const back = (to) => `<button class="mt-8 btn ghost wide" data-act="import-step" data-to="${to}">Назад</button>`;
   // The way to ask for help is in the same place on every step: under its buttons.
@@ -618,7 +621,7 @@ function importStep(n, moved = true) {
   } else {
     // Another part is a side way, so a link: one big button at the bottom, «Добавить», as on the other steps.
     body = `<div id="imp-head"></div><div id="imp-list"></div>
-      <p class="mt-12 small" id="imp-more">Ответ пришёл не целиком? <button class="linkish" data-act="import-more">Вставить ещё часть</button></p>`;
+      <p class="mt-12 small" id="imp-more">Ответ пришёл не целиком? <button class="linkish" data-act="import-more" data-how="more">Вставить ещё часть</button></p>`;
   }
   // Step 4's buttons stay on screen while the list scrolls (a sticky bar, a direct child of the tall column).
   const foot = n === 4
@@ -629,13 +632,13 @@ function importStep(n, moved = true) {
   const ta = $('#imp-text');
   if (ta) {
     // A paste is read right away; typed or edited text waits for «Найти растения», which works once there's text.
-    ta.addEventListener('paste', () => setTimeout(importPasted));
+    ta.addEventListener('paste', () => setTimeout(importPasted, 0, 'paste'));
     ta.addEventListener('input', () => { if (!imp.found) $('#imp-go').disabled = !ta.value.trim(); });
   }
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
-    track('import_step', { step: n, ...(n > 2 && { via: imp.via }) });
+    track('import_step', { step: n, from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
 }
 // Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the
@@ -725,12 +728,13 @@ async function importFile(f) {
   try { text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
   readImport(text, 'file', ext);
 }
-// Reads what's in the answer field.
-function importPasted() {
+// Reads what's in the answer field. `how` it got there, for stats: 'paste' (pasted into the field),
+// 'clipboard' («Вставить ответ»), 'button' («Найти растения» after typing or editing).
+function importPasted(how) {
   const ta = $('#imp-text');
   if (!ta || !ta.value.trim()) return;
   const text = ta.value;
-  readImport(text.length > IMPORT_MAX ? null : text, 'paste', '', text.length > IMPORT_MAX ? 'too_big' : '');
+  readImport(text.length > IMPORT_MAX ? null : text, 'paste', '', text.length > IMPORT_MAX ? 'too_big' : '', how);
 }
 // A backup picked here by mistake: it has no plant list for import, but can be restored in settings.
 function isBackup(text) {
@@ -744,7 +748,7 @@ function importMatch(it) {
 // One part of the answer (a paste or a file), on step 3: its plants join the list, and the step says how many
 // were found, with «Проверить список» to go on (the screen doesn't change by itself). A part with no plants says
 // why and leaves the list as it was.
-function readImport(text, via, ext = '', fail = '') {
+function readImport(text, via, ext = '', fail = '', how = via) {
   const res = fail ? { error: fail } : text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text, imp.carry);
   const note = $('#imp-note'), go = $('#imp-go');
   if (!note) return;
@@ -754,7 +758,7 @@ function readImport(text, via, ext = '', fail = '') {
       ? '<p class="mt-10 error-note small">Это резервная копия Жунглей, а не ответ ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
       : `<p class="mt-10 error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>`;
     announce(note.textContent);
-    track('import_failed', { via, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    track('import_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
     return;
   }
   imp.carry = res.tail || '';
@@ -777,7 +781,8 @@ function readImport(text, via, ext = '', fail = '') {
   const have = new Set(allPlants().map((p) => `${norm(p.species)}|${norm(p.name)}`));
   fresh.forEach((it) => {
     importMatch(it);
-    if (!have.has(`${norm(it.species)}|${norm(it.name)}`)) imp.picked.add(imp.items.length);
+    it.dup = have.has(`${norm(it.species)}|${norm(it.name)}`);
+    if (!it.dup) imp.picked.add(imp.items.length);
     imp.items.push(it);
   });
   imp.found = fresh.length;
@@ -787,6 +792,10 @@ function readImport(text, via, ext = '', fail = '') {
     imp.info.unread = (imp.info.unread || 0) + res.bad;
   }
   saveImport();
+  track('import_read', {
+    via, how, found: fresh.length, total: imp.items.length, repeated: res.items.length - fresh.length, unread: res.bad, cut: res.cut,
+    repaired: res.repaired, matched: fresh.filter((it) => it.card).length, ...(via === 'file' && { file_ext: ext }),
+  });
   const first = imp.items.length === fresh.length;
   const said = !fresh.length ? 'Эти растения уже в списке' : first ? `Нашлось ${plantsN(fresh.length)}` : `Нашлось ещё ${fresh.length}, всего ${plantsN(imp.items.length)}`;
   // A plant the AI wrote with a mistake is skipped, and said so: the person can ask the AI for it again.
@@ -803,17 +812,18 @@ function readImport(text, via, ext = '', fail = '') {
 // Step 4: the plants found, ticked except those already in the collection.
 function renderImportList() {
   const have = new Set(allPlants().map((p) => `${norm(p.species)}|${norm(p.name)}`));
-  const n = imp.items.length, on = imp.picked.size;
+  const n = imp.items.length;
+  const inHave = (it) => have.has(`${norm(it.species)}|${norm(it.name)}`);
   $('#imp-head').innerHTML = imp.info.cut
     ? `<div class="info"><b>Ответ оборвался</b>Напишите ИИ «Продолжи».
-      <button class="mt-10 btn wide" data-act="import-more">${I('plus')}Вставить продолжение</button></div>`
+      <button class="mt-10 btn wide" data-act="import-more" data-how="continue">${I('plus')}Вставить продолжение</button></div>`
     // All of them already in the collection: nothing is ticked, so say how to add them anyway.
-    : `<p class="m-0 small muted">${on ? 'Снимите галочку с лишних.' : `${n === 1 ? 'Это растение уже' : 'Все уже'} в коллекции. Отметьте, если нужны ещё раз.`}</p>`;
+    : `<p class="m-0 small muted">${!imp.items.every(inHave) ? 'Снимите галочку с лишних.' : `${n === 1 ? 'Это растение уже' : 'Все уже'} в коллекции. Отметьте, если нужны ещё раз.`}</p>`;
   // With «Вставить продолжение» on top, the button under the list would say the same.
   $('#imp-more').hidden = imp.info.cut;
   $('#imp-list').innerHTML = imp.items.map((it, i) => {
     const ticked = imp.picked.has(i);
-    const sub = [have.has(`${norm(it.species)}|${norm(it.name)}`) ? 'уже есть в коллекции' : '', ...[it.room, it.spot].filter(Boolean).map(typedHtml),
+    const sub = [inHave(it) ? 'уже есть в коллекции' : '', ...[it.room, it.spot].filter(Boolean).map(typedHtml),
       it.card ? '' : 'нет в каталоге', it.guess ? 'по фото, проверьте' : ''].filter(Boolean).join(' · ');
     const pic = it.card || { species: it.species, type: it.type || it.base.type };
     return `<button class="pick ${ticked ? 'on' : ''}" data-act="import-pick" data-i="${i}" aria-pressed="${ticked}">
@@ -882,6 +892,7 @@ function addImported() {
   track('plants_added', {
     count: list.length, generic_count: carded.filter((it) => it.card.generic).length, catalog_ids: carded.map((it) => it.card.id),
     own_count: list.length - carded.length, guess_count: list.filter((it) => it.guess).length,
+    found: imp.items.length, already: imp.items.filter((it) => it.dup).length,
     source: 'import', via: imp.info.via.size > 1 ? 'both' : [...imp.info.via][0], parts: imp.info.parts, cut: imp.info.cut,
     repaired: imp.info.repaired, unread: imp.info.unread || 0, ...(imp.info.ext && { file_ext: imp.info.ext }),
     with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
@@ -961,7 +972,9 @@ Object.assign(ACTS, {
       track('import_prompt_copied', { how });
       if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
       // Copied, or shown to copy by hand: either way the next step opens up, and copying is no longer the main action.
+      // Kept on the device: people go to the AI chat right from here, and the app may reload meanwhile.
       imp.copied = true;
+      saveImport();
       el.classList.remove('ok');
       const next = $('#imp-next');
       next.disabled = false;
@@ -980,7 +993,7 @@ Object.assign(ACTS, {
     el.focus();
   },
   'import-show'() { showPrompt(); track('import_prompt_shown'); },
-  'import-read'() { importPasted(); },
+  'import-read'() { importPasted('button'); },
   // Reads the clipboard into the answer field, then the answer as if pasted. Browsers ask first (iPhone shows
   // a «Вставить» bubble to tap); refused or empty, the field takes a paste by hand.
   async 'import-clip'() {
@@ -998,12 +1011,12 @@ Object.assign(ACTS, {
       return;
     }
     ta.value = text;
-    importPasted();
+    importPasted('clipboard');
   },
   'import-step'(el) { importStep(Number(el.dataset.to)); },
   'import-via'(el) { imp.via = el.dataset.via; importStep(3); },
   // «Вставить ещё часть» or «Вставить продолжение»: back to step 3 the same way (text or file), the list kept.
-  'import-more'() { importStep(3); },
+  'import-more'(el) { importStep(3, true, el.dataset.how); },
   'import-copy-again'(el) {
     copyPrompt(el, (how) => {
       track('import_prompt_copied', { how, from: 'again' });
