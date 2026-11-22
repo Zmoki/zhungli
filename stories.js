@@ -323,7 +323,7 @@ function endStory(slide) {
   box.className = 'st-end';
   if (kind === 'tiles') {
     const n = ticked.size;
-    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Остальное найдём в каталоге.</p>
+    box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, что есть, а остальное найдём в каталоге.</p>
       <div class="qs-grid">${QUICK.map(([k, label]) => `<button class="qs${ticked.has(k) ? ' on' : ''}" data-act="story-tick" data-key="${k}" aria-pressed="${ticked.has(k)}">
         <span class="qs-pic" aria-hidden="true">${plantSvg(PLANTS.find((p) => p.id === k), 'fine')}</span><span class="qs-name">${label}</span></button>`).join('')}</div>
       <button class="btn st-btn wide" data-act="story-add"${n ? '' : ' disabled'}>${n ? `${I('plus')}Добавить ${plantsN(n)}` : 'Ничего не выбрано'}</button>

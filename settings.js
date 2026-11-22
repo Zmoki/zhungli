@@ -124,6 +124,7 @@ async function doImport(file) {
     if (data.app !== 'zhungli' || !data.state) throw new Error('bad');
     if (!(await ask({ title: 'Заменить текущие данные?', text: 'Вместо них будет копия от ' + new Date(data.at).toLocaleDateString('ru-RU') + '.', ok: 'Заменить', danger: true }))) return;
     S = prepare(data.state);
+    S.backupAt = today(); // the file restored from is a backup in hand: the backup task waits a month
     stored = readStored(); // a restore replaces data on purpose, even newer data from another window
     save();
     await idbReq((st) => st.clear(), 'readwrite');
