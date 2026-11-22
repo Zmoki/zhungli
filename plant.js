@@ -428,9 +428,11 @@ function rowValues(p) {
 }
 const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', way: 'Как растёт',
   feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
+// Rows whose open body doesn't show their value keep it in the head: the card's name (it doesn't change while open).
+const KEEP_VALUE = new Set(['card']);
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
-  return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
+  return `<div class="srow" id="sr-${key}"><button class="srow-head${KEEP_VALUE.has(key) ? ' keep-v' : ''}" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
     <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
     <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
 }
@@ -441,6 +443,28 @@ function refreshRows() {
   const p = plant(cardFor);
   if (!p) return;
   Object.entries(rowValues(p)).forEach(([k, [v, off]]) => { const el = $(`#srv-${k}`); if (el) { if (el.innerHTML !== v) el.innerHTML = v; el.classList.toggle('off', off); } });
+  keepTapped();
+}
+// A tap can change rows above it: another row's value gets longer and wraps («пауза до 21 декабря» in a closed
+// «Подкормка» after «Недавно купили: Да»). The sheet scrolls by as much, so the tapped control stays under the finger.
+// A handler may draw the control anew, so it's found again by its data attributes.
+let tapped = null;
+const TAP_KEYS = ['act', 'field', 'kind', 'v', 'n', 'm', 'way', 'row', 'spot', 'room'];
+document.addEventListener('click', (e) => {
+  const el = e.target.closest && e.target.closest('#cp-settings [data-act]');
+  if (!el || el.dataset.act === 'srow') { tapped = null; return; } // opening a row moves what's below it, as it should
+  const sel = TAP_KEYS.filter((k) => el.dataset[k] !== undefined).map((k) => `[data-${k}="${CSS.escape(el.dataset[k])}"]`).join('');
+  tapped = { el, sel, top: el.getBoundingClientRect().top };
+}, true);
+function keepTapped() {
+  const t = tapped;
+  tapped = null;
+  if (!t) return;
+  const el = t.el.isConnected ? t.el : $(`#cp-settings ${t.sel}`);
+  const box = $('#sheet');
+  if (!el || !box || el.closest('[hidden]')) return;
+  const moved = el.getBoundingClientRect().top - t.top;
+  if (Math.abs(moved) >= 1) box.scrollTop += moved;
 }
 // Submit too: a new spot added with Enter goes through the form, with no click or change after it.
 ['change', 'click', 'input', 'submit'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#cp-settings')) setTimeout(refreshRows, 0); }));
