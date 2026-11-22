@@ -239,7 +239,11 @@ function setRemind(id, kind, x, action) {
   else if (r.remind) { delete r.remind[kind]; if (!Object.keys(r.remind).length) delete r.remind; }
   save();
   $(`#remind-${kind}`).innerHTML = remindMore(id, kind);
-  track('reminder_changed', { kind, action, ...(x ? { every: x.every, months: x.months.length } : {}) });
+  // Pruning is the only reminder now: another kind would need its own events in analytics/events.json.
+  if (kind !== 'prune') return;
+  if (action === 'every') track('prune_schedule_changed', { every: x.every });
+  else if (action === 'months') track('prune_months_changed', { months: x.months.length });
+  else track('prune_toggled', { on: action === 'on' });
 }
 const intHint = (p) => `Подстраивается по вашим ответам «${labelsOf(p)[0]}» и «${labelsOf(p)[1]}».`;
 // How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
@@ -961,7 +965,7 @@ Object.assign(ACTS, {
     $(`#remind-${k}`).innerHTML = remindMore(id, k);
     $(`#remind-${k} .last-done`)?.focus();
     refreshHistory(id);
-    track('reminder_logged', { kind: k, from: 'card' });
+    if (k === 'prune') track('prune_logged');
     // Undo also redraws the reminder and the history in the card, if it's still open.
     toast(REMINDERS[k].toast, () => {
       undo();
