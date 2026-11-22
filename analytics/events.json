@@ -196,6 +196,7 @@
     "bath_day_picked": {
       "area": "care", "since": 160,
       "when": "step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed",
+      "note": "Sent again after «Назад» and a new pick, so count devices or take a device's last pick.",
       "props": {
         "count": { "type": "int", "desc": "plants ticked" },
         "of": { "type": "int", "desc": "plants offered (at most `BATH_MAX`, dry pots only)" }
@@ -686,7 +687,7 @@
     "bath_day_toggled": {
       "area": "settings", "since": 160,
       "when": "«Банный день» checkbox in the app's settings",
-      "props": { "on": { "type": "bool", "desc": "on starts at every 120 days" } }
+      "props": { "on": { "type": "bool", "desc": "`true`: switched on, which sets every 120 days" } }
     },
     "bath_day_schedule_changed": {
       "area": "settings", "since": 160,

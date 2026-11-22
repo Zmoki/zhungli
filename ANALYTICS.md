@@ -79,7 +79,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133 |
 | `bath_day_started` | step 1 of the bath day card: «Да!» on «Устраиваем сегодня банный день?» | none | v137 |
 | `bath_day_snoozed` | step 1 of the bath day card: «Через 3 дня» (before v160: `bonus_skipped` `kind: bath`) | none | v160 |
-| `bath_day_picked` | step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed | `count`: plants ticked<br>`of`: plants offered (at most `BATH_MAX`, dry pots only) | v160 |
+| `bath_day_picked` | step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed. Sent again after «Назад» and a new pick, so count devices or take a device's last pick. | `count`: plants ticked<br>`of`: plants offered (at most `BATH_MAX`, dry pots only) | v160 |
 | `bath_day_finished`<br>was `bath_day_done` | step 3 of the bath day card: «Промыто» | `count`: bathed (was `n`)<br>`left`: plants still due a rinse | v160 |
 | `reminder_logged` | «Обрезано сегодня» in the plant card | `kind`: `prune`<br>`from`: `card` | v120 |
 | `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` | v137 |
@@ -172,7 +172,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | --- | --- | --- | --- |
 | `limit_changed` | plants-per-day limit changed | `limit` | v7 |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v130 |
-| `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: on starts at every 120 days | v160 |
+| `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: `true`: switched on, which sets every 120 days | v160 |
 | `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v160 |
 | `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v7 |
 | `backup_imported` | backup restored | none | v7 |
