@@ -166,7 +166,7 @@ Object.assign(ACTS, {
   'bath-every'(el) {
     S.settings.bath = Number(el.dataset.n); save();
     $('#bath-box').innerHTML = bathBox(); $(`[data-act="bath-every"][data-n="${el.dataset.n}"]`).focus(); render();
-    track('bath_day_changed', { every: S.settings.bath });
+    track('bath_day_schedule_changed', { every: S.settings.bath });
   },
   settings() { track('settings_opened'); openSettings(); },
   news() { openNews(); },
@@ -211,7 +211,7 @@ Object.assign(ACTS, {
 });
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (el.id === 'bath-on') { S.settings.bath = el.checked ? 120 : 0; save(); $('#bath-box').innerHTML = bathBox(); $('#bath-on').focus(); render(); track('bath_day_changed', { every: S.settings.bath }); return; }
+  if (el.id === 'bath-on') { S.settings.bath = el.checked ? 120 : 0; save(); $('#bath-box').innerHTML = bathBox(); $('#bath-on').focus(); render(); track('bath_day_toggled', { on: el.checked }); return; }
   if (el.id === 'pets-on') { S.settings.pets = el.checked; save(); render(); track('pets_toggled', { on: el.checked }); return; }
   if (el.id !== 'stats-on') return;
   if (!el.checked) statsQueue = [];
