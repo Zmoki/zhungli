@@ -650,10 +650,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .imp-flow { padding-bottom: 28px; }
 /* Steps 1–3 are as tall as the tallest of them, with the buttons at the bottom: the sheet doesn't jump between
    steps, and what a tap adds (a note, a status) fills the free room instead of pushing the buttons down. */
-.imp-fixed { display: flex; flex-direction: column; min-height: min(600px, 78dvh); }
+.imp-fixed { display: flex; flex-direction: column; min-height: min(616px, 80dvh); }
 .imp-actions { margin-top: auto; padding-top: 16px; }
 /* Room for «Нашлось 5 растений» or a two-line error under the answer field, kept before either shows up */
 #imp-note { min-height: 4.6rem; }
+.imp-help { margin: 28px 0 0; text-align: center; }
 .imp-flow .pick-bar { padding-bottom: calc(env(safe-area-inset-bottom) + 32px); }
 .imp-ok { display: flex; gap: 8px; align-items: center; font-weight: 800; }
 /* A drawn button inside a sentence («Под ответом нажмите [⧉]») */
