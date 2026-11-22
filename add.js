@@ -606,13 +606,16 @@ function importStep(n, moved = true) {
       <div id="imp-note"></div>`;
     actions = `<button class="btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
   } else {
+    // Another part is a side way, so a link: one big button at the bottom, «Добавить», as on the other steps.
     body = `<div id="imp-head"></div><div id="imp-list"></div>
-      <button class="mt-12 btn wide" data-act="import-more" id="imp-more">${I('plus')}Вставить ещё часть</button>
-      <div class="pick-bar" id="imp-bar"><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button>${help}</div>`;
+      <p class="mt-12 small" id="imp-more">Ответ пришёл не целиком? <button class="linkish" data-act="import-more">Вставить ещё часть</button></p>`;
   }
-  $('#sheet-body').innerHTML = `${subHead('Перенести из чата с ИИ', imp.back)}<div class="imp-flow${n < 4 ? ' imp-fixed' : ''}"><div>
-    <p class="small muted m-0">Шаг ${n} из 4</p><h3 class="sec-title mt-6" id="imp-q" tabindex="-1">${q}</h3>${body}</div>
-    ${actions ? `<div class="imp-actions">${actions}</div>` : ''}</div>`;
+  // Step 4's buttons stay on screen while the list scrolls (a sticky bar, a direct child of the tall column).
+  const foot = n === 4
+    ? `<div class="pick-bar imp-actions" id="imp-bar"><button class="btn ok wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button>${help}</div>`
+    : `<div class="imp-actions">${actions}</div>`;
+  $('#sheet-body').innerHTML = `${subHead('Перенести из чата с ИИ', imp.back)}<div class="imp-flow imp-fixed"><div>
+    <p class="small muted m-0">Шаг ${n} из 4</p><h3 class="sec-title mt-6" id="imp-q" tabindex="-1">${q}</h3>${body}</div>${foot}</div>`;
   const ta = $('#imp-text');
   if (ta) {
     // A paste is read right away; typed or edited text waits for «Найти растения», which works once there's text.
