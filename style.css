@@ -789,8 +789,6 @@ svg.pl.v5 { --pot: #4cc77a; --pot-2: #34ad62; }
 .cut { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 2; stroke-linecap: round; }
 .co { fill: var(--coleus); stroke: var(--leaf); stroke-width: 1.6; }
 .trap { fill: var(--coleus); }
-/* Catalog with «Безопасно для питомцев» on: other plants and groups left empty are hidden */
-.pets-only .pick:not([data-pets="safe"]), .pets-only .pick-group:not(:has(.pick[data-pets="safe"]:not([hidden]))) { display: none; }
 .trunk { fill: var(--trunk); }
 .nm-pl { display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: 8px; vertical-align: middle; background: var(--green-soft); border-radius: 10px; overflow: hidden; }
 .nm-pl svg.pl { width: 30px; height: 30px; }
