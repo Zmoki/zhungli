@@ -114,7 +114,7 @@ function openAdd(back = false) {
     <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <button class="import-cta mini" data-act="add-import"><span class="pe" aria-hidden="true">${I('bot')}</span>
-      <span class="pt"><b>Много растений? Перенести из чата с ИИ</b><small>ChatGPT или Claude составит список с уходом</small></span>
+      <span class="pt"><b>Много растений? Перенести из чата с ИИ</b><small>DeepSeek, GigaChat или ChatGPT составит список</small></span>
       <span class="pc" aria-hidden="true">${I('chevron-right')}</span></button>
     <h3 class="sec-title">Каталог</h3>
     ${catalogHtml()}
@@ -327,72 +327,92 @@ function openCustom(species = '', from = 'button', back = '') {
 }
 
 /* ---------- Import from an AI chat ---------- */
-// The user copies a prompt into ChatGPT/Claude, picks the plants.json file it sends,
-// and the plants become custom plants with their care tips.
-const IMPORT_PROMPT = `Сделайте файл plants.json со списком моих растений для приложения «Жунгли» и пришлите его мне для скачивания: файлом, не текстом в чате. Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня). Если в чате есть фото растений, определите вид по фото. Если не уверены, выберите самый вероятный и в tip первой фразой напишите, что вид определён по фото и его стоит проверить.
+// The user copies a prompt into an AI chat (DeepSeek, GigaChat, ChatGPT…), then pastes its answer or picks
+// the plants.json file it sent. The AI only lists the plants and where they are: care comes from the catalog
+// card each plant matches, or from the generic type it's like.
+const IMPORT_PROMPT = `Составьте список моих растений для приложения «Жунгли». Возьмите растения, о которых мы говорили в этом чате (если непонятно какие, спросите меня). Если в чате есть фото растений, определите вид по фото. Если не уверены, выберите самый вероятный и поставьте "guess": true.
 
-Если в чате сказано, как растёт растение (в воде, в керамзите, в поне, на блоке, в террариуме, в аквариуме, на фитиле, с резервуаром), пишите проверку и уход именно для этого способа.
+Ответьте только JSON-массивом, без пояснений: обычные двойные кавычки, один объект на растение, все растения без сокращений. Если умеете делать файлы, пришлите файл plants.json, если нет, просто напишите JSON текстом.
 
-В текстах не используйте длинные тире «—»: вместо них ставьте двоеточие, запятую или точку.
-
-В файле должен быть только JSON-массив, без пояснений: обычные двойные кавычки, числа без пробелов. Один объект на растение, поля:
+Поля:
 - species: вид или сорт по-русски
+- latin: латинское название
 - name: имя, если оно есть у растения, иначе ""
 - room: комната, где стоит, если она упоминалась (например "Кухня"), иначе ""
 - spot: место в комнате: подоконник, полка, стол и т. п., если оно упоминалось, иначе ""
-- type: в чём растёт. Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов, сушить почти полностью), "sphagnum" (сфагнум), "bark" (кора, орхидеи), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде: черенки, растения в банке), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
-- watering: как поливать растение в горшке. Варианты: "top" (сверху), "bottom" (снизу: горшок ставят в поддон с водой), "wick" (фитиль), "reservoir" (резервуар в горшке: кашпо с автополивом, керамзит с запасом раствора), "drip" (капельный автополив или полив по таймеру из шланга); для воды, блока, террариума и аквариума ставьте "top"
-- lux: сколько света нужно, в люксах, [от, до]
-- every: через сколько дней обычно проверять полив (для керамзита проверять уровень раствора, для воды смотреть, пора ли её менять)
-- check: вопрос при проверке, например "Верхние 2–3 см сухие?" или "Уровень раствора на минимуме?"
-- water: как поливать, доливать или менять воду и когда удобрять
-- soil: в чём растёт и какой горшок
-- cond: условия, начните с температуры так: "18–26 °C; ..."
-- tip: самое важное в уходе
-- toxic: true, если сок ядовит или раздражает кожу
-- big: true, если крупные листья, которые надо протирать от пыли
-- quips: 3 коротких смешных фразы от лица растения, на «вы» ко мне
+- type: в чём растёт, только если это сказано в чате, иначе "". Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов), "sphagnum" (сфагнум), "bark" (кора), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
+- watering: как поливают, только если это сказано в чате, иначе "". Варианты: "top" (сверху), "bottom" (снизу, через поддон), "wick" (фитиль), "reservoir" (резервуар в горшке, кашпо с автополивом), "drip" (капельный автополив)
+- like: на что похоже по уходу. Варианты: "easy" (неприхотливое лиственное), "humid" (тропическое влаголюбивое), "succulent" (суккулент), "cactus" (кактус), "flowering" (цветущее), "orchid" (орхидея), "herbs" (травы и рассада)
+- guess: true, если вид определён по фото и вы не уверены, иначе false
 
 Пример:
-[{"species":"Пеперомия туполистная","name":"","room":"Кухня","spot":"Подоконник","type":"soil","watering":"top","lux":[8000,15000],"every":7,"check":"Верхние 2–3 см сухие?","water":"Когда верхний слой подсох, умеренно.","soil":"Лёгкий грунт с перлитом, горшок с дренажем.","cond":"18–26 °C; обычная влажность.","tip":"Мясистые листья запасают воду, поэтому перелив опаснее пересушки.","toxic":false,"big":false,"quips":["Я толстенькая, но это вода.","Не заливайте меня, я и так сочная.","Поверните меня к свету, пожалуйста."]}]`;
+[{"species":"Монстера деликатесная","latin":"Monstera deliciosa","name":"Моня","room":"Кухня","spot":"Подоконник","type":"","watering":"","like":"easy","guess":false}]`;
 
 // Cleans formatting chat apps add, so JSON.parse can read the answer.
 function repairJson(src) {
   return src
     .replace(/^\s*\/\/.*$/gm, '') // line comments
     .replace(/[“”„‟″]/g, '"').replace(/[‘’]/g, "'") // typographic quotes
-    .replace(/(\d)[   ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
+    .replace(/(\d)[   ](?=\d{3}\b)/g, '$1') // 8 000 → 8000
     .replace(/,\s*([\]}])/g, '$1'); // trailing commas
 }
-// Finds the plant list in the AI's file: code fences, text around it (even with brackets),
-// typographic quotes, spaced numbers, a single object or objects without [ ].
-function parseImport(text) {
+// Where the `{…}` starting at `a` closes (braces in strings don't count), or -1 if it never does:
+// an answer cut off mid-plant.
+function objectEnd(t, a) {
+  let depth = 0, inStr = false;
+  for (let i = a; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) { if (c === '\\') i++; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && !--depth) return i;
+  }
+  return -1;
+}
+// Every plant object in the text, one by one, so text around them, code fences, a missing [ ] or a broken
+// plant don't lose the rest. `tail`: an unclosed plant at the end, to join with the next part of the answer.
+// `cut`: the answer stops before its list closes.
+function importObjects(t) {
+  const objs = [];
+  let parsed = false, repaired = false, tail = '', first = -1, last = -1;
+  for (let a = t.indexOf('{'); a !== -1;) {
+    const b = objectEnd(t, a);
+    if (b < 0) { tail = t.slice(a); a = t.indexOf('{', a + 1); continue; }
+    let v = null;
+    for (const [src, fix] of [[t.slice(a, b + 1), false], [repairJson(t.slice(a, b + 1)), true]]) {
+      try { v = JSON.parse(src); repaired ||= fix; break; } catch (e) { /* try the repaired text, then move on */ }
+    }
+    if (!v) { a = t.indexOf('{', a + 1); continue; }
+    parsed = true; tail = ''; last = b;
+    if (first < 0) first = a;
+    // A wrapper like {"plants": […]} holds the list; a plant itself has a name.
+    const inner = v.species || v.name ? null : Object.values(v).find((x) => Array.isArray(x) && x.some((y) => y && typeof y === 'object'));
+    objs.push(...(inner || [v]));
+    a = t.indexOf('{', b + 1);
+  }
+  // A list opened before the first plant but never closed after the last one.
+  const cut = !!tail || (first > 0 && t.lastIndexOf('[', first) >= 0 && t.indexOf(']', last) < 0);
+  return { objs, parsed, repaired, tail, cut };
+}
+// The plants in a pasted answer or a file. `carry`: the unclosed end of the previous part, for an answer
+// that came in several messages or was continued after «Продолжи».
+function parseImport(text, carry = '') {
   const t = String(text || '').trim();
   if (!t) return { error: 'empty' };
   // What the text looked like, without any of its content.
-  const diag = { has_code_fence: t.includes('```'), has_curly_quotes: /[“”„]/.test(t), has_spaced_numbers: /\d[   ]\d{3}\b/.test(t) };
-  const tries = [];
-  const end = t.lastIndexOf(']');
-  for (let a = t.indexOf('['), n = 0; a !== -1 && a < end && n < 8; a = t.indexOf('[', a + 1), n++) tries.push(t.slice(a, end + 1));
-  const c = t.indexOf('{'), d = t.lastIndexOf('}');
-  if (c !== -1 && d > c) tries.push(t.slice(c, d + 1), `[${t.slice(c, d + 1)}]`);
-  if (!tries.length) return { error: 'no_list', diag };
-  let parsed = false;
-  for (const raw of tries) {
-    for (const [src, repaired] of [[raw, false], [repairJson(raw), true]]) {
-      let v;
-      try { v = JSON.parse(src); } catch (e) { continue; }
-      parsed = true;
-      if (v && !Array.isArray(v)) v = Array.isArray(v.plants) ? v.plants : Object.values(v).find(Array.isArray) || [v];
-      const items = v.map(normImport).filter(Boolean);
-      if (items.length) return { items, repaired };
-    }
-  }
-  return { error: parsed ? 'no_plants' : 'bad_json', diag };
+  const diag = { has_code_fence: t.includes('```'), has_curly_quotes: /[“”„]/.test(t), has_spaced_numbers: /\d[   ]\d{3}\b/.test(t) };
+  const read = (s) => { const r = importObjects(s); return { ...r, items: r.objs.map(normImport).filter(Boolean) }; };
+  let res = read(t);
+  // This part may carry on the plant the last one broke off, or start over: whichever reads more plants.
+  if (carry) { const joined = read(carry + t); if (joined.items.length > res.items.length) res = joined; }
+  if (res.items.length) return { items: res.items, repaired: res.repaired, cut: res.cut, tail: res.tail };
+  if (!t.includes('{')) return { error: 'no_list', diag };
+  return { error: res.parsed ? 'no_plants' : 'bad_json', diag };
 }
-// Common off-format answers: 'succulent', 'orchid', 'грунт'…
+// Common off-format answers: 'succulent', 'orchid', 'грунт'… Not said: ''.
 function importType(x) {
-  const t = String(x || '').toLowerCase();
+  const t = String(x || '').trim().toLowerCase();
+  if (!t) return '';
   if (TYPE_NAMES[t]) return t;
   if (/aquar|аквар/.test(t)) return 'aquarium';
   if (/terrar|террар|флорар|бутыл/.test(t)) return 'terrarium';
@@ -407,48 +427,80 @@ function importType(x) {
   if (/water|вод/.test(t)) return 'water';
   return 'soil';
 }
-// How a potted plant is watered; the old answer "type": "wick" means soil on a wick.
+// How a potted plant is watered; older answers put "wick" in `type`. Not said: ''.
 function importWatering(x, type) {
-  const t = `${x || ''} ${type || ''}`.toLowerCase();
+  const t = `${x || ''} ${type || ''}`.trim().toLowerCase();
   if (/wick|фитил/.test(t)) return 'wick';
   // Before the reservoir: «капельный автополив» is drip irrigation, «кашпо с автополивом» a reservoir.
   if (/drip|irrigat|капел|таймер|timer/.test(t)) return 'drip';
   if (/reserv|резерв|автопол|self.?water|semi|hydro|гидро/.test(t)) return 'reservoir';
   if (/bottom|снизу|через поддон/.test(t)) return 'bottom';
-  return 'top';
+  return String(x || '').trim() ? 'top' : '';
 }
+// The generic type a plant is like, for plants the catalog doesn't have.
+const IMPORT_LIKE = [[/succ|сукк/, 'g-succ'], [/cact|какт/, 'g-cactus'], [/orchid|орхид/, 'g-orchid'], [/flower|bloom|цвет/, 'g-flower'],
+  [/herb|seed|трав|рассад/, 'g-herbs'], [/humid|fern|влаг|папорот/, 'g-humid'], [/easy|leaf|foliage|неприхот|листв/, 'g-easy']];
+const importLike = (x) => (IMPORT_LIKE.find(([re]) => re.test(String(x || '').toLowerCase())) || [])[1] || '';
 const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 function normImport(o) {
-  if (!o || typeof o !== 'object') return null;
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
   const str = (x, max = 500) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
   const species = str(o.species, 80) || str(o.name, 80);
   if (!species) return null;
-  // Numbers may come as strings: "7–10", "8 000", "8000–15000 лк".
-  const nums = (x) => (String(x ?? '').replace(/(\d)[\s\u00a0\u202f](?=\d{3}\b)/g, '$1').match(/\d+(?:[.,]\d+)?/g) || []).map((m) => Number(m.replace(',', '.')));
-  const num = (x) => nums(x)[0];
-  const yes = (x) => x === true || /^(true|да|yes)$/i.test(String(x).trim());
-  let lux = (Array.isArray(o.lux) ? o.lux.map(num) : nums(o.lux)).filter((x) => x > 0);
-  lux = lux.length ? [Math.min(...lux), Math.max(...lux)].map((x) => clamp(Math.round(x), 300, 100000)) : [6000, 15000];
-  const quips = Array.isArray(o.quips) ? o.quips.map((q) => str(q, 120)).filter(Boolean).slice(0, 5) : [];
   const type = importType(o.type);
-  // Clay pebbles almost always stand in a pot with a reservoir.
-  const watering = !MEDIA[type].pot ? 'top' : MEDIA[type].watering && !o.watering ? MEDIA[type].watering : importWatering(o.watering, o.type);
   return {
-    species, name: str(o.name, 40) === species ? '' : str(o.name, 40),
+    species, latin: str(o.latin, 80), name: str(o.name, 40) === species ? '' : str(o.name, 40),
     room: cap(str(o.room, 40)), spot: cap(str(o.spot ?? o.place, 40)),
-    emoji: [...str(o.emoji, 16)].slice(0, 2).join('') || '🪴',
-    type, ...(watering !== 'top' ? { watering } : {}),
-    // Drip irrigation is checked every 2 weeks (it doesn't learn): the AI's watering interval doesn't apply.
-    lux, every: watering === 'drip' ? WATERING.drip.start() : clamp(Math.round(num(o.every)) || 6, 1, 60),
-    check: str(o.check, 100), water: str(o.water), soil: str(o.soil), cond: str(o.cond), tip: str(o.tip),
-    toxic: yes(o.toxic), big: yes(o.big), quips: quips.length ? quips : GENERIC_QUIPS,
+    type, watering: type && !MEDIA[type].pot ? '' : importWatering(o.watering, o.type),
+    like: importLike(o.like), guess: o.guess === true || /^(true|да|yes)$/i.test(String(o.guess ?? '').trim()),
   };
 }
+// The catalog card for a plant the AI named. A card fits when every word of its name, or of one of its `aka`
+// names, is among the AI's words: the Russian name and the Latin one, read as Russian like in the catalog search,
+// with endings trimmed and small typos forgiven. The card covering most of the AI's words wins, so «Фикус
+// Бенджамина» gets its own card, not «Фикус», and «Традесканция зебрина» isn't taken for an alocasia
+// (whose `aka` has «зебрина» too). Ties go to a card matched by its own name, then a specific card over a generic one,
+// then catalog order. No card: null.
+const matchWords = (s) => norm(s).split(/[^a-zа-я0-9]+/).filter(Boolean)
+  .map((w) => looseSound(searchStem(/[a-z]/.test(w) ? fromLatin(w) : w)));
+const wordFits = (w, t) => w === t || (Math.min(w.length, t.length) >= 4 && (t.startsWith(w) || w.startsWith(t)))
+  || (w.length >= 8 && nearStart(w, t, w.length >= 11 ? 2 : 1));
+let catalogNames = null;
+function catalogCard(it) {
+  catalogNames ||= PLANTS.filter((d) => !d.hidden)
+    .map((d) => ({ d, names: [d.species, ...String(d.aka || '').split(',')].map(matchWords).filter((ws) => ws.length) }));
+  const words = matchWords(`${it.species} ${it.latin}`);
+  let best = null, top = [0, 0, 0];
+  catalogNames.forEach(({ d, names }) => {
+    const covered = new Set();
+    let own = 0;
+    names.forEach((ws, k) => {
+      const at = ws.map((w) => words.findIndex((t) => wordFits(w, t)));
+      if (at.some((i) => i < 0)) return;
+      at.forEach((i) => covered.add(i));
+      if (!k) own = 1;
+    });
+    const score = [covered.size, own, d.generic ? 0 : 1];
+    const better = score.map((x, i) => x - top[i]).find((x) => x) > 0;
+    if (covered.size && better) { best = d; top = score; }
+  });
+  return best;
+}
+// A plant the catalog doesn't have becomes an own plant like a generic type: the one for its medium
+// (water, a block, a terrarium, an aquarium), else the one the AI said it's like.
+const MEDIUM_LIKE = { water: 'cuttings', mount: 'g-mount', terrarium: 'g-terrarium', aquarium: 'g-aquarium' };
+const importBase = (it) => {
+  const id = MEDIUM_LIKE[it.type] || it.like || { dry: 'g-succ', bark: 'g-orchid' }[it.type] || 'g-easy';
+  return PLANTS.find((d) => d.id === id) || PLANTS.find((d) => d.id === 'g-easy');
+};
 
+// The plants read so far: pastes and files add up, so an answer in several messages can be pasted part by part.
 let importItems = [];
-let importRepaired = false;
-let importExt = '';
 let importPicked = new Set();
+// The unclosed plant at the end of the last part, joined with the next one.
+let importCarry = '';
+// How the import went, for stats: ways used, parts read, whether an answer broke off, file kind.
+let importInfo = null;
 // How to copy the shown prompt by hand: the gesture that opens the system menu differs by platform.
 // «Как узнать, что за растение»: for people who don't know the name. The phone's own apps or an AI chat tell it
 // from a photo; nothing goes through Жунгли. Opened from the add sheet (`back`, with the search as it was) or from
@@ -464,7 +516,7 @@ function openNameHelp(from, back = '', q = '') {
     ${subHead('Как узнать, что за растение', back, q)}
     <div class="info"><b>Сфотографируйте</b>Лист целиком и растение сбоку, при дневном свете.</div>
     <div class="info"><b>Спросите приложение</b>Умную камеру в приложении Яндекс или Google Lens. Они покажут похожие растения с названиями.</div>
-    <div class="info"><b>Или спросите ИИ</b>Отправьте фото в ChatGPT или Claude: он определит растения и сразу соберёт список для Жунглей.
+    <div class="info"><b>Или спросите ИИ</b>Отправьте фото в Алису, GigaChat или ChatGPT: ИИ определит растения и сразу соберёт список для Жунглей.
       <button class="mt-10 btn wide" data-act="add-import">${I('bot')}Перенести из чата с ИИ</button></div>
     <div class="info"><b>Найдите в каталоге</b>Сорт не знаете: берите карточку без сорта, например «Диффенбахия». Даже род неясен: «Своё растение» и в нём «На что похоже».
       ${search}</div>`;
@@ -480,9 +532,11 @@ function openImport(back = '') {
   track('import_opened');
   importItems = [];
   importPicked = new Set();
+  importCarry = '';
+  importInfo = { via: new Set(), parts: 0, cut: false, repaired: false, ext: '' };
   $('#sheet-body').innerHTML = `
-    ${subHead('Импорт из чата с ИИ', back)}
-    <div class="info"><b>Шаг 1 из 2</b>Скопируйте запрос и отправьте ИИ, который умеет делать файлы: ChatGPT, Claude или другому. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
+    ${subHead('Перенести из чата с ИИ', back)}
+    <div class="info"><b>Шаг 1 из 2</b>Скопируйте запрос и отправьте в чат с ИИ: DeepSeek, GigaChat, Алиса, ChatGPT или другой. Лучше в чат, где уже обсуждали растения. Не знаете названий? Приложите к запросу фото растений.
       <button class="mt-10 btn ok wide" data-act="import-copy">${I('copy')}Скопировать запрос</button>
       <div class="mt-12 small" id="imp-manual" hidden><p class="m-0 muted">Длинный запрос чат может вставить файлом-вложением. Так и должно быть, просто отправьте.</p>
         <p class="m-0 copy-help"><button class="linkish" data-act="import-show">Не вставляется? Показать запрос</button></p></div>
@@ -490,10 +544,16 @@ function openImport(back = '') {
         <textarea class="mt-8 input" id="imp-prompt" rows="8" inputmode="none" aria-label="Запрос для ИИ" aria-describedby="imp-prompt-hint" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
         <button class="mt-8 btn wide" data-act="import-copy-again">${I('copy')}Скопировать ещё раз</button></div>
       <p class="sr-only" id="imp-status" role="status"></p></div>
-    <div class="info"><b>Шаг 2 из 2</b>ИИ сделает файл plants.json. Сохраните его на устройство и выберите здесь.
-      <button class="mt-10 btn wide" data-act="import-file" id="imp-file">${I('file-up')}Выбрать файл</button></div>
+    <div class="info"><b>Шаг 2 из 2</b>Скопируйте ответ ИИ целиком и вставьте сюда. Если ИИ прислал файл, выберите его.
+      <div class="mt-10 field m-0"><label for="imp-text">Ответ ИИ</label>
+        <textarea class="input" id="imp-text" rows="3" placeholder="Вставьте ответ сюда" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea></div>
+      <button class="mt-8 btn ok wide" data-act="import-read">${I('sprout')}Показать растения</button>
+      <button class="mt-8 btn wide" data-act="import-file">${I('file-up')}Выбрать файл</button></div>
+    <div id="imp-note"></div>
     <div id="imp-list"></div>
     <div class="pick-bar" id="imp-bar" hidden><button class="btn primary wide" data-act="import-add" id="imp-add" disabled>Ничего не выбрано</button></div>`;
+  // A paste is read right away; typed or edited text waits for «Показать растения».
+  $('#imp-text').addEventListener('paste', () => setTimeout(importPasted));
   openSheet();
 }
 // Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the
@@ -578,54 +638,124 @@ const IMPORT_MAX = 1e6;
 async function importFile(f) {
   const dot = f.name.lastIndexOf('.');
   const ext = { json: 'json', txt: 'txt' }[dot < 0 ? '' : f.name.slice(dot + 1).toLowerCase()] || 'other';
-  if (f.size > IMPORT_MAX) { showImport(null, ext, 'too_big'); return; }
+  if (f.size > IMPORT_MAX) { readImport(null, 'file', ext, 'too_big'); return; }
   let text = null;
-  try { text = (await f.text()).replace(/^\uFEFF/, ''); } catch (e) { /* unreadable */ }
-  showImport(text, ext);
+  try { text = (await f.text()).replace(/^﻿/, ''); } catch (e) { /* unreadable */ }
+  readImport(text, 'file', ext);
+}
+// Reads what's in the answer field; once its plants are in the list, the field empties for the next part.
+function importPasted() {
+  const ta = $('#imp-text');
+  if (!ta) return;
+  const text = ta.value;
+  if (!text.trim()) { $('#imp-note').innerHTML = '<p class="small">Сначала вставьте в поле ответ ИИ.</p>'; ta.focus(); return; }
+  if (readImport(text.length > IMPORT_MAX ? null : text, 'paste', '', text.length > IMPORT_MAX ? 'too_big' : '')) ta.value = '';
 }
 // A backup picked here by mistake: it has no plant list for import, but can be restored in settings.
 function isBackup(text) {
   try { const d = JSON.parse(text); return !!d && d.app === 'zhungli' && !!d.state; } catch (e) { return false; }
 }
-function showImport(text, ext, fail) {
-  const res = fail ? { error: fail } : text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text);
-  const box = $('#imp-list');
-  if (!box) return;
-  $('#imp-file').innerHTML = `${I('file-up')}${res.error ? 'Выбрать файл' : 'Выбрать другой файл'}`;
+// One part of the answer (a paste or a file): its plants join the list, each with its catalog card or the
+// generic type it's like. A part with no plants shows why and leaves the list as it was. Returns whether it read.
+function readImport(text, via, ext = '', fail = '') {
+  const res = fail ? { error: fail } : text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text, importCarry);
+  const note = $('#imp-note');
+  if (!note) return false;
+  const where = via === 'file' ? 'этом файле' : 'этом тексте';
   if (res.error) {
-    importItems = [];
-    importPicked = new Set();
-    box.innerHTML = res.error === 'backup'
-      ? '<p class="error-note small">Это резервная копия Жунглей, а не файл от ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
-      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: 'Этот файл слишком большой для списка растений. Похоже, выбран не тот.' }[res.error] || 'В этом файле не нашлось списка растений.'} Нужен файл plants.json, который ИИ сделает по запросу из шага 1.</p>
-      <p class="small muted" data-from="import">Всё равно не выходит? Пришлите файл Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}, она разберётся и починит.</p>`;
-    track('import_failed', { length: text ? text.length : 0, reason: res.error, file_ext: ext, ...(res.diag || {}) });
-  } else {
-    importItems = res.items;
-    importRepaired = res.repaired;
-    // Plants already in the collection start unticked.
-    const have = new Set(allPlants().map((p) => p.species.toLowerCase()));
-    importPicked = new Set(importItems.map((it, i) => i).filter((i) => !have.has(importItems[i].species.toLowerCase())));
-    importExt = ext;
-    // All of them already in the collection: nothing is ticked and the add bar stays hidden, so say how to add them anyway.
-    const note = importPicked.size ? `Найдено ${plantsN(importItems.length)}. Снимите галочку с лишних.`
-      : `${importItems.length === 1 ? 'Это растение уже' : `Все ${plantsN(importItems.length)} уже`} в коллекции. Отметьте, если нужны ещё раз.`;
-    box.innerHTML = `<p class="found-note small muted">${note}</p>` +
-      importItems.map((it, i) => {
-        const dup = !importPicked.has(i);
-        return `<button class="pick ${dup ? '' : 'on'}" data-act="import-pick" data-i="${i}">
-        <span class="pe" aria-hidden="true">${plantSvg(it, 'fine')}</span><span class="pt"><b>${[it.name, it.species].filter(Boolean).map(typedHtml).join(' · ')}</b>
-        <small>${dup ? 'уже есть в коллекции · ' : ''}${it.room || it.spot ? [it.room, it.spot].filter(Boolean).map(typedHtml).join(' · ') + ' · ' : ''}${esc(TYPE_NAMES[it.type])}${it.watering ? `, ${esc(WATERING[it.watering].name.toLowerCase())}` : ''} · свет ${kLux(it.lux[0])}–${kLux(it.lux[1])} ${LK} · раз в ${days(it.every)}</small></span>
-        <span class="pc" aria-hidden="true">${I(dup ? 'plus' : 'check')}</span></button>`;
-      }).join('');
+    note.innerHTML = res.error === 'backup'
+      ? '<p class="error-note small">Это резервная копия Жунглей, а не ответ ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
+      : `<p class="error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>
+      <p class="small muted" data-from="import">Всё равно не выходит? Пришлите ответ Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}, она разберётся и починит.</p>`;
+    announce(note.querySelector('p').textContent);
+    track('import_failed', { via, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    return false;
   }
+  importCarry = res.tail || '';
+  importInfo.via.add(via);
+  importInfo.parts++;
+  importInfo.cut = res.cut;
+  importInfo.repaired ||= res.repaired;
+  if (via === 'file') importInfo.ext = ext;
+  // The same plant from a part pasted twice, or repeated by the AI when it carried on, is listed once.
+  const key = (it) => [it.species, it.name, it.room, it.spot].map(norm).join('|');
+  const listed = new Set(importItems.map(key));
+  const fresh = res.items.filter((it) => !listed.has(key(it)) && listed.add(key(it)));
+  // Plants already in the collection (same species and name) start unticked.
+  const have = new Set(allPlants().map((p) => `${norm(p.species)}|${norm(p.name)}`));
+  const first = !importItems.length;
+  fresh.forEach((it) => {
+    it.card = catalogCard(it);
+    if (!it.card) it.base = importBase(it);
+    it.dup = have.has(`${norm(it.species)}|${norm(it.name)}`);
+    if (!it.dup) importPicked.add(importItems.length);
+    importItems.push(it);
+  });
+  const n = importItems.length;
+  const head = !fresh.length ? 'Эти растения уже в списке.'
+    : !first ? `Добавлено ещё ${fresh.length}, всего ${plantsN(n)}.`
+      : importPicked.size ? `Найдено ${plantsN(n)}. Снимите галочку с лишних.`
+        // All of them already in the collection: nothing is ticked and the add bar stays hidden, so say how to add them anyway.
+        : `${n === 1 ? 'Это растение уже' : `Все ${plantsN(n)} уже`} в коллекции. Отметьте, если нужны ещё раз.`;
+  const more = res.cut ? '<p class="small"><b>Похоже, ответ оборвался.</b> Напишите ИИ «Продолжи» и вставьте сюда продолжение.</p>'
+    : via === 'paste' ? '<p class="small muted">Ответ пришёл несколькими сообщениями? Вставьте следующее так же.</p>' : '';
+  note.innerHTML = `<p class="found-note small muted">${head}</p>${more}`;
+  announce(`${head}${res.cut ? ' Похоже, ответ оборвался.' : ''}`);
+  renderImportList();
+  return true;
+}
+// What a row says about a plant's care: its catalog card, or that it's own and like a generic type.
+const importCare = (it) => (it.card ? `карточка «${esc(it.card.species)}»` : `нет в каталоге, похоже на «${esc(it.base.species)}»`);
+function renderImportList() {
+  $('#imp-list').innerHTML = importItems.map((it, i) => {
+    const on = importPicked.has(i);
+    const place = [it.room, it.spot].filter(Boolean).map(typedHtml).join(' · ');
+    const pic = it.card || { species: it.species, type: it.type || it.base.type };
+    return `<button class="pick ${on ? 'on' : ''}" data-act="import-pick" data-i="${i}">
+      <span class="pe" aria-hidden="true">${plantSvg(pic, 'fine')}</span><span class="pt"><b>${[it.name, it.species].filter(Boolean).map(typedHtml).join(' · ')}</b>
+      <small>${it.dup ? 'уже есть в коллекции · ' : ''}${place ? place + ' · ' : ''}${importCare(it)}${it.type ? ` · ${esc(TYPE_NAMES[it.type].toLowerCase())}` : ''}${it.guess ? ' · вид по фото, проверьте' : ''}</small></span>
+      <span class="pc" aria-hidden="true">${I(on ? 'check' : 'plus')}</span></button>`;
+  }).join('');
   updateImportBar();
 }
 const updateImportBar = () => showAddBar($('#imp-bar'), $('#imp-add'), importPicked.size);
+// A plant with a catalog card: added like one from the catalog, keeping the AI's name for it as the species
+// («Монстера Тай Констеллейшн» on «Монстера deliciosa»). A medium or watering the chat mentioned is set as if
+// picked in the plant card, without the «just repotted» pause: the plant already grows that way.
+function importCard(it, i, place) {
+  const d = it.card, id = newId('p', i);
+  const r = S.plants[id] = { ...runtime(d, firstCheck(i, d.every)), def: d.id, medium: mediumIn({}, d), ...place };
+  if (norm(it.species) !== norm(d.species)) r.species = it.species;
+  if (it.type || it.watering) {
+    const medium = it.type || mediumIn(r, d);
+    let watering = it.watering || wateringIn(r, d);
+    if (it.type && !it.watering && MEDIA[medium].watering && (!watering || watering === 'top')) watering = MEDIA[medium].watering;
+    if (setWay(id, medium, watering)) { r.repotted = false; r.nextCheck = firstCheck(i, Math.round(r.interval)); }
+  }
+  return id;
+}
+// A plant the catalog lacks: an own card from the generic type it's like, as «Своё растение» makes it.
+// The type's check question and care tips fit only its own medium: on another one they're left out.
+function importOwn(it, i, place) {
+  const base = it.base, id = newId('c', i);
+  const type = it.type || base.type;
+  const watering = MEDIA[type].pot ? it.watering || MEDIA[type].watering || 'top' : '';
+  const own = type === base.type && (!watering || watering === 'top');
+  const every = own ? base.every : (wayOf({ type, watering }).start || ((b) => b))(base.every);
+  const care = type === base.type ? { check: base.check, water: base.water, soil: base.soil, cond: base.cond } : {};
+  S.custom[id] = {
+    id, species: it.species, cat: 'Мои', emoji: base.emoji || '🪴', ...care, humid: base.humid, big: base.big,
+    lux: [...base.lux], every, type, ...(watering && watering !== 'top' ? { watering } : {}), tip: base.tip || '', quips: base.quips || GENERIC_QUIPS,
+  };
+  S.custom[id].tone = toneOf(S.custom[id]);
+  S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, every)), ...place };
+  return id;
+}
 function addImported() {
   if (addFlow) addFlow.done = true;
   const picked = [...importPicked].sort((a, b) => a - b).map((i) => importItems[i]);
-  const list = [...picked].sort((a, b) => a.every - b.every);
+  const every = (it) => (it.card || it.base).every;
+  const list = [...picked].sort((a, b) => every(a) - every(b));
   // A new collection where every plant has a room keeps no empty default «Комната»: the first imported room takes its place.
   const first = S.rooms[0];
   let rename = !Object.keys(S.plants).length && S.rooms.length === 1 && first.t == null && first.name === 'Комната' && list.every((it) => it.room);
@@ -633,19 +763,22 @@ function addImported() {
   // Rooms come in the order the AI listed them (plants below are sorted by how often to check them).
   picked.forEach((it) => { if (it.room) { importRoom(it.room, rename); rename = false; } });
   list.forEach((it, i) => {
-    const id = newId('c', i);
-    const { name, room, spot: rawSpot, ...d } = it;
     // Reuse a place that differs only in case («подоконник» → «Подоконник»).
-    const spot = rawSpot && (S.spots.find((x) => norm(x) === norm(rawSpot)) || rawSpot);
+    const spot = it.spot && (S.spots.find((x) => norm(x) === norm(it.spot)) || it.spot);
     if (spot && !S.spots.includes(spot)) S.spots.push(spot);
-    S.custom[id] = { ...d, id, cat: 'Мои', tone: toneOf(it) };
-    S.plants[id] = { ...runtime(S.custom[id], firstCheck(i, it.every)), name, spot, room: importRoom(room, false) };
+    const place = { name: it.name, spot, room: importRoom(it.room, false) };
+    const id = it.card ? importCard(it, i, place) : importOwn(it, i, place);
+    if (it.guess) S.plants[id].notes = ['ИИ определил вид по фото, стоит проверить.'];
   });
   initBonus(S);
   save();
   const noSpot = list.filter((it) => !it.spot).length;
+  const carded = list.filter((it) => it.card);
   track('plants_added', {
-    count: list.length, generic_count: 0, source: 'import', repaired: importRepaired, file_ext: importExt,
+    count: list.length, generic_count: carded.filter((it) => it.card.generic).length, catalog_ids: carded.map((it) => it.card.id),
+    own_count: list.length - carded.length, guess_count: list.filter((it) => it.guess).length,
+    source: 'import', via: importInfo.via.size > 1 ? 'both' : [...importInfo.via][0], parts: importInfo.parts, cut: importInfo.cut,
+    repaired: importInfo.repaired, ...(importInfo.ext && { file_ext: importInfo.ext }),
     with_room: list.filter((it) => it.room).length, with_spot: list.length - noSpot, rooms_created: S.rooms.length - roomsBefore,
   });
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
@@ -735,6 +868,7 @@ Object.assign(ACTS, {
     el.focus();
   },
   'import-show'() { showPrompt(); track('import_prompt_shown'); },
+  'import-read'() { importPasted(); },
   'import-copy-again'(el) {
     copyPrompt(el, (how) => {
       track('import_prompt_copied', { how, from: 'again' });
