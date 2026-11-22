@@ -81,7 +81,7 @@ On every event:
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | `plant_kind`, `plant_type`, `watering`, `generic` |
 | `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days` at rest, plus the plant fields |
 | `feeding_logged` | plants noted as fed | `from`: `day` («Готово» on «День подкормки», with `n` fed of `of` listed) / `card` («Подкормлено сегодня») |
-| `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `0` |
+| `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `14` / `30` / `90` / `0` |
 | `feed_lamp_toggled` | «Зимой под лампой» | `on` |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` |
 | `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none |
