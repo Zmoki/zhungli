@@ -676,7 +676,7 @@ Object.assign(ACTS, {
     document.getElementById('how-' + id).hidden = !open;
     el.setAttribute('aria-expanded', open);
     howOpen.set(id, open);
-    if (open) track('how_opened', kindOf(id));
+    if (open) track('watering_tip_opened', kindOf(id));
   },
   'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
   'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },
@@ -702,7 +702,7 @@ Object.assign(ACTS, {
     bathStep = 0; bathPicked = []; bathOff = new Set();
     logToday({ a: 'bonus:bath', title: 'Банный день' });
     const left = bathPlan().due;
-    track('bath_day_done', { n: ids.length, left: left.length });
+    track('bath_day_done', { count: ids.length, left: left.length });
     afterTask(left.length ? `Все чистые 🛁 В следующий раз: ${nameList(left)}` : 'Все чистые 🛁 До следующего круга', undo);
   },
   'bonus-done'(el) {
@@ -714,7 +714,7 @@ Object.assign(ACTS, {
       fed.forEach(feedDone);
       boxes.filter((x) => !on(x)).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
       feedOff = new Set();
-      track('feeding_logged', { from: 'day', n: fed.length, of: boxes.length });
+      track('feeding_logged', { from: 'day', count: fed.length, of: boxes.length });
       logToday({ a: 'bonus:feed', title: 'День подкормки' });
       afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);
       return;
@@ -739,16 +739,16 @@ Object.assign(ACTS, {
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
   'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
-  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { kind: 'ios_added' }); save(); render(); },
-  'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { kind: el.dataset.kind } : {}); save(); render(); },
+  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { where: 'ios_added' }); save(); render(); },
+  'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;
     if (!ask) return;
     installPrompt = null; // the browser's prompt works once
     try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
-    ask.userChoice.then(({ outcome }) => { track('install_prompt', { outcome }); render(); }, () => render());
+    ask.userChoice.then(({ outcome }) => { track('install_prompt_answered', { outcome }); render(); }, () => render());
   },
-  'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_tapped'); },
+  'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_clicked'); },
   'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },
   'stats-ok'() { S.statsNotice = true; save(); render(); },
   'stats-off'() { statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); },
