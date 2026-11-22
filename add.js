@@ -546,7 +546,8 @@ const IMPORT_KEY = 'zhungli.import';
 const IMPORT_KEEP = 3 * 3600e3;
 function saveImport() {
   try {
-    const { items, picked, info, back, ...rest } = imp;
+    // The pasted text itself (`read`) stays out: it can be long, and the field starts empty anyway.
+    const { items, picked, info, back, read, ...rest } = imp;
     localStorage.setItem(IMPORT_KEY, JSON.stringify({
       ...rest, t: Date.now(), picked: [...picked], info: { ...info, via: [...info.via] },
       items: items.map(({ card, base, ...it }) => it),
@@ -579,7 +580,7 @@ function openImport(back = '') {
 function importStep(n, moved = true, how = '') {
   const from = imp.step;
   imp.step = n;
-  if (n === 3) imp.found = 0;
+  if (n === 3) { imp.found = 0; imp.read = ''; }
   if (n > 1 || imp.copied) saveImport();
   const q = ['Скопируйте запрос для ИИ', 'Как ИИ прислал ответ?', imp.via === 'file' ? 'Выберите файл от ИИ' : 'Вставьте ответ ИИ', 'Проверьте список'][n - 1];
   const back = (to) => `<button class="mt-8 btn ghost wide" data-act="import-step" data-to="${to}">Назад</button>`;
@@ -610,14 +611,14 @@ function importStep(n, moved = true, how = '') {
     body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p>
       <button class="mt-10 btn ok wide" data-act="import-file">${I('file-up')}Выбрать файл</button>
       <div id="imp-note"></div>`;
-    actions = `<button class="btn ok wide" data-act="import-step" data-to="4" id="imp-go" disabled>Проверить список${I('chevron-right')}</button>${back(2)}${help}`;
+    actions = `<button class="btn ok wide" id="imp-go"></button>${back(2)}${help}`;
   } else if (n === 3) {
     // A field to paste into, not a button that reads the clipboard: on iPhone such a button needs a second tap on the
     // system «Вставить» bubble, which confused people.
     body = `<p class="m-0">Под ответом нажмите <span class="kbd" role="img" aria-label="«Копировать»">${I('copy')}</span> и вставьте сюда.</p>
       <textarea class="mt-10 input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ сюда" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
       <div id="imp-note"></div>`;
-    actions = `<button class="btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
+    actions = `<button class="btn ok wide" id="imp-go"></button>${back(2)}${help}`;
   } else {
     // Another part is a side way, so a link: one big button at the bottom, «Добавить», as on the other steps.
     body = `<div id="imp-head"></div><div id="imp-list"></div>
@@ -633,13 +634,28 @@ function importStep(n, moved = true, how = '') {
   if (ta) {
     // A paste is read right away; typed or edited text waits for «Найти растения», which works once there's text.
     ta.addEventListener('paste', () => setTimeout(importPasted, 0, 'paste'));
-    ta.addEventListener('input', () => { if (!imp.found) $('#imp-go').disabled = !ta.value.trim(); });
+    ta.addEventListener('input', importGo);
   }
+  if (n === 3) importGo();
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
     track('import_step', { step: n, from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
+}
+// Step 3's main button. Text waiting to be read: «Найти растения». Plants in the list (found now, or from an
+// earlier part when the person came back with «Вставить ещё часть»): «Проверить список», so the list is never out of
+// reach. Neither: disabled, «Найти растения» for text, «Проверить список» for a file (picked with the button above).
+function importGo() {
+  const go = $('#imp-go'), ta = $('#imp-text');
+  if (!go) return;
+  // Text already read (found plants or not) isn't waiting any more.
+  const waiting = !!ta && !!ta.value.trim() && ta.value !== imp.read;
+  const list = !waiting && (imp.items.length > 0 || !ta);
+  go.disabled = !waiting && !imp.items.length;
+  go.dataset.act = list ? 'import-step' : 'import-read';
+  go.dataset.to = '4';
+  go.innerHTML = list ? `Проверить список${I('chevron-right')}` : 'Найти растения';
 }
 // Selects all of a text field. iOS doesn't select text in a readonly field, so readonly is lifted for the
 // moment of selecting (as clipboard.js does); it's back before the next paint, so no keyboard shows.
@@ -750,8 +766,9 @@ function importMatch(it) {
 // why and leaves the list as it was.
 function readImport(text, via, ext = '', fail = '', how = via) {
   const res = fail ? { error: fail } : text === null ? { error: 'unreadable' } : isBackup(text) ? { error: 'backup' } : parseImport(text, imp.carry);
-  const note = $('#imp-note'), go = $('#imp-go');
+  const note = $('#imp-note');
   if (!note) return;
+  if (via === 'paste') imp.read = $('#imp-text')?.value ?? '';
   const where = via === 'file' ? 'этом файле' : 'этом тексте';
   if (res.error) {
     note.innerHTML = res.error === 'backup'
@@ -759,6 +776,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
       : `<p class="mt-10 error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>`;
     announce(note.textContent);
     track('import_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    importGo();
     return;
   }
   imp.carry = res.tail || '';
@@ -802,12 +820,9 @@ function readImport(text, via, ext = '', fail = '', how = via) {
   const lost = res.bad ? `${plantsN(res.bad)} ${plural(res.bad, 'не прочиталось', 'не прочитались', 'не прочиталось')}. Попросите ИИ прислать ${res.bad === 1 ? 'его' : 'их'} ещё раз.` : '';
   note.innerHTML = `<p class="mt-10 imp-ok">${I('check')}${said}</p>${lost ? `<p class="mt-6 m-0 small">${lost}</p>` : ''}`;
   announce(`${said}. ${lost}`.trim());
-  go.disabled = false;
   // Found: «Проверить список» is the one main button now.
   $('#sheet [data-act="import-file"]')?.classList.remove('ok');
-  go.dataset.act = 'import-step';
-  go.dataset.to = '4';
-  go.innerHTML = `Проверить список${I('chevron-right')}`;
+  importGo();
 }
 // Step 4: the plants found, ticked except those already in the collection.
 function renderImportList() {
