@@ -75,10 +75,12 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `greenhouse_removed` | greenhouse removed from the vent card | none | v7 |
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none | v131 |
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») | v7 |
-| `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` / `bath` (the bath day) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
+| `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160) | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` / `bath` (the bath day, up to v159) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
 | `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133 |
-| `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none | v137 |
-| `bath_day_done` | «Промыто» on the bath day card | `count`: bathed (was `n`)<br>`left`: plants still due a rinse | v137 |
+| `bath_day_started` | step 1 of the bath day card: «Да!» on «Устраиваем сегодня банный день?» | none | v137 |
+| `bath_day_snoozed` | step 1 of the bath day card: «Через 3 дня» (before v160: `bonus_skipped` `kind: bath`) | none | v160 |
+| `bath_day_picked` | step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed | `count`: plants ticked<br>`of`: plants offered (at most `BATH_MAX`, dry pots only) | v160 |
+| `bath_day_finished`<br>was `bath_day_done` | step 3 of the bath day card: «Промыто» | `count`: bathed (was `n`)<br>`left`: plants still due a rinse | v160 |
 | `reminder_logged` | «Обрезано сегодня» in the plant card | `kind`: `prune`<br>`from`: `card` | v120 |
 | `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` | v137 |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none | v132 |
@@ -170,7 +172,8 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | --- | --- | --- | --- |
 | `limit_changed` | plants-per-day limit changed | `limit` | v7 |
 | `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v130 |
-| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed | `every`: `0` (off) / `60` / `120` / `180` | v137 |
+| `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: on starts at every 120 days | v160 |
+| `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v160 |
 | `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v7 |
 | `backup_imported` | backup restored | none | v7 |
 | `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v90 |
@@ -209,6 +212,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
+| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
 | `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
 | `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed` | `on` | v69–v75 |
@@ -224,7 +228,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 
 [`analytics/events.json`](analytics/events.json) is the tracking plan and the source of truth: every event, its props, types, values and history. The tables above, the old-name translation in `functions/ingest/batch.js` and the PostHog event descriptions are made from it.
 
-1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text.
+1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix: `bath_day_*` is the app's «Банный день» (settings and the card on «Сегодня»), `bath_*` one plant's choice in its card.
 2. Add or change the event in `events.json`. Reuse prop names and value lists that exist (`plant` props, `medium`, `catalog_id`…). A `text` prop needs `why` and a line in `privacy.html`.
 3. Renamed an event or a prop? Keep the old name in `was`: the ingest function translates it for phones still on an old version. Gone? Set `removed` to the first version without it; don't delete it.
 4. `node tools/events.js --write`, then `node tools/events.js` must report no problems.

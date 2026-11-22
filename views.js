@@ -687,12 +687,14 @@ Object.assign(ACTS, {
     el.querySelector('.pc').innerHTML = I(on ? 'check' : 'plus');
   },
   'bath-go'(el) {
-    bathPicked = [...el.closest('.task').querySelectorAll('[data-pick]')].filter((x) => x.getAttribute('aria-pressed') === 'true').map((x) => x.dataset.pick);
+    const tiles = [...el.closest('.task').querySelectorAll('[data-pick]')];
+    bathPicked = tiles.filter((x) => x.getAttribute('aria-pressed') === 'true').map((x) => x.dataset.pick);
     if (!bathPicked.length) { toast('Отметьте, кого купаем'); return; }
     bathStep = 2; bathRender('[data-act="bath-done"]');
+    track('bath_day_picked', { count: bathPicked.length, of: tiles.length });
   },
   'bath-back'() { bathStep = 1; bathRender('[data-act="bath-go"]'); },
-  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bonus_skipped', { kind: 'bath' }); toast('Ок, через 3 дня 🙂'); },
+  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bath_day_snoozed'); toast('Ок, через 3 дня 🙂'); },
   // A rinse is a thorough watering: it counts as one, and the plant's rinse restarts.
   'bath-done'() {
     const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
@@ -702,7 +704,7 @@ Object.assign(ACTS, {
     bathStep = 0; bathPicked = []; bathOff = new Set();
     logToday({ a: 'bonus:bath', title: 'Банный день' });
     const left = bathPlan().due;
-    track('bath_day_done', { count: ids.length, left: left.length });
+    track('bath_day_finished', { count: ids.length, left: left.length });
     afterTask(left.length ? `Все чистые 🛁 В следующий раз: ${nameList(left)}` : 'Все чистые 🛁 До следующего круга', undo);
   },
   'bonus-done'(el) {

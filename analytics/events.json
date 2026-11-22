@@ -166,11 +166,11 @@
     },
     "bonus_skipped": {
       "area": "care", "since": 7,
-      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?»",
+      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160)",
       "props": {
         "kind": { "type": "enum", "values": {
           "dust": "", "rotate": "", "flush": "", "leach": "", "roots": "", "prune": "",
-          "bath": "the bath day",
+          "bath": "the bath day, up to v159",
           "backup": "the backup task",
           "feedback": "«Не нужно» on «Как вам Жунгли?»"
         } }
@@ -187,11 +187,23 @@
     },
     "bath_day_started": {
       "area": "care", "since": 137,
-      "when": "«Да!» on «Устраиваем сегодня банный день?»"
+      "when": "step 1 of the bath day card: «Да!» on «Устраиваем сегодня банный день?»"
     },
-    "bath_day_done": {
-      "area": "care", "since": 137,
-      "when": "«Промыто» on the bath day card",
+    "bath_day_snoozed": {
+      "area": "care", "since": 160,
+      "when": "step 1 of the bath day card: «Через 3 дня» (before v160: `bonus_skipped` `kind: bath`)"
+    },
+    "bath_day_picked": {
+      "area": "care", "since": 160,
+      "when": "step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed",
+      "props": {
+        "count": { "type": "int", "desc": "plants ticked" },
+        "of": { "type": "int", "desc": "plants offered (at most `BATH_MAX`, dry pots only)" }
+      }
+    },
+    "bath_day_finished": {
+      "area": "care", "since": 160, "was": ["bath_day_done"],
+      "when": "step 3 of the bath day card: «Промыто»",
       "props": {
         "count": { "type": "int", "desc": "bathed", "was": ["n"] },
         "left": { "type": "int", "desc": "plants still due a rinse" }
@@ -671,10 +683,15 @@
       "when": "«Дома есть кошка или собака» in settings",
       "props": { "on": { "type": "bool" } }
     },
-    "bath_day_changed": {
-      "area": "settings", "since": 137,
-      "when": "«Банный день» in the app's settings turned on, off, or its interval changed",
-      "props": { "every": { "type": "enum", "values": { "0": "off", "60": "", "120": "", "180": "" } } }
+    "bath_day_toggled": {
+      "area": "settings", "since": 160,
+      "when": "«Банный день» checkbox in the app's settings",
+      "props": { "on": { "type": "bool", "desc": "on starts at every 120 days" } }
+    },
+    "bath_day_schedule_changed": {
+      "area": "settings", "since": 160,
+      "when": "«Как часто купать каждое растение» chip under «Банный день» in the app's settings",
+      "props": { "every": { "type": "enum", "desc": "days", "values": { "60": "", "120": "", "180": "" } } }
     },
     "backup_exported": {
       "area": "settings", "since": 7,
@@ -795,6 +812,11 @@
       }
     },
 
+    "bath_day_changed": {
+      "area": "settings", "since": 137, "removed": 160,
+      "when": "«Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either)",
+      "props": { "every": { "type": "enum", "values": { "0": "off", "60": "", "120": "", "180": "" } } }
+    },
     "answer_undone": {
       "area": "care", "since": 152, "removed": 159,
       "when": "«×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type`",
