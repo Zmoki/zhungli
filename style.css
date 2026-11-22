@@ -476,8 +476,9 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 @media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 /* «История» list: grouped by month, an icon in the action's color, the date under the word, «×» on the newest answer */
 /* «Полив» on top of «Уход»: a plain block (title, two marks, the button), not a folding row */
-.water-row { padding: 18px 20px 20px; }
-.wmarks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0 0; font-size: 0.882rem; color: var(--muted); }
+.water-row { padding: 0; }
+.water-head { display: flex; align-items: center; min-height: 60px; padding: 14px 20px; }
+.wmarks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 0.882rem; color: var(--muted); }
 .wmarks span { display: inline-flex; align-items: center; gap: 6px; }
 .wmarks .ic { width: 18px; height: 18px; flex: none; }
 .hl-month { font-size: 0.882rem; color: var(--muted); font-weight: 900; margin: 20px 0 8px; }
@@ -513,7 +514,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .group h3 { margin: 0 0 14px; font-size: 1rem; font-weight: 900; }
 /* Plant settings: groups of folding rows, the current value on the right; a value that doesn't apply is grey.
    Each group is a card with its name in a darker beige band on top, so the name clearly belongs to its rows. */
-.srows { margin: 0 0 20px; border: 1px solid transparent; border-radius: 20px; background: var(--card); overflow: hidden; }
+.srows { margin: 0 0 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); overflow: hidden; }
 .srows-title { margin: 0; padding: 12px 20px; border-bottom: 1px solid transparent; background: var(--band); color: var(--ink); text-align: center; font-size: 1.059rem; font-weight: 900; }
 /* Transparent borders turn visible in forced colors, where the band and card backgrounds are gone. */
 .srow + .srow { border-top: 1px solid var(--line); }
@@ -526,9 +527,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srow-v.off { font-style: italic; }
 .srow-head .ic { flex: none; width: 1.1em; height: 1.1em; color: var(--muted); transition: transform .15s; }
 .srow-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
-.srow-body { padding: 4px 20px 24px; }
+/* An open row's inner part is white (--surface), so it reads apart from the beige heads */
+.srow-body { padding: 16px 20px 24px; background: var(--surface); }
 /* Room around the action buttons in a row: away from the text above, and their floor clear of the row's edge */
-:is(.srow-body, .water-row) > .btn, .srow-body > div > .btn, .srow-body .btns { margin-top: 16px; }
+/* Every action button in a row: full width (.wide), centered, with its floor, 16px under the text above */
+.srow-body > .btn, .srow-body > div > .btn, .srow-body .btns { margin-top: 16px; }
 .srow-body > .field:last-child, .srow-body > div:last-child > .field:last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .srow-head .ic { transition: none; } }
 .group > .field:last-child, .group > div:last-child > .field:last-child { margin-bottom: 0; }
