@@ -18,6 +18,7 @@ The core look and feel of Жунгли. Accessibility and tone rules are in [CLA
 - **Sheet heads:** the title and ×, plus ← when there's a sheet to go back to. No icon square: it took a third of the first screen.
 - **Stories** («Как работают Жунгли»): their own look, the same in both themes. Deep leaf green (`--st-bg`) with cream text, white progress bars, flat pill buttons without the chunky floor, and the app's real screens inside in a cream phone frame. The phones are pictures (hidden from screen readers, which get the same steps as text) scaled down to fit, so their text may end up under 14px; the drawn Safari's text is in rem like the app's.
 - **Shape:** big rounded corners (`--radius`, 26px) and round chips.
+- **Space:** generous, so each card and control reads on its own (W3C COGA: use white space): 24px between cards, 20px inside a task card, 14px between buttons, 10px between chips, 12px between picker rows and info blocks, 36px above a section heading.
 
 ## Color means something
 
