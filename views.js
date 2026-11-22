@@ -332,7 +332,8 @@ function viewToday() {
       buttons: `<button class="btn ${g.fixed ? 'ok' : 'water'}" data-act="water" data-id="${esc(p.id)}">${I(yi)}${yes}</button>
         <button class="btn" data-act="wet" data-id="${esc(p.id)}">${ni ? I(ni) : ''}${no}</button>`,
       hint: resting(p) && p.rest ? p.rest.water : p.water,
-      fold: (resting(p) && p.rest ? p.rest.water : p.water) ? { id: p.id, open: howOpen.get(p.id) ?? checksOf(p).length < HOW_OPEN, water: !g.fixed } : null,
+      // A resting plant's tip is a warning (water much less): it stays open, like every warning.
+      fold: (resting(p) && p.rest ? p.rest.water : p.water) ? { id: p.id, open: howOpen.get(p.id) ?? (checksOf(p).length < HOW_OPEN || !!(resting(p) && p.rest)), water: !g.fixed } : null,
       after: `<button class="later" data-act="later" data-id="${esc(p.id)}">${I('skip-forward')}Завтра</button>`,
     });
   });

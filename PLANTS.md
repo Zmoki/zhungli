@@ -139,7 +139,7 @@ Where statuses show:
 - **Grid cards:** faces only. The word is there for screen readers.
 - **Plant card:** face and word on the photo.
 - **Filter chips:** under the search, with counts.
-- **Light tab:** a tag on each row.
+- **Light tab:** a tag on each measured row.
 
 ## Light
 
