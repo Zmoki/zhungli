@@ -223,7 +223,7 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 // «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
 // `bathOff` and `feedOff` keep the unticked ones across redraws.
 let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
-let bathShownOn = '', feedShownOn = ''; // the day bath_day_shown / feed_day_shown went out in this launch
+let bathShownOn = '', feedShownOn = '', pruneShownOn = ''; // the day bath_day_shown / feed_day_shown / prune_task_shown went out in this launch
 // True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
 let sampleDraw = false;
 const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
@@ -365,6 +365,8 @@ function viewToday() {
   if (bathCard && !sampleDraw && !document.hidden && bathStep === 0 && bathShownOn !== t) { bathShownOn = t; track('bath_day_shown', { count: bp.offer.length }); }
   const feedTask = bonus.find((b) => b.key.startsWith('feed:'));
   if (feedTask && !sampleDraw && !document.hidden && feedShownOn !== t) { feedShownOn = t; track('feed_day_shown', { count: feedTask.pick.length }); }
+  const pruneTasks = bonus.filter((b) => b.key.startsWith('prune:')).length;
+  if (pruneTasks && !sampleDraw && !document.hidden && pruneShownOn !== t) { pruneShownOn = t; track('prune_task_shown', { count: pruneTasks }); }
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
@@ -729,12 +731,14 @@ Object.assign(ACTS, {
     }
     const b = bonusTasks().find((x) => x.key === el.dataset.key);
     bonusDone(el.dataset.key);
-    track('bonus_done', { kind: el.dataset.key.split(':')[0] });
+    if (el.dataset.key.startsWith('prune:')) track('prune_task_finished');
+    else track('bonus_done', { kind: el.dataset.key.split(':')[0] });
     logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
     afterTask('Бонус засчитан ✨', undo);
   },
   'bonus-skip'(el) {
     if (el.dataset.key.startsWith('feed:')) track('feed_day_snoozed', { count: bonusKeys(el.dataset.key).length });
+    else if (el.dataset.key.startsWith('prune:')) track('prune_task_snoozed');
     else track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
     bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через 3 дня 🙂');
   },

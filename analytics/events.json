@@ -152,24 +152,25 @@
     },
     "bonus_done": {
       "area": "care", "since": 7,
-      "when": "bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`)",
+      "when": "bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`, pruning `prune_task_finished` since v163)",
       "props": {
         "kind": { "type": "enum", "values": {
           "dust": "", "rotate": "",
           "flush": "clay pebbles",
           "leach": "mineral medium",
           "roots": "aquarium",
-          "prune": "a reminder turned on in the plant card",
+          "prune": "a reminder turned on in the plant card, up to v162",
           "feedback": "«Написать» on «Как вам Жунгли?»"
         } }
       }
     },
     "bonus_skipped": {
       "area": "care", "since": 7,
-      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162)",
+      "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162, pruning `prune_task_snoozed` since v163)",
       "props": {
         "kind": { "type": "enum", "values": {
-          "dust": "", "rotate": "", "flush": "", "leach": "", "roots": "", "prune": "",
+          "dust": "", "rotate": "", "flush": "", "leach": "", "roots": "",
+          "prune": "up to v162",
           "bath": "the bath day, up to v159",
           "feed": "the feeding day, up to v161",
           "backup": "the backup task",
@@ -227,13 +228,19 @@
         "left": { "type": "int", "desc": "plants still due a rinse" }
       }
     },
-    "reminder_logged": {
-      "area": "care", "since": 120,
-      "when": "«Обрезано сегодня» in the plant card",
-      "props": {
-        "kind": { "type": "enum", "values": { "prune": "" } },
-        "from": { "type": "enum", "values": { "card": "" } }
-      }
+    "prune_task_shown": {
+      "area": "care", "since": 163,
+      "when": "«Обрежьте: …» tasks drawn on «Сегодня», once per launch and day, while the app is on screen",
+      "note": "The funnel's first step: count devices.",
+      "props": { "count": { "type": "int", "desc": "pruning tasks shown (one per plant)" } }
+    },
+    "prune_task_finished": {
+      "area": "care", "since": 163,
+      "when": "«Обрезано» on a «Обрежьте: …» task (before v163: `bonus_done` `kind: prune`)"
+    },
+    "prune_task_snoozed": {
+      "area": "care", "since": 163,
+      "when": "«Через 3 дня» on a «Обрежьте: …» task (before v163: `bonus_skipped` `kind: prune`)"
     },
     "rinse_logged": {
       "area": "care", "since": 137,
@@ -368,15 +375,24 @@
       "area": "plant", "since": 162,
       "when": "«Подкормлено сегодня» in the plant card's «Подкормка» (before v162: `feeding_logged` `from: card`)"
     },
-    "reminder_changed": {
-      "area": "plant", "since": 120,
-      "when": "«Звать на обрезку?» or its options changed in the plant card",
-      "props": {
-        "kind": { "type": "enum", "values": { "prune": "" } },
-        "action": { "type": "enum", "values": { "on": "", "off": "", "every": "", "months": "" } },
-        "every": { "type": "enum", "desc": "days, unless off", "values": { "14": "", "30": "", "60": "", "300": "" } },
-        "months": { "type": "int", "desc": "how many months are on, unless off" }
-      }
+    "prune_toggled": {
+      "area": "plant", "since": 163,
+      "when": "«Звать на обрезку?» in the plant card's «Обрезка»",
+      "props": { "on": { "type": "bool", "desc": "`true`: switched on, with the card's start interval and months" } }
+    },
+    "prune_schedule_changed": {
+      "area": "plant", "since": 163,
+      "when": "how often chip under «Звать на обрезку?» in the plant card",
+      "props": { "every": { "type": "enum", "desc": "days", "values": { "14": "", "30": "", "60": "", "300": "once a year" } } }
+    },
+    "prune_months_changed": {
+      "area": "plant", "since": 163,
+      "when": "a month chip under «Звать на обрезку?» in the plant card",
+      "props": { "months": { "type": "int", "desc": "how many months are on now" } }
+    },
+    "prune_logged": {
+      "area": "plant", "since": 163, "was": ["reminder_logged"],
+      "when": "«Обрезано сегодня» in the plant card's «Обрезка»"
     },
     "bath_toggled": {
       "area": "plant", "since": 159,
@@ -834,6 +850,16 @@
       }
     },
 
+    "reminder_changed": {
+      "area": "plant", "since": 120, "removed": 163,
+      "when": "«Звать на обрезку?» or its options changed in the plant card; replaced by `prune_toggled`, `prune_schedule_changed` and `prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день»",
+      "props": {
+        "kind": { "type": "enum", "values": { "prune": "", "rinse": "before «Банный день»" } },
+        "action": { "type": "enum", "values": { "on": "", "off": "", "every": "", "months": "" } },
+        "every": { "type": "enum", "desc": "days, unless off", "values": { "14": "", "30": "", "60": "", "300": "" } },
+        "months": { "type": "int", "desc": "how many months are on, unless off" }
+      }
+    },
     "feeding_logged": {
       "area": "care", "since": 133, "removed": 162,
       "when": "plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`)",
