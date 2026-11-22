@@ -243,8 +243,9 @@ function bathHtml(bp) {
   }
   if (bathStep === 2) {
     const ps = bathPicked.map(plant).filter(Boolean);
-    return taskCard({ ...base, sub: ps.map((p) => p.title).join(', '), task: 'Пошли купать!', hint: RINSE.hint,
-      pick: `<div class="bath-pics" aria-hidden="true">${ps.map((p) => `<span class="bath-pic">${picOf(p)}</span>`).join('')}</div>`,
+    // The pictures say who: no names on screen, but screen readers get them.
+    return taskCard({ ...base, sub: plantsN(ps.length), task: 'Пошли купать!', hint: RINSE.hint,
+      pick: `<div class="bath-pics" role="img" aria-label="${esc(ps.map((p) => p.title).join(', '))}">${ps.map((p) => `<span class="bath-pic">${picOf(p)}</span>`).join('')}</div>`,
       buttons: `<button class="btn ok" data-act="bath-done">${I('check')}Покупали!</button><button class="btn ghost" data-act="bath-back">Назад</button>` });
   }
   return taskCard({ ...base, sub: `${plantsN(bp.offer.length)} с подсохшим грунтом`, task: 'Устраиваем сегодня банный день?',
