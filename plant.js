@@ -243,7 +243,7 @@ function setRemind(id, kind, x, action) {
   if (kind !== 'prune') return;
   if (action === 'every') track('prune_schedule_changed', { every: x.every });
   else if (action === 'months') track('prune_months_changed', { months: x.months.length });
-  else track('prune_toggled', { on: action === 'on' });
+  else if (action === 'on' || action === 'off') track('prune_toggled', { on: action === 'on' });
 }
 const intHint = (p) => `Подстраивается по вашим ответам «${labelsOf(p)[0]}» и «${labelsOf(p)[1]}».`;
 // How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
