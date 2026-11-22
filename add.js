@@ -606,16 +606,16 @@ function importStep(n, moved = true, how = '') {
       <p class="mt-12 small muted">Видите значок файла или «Скачать»? Это файл.</p>`;
     actions = `${back(1)}${help}`;
   } else if (n === 3 && imp.via === 'file') {
-    // Like «Вставить ответ»: the file is picked on top, and «Проверить список» at the bottom works once it's read.
+    // The file is picked on top, and «Проверить список» at the bottom works once it's read.
     body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p>
       <button class="mt-10 btn ok wide" data-act="import-file">${I('file-up')}Выбрать файл</button>
       <div id="imp-note"></div>`;
     actions = `<button class="btn ok wide" data-act="import-step" data-to="4" id="imp-go" disabled>Проверить список${I('chevron-right')}</button>${back(2)}${help}`;
   } else if (n === 3) {
-    // «Вставить ответ» reads the clipboard in one tap; where the browser can't, only the field is shown.
-    body = `<p class="m-0">Под ответом нажмите <span class="kbd" role="img" aria-label="«Копировать»">${I('copy')}</span> и вернитесь сюда.</p>
-      ${navigator.clipboard?.readText ? `<button class="mt-10 btn ok wide" data-act="import-clip">${I('clipboard-paste')}Вставить ответ</button>` : ''}
-      <textarea class="mt-10 input" id="imp-text" rows="3" aria-label="Ответ ИИ" placeholder="${navigator.clipboard?.readText ? 'Или вставьте сюда сами' : 'Вставьте ответ сюда'}" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+    // A field to paste into, not a button that reads the clipboard: on iPhone such a button needs a second tap on the
+    // system «Вставить» bubble, which confused people.
+    body = `<p class="m-0">Под ответом нажмите <span class="kbd" role="img" aria-label="«Копировать»">${I('copy')}</span> и вставьте сюда.</p>
+      <textarea class="mt-10 input" id="imp-text" rows="5" aria-label="Ответ ИИ" placeholder="Вставьте ответ сюда" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
       <div id="imp-note"></div>`;
     actions = `<button class="btn ok wide" data-act="import-read" id="imp-go" disabled>Найти растения</button>${back(2)}${help}`;
   } else {
@@ -729,7 +729,7 @@ async function importFile(f) {
   readImport(text, 'file', ext);
 }
 // Reads what's in the answer field. `how` it got there, for stats: 'paste' (pasted into the field),
-// 'clipboard' («Вставить ответ»), 'button' («Найти растения» after typing or editing).
+// 'button' («Найти растения» after typing or editing).
 function importPasted(how) {
   const ta = $('#imp-text');
   if (!ta || !ta.value.trim()) return;
@@ -804,7 +804,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
   announce(`${said}. ${lost}`.trim());
   go.disabled = false;
   // Found: «Проверить список» is the one main button now.
-  document.querySelectorAll('#sheet [data-act="import-clip"], #sheet [data-act="import-file"]').forEach((b) => b.classList.remove('ok'));
+  $('#sheet [data-act="import-file"]')?.classList.remove('ok');
   go.dataset.act = 'import-step';
   go.dataset.to = '4';
   go.innerHTML = `Проверить список${I('chevron-right')}`;
@@ -994,25 +994,6 @@ Object.assign(ACTS, {
   },
   'import-show'() { showPrompt(); track('import_prompt_shown'); },
   'import-read'() { importPasted('button'); },
-  // Reads the clipboard into the answer field, then the answer as if pasted. Browsers ask first (iPhone shows
-  // a «Вставить» bubble to tap); refused or empty, the field takes a paste by hand.
-  async 'import-clip'() {
-    const ta = $('#imp-text');
-    let text = '', result = 'ok';
-    try { text = await navigator.clipboard.readText(); } catch (e) { result = 'denied'; }
-    if (result === 'ok' && !text.trim()) result = 'empty';
-    track('import_clipboard', { result });
-    if (!ta?.isConnected) return;
-    if (result !== 'ok') {
-      $('#imp-note').innerHTML = `<p class="mt-10 error-note small">${result === 'empty'
-        ? 'Пока нечего вставить. Скопируйте ответ в чате с ИИ.'
-        : 'Не получилось вставить. Нажмите на поле и выберите «Вставить».'}</p>`;
-      announce($('#imp-note').textContent);
-      return;
-    }
-    ta.value = text;
-    importPasted('clipboard');
-  },
   'import-step'(el) { importStep(Number(el.dataset.to)); },
   'import-via'(el) { imp.via = el.dataset.via; importStep(3); },
   // «Вставить ещё часть» or «Вставить продолжение»: back to step 3 the same way (text or file), the list kept.
