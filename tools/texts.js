@@ -1,7 +1,7 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Every Russian text in the app's code, for review, and a check of the text rules (CLAUDE.md, DESIGN.md).
 // No packages: run with Node from the repo root.
-//   node tools/texts.js               rule problems in UI and catalog texts (exit code 1 if any)
+//   node tools/texts.js               rule problems in UI, «Что нового», page and catalog texts (exit code 1 if any)
 //   node tools/texts.js --html FILE   also a page with every UI text by screen, to read through
 'use strict';
 const fs = require('fs');
@@ -20,6 +20,13 @@ const SCREENS = [
   ['app.js', 'Общее'],
   ['telegram.js', 'Телеграм'],
   ['shapes.js', 'Картинки растений'],
+  ['changelog.js', '«Что нового»'],
+];
+// Texts outside the scripts: pages and the home-screen manifest.
+const PAGES = [
+  ['index.html', 'Страница приложения'],
+  ['privacy.html', 'Конфиденциальность'],
+  ['manifest.webmanifest', 'Значок на экране «Домой»'],
 ];
 const CATALOG = 'plants.js';
 const CYR = /[А-Яа-яЁё]/;
@@ -29,14 +36,24 @@ const CYR = /[А-Яа-яЁё]/;
 function literals(src) {
   const out = [];
   let i = 0, line = 1, prev = '';
-  const regexAfter = /^([(,=:[!&|?{};+\-*%<>~^]|return|typeof|case|of|in|delete|void|)$/;
+  const regexAfter = /^([(,=:[!&|?{};+\-*%<>~^]|return|typeof|case|of|in|delete|void|else|await|yield|throw|new|do|)$/;
   const step = () => { if (src[i] === '\n') line++; i++; };
+  // After a backslash: the character it stands for (\n, \u00a0, \u{1F33F}, \x41), or the next one as is.
+  function escaped() {
+    step();
+    const c = src[i];
+    let m;
+    if (c === 'u' && (m = src.slice(i).match(/^u\{([0-9a-fA-F]+)\}|^u([0-9a-fA-F]{4})/))) { for (let k = 0; k < m[0].length; k++) step(); return String.fromCodePoint(parseInt(m[1] || m[2], 16)); }
+    if (c === 'x' && (m = src.slice(i).match(/^x([0-9a-fA-F]{2})/))) { step(); step(); step(); return String.fromCharCode(parseInt(m[1], 16)); }
+    step();
+    return { n: '\n', t: '\t' }[c] || c;
+  }
   function quoted(q) {
     const start = line;
     let s = '';
     step();
     while (i < src.length && src[i] !== q) {
-      if (src[i] === '\\') { s += src[i + 1] === 'n' ? '\n' : src[i + 1]; step(); step(); continue; }
+      if (src[i] === '\\') { s += escaped(); continue; }
       s += src[i]; step();
     }
     step();
@@ -47,7 +64,7 @@ function literals(src) {
     let s = '';
     step();
     while (i < src.length && src[i] !== '`') {
-      if (src[i] === '\\') { s += src[i + 1]; step(); step(); continue; }
+      if (src[i] === '\\') { s += escaped(); continue; }
       if (src[i] === '$' && src[i + 1] === '{') { step(); step(); expr(); s += '{…}'; continue; }
       s += src[i]; step();
     }
@@ -108,10 +125,13 @@ const plain = (s) => s.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(
 
 // The rules, each a test and what to do instead. `catalog: false`: UI only.
 const RULES = [
-  { id: 'long-dash', test: (t) => /—/.test(t) && t.trim() !== '—', say: 'Длинное тире «—»: двоеточие, запятая, точка или скобки' },
+  // «—» in quotes is the dash itself being named («Из текстов пропали длинные тире «—»»).
+  { id: 'long-dash', test: (t) => /—/.test(t.replace(/«—»/g, '')) && t.trim() !== '—', say: 'Длинное тире «—»: двоеточие, запятая, точка или скобки' },
   { id: 'ty', test: (t) => /(^|[^А-Яа-яЁё])(ты|тебя|тебе|тобой|твой|твоя|твоё|твои|твоих)(?![А-Яа-яЁё])/i.test(t), say: 'На «ты»: в приложении на «вы»' },
-  { id: 'semicolon', test: (t) => CYR.test(t) && /;\s*[А-Яа-яЁё]/.test(t), say: '«;» в тексте: одна мысль в предложении' },
-  { id: 'substrate', test: (t) => /субстрат/i.test(t), say: '«субстрат»: пишем «грунт» (или «смесь» для минеральных)' },
+  // DESIGN.md asks it of care and app texts; the privacy page is a statement, and changing it needs a «Что нового» entry.
+  { id: 'semicolon', test: (t) => CYR.test(t) && /;\s*[А-Яа-яЁё]/.test(t), say: '«;» в тексте: одна мысль в предложении', skip: ['privacy.html'] },
+  // A word in quotes is the word itself being named («грунт» вместо «субстрата»).
+  { id: 'substrate', test: (t) => /субстрат/i.test(t.replace(/«[^«»]*»/g, '')), say: '«субстрат»: пишем «грунт» (или «смесь» для минеральных)' },
   { id: 'straight-quotes', test: (t) => CYR.test(t) && /"[^"]*[А-Яа-яЁё][^"]*"/.test(t), say: 'Прямые кавычки "": ёлочки «»' },
   { id: 'dots', test: (t) => /\.\.\./.test(t), say: 'Три точки: символ «…»' },
   { id: 'gotovo', test: (t) => /^Готово$/.test(t.trim()), say: '«Готово» на кнопке: прошедшая форма действия («Полито»)', catalog: false },
@@ -131,9 +151,28 @@ function read(file) {
     .filter((x) => CYR.test(x.text) && !SKIP.has(x.top));
 }
 
+// An HTML page's visible text (between tags) and the attributes people read or hear, with their lines;
+// a manifest's string values.
+function readPage(file) {
+  const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  const lineAt = (k) => src.slice(0, k).split('\n').length;
+  const items = [];
+  const add = (text, k) => { const t = plain(text); if (CYR.test(t)) items.push({ text: t, raw: text, line: lineAt(k), file, owner: '', top: '' }); };
+  if (file.endsWith('.webmanifest')) {
+    const walk = (v) => (typeof v === 'string' ? add(v, src.indexOf(JSON.stringify(v).slice(1, -1))) : v && typeof v === 'object' ? Object.values(v).forEach(walk) : 0);
+    walk(JSON.parse(src));
+    return items;
+  }
+  // Scripts, styles and comments blanked out with spaces, so positions and lines stay the same.
+  const html = src.replace(/<(script|style)\b[\s\S]*?<\/\1>|<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
+  for (const m of html.matchAll(/>([^<]+)</g)) add(m[1], m.index + 1);
+  for (const m of html.matchAll(/\b(?:aria-label|title|placeholder|alt|content)="([^"]*)"/g)) add(m[1], m.index);
+  return items;
+}
+
 function check(items, catalog) {
   const found = [];
-  items.forEach((x) => RULES.forEach((r) => { if ((!catalog || r.catalog !== false) && r.test(x.text, x.raw)) found.push({ ...x, rule: r }); }));
+  items.forEach((x) => RULES.forEach((r) => { if ((!catalog || r.catalog !== false) && !(r.skip || []).includes(x.file) && r.test(x.text, x.raw)) found.push({ ...x, rule: r }); }));
   return found;
 }
 
@@ -167,7 +206,8 @@ ${(() => { const cat = problems.filter((p) => p.file === CATALOG); return `<deta
 </main></body></html>`;
 }
 
-const screens = SCREENS.map(([file, title]) => ({ file, title, items: read(file) })).filter((s) => s.items.length);
+const screens = [...SCREENS.map(([file, title]) => ({ file, title, items: read(file) })),
+  ...PAGES.map(([file, title]) => ({ file, title, items: readPage(file) }))].filter((s) => s.items.length);
 const catalog = read(CATALOG);
 const problems = [...screens.flatMap((s) => check(s.items, false)), ...check(catalog, true)];
 
