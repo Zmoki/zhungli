@@ -529,7 +529,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srow-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
 /* An open row's inner part: a white card (--surface) set inside the row with a margin all round, like the picture
    in a plant tile, so it clearly belongs to the row above it */
-.srow-body { margin: 0 12px 12px; padding: 16px 16px 20px; border-radius: 16px; background: var(--surface); }
+.srow-body { margin: 0 12px 12px; padding: 20px 18px 22px; border-radius: 16px; background: var(--surface); }
+/* Room between the parts of a row: fields, hints and their lines */
+.srow-body .field { margin-bottom: 24px; }
+.srow-body .hint p + p { margin-top: 12px; }
+.srow-body :is(.small, .hint) { line-height: 1.5; }
 /* Room around the action buttons in a row: away from the text above, and their floor clear of the row's edge */
 /* Every action button in a row: full width (.wide), centered, with its floor, 16px under the text above */
 .srow-body > .btn, .srow-body > div > .btn, .srow-body .btns { margin-top: 16px; }
