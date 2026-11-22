@@ -42,8 +42,8 @@ Sent together by events that `use` the «plant» group.
 
 | Property | Value |
 | --- | --- |
-| `plant_kind` | catalog id or `custom` |
-| `plant_type` | a [`medium` value](#value-lists); the plant's medium now |
+| `catalog_id` | catalog id or `custom` (was `plant_kind`) |
+| `medium` | a [`medium` value](#value-lists); the plant's medium now (was `plant_type`) |
 | `watering` | a [`watering` value](#value-lists) |
 | `generic` | a generic catalog card |
 
@@ -67,8 +67,8 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card | `answer`: `dry` / `wet` / `later`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`from`: `card` (plant card only)<br>the [plant props](#plant-props) | v7 |
-| `how_opened` | «Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v151 |
-| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v152 |
+| `watering_tip_opened`<br>was `how_opened` | «Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v159 |
+| `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `plant_checked` words (drip irrigation: `dry` is «Работает», `wet` «Поправлено»)<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v159 |
 | `day_completed` | last check of the day done | `done_today` | v7 |
 | `show_all_clicked` | «show all» on Today | none | v7 |
 | `greenhouse_vented` | «Проветрено» on the vent card | none | v7 |
@@ -76,9 +76,9 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `quarantine_checked` | «Осмотрено» on a new plant's pest check | none | v131 |
 | `bonus_done` | bonus task done (the feeding day is `feeding_logged`) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card) / `feedback` («Написать» on «Как вам Жунгли?») | v7 |
 | `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` / `bath` (the bath day) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
-| `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`n`: how many fed<br>`of`: `day` only: how many were listed | v133 |
+| `feeding_logged` | plants noted as fed | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133 |
 | `bath_day_started` | «Да!» on «Устраиваем сегодня банный день?» | none | v137 |
-| `bath_day_done` | «Промыто» on the bath day card | `n`: bathed<br>`left`: plants still due a rinse | v137 |
+| `bath_day_done` | «Промыто» on the bath day card | `count`: bathed (was `n`)<br>`left`: plants still due a rinse | v137 |
 | `reminder_logged` | «Обрезано сегодня» in the plant card | `kind`: `prune`<br>`from`: `card` | v120 |
 | `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` | v137 |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none | v132 |
@@ -97,8 +97,8 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `lux_entered` | lux reading saved | `from`: `light_tab` / `card` | v7 |
 | `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing). Never the spot's name. | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v94 |
 | `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v76 |
-| `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `days`: `7` / `14` / `21` / `28`<br>the [plant props](#plant-props) | v119 |
-| `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_card`<br>`to_card`<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v106 |
+| `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `every`: `7` / `14` / `21` / `28`; days (was `days`)<br>the [plant props](#plant-props) | v119 |
+| `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v106 |
 | `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card | `on` | v7 |
 | `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`<br>`from`: `card` / `task` | v131 |
 | `repot_toggled` | «Недавно пересажено» in the plant card | `on` | v154 |
@@ -107,7 +107,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `0` (off) / `14` / `30` / `90` | v133 |
 | `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card | `on` | v133 |
 | `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card | `kind`: `prune`<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120 |
-| `bath_opt_out` | «Звать в банный день?» in the plant card | `on`: `true` for «Нет» | v137 |
+| `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v159 |
 | `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` | v68 |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` | v67 |
 
@@ -116,7 +116,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `add_opened` | «Добавить растения» sheet opened | `from`: `today` / `plants` / `light` / `room`; tab it was opened from | v23 |
-| `plants_added` | plants added from the picker, the custom form or AI import | `count`<br>`source`: `catalog` / `quick` (tiles on an empty screen) / `stories` (tiles in the last story) / `custom` / `import`<br>`generic_count`: how many are generic catalog cards<br>`catalog_ids`: catalog, quick and stories picks; import: plants matched to catalog cards<br>`via`: `paste` / `file` / `both`; import<br>`parts`: import: pastes and files that added plants (an answer in several messages or continued)<br>`cut`: import: the last part broke off mid-list<br>`repaired`: import: the answer needed fixing (quotes, spaced numbers, comments)<br>`unread`: import: plants written so badly they were skipped, summed over the parts that added plants<br>`file_ext`: `json` / `txt` / `other`; import, when a file was used<br>`own_count`: import: not in the catalog (own plants like a generic type)<br>`found`: import: rows in the list<br>`already`: import: rows already in the collection, so unticked at first; `found` minus `count` is what was left out<br>`guess_count`: import: the AI said the species is a guess from a photo<br>`with_room`: import: how many came with a room (no names sent)<br>`with_spot`: import: how many came with a place (no names sent)<br>`rooms_created`: import<br>`plant_type`: a [`medium` value](#value-lists); custom<br>`like`: custom: the generic type it was based on<br>`tuned`: custom: light, interval, type or tip changed by hand in «Тонкая настройка» | v7 |
+| `plants_added` | plants added from the picker, the custom form or AI import | `count`<br>`source`: `catalog` / `quick` (tiles on an empty screen) / `stories` (tiles in the last story) / `custom` / `import`<br>`generic_count`: how many are generic catalog cards<br>`catalog_ids`: catalog, quick and stories picks; import: plants matched to catalog cards<br>`via`: `paste` / `file` / `both`; import<br>`parts`: import: pastes and files that added plants (an answer in several messages or continued)<br>`cut`: import: the last part broke off mid-list<br>`repaired`: import: the answer needed fixing (quotes, spaced numbers, comments)<br>`unread`: import: plants written so badly they were skipped, summed over the parts that added plants<br>`file_ext`: `json` / `txt` / `other`; import, when a file was used<br>`own_count`: import: not in the catalog (own plants like a generic type)<br>`found`: import: rows in the list<br>`already`: import: rows already in the collection, so unticked at first; `found` minus `count` is what was left out<br>`guess_count`: import: the AI said the species is a guess from a photo<br>`with_room`: import: how many came with a room (no names sent)<br>`with_spot`: import: how many came with a place (no names sent)<br>`rooms_created`: import<br>`medium`: a [`medium` value](#value-lists); custom (was `plant_type`)<br>`catalog_id`: custom: the generic type it was based on (was `like`)<br>`tuned`: custom: light, interval, type or tip changed by hand in «Тонкая настройка» | v7 |
 | `custom_opened` | own plant form opened | `from`: `button` («Своё растение» under «Не нашли своё?») / `search_miss` («Добавить как своё» after a catalog search found nothing) | v23 |
 | `quick_abandoned` | tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app | `picked`: how many ticked<br>`then`: `catalog` / `import` / `restore` / `left_app`; what they turned to instead of «Добавить»; they may still add there | v70 |
 | `name_help_opened` | «Как узнать, что за растение» opened | `from`: `search` (link under the catalog search) / `not_found` (search found nothing) / `empty` (first screen with no plants) | v124 |
@@ -129,7 +129,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `import_opened` | AI import sheet opened | `restored`: it opened where an unfinished import stopped (kept on the device for 3 hours)<br>`step`: with `restored` | v23 |
-| `import_step` | AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение») | `step`: 1–4<br>`from`: the step left (lower: «Назад»)<br>`via`: `paste` / `file`; steps 3 and 4<br>`how`: `more` («Вставить ещё часть») / `continue` («Вставить продолжение», the answer broke off) | v157 |
+| `import_step` | AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение») | `step`: 1–4<br>`from_step`: the step left (lower: «Назад») (was `from`)<br>`via`: `paste` / `file`; steps 3 and 4<br>`how`: `more` («Вставить ещё часть») / `continue` («Вставить продолжение», the answer broke off) | v157 |
 | `import_prompt_copied` | «Скопировать запрос» in AI import, or «Скопировать ещё раз» under the shown prompt | `how`: `exec` (select-and-copy worked) / `clipboard` (only the Clipboard API worked; it can still fail silently on iPhone) / `failed` (both refused, or copying hung for 5 s: the prompt is shown to copy by hand) / `none` (no way to copy)<br>`from`: `again` (the button under the shown prompt) | v12 |
 | `import_prompt_shown` | «Не вставляется? Показать запрос» in AI import: copying didn't reach the AI chat | none | v80 |
 | `import_read` | a pasted answer or a picked file had plants (import step 3) | `via`: `paste` / `file`<br>`how`: `paste` (pasted into the field) / `button` («Найти растения» after typing or editing) / `file`<br>`found`: new plants<br>`total`: in the list now<br>`repeated`: already read from an earlier part<br>`matched`: new ones with a catalog card<br>`unread`<br>`cut`: the answer broke off<br>`repaired`<br>`file_ext`: `json` / `txt` / `other`; files | v157 |
@@ -148,15 +148,15 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | --- | --- | --- | --- |
 | `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch). On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v92 |
 | `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v92 |
-| `install_hint_hidden` | home screen hint closed | `kind`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) | v7 |
-| `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` | v85 |
+| `install_hint_hidden` | home screen hint closed | `where`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) (was `kind`) | v7 |
+| `install_prompt_answered`<br>was `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` | v159 |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | none | v85 |
 
 ### Telegram
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | none | v32 |
+| `tg_home_screen_clicked`<br>was `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | none | v159 |
 | `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`<br>`cloud_plants`<br>`local_plants` | v36 |
 | `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`<br>`error`: Telegram's error text, up to 80 characters | v36 |
 | `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`<br>`downloaded`<br>`removed`: of removed plants or removed photos<br>`skipped`: didn't fit the 1024-key limit | v37 |
@@ -209,6 +209,8 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
+| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
+| `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed` | `on` | v69–v75 |
 
 ## Value lists

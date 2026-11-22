@@ -323,7 +323,7 @@ function openCustom(species = '', from = 'button', back = '') {
     initBonus(S);
     save();
     closeSheet();
-    track('plants_added', { count: 1, generic_count: 0, source: 'custom', plant_type: S.custom[id].type, like: base.id, tuned });
+    track('plants_added', { count: 1, generic_count: 0, source: 'custom', medium: S.custom[id].type, catalog_id: base.id, tuned });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -640,7 +640,7 @@ function importStep(n, moved = true, how = '') {
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
-    track('import_step', { step: n, from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
+    track('import_step', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
 }
 // Step 3's main button. Text waiting to be read: «Найти растения». Plants in the list (found now, or from an

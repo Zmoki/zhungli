@@ -817,7 +817,7 @@ Object.assign(ACTS, {
     feedDone(id); save();
     $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
     $('#feed-box .last-done')?.focus();
-    track('feeding_logged', { from: 'card', n: 1 });
+    track('feeding_logged', { from: 'card', count: 1 });
     toast('Подкормка записана 🍽️', () => {
       undo();
       if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
@@ -865,7 +865,7 @@ Object.assign(ACTS, {
     const refocus = () => $(`[data-act="yes-no"][data-field="${f}"]${k ? `[data-kind="${k}"]` : ''}[data-v="${el.dataset.v}"]`)?.focus();
     if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); return; } // saves
     if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('feed_lamp_toggled', { on }); return; }
-    if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_opt_out', { on: !on }); return; }
+    if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_toggled', { on }); return; }
     if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on }); return; }
     if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
     if (f === 'repotted') { r.repotted = on ? today() : false; track('repot_toggled', { on }); }
@@ -882,7 +882,7 @@ Object.assign(ACTS, {
     if (!(await ask({ title: `Убрать отметку «${word}»?`, text: h.was ? 'Следующая проверка и интервал станут как до этой отметки.' : 'Отметка уйдёт из истории.', ok: 'Убрать', danger: true }))) return;
     const undo = snapshot();
     undoAnswer(id);
-    track('answer_undone', { answer: h.a, restored: !!h.was, ...kindOf(id) });
+    track('check_undone', { answer: UNDO_ANSWER[h.a] || h.a, restored: !!h.was, ...kindOf(id) });
     save(); render(); openPlant(id, 'history'); $('#cp-history')?.focus();
     toast('Отметка убрана', () => { undo(); if (sheet.open && cardFor === id) openPlant(id, 'history'); });
   },
@@ -904,7 +904,7 @@ Object.assign(ACTS, {
     const res = setCard(id, el.dataset.key);
     if (!res) return;
     save();
-    track('card_changed', { from_card: res.from.id, to_card: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
+    track('card_changed', { from_catalog_id: res.from.id, catalog_id: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
       same_medium: res.sameMedium, notes_moved: res.moved, searched: cardSearched });
     ACTS['card-back'](el, id);
     const undo = () => {
@@ -982,7 +982,7 @@ Object.assign(ACTS, {
     const p = plant(id);
     $('#glance').innerHTML = glanceHtml(p);
     $('#water-box').innerHTML = waterBox(p);
-    track('check_interval_set', { days: n, ...kindOf(id) });
+    track('check_interval_set', { every: n, ...kindOf(id) });
   },
   async delete(el, id) {
     if (await ask({ title: `Убрать «${plant(id).title}» из коллекции?`, text: 'Отметки, заметки и фото этого растения удалятся.', ok: 'Убрать', danger: true })) {
