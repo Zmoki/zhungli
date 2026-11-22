@@ -593,8 +593,11 @@ function importStep(n, moved = true) {
       <p class="mt-12 small muted">Видите значок файла или «Скачать»? Это файл.</p>`;
     actions = `${back(1)}${help}`;
   } else if (n === 3 && imp.via === 'file') {
-    body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p><div id="imp-note"></div>`;
-    actions = `<button class="btn ok wide" data-act="import-file" id="imp-go">${I('file-up')}Выбрать файл</button>${back(2)}${help}`;
+    // Like «Вставить ответ»: the file is picked on top, and «Проверить список» at the bottom works once it's read.
+    body = `<p class="m-0">Сохраните его из чата и выберите здесь.</p>
+      <button class="mt-10 btn ok wide" data-act="import-file">${I('file-up')}Выбрать файл</button>
+      <div id="imp-note"></div>`;
+    actions = `<button class="btn ok wide" data-act="import-step" data-to="4" id="imp-go" disabled>Проверить список${I('chevron-right')}</button>${back(2)}${help}`;
   } else if (n === 3) {
     // «Вставить ответ» reads the clipboard in one tap; where the browser can't, only the field is shown.
     body = `<p class="m-0">Под ответом нажмите <span class="kbd" role="img" aria-label="«Копировать»">${I('copy')}</span> и вернитесь сюда.</p>
@@ -766,7 +769,7 @@ function readImport(text, via, ext = '', fail = '') {
   announce(said);
   go.disabled = false;
   // Found: «Проверить список» is the one main button now.
-  $('#sheet [data-act="import-clip"]')?.classList.remove('ok');
+  document.querySelectorAll('#sheet [data-act="import-clip"], #sheet [data-act="import-file"]').forEach((b) => b.classList.remove('ok'));
   go.dataset.act = 'import-step';
   go.dataset.to = '4';
   go.innerHTML = `Проверить список${I('chevron-right')}`;
