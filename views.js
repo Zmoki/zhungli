@@ -220,24 +220,28 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 
 // «Банный день» as a few steps in one card: are we bathing today, who, how, done. Only plants due a rinse
 // whose soil is dry today are offered, at most BATH_MAX (bathPlan); the step and the picks live here until the card is done.
-// «Кого купаем?» is a list of rows like the catalog's, all ticked; `bathOff` keeps the unticked ones across redraws.
-let bathStep = 0, bathPicked = [], bathOff = new Set();
+// «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
+// `bathOff` and `feedOff` keep the unticked ones across redraws.
+let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
+// True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
+let sampleDraw = false;
+const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
 // A plant's photo, or its silhouette in today's mood.
 const picOf = (p) => (photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]));
-const bathRow = (p) => {
-  const on = !bathOff.has(p.id), sub = plantSubHtml(p);
-  return `<button class="pick${on ? ' on' : ''}" data-act="bath-pick" data-pick="${esc(p.id)}" aria-pressed="${on}">
+const plantPick = (kind) => (p) => {
+  const on = !pickOff(kind).has(p.id), sub = plantSubHtml(p);
+  return `<button class="pick${on ? ' on' : ''}" data-act="plant-pick" data-kind="${kind}" data-pick="${esc(p.id)}" aria-pressed="${on}">
     <span class="pe" aria-hidden="true">${picOf(p)}</span><span class="pt"><b>${typedHtml(p.title)}</b>${sub ? `<small>${sub}</small>` : ''}</span>
     <span class="pc" aria-hidden="true">${I(on ? 'check' : 'plus')}</span></button>`;
 };
-const pickList = (ps, legend) => `<fieldset class="feed-who"><legend class="sr-only">${legend}</legend>${ps.map((p) => `<label class="toggle"><input type="checkbox" data-pick="${esc(p.id)}" checked> ${typedHtml(p.title)}</label>`).join('')}</fieldset>`;
+const pickList = (kind, ps, label) => `<div class="who-pick" role="group" aria-label="${esc(label)}">${ps.map(plantPick(kind)).join('')}</div>`;
 function bathHtml(bp) {
   const base = { cls: 'bonus', icon: 'droplets', name: 'Банный день' };
   const later = bp.due.length - bp.offer.length, wet = bp.due.length - bp.ready.length;
   if (bathStep === 1) {
     const why = [bp.ready.length > bp.offer.length ? `за раз купаем не больше ${BATH_MAX}` : '', wet ? `у ${wet === later ? 'них' : 'кого-то'} грунт ещё влажный` : ''].filter(Boolean).join(', а ');
     return taskCard({ ...base, sub: plantsN(bp.offer.length), task: 'Кого купаем?',
-      pick: `<div class="bath-who" role="group" aria-label="Кого купаем">${bp.offer.map(bathRow).join('')}</div>`,
+      pick: pickList('bath', bp.offer, 'Кого купаем'),
       buttons: `<button class="btn ok" data-act="bath-go">${I('droplets')}Пошли купать!</button><button class="btn ghost" data-act="bath-cancel">Отмена</button>`,
       hint: later ? `Остальных (${plantsN(later)}) позову в другой банный день: ${why}.` : '' });
   }
@@ -343,15 +347,18 @@ function viewToday() {
   }
 
   const bonus = bonusTasks(), bp = bathPlan();
-  if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
+  if (!sampleDraw) {
+    if (!bonus.some((b) => b.pick)) feedOff = new Set(); // a feeding day over or put off starts all ticked next time
+    if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
+  }
   const bathCard = bp && bp.shown ? bathHtml(bp) : '';
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
       html += taskCard({
         cls: 'bonus', p: b.p, icon: b.icon, name: b.title, sub: b.sub, task: b.task, who: b.who, hint: b.hint,
-        // «День подкормки»: a tick per plant, all on; «Готово» notes the ticked ones, the rest come back in a few days.
-        pick: b.pick ? pickList(b.pick, b.pickLegend) : '',
+        // «День подкормки»: a row per plant, all ticked; «Готово» notes the ticked ones, the rest come back in a few days.
+        pick: b.pick ? pickList('feed', b.pick, b.pickLegend) : '',
         buttons: b.contact
           ? `${outLink('telegram', 'Написать', 'btn ok', 'data-act="feedback-answer" data-wrote="1" data-from="feedback_task"')}
           <button class="btn ghost" data-act="feedback-answer">Не нужно</button>`
@@ -680,9 +687,9 @@ Object.assign(ACTS, {
   },
   'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
   'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },
-  'bath-pick'(el) {
-    const id = el.dataset.pick, on = bathOff.has(id);
-    if (on) bathOff.delete(id); else bathOff.add(id);
+  'plant-pick'(el) {
+    const off = pickOff(el.dataset.kind), id = el.dataset.pick, on = off.has(id);
+    if (on) off.delete(id); else off.add(id);
     el.classList.toggle('on', on); el.setAttribute('aria-pressed', on);
     el.querySelector('.pc').innerHTML = I(on ? 'check' : 'plus');
   },
@@ -708,11 +715,12 @@ Object.assign(ACTS, {
   'bonus-done'(el) {
     const undo = snapshot();
     if (el.dataset.key.startsWith('feed:')) {
-      const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')];
-      const fed = boxes.filter((x) => x.checked).map((x) => x.dataset.pick);
+      const boxes = [...el.closest('.task').querySelectorAll('[data-pick]')], on = (x) => x.getAttribute('aria-pressed') === 'true';
+      const fed = boxes.filter(on).map((x) => x.dataset.pick);
       if (!fed.length) { toast('Отметьте, кого подкормили'); return; }
       fed.forEach(feedDone);
-      boxes.filter((x) => !x.checked).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
+      boxes.filter((x) => !on(x)).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
+      feedOff = new Set();
       track('feeding_logged', { from: 'day', n: fed.length, of: boxes.length });
       logToday({ a: 'bonus:feed', title: 'День подкормки' });
       afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);

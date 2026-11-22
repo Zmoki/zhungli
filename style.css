@@ -376,8 +376,6 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .mood.pets.safe, .pet-tag.safe { color: var(--st-fine); }
 .pet-tag { font-weight: 800; white-space: nowrap; }
 .pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
-/* «День подкормки»: a tick per plant, above the buttons */
-.feed-who { border: 0; padding: 0; margin: 0 0 14px; display: grid; gap: 6px; }
 .info.warn { background: var(--red-soft); }
 #sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 24px); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -600,8 +598,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
-/* «Банный день»: who's bathing as catalog rows, then their pictures in one line that shrinks to fit */
-.bath-who { margin: 0 0 14px; }
+/* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */
+.who-pick { margin: 0 0 14px; }
 .bath-pics { display: flex; justify-content: center; gap: 8px; margin: 0 0 14px; }
 .bath-pic { flex: 0 1 72px; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; border-radius: 22px; overflow: hidden; background: var(--green-soft); }
 .bath-pic img { width: 100%; height: 100%; object-fit: cover; }

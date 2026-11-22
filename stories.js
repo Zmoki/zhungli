@@ -35,8 +35,8 @@ function sampleGarden(list = SAMPLE) {
 // Builds markup with `state` as S, and puts the person's own state back whatever happens.
 function onSample(state, build) {
   const own = S;
-  S = state;
-  try { return build(); } finally { S = own; }
+  S = state; sampleDraw = true;
+  try { return build(); } finally { S = own; sampleDraw = false; }
 }
 // Markup → elements with every tap, id and link taken out. `prep` runs first, to tag what the story needs from them.
 const STRIP = ['data-act', 'data-open', 'data-tab', 'data-id', 'data-field', 'data-key', 'data-from', 'data-out', 'data-room', 'data-spot',
