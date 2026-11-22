@@ -489,7 +489,9 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 
 /* Plant card: short facts, tabs, setting groups, the 4-week rhythm */
 .glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
-.glance li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: var(--card); font-size: 0.882rem; font-weight: 800; }
+/* Short facts read as info, not as chips: no fill, so they don't look tappable (beige is for controls) */
+.glance li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; margin-right: 10px; font-size: 0.882rem; font-weight: 800; }
+.glance .ic { color: var(--muted); }
 .glance .ic { width: 18px; height: 18px; flex: none; }
 /* Tabs share the row by their label; with large text they wrap instead of cutting a label */
 .seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 24px 0 16px; border-radius: var(--radius); background: var(--card); }
