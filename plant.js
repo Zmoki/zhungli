@@ -83,8 +83,9 @@ const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
   if (g.noChecks) return whyNot('Поливать не нужно, корни в воде аквариума.');
-  return `<div class="info water">${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}<br>${p.nextCheck <= today() ? w.due : `${w.next} ${esc(rel(p.nextCheck))}`}</div>
-    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
+  // The next check is the row's value; here only the last watering, as plain text, and the button.
+  return `<p class="m-0">${p.lastWater ? `${w.last} ${esc(rel(p.lastWater))}` : w.none}.</p>
+    <button class="mt-10 water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}">${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
