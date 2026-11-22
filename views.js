@@ -383,7 +383,7 @@ function viewPlants() {
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
   if (!ps.length) html += emptyCard('Пока пусто', 'Добавьте первое растение, и джунгли начнутся 🌱');
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}</div>` + stateFilter(ps);
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + stateFilter(ps);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
   else html += spotGroups(ps);

@@ -98,7 +98,7 @@ function catalogHtml(changeFor) {
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
-  return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}</div>
+  return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}${searchX('')}</div>
     ${changeFor ? '' : nameHelpLink('search', 'Не знаете, как называется растение?')}
     <div id="pick-none" class="pick-none" hidden></div>
     ${cats.map((c) => `<div class="pick-group"${c === 'Общие типы' ? ' data-generic' : ''}><div class="group-title">${c === 'Общие типы' ? GENERIC_TITLE : esc(c)}</div>
