@@ -18,9 +18,9 @@ PostHog: project 720394 (US cloud), through the PostHog MCP tools. Every chart a
 ## An event PR
 
 1. A worktree from an up-to-date `main` (`.claude/worktrees/<name>`), its own branch.
-2. Change the `track()` calls. Edit `analytics/events.json` as text so its hand formatting stays: a rename keeps every old name in `was` (the ingest function translates them for old app versions); a split or merge that needs a new prop can't be translated, so the old event gets `removed` and a `note`.
-3. Bump the version (`index.html` `?v=`, `version.txt`, `CACHE` in `sw.js`), then `node tools/events.js --write`, `node tools/events.js` and `node tools/texts.js`: all must report 0 problems.
-4. Test in the browser: a temporary entry in the parent folder's `.claude/launch.json` on a free port, `preview_start`, clear storage and the service worker, then read the `[stats]` lines in the console (`flushStats()` sends the batch at once). Check every new or renamed event and its props. Remove the launch entry after.
+2. Change the `track()` calls and `analytics/events.json` by ANALYTICS.md «Adding or changing an event» (`was`, `removed`). Edit the JSON as text so its hand formatting stays. A split or merge that needs a new prop can't be translated at ingest: say so in a `note`.
+3. Bump the version as CLAUDE.md «Release» says, then run `node tools/events.js --write`, `node tools/events.js` and `node tools/texts.js`: all must report 0 problems.
+4. Test in the browser: a temporary entry on a free port in the `.claude/launch.json` that `preview_start` reads (the session's working folder), `preview_start`, clear storage and the service worker, then read the `[stats]` lines in the console (`flushStats()` sends the batch at once). Check every new or renamed event and its props. Remove the launch entry after.
 5. Commit, push, open the PR with a table of the changes and what was tested. Then the review (code-review high with fixes) and merge only when the user says so.
 
 ## After the merge
