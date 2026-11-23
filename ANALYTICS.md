@@ -1,6 +1,22 @@
 # Analytics
 
-Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US cloud), dashboards [«boring stuff»](https://us.posthog.com/project/720394/dashboard/2333552) (standard app metrics) and [«first run»](https://us.posthog.com/project/720394/dashboard/2379017) (the first minutes of new people).
+Anonymous usage stats in PostHog: project «zhungli.zmoki.xyz» (720394, US cloud). Working with events and charts: the `analytics` skill in `.claude/skills/`.
+
+Dashboards, one per event prefix (sections inside), all without our own devices:
+
+| Dashboard | Shows |
+| --- | --- |
+| [«boring stuff»](https://us.posthog.com/project/720394/dashboard/2333552) | standard app metrics: active devices, retention, activation, errors |
+| [«first run»](https://us.posthog.com/project/720394/dashboard/2379017) | «Onboarding steps» (kept simple), the install card below |
+| [«App»](https://us.posthog.com/project/720394/dashboard/2398508) | `app_*` but health: launches, tabs and pages, settings, backups and sync, installing |
+| [«Today»](https://us.posthog.com/project/720394/dashboard/2398388) | `today_*`: how far people get each day, finished days, cards that aren't care |
+| [«Care»](https://us.posthog.com/project/720394/dashboard/2397688) | `care_*`: each care's funnel and how often it's done |
+| [«Add Plants»](https://us.posthog.com/project/720394/dashboard/2397765) | `add_*`: all ways, catalog, quick tiles, own plant, AI import |
+| [«Plant»](https://us.posthog.com/project/720394/dashboard/2397995) | `plant_*`, `plants_*`: the plant card, care settings, the Plants tab |
+| [«Stories»](https://us.posthog.com/project/720394/dashboard/2398451) | `stories_*`: openings, each story, how they close |
+| [«Health & Web Vitals»](https://us.posthog.com/project/720394/dashboard/2398114) | `app_health_*` and page speed |
+
+`light_*` and `room_*` have no dashboard.
 
 ## How it works
 
