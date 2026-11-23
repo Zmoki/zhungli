@@ -106,7 +106,8 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `plant_photo_removed`<br>was `photo_removed` | photo removed from a plant (back to the drawing) | none | v166 |
 | `plant_note_changed`<br>was `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back)<br>`note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` | v166 |
 | `plant_setting_lux_changed`<br>was `lux_entered` | lux reading saved (clearing it sends nothing) | `from`: `light_tab` / `card` | v166 |
-| `plant_setting_spot_added`<br>was `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing). Never the spot's name. | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v166 |
+| `plant_setting_room_changed` | another «Комната» chip picked in the plant card (with 2+ rooms; no room name sent) | `rooms`: how many rooms | v168 |
+| `plant_setting_spot_changed` | another spot chip picked in the plant card (no spot name sent); a new spot typed there is `app_setting_spot_added` `from: card` | none | v168 |
 | `plant_setting_grow_changed`<br>was `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v166 |
 | `plant_setting_watering_schedule_changed`<br>was `check_interval_set` | how often the watering check comes, changed in the plant card's «Как растёт»: a chip for drip irrigation (it doesn't learn), or − / + for the others. A run of − / + taps sends one event, 1.2 s after the last tap (at once when the app hides), and none if it ends where it began. | `every`: days; chips: 7, 14, 21 or 28 (was `days`)<br>`how`: `chips` (drip irrigation) / `stepper` («Проверять примерно каждые» − / +); since v166 (before: chips only)<br>the [plant props](#plant-props) | v166 |
 | `plant_setting_card_changed`<br>was `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v166 |
@@ -192,14 +193,17 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `app_data_imported`<br>was `backup_imported` | backup restored | none | v168 |
 | `app_data_reset`<br>was `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v168 |
 | `app_setting_stats_enabled`<br>was `stats_enabled` | stats switched back on | none | v168 |
+| `app_setting_room_added`<br>was `room_added` | a room added (no room name sent) | `rooms`: how many now<br>`from`: `settings` («+ комната» in the app's settings) / `room_tab` («Добавить комнату» on the Room tab); since v168 | v168 |
+| `app_setting_room_renamed` | a room renamed (no room name sent) | `from`: `settings` (the room chip in the app's settings (one room)) / `room_tab` (the pencil on the Room tab) | v168 |
+| `app_setting_room_removed`<br>was `room_removed` | a room removed, its plants moved to another room (no room name sent) | `rooms`: how many now<br>`from`: `settings` (× on the room chip in the app's settings) / `room_tab` (× on the Room tab); since v168 | v168 |
+| `app_setting_spot_added`<br>was `plant_setting_spot_added`, `spot_added` | a spot added: in the app's settings, or typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing). Never the spot's name. | `from`: `settings` («+ место» in the app's settings) / `card` («+ место» in the plant card); since v168 (before: card only)<br>`how`: `button` (+) / `enter` (Enter, «Готово» on a phone); card<br>`new_spot`: card: not in the spot list before | v168 |
+| `app_setting_spot_removed` | × on a spot in the app's settings, confirmed if plants stood there (no spot name sent) | `plants`: plants left without a spot | v168 |
 
 ### Room tab
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `room_saved` | room temperature and humidity saved | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v7 |
-| `room_added` | a room added on the Room tab (no room name sent) | `rooms` | v67 |
-| `room_removed` | a room removed (no room name sent) | `rooms` | v67 |
+| `room_climate_changed`<br>was `room_saved` | a room's temperature and humidity saved («Записать» on the Room tab) | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v168 |
 
 ### Errors and speed
 
@@ -250,7 +254,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
    - care actions (tasks on «Сегодня», «…сегодня» buttons in the plant card) use the care's prefix: `watering_*`, `feed_*`, `prune_*`, `bath_*`, `bath_day_*` (the app's «Банный день»);
    - anything set in the plant card's «Настройки», care settings included, is `plant_setting_*` (`plant_setting_feed_lamp_toggled`, not `feed_lamp_toggled`); the same setting changed elsewhere (the Light tab, «Без теплицы» on a task) keeps that name, with `from`;
    - the rest of the plant card is `plant_*`, the Plants tab `plants_*`;
-   - the app itself is `app_*` (`app_opened`, `app_tab_opened`), its settings `app_setting_*` (`app_setting_bath_day_toggled`; the bath day card on «Сегодня» stays `bath_day_*`), backups and data `app_data_*`.
+   - the app itself is `app_*` (`app_opened`, `app_tab_opened`), its settings `app_setting_*` (`app_setting_bath_day_toggled`; the bath day card on «Сегодня» stays `bath_day_*`), backups and data `app_data_*`. The lists of rooms and spots are app settings (`app_setting_room_added`), a plant's room or spot a plant setting (`plant_setting_spot_changed`), and a room's own readings `room_*` (`room_climate_changed`).
 2. Add or change the event in `events.json`. Reuse prop names and value lists that exist (`plant` props, `medium`, `catalog_id`…). A `text` prop needs `why` and a line in `privacy.html`.
 3. Renamed an event or a prop? Keep the old name in `was`: the ingest function translates it for phones still on an old version. Gone? Set `removed` to the first version without it; don't delete it.
 4. `node tools/events.js --write`, then `node tools/events.js` must report no problems.

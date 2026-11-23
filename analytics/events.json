@@ -330,14 +330,14 @@
       "when": "lux reading saved (clearing it sends nothing)",
       "props": { "from": { "type": "enum", "values": { "light_tab": "", "card": "" } } }
     },
-    "plant_setting_spot_added": {
-      "area": "plant", "since": 166, "was": ["spot_added"],
-      "when": "a spot typed in the plant card's new spot field and added (empty field: nothing)",
-      "note": "Never the spot's name.",
-      "props": {
-        "how": { "type": "enum", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
-        "new_spot": { "type": "bool", "desc": "not in the spot list before" }
-      }
+    "plant_setting_room_changed": {
+      "area": "plant", "since": 168,
+      "when": "another «Комната» chip picked in the plant card (with 2+ rooms; no room name sent)",
+      "props": { "rooms": { "type": "int", "desc": "how many rooms" } }
+    },
+    "plant_setting_spot_changed": {
+      "area": "plant", "since": 168,
+      "when": "another spot chip picked in the plant card (no spot name sent); a new spot typed there is `app_setting_spot_added` `from: card`"
     },
     "plant_setting_grow_changed": {
       "area": "plant", "since": 166, "was": ["grow_changed"],
@@ -805,24 +805,54 @@
       "when": "stats switched back on"
     },
 
-    "room_saved": {
-      "area": "room", "since": 7,
-      "when": "room temperature and humidity saved",
+    "room_climate_changed": {
+      "area": "room", "since": 168, "was": ["room_saved"],
+      "when": "a room's temperature and humidity saved («Записать» on the Room tab)",
       "props": {
         "temp": { "type": "int", "desc": "rounded" },
         "humidity": { "type": "int", "desc": "rounded" },
         "rooms": { "type": "int", "desc": "how many rooms" }
       }
     },
-    "room_added": {
-      "area": "room", "since": 67,
-      "when": "a room added on the Room tab (no room name sent)",
-      "props": { "rooms": { "type": "int" } }
+    "app_setting_room_added": {
+      "area": "settings", "since": 168, "was": ["room_added"],
+      "when": "a room added (no room name sent)",
+      "props": {
+        "rooms": { "type": "int", "desc": "how many now" },
+        "from": { "type": "enum", "desc": "since v168", "values": { "settings": "«+ комната» in the app's settings", "room_tab": "«Добавить комнату» on the Room tab" } }
+      }
     },
-    "room_removed": {
-      "area": "room", "since": 67,
-      "when": "a room removed (no room name sent)",
-      "props": { "rooms": { "type": "int" } }
+    "app_setting_room_renamed": {
+      "area": "settings", "since": 168,
+      "when": "a room renamed (no room name sent)",
+      "props": {
+        "from": { "type": "enum", "values": { "settings": "the room chip in the app's settings (one room)", "room_tab": "the pencil on the Room tab" } }
+      }
+    },
+    "app_setting_room_removed": {
+      "area": "settings", "since": 168, "was": ["room_removed"],
+      "when": "a room removed, its plants moved to another room (no room name sent)",
+      "props": {
+        "rooms": { "type": "int", "desc": "how many now" },
+        "from": { "type": "enum", "desc": "since v168", "values": { "settings": "× on the room chip in the app's settings", "room_tab": "× on the Room tab" } }
+      }
+    },
+    "app_setting_spot_added": {
+      "area": "settings", "since": 168, "was": ["plant_setting_spot_added", "spot_added"],
+      "when": "a spot added: in the app's settings, or typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing)",
+      "note": "Never the spot's name.",
+      "props": {
+        "from": { "type": "enum", "desc": "since v168 (before: card only)", "values": { "settings": "«+ место» in the app's settings", "card": "«+ место» in the plant card" } },
+        "how": { "type": "enum", "desc": "card", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
+        "new_spot": { "type": "bool", "desc": "card: not in the spot list before" }
+      }
+    },
+    "app_setting_spot_removed": {
+      "area": "settings", "since": 168,
+      "when": "× on a spot in the app's settings, confirmed if plants stood there (no spot name sent)",
+      "props": {
+        "plants": { "type": "int", "desc": "plants left without a spot" }
+      }
     },
 
     "js_error": {

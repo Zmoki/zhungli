@@ -804,7 +804,7 @@ Object.assign(ACTS, {
     const h = parseFloat(String($(`#in-h-${rm.id}`).value).replace(',', '.'));
     if (Number.isNaN(t) || Number.isNaN(h)) { toast('Впишите обе цифры 🙂'); return; }
     Object.assign(rm, { t, h, d: today() }); save(); render(); toast('Записано 🌡️');
-    track('room_saved', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
+    track('room_climate_changed', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
   },
   // Rooms are also added, renamed and removed from settings (data-from="settings").
   async 'room-add'(el) {
@@ -813,12 +813,15 @@ Object.assign(ACTS, {
     S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
     if (el.dataset.from === 'settings') openSettings();
     toast('Комната добавлена. Выберите её в карточках растений 🪴');
-    track('room_added', { rooms: S.rooms.length });
+    track('app_setting_room_added', { rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
   async 'room-rename'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
     const name = rm && ((await ask({ title: 'Новое название комнаты', input: { value: rm.name }, ok: 'Сохранить' })) || '');
-    if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
+    if (name && name !== rm.name) {
+      rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings();
+      track('app_setting_room_renamed', { from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
+    }
   },
   async 'room-del'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
@@ -828,6 +831,6 @@ Object.assign(ACTS, {
     Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
     S.rooms = rest; save(); render();
     if (el.dataset.from === 'settings') openSettings();
-    track('room_removed', { rooms: S.rooms.length });
+    track('app_setting_room_removed', { rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
 });
