@@ -49,7 +49,7 @@ function openNews() {
       <h3>Версия ${e.v}<span class="muted small"> · ${date(e.d)}</span></h3>
       <ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
     <p class="small muted credit" data-from="news">${CREDITS}</p>`;
-  track('news_opened', { had_new: hasNews() });
+  track('app_news_opened', { had_new: hasNews() });
   S.seen = APP_VERSION;
   save();
   openSheet();
@@ -138,7 +138,7 @@ async function doImport(file) {
     if (window.photoChanged) Object.entries(photos).forEach(([id, url]) => window.photoChanged(id, url));
     if (window.photoRemoved) gone.forEach((id) => window.photoRemoved(id));
     closeSheet();
-    track('backup_imported');
+    track('app_data_imported');
     toast('Готово, всё вернулось 🌿');
   } catch (e) {
     toast('Это не похоже на копию Жунглей 🤔 Если это точно она, напишите Зареме в Телеграм @zmoki.');
@@ -166,12 +166,12 @@ Object.assign(ACTS, {
   'bath-every'(el) {
     S.settings.bath = Number(el.dataset.n); save();
     $('#bath-box').innerHTML = bathBox(); $(`[data-act="bath-every"][data-n="${el.dataset.n}"]`).focus(); render();
-    track('bath_day_schedule_changed', { every: S.settings.bath });
+    track('app_setting_bath_day_schedule_changed', { every: S.settings.bath });
   },
-  settings() { track('settings_opened'); openSettings(); },
+  settings() { track('app_settings_opened'); openSettings(); },
   news() { openNews(); },
   limit(el) {
-    S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('limit_changed', { limit: S.settings.limit });
+    S.settings.limit = Number(el.dataset.n); showAll = false; save(); track('app_setting_limit_changed', { limit: S.settings.limit });
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
   async 'spot-del'(el) {
@@ -180,19 +180,20 @@ Object.assign(ACTS, {
     if (there.length && !(await ask({ title: `Убрать место «${sp}»?`, text: `Здесь ${plantsN(there.length)}. Они останутся без места.`, ok: 'Убрать', danger: true }))) return;
     there.forEach((r) => { r.spot = ''; });
     S.spots = S.spots.filter((x) => x !== sp); save(); openSettings();
+    track('app_setting_spot_changed', { action: 'removed', from: 'settings', plants: there.length });
   },
   async 'spot-add'() {
     const sp = await ask({ title: 'Как называется место?', input: { placeholder: 'Например, «Подоконник»' }, ok: 'Добавить' });
-    if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); }
+    if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); track('app_setting_spot_changed', { action: 'added', from: 'settings' }); }
   },
   export(el) {
-    doExport(); track('backup_exported', el.dataset.from ? { from: el.dataset.from } : {});
+    doExport(); track('app_data_exported', el.dataset.from ? { from: el.dataset.from } : {});
     if (el.dataset.from === 'install_hint' && !S.movedHome) { S.movedHome = true; save(); render(); }
   },
   import() { endQuick('restore'); $('#import-input').click(); },
   async reset() {
     if (await ask({ title: 'Стереть всё и начать заново?', text: 'Удалятся все отметки, фото и настройки.', ok: 'Стереть', danger: true })) {
-      track('data_reset');
+      track('app_data_reset');
       flushStats();
       // A stats opt-out is about the person, not the plants: it outlives the reset.
       if (S.settings.stats === false) {
@@ -211,11 +212,11 @@ Object.assign(ACTS, {
 });
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (el.id === 'bath-on') { S.settings.bath = el.checked ? 120 : 0; save(); $('#bath-box').innerHTML = bathBox(); $('#bath-on').focus(); render(); track('bath_day_toggled', { on: el.checked }); return; }
-  if (el.id === 'pets-on') { S.settings.pets = el.checked; save(); render(); track('pets_toggled', { on: el.checked }); return; }
+  if (el.id === 'bath-on') { S.settings.bath = el.checked ? 120 : 0; save(); $('#bath-box').innerHTML = bathBox(); $('#bath-on').focus(); render(); track('app_setting_bath_day_toggled', { on: el.checked }); return; }
+  if (el.id === 'pets-on') { S.settings.pets = el.checked; save(); render(); track('app_setting_pets_toggled', { on: el.checked }); return; }
   if (el.id !== 'stats-on') return;
   if (!el.checked) statsQueue = [];
   S.settings.stats = el.checked;
   save();
-  if (el.checked) track('stats_enabled');
+  if (el.checked) track('app_setting_stats_enabled');
 });

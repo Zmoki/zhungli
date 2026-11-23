@@ -196,10 +196,10 @@ function render() {
 // Author links: send right away, the app may go to background.
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-out]');
-  if (a) { track('author_link_clicked', { target: a.dataset.out, from: a.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
+  if (a) { track('app_author_link_clicked', { target: a.dataset.out, from: a.closest('[data-from]')?.dataset.from || 'other' }); flushStats(); }
   const pv = e.target.closest('a[href="privacy"]');
   if (pv) {
-    track('privacy_opened', { from: pv.closest('[data-from]')?.dataset.from || 'other' });
+    track('app_privacy_opened', { from: pv.closest('[data-from]')?.dataset.from || 'other' });
     flushStats();
     // The page opens in this window, so coming back reloads the app: that's not a new launch.
     try { sessionStorage.setItem('zhungli.privacyAt', Date.now()); } catch (err) { /* private mode */ }
@@ -211,7 +211,7 @@ document.addEventListener('click', (e) => {
   if (!el) return;
   if (el.dataset.tab) {
     tab = el.dataset.tab;
-    track('tab_viewed', { tab });
+    track('app_tab_opened', { tab });
     render();
     window.scrollTo(0, 0);
     return;

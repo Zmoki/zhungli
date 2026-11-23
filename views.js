@@ -104,7 +104,7 @@ let installFirstShown = false;
 function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
-  if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
+  if (!installFirstShown) { installFirstShown = true; track('app_install_card_shown', { where: kind }); }
   const { where } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
@@ -760,15 +760,15 @@ Object.assign(ACTS, {
     setTimeout(() => { render(); if (!el.dataset.wrote) toast('Хорошо, больше не спрошу 🙂'); }, 0);
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
-  'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
-  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { where: 'ios_added' }); save(); render(); },
-  'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
+  'stay-browser'(el) { S.stayBrowser = today(); track('app_install_card_declined', { where: el.dataset.kind }); save(); render(); },
+  'home-added'() { S.homeIcon = today(); track('app_install_hint_hidden', { where: 'ios_added' }); save(); render(); },
+  'hide-install'(el) { S.hideInstall = true; track('app_install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;
     if (!ask) return;
     installPrompt = null; // the browser's prompt works once
     try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
-    ask.userChoice.then(({ outcome }) => { track('install_prompt_answered', { outcome }); render(); }, () => render());
+    ask.userChoice.then(({ outcome }) => { track('app_install_prompt_answered', { outcome }); render(); }, () => render());
   },
   'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_clicked'); },
   'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },
@@ -804,7 +804,7 @@ Object.assign(ACTS, {
     const h = parseFloat(String($(`#in-h-${rm.id}`).value).replace(',', '.'));
     if (Number.isNaN(t) || Number.isNaN(h)) { toast('Впишите обе цифры 🙂'); return; }
     Object.assign(rm, { t, h, d: today() }); save(); render(); toast('Записано 🌡️');
-    track('room_saved', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
+    track('room_climate_changed', { temp: Math.round(t), humidity: Math.round(h), rooms: S.rooms.length });
   },
   // Rooms are also added, renamed and removed from settings (data-from="settings").
   async 'room-add'(el) {
@@ -813,12 +813,15 @@ Object.assign(ACTS, {
     S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
     if (el.dataset.from === 'settings') openSettings();
     toast('Комната добавлена. Выберите её в карточках растений 🪴');
-    track('room_added', { rooms: S.rooms.length });
+    track('app_setting_room_changed', { action: 'added', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
   async 'room-rename'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
     const name = rm && ((await ask({ title: 'Новое название комнаты', input: { value: rm.name }, ok: 'Сохранить' })) || '');
-    if (name) { rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings(); }
+    if (name && name !== rm.name) {
+      rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings();
+      track('app_setting_room_changed', { action: 'renamed', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
+    }
   },
   async 'room-del'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
@@ -828,6 +831,6 @@ Object.assign(ACTS, {
     Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
     S.rooms = rest; save(); render();
     if (el.dataset.from === 'settings') openSettings();
-    track('room_removed', { rooms: S.rooms.length });
+    track('app_setting_room_changed', { action: 'removed', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
 });

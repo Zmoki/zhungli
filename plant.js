@@ -899,6 +899,7 @@ Object.assign(ACTS, {
     const undo = snapshot(); actWater(id); track('watering_logged', kindOf(id)); save(); closeSheet(); toast(actWords(plant(id)).done, undo);
   },
   spot(el, id) {
+    if (S.plants[id].spot !== el.dataset.spot) track('plant_setting_spot_changed');
     S.plants[id].spot = el.dataset.spot; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
@@ -928,6 +929,7 @@ Object.assign(ACTS, {
   'card-settings'() { pickCardTab('settings'); },
   'card-history'() { pickCardTab('history'); },
   'room-pick'(el, id) {
+    if (roomOf(S.plants[id]) !== S.rooms.find((rm) => rm.id === el.dataset.room)) track('plant_setting_room_changed', { rooms: S.rooms.length });
     S.plants[id].room = el.dataset.room; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
   },
@@ -1032,11 +1034,14 @@ document.addEventListener('keydown', (e) => {
 function addSpot(id, how) {
   const s = $('#f-new-spot').value.trim();
   if (!s) { spotForm(false); return; }
+  const moved = S.plants[id].spot !== s;
   S.plants[id].spot = s;
   const fresh = !S.spots.includes(s);
   if (fresh) S.spots.push(s);
   save();
-  track('plant_setting_spot_added', { how, new_spot: fresh });
+  // A spot typed that's already in the list is only a pick for this plant.
+  if (fresh) track('app_setting_spot_changed', { action: 'added', from: 'card', how });
+  else if (moved) track('plant_setting_spot_changed');
   const box = $('#spot-chips');
   let chip = [...box.querySelectorAll('[data-act="spot"]')].find((c) => c.dataset.spot === s);
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }

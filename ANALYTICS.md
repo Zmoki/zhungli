@@ -56,11 +56,11 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `app_opened` | app starts, or returns after 30+ min in background | `tasks_due`: tasks waiting on Today at that moment (watering checks shown and greenhouse vents, not «Если есть силы»)<br>`how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch)<br>`ready_ms`: ms from navigation start until the first screen is built; not for `resume`, nor when started in background<br>`$referring_domain`: `start` only, once per arrival (a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself) | v7 |
-| `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` | v7 |
-| `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes | v10 |
-| `settings_opened` | settings opened from the header | none | v88 |
-| `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` / `other` (no `data-from` around the link) | v88 |
-| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile)<br>`from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` / `other` (no `data-from` around the link) | v8 |
+| `app_tab_opened`<br>was `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` | v168 |
+| `app_news_opened`<br>was `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes | v168 |
+| `app_settings_opened`<br>was `settings_opened` | settings opened from the header | none | v168 |
+| `app_privacy_opened`<br>was `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` / `other` (no `data-from` around the link) | v168 |
+| `app_author_link_clicked`<br>was `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile)<br>`from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` / `other` (no `data-from` around the link) | v168 |
 
 ### Today: checks and tasks
 
@@ -106,7 +106,8 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `plant_photo_removed`<br>was `photo_removed` | photo removed from a plant (back to the drawing) | none | v166 |
 | `plant_note_changed`<br>was `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back)<br>`note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` | v166 |
 | `plant_setting_lux_changed`<br>was `lux_entered` | lux reading saved (clearing it sends nothing) | `from`: `light_tab` / `card` | v166 |
-| `plant_setting_spot_added`<br>was `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing). Never the spot's name. | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v166 |
+| `plant_setting_room_changed` | another «Комната» chip picked in the plant card (with 2+ rooms; no room name sent) | `rooms`: how many rooms | v168 |
+| `plant_setting_spot_changed` | another spot picked in the plant card: a spot chip, or a spot typed in the new spot field that is already in the list (no spot name sent); a new spot typed there is `app_setting_spot_changed` `action: added, from: card` | none | v168 |
 | `plant_setting_grow_changed`<br>was `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v166 |
 | `plant_setting_watering_schedule_changed`<br>was `check_interval_set` | how often the watering check comes, changed in the plant card's «Как растёт»: a chip for drip irrigation (it doesn't learn), or − / + for the others. A run of − / + taps sends one event, 1.2 s after the last tap (at once when the app hides), and none if it ends where it began. | `every`: days; chips: 7, 14, 21 or 28 (was `days`)<br>`how`: `chips` (drip irrigation) / `stepper` («Проверять примерно каждые» − / +); since v166 (before: chips only)<br>the [plant props](#plant-props) | v166 |
 | `plant_setting_card_changed`<br>was `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v166 |
@@ -162,10 +163,10 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch). On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v92 |
-| `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v92 |
-| `install_hint_hidden` | home screen hint closed | `where`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) (was `kind`) | v7 |
-| `install_prompt_answered`<br>was `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` | v159 |
+| `app_install_card_shown`<br>was `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch). On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v168 |
+| `app_install_card_declined`<br>was `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v168 |
+| `app_install_hint_hidden`<br>was `install_hint_hidden` | home screen hint closed | `where`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) (was `kind`) | v168 |
+| `app_install_prompt_answered`<br>was `install_prompt_answered`, `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` | v168 |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | none | v85 |
 
 ### Telegram
@@ -184,22 +185,22 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `limit_changed` | plants-per-day limit changed | `limit` | v7 |
-| `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v130 |
-| `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: `true`: switched on, which sets every 120 days | v160 |
-| `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v160 |
-| `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v7 |
-| `backup_imported` | backup restored | none | v7 |
-| `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v90 |
-| `stats_enabled` | stats switched back on | none | v7 |
+| `app_setting_limit_changed`<br>was `limit_changed` | plants-per-day limit changed | `limit` | v168 |
+| `app_setting_pets_toggled`<br>was `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v168 |
+| `app_setting_bath_day_toggled`<br>was `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: `true`: switched on, which sets every 120 days | v168 |
+| `app_setting_bath_day_schedule_changed`<br>was `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v168 |
+| `app_data_exported`<br>was `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v168 |
+| `app_data_imported`<br>was `backup_imported` | backup restored | none | v168 |
+| `app_data_reset`<br>was `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v168 |
+| `app_setting_stats_enabled`<br>was `stats_enabled` | stats switched back on | none | v168 |
+| `app_setting_room_changed` | the list of rooms changed: a room added, renamed or removed (its plants move to another room); no room name sent | `action`: `added` / `renamed` / `removed`<br>`rooms`: how many now<br>`from`: `settings` (the rooms in the app's settings) / `room_tab` (the Room tab) | v168 |
+| `app_setting_spot_changed` | the list of spots changed: a spot added in the app's settings, or a new one typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing), or removed in the app's settings (confirmed if plants stood there). Never the spot's name. | `action`: `added` / `removed`<br>`from`: `settings` (the spots in the app's settings) / `card` («+ место» in the plant card)<br>`plants`: removed: plants left without a spot<br>`how`: `button` (+) / `enter` (Enter, «Готово» on a phone); added from the card | v168 |
 
 ### Room tab
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `room_saved` | room temperature and humidity saved | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v7 |
-| `room_added` | a room added on the Room tab (no room name sent) | `rooms` | v67 |
-| `room_removed` | a room removed (no room name sent) | `rooms` | v67 |
+| `room_climate_changed`<br>was `room_saved` | a room's temperature and humidity saved («Записать» on the Room tab) | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v168 |
 
 ### Errors and speed
 
@@ -227,10 +228,14 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | --- | --- | --- | --- |
 | `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card; split into `watering_task_finished` (`dry` / `wet`), `watering_task_snoozed` (`later`) and `watering_logged` (`from: card`) | `answer`: `dry` / `wet` / `later`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`from`: `card` (plant card only)<br>the [plant props](#plant-props) | v7–v166 |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
+| `room_added` | a room added (no room name sent); replaced by `app_setting_room_changed` `action: added` | `rooms` | v67–v167 |
+| `room_removed` | a room removed (no room name sent); replaced by `app_setting_room_changed` `action: removed` | `rooms` | v67–v167 |
+| `plant_setting_spot_added` | a spot typed in the plant card's new spot field and added; replaced by `app_setting_spot_changed` `action: added, from: card` | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v166–v167 |
+| `spot_added` | a spot typed in the plant card's new spot field and added; renamed `plant_setting_spot_added` in v166, now `app_setting_spot_changed` `action: added, from: card` | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v94–v165 |
 | `greenhouse_removed` | greenhouse removed from the vent card; replaced by `plant_setting_greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
 | `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `plant_setting_prune_toggled`, `plant_setting_prune_schedule_changed` and `plant_setting_prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
 | `feeding_logged` | plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`) | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133–v161 |
-| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
+| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `app_setting_bath_day_toggled` and `app_setting_bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
 | `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `watering_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
 | `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `plant_setting_bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `plant_setting_grow_changed` | `on` | v69–v75 |
@@ -249,7 +254,8 @@ No longer sent; old data keeps them. Hidden in PostHog.
 1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix, and the prefix tells a care action from a setting:
    - care actions (tasks on «Сегодня», «…сегодня» buttons in the plant card) use the care's prefix: `watering_*`, `feed_*`, `prune_*`, `bath_*`, `bath_day_*` (the app's «Банный день»);
    - anything set in the plant card's «Настройки», care settings included, is `plant_setting_*` (`plant_setting_feed_lamp_toggled`, not `feed_lamp_toggled`); the same setting changed elsewhere (the Light tab, «Без теплицы» on a task) keeps that name, with `from`;
-   - the rest of the plant card is `plant_*`, the Plants tab `plants_*`; app settings keep their feature's prefix (`bath_day_toggled`).
+   - the rest of the plant card is `plant_*`, the Plants tab `plants_*`;
+   - the app itself is `app_*` (`app_opened`, `app_tab_opened`), its settings `app_setting_*` (`app_setting_bath_day_toggled`; the bath day card on «Сегодня» stays `bath_day_*`), backups and data `app_data_*`. The lists of rooms and spots are app settings (`app_setting_room_changed`), a plant's room or spot a plant setting (`plant_setting_spot_changed`), and a room's own readings `room_*` (`room_climate_changed`).
 2. Add or change the event in `events.json`. Reuse prop names and value lists that exist (`plant` props, `medium`, `catalog_id`…). A `text` prop needs `why` and a line in `privacy.html`.
 3. Renamed an event or a prop? Keep the old name in `was`: the ingest function translates it for phones still on an old version. Gone? Set `removed` to the first version without it; don't delete it.
 4. `node tools/events.js --write`, then `node tools/events.js` must report no problems.
