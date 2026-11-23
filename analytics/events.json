@@ -106,9 +106,27 @@
       }
     },
 
+    "watering_task_finished": {
+      "area": "care", "since": 167,
+      "when": "«Полито» or «Ещё влажно» on a watering card on «Сегодня» (the words depend on how the plant grows: «Долито» / «Вода есть», «Вода сменена», drip irrigation «Работает» / «Поправлено»)",
+      "use": ["plant"],
+      "props": {
+        "answer": { "type": "enum", "desc": "drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "watered, it was dry", "wet": "still wet, no water needed" } }
+      }
+    },
+    "watering_task_snoozed": {
+      "area": "care", "since": 167,
+      "when": "«Завтра» on a watering card on «Сегодня»",
+      "use": ["plant"]
+    },
+    "watering_logged": {
+      "area": "care", "since": 167,
+      "when": "«Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's)",
+      "use": ["plant"]
+    },
     "plant_checked": {
-      "area": "care", "since": 7,
-      "when": "answer on a check card, or «Полито сегодня» in the plant card",
+      "area": "care", "since": 7, "removed": 167,
+      "when": "answer on a check card, or «Полито сегодня» in the plant card; split into `watering_task_finished` (`dry` / `wet`), `watering_task_snoozed` (`later`) and `watering_logged` (`from: card`)",
       "use": ["plant"],
       "props": {
         "answer": { "type": "enum", "desc": "drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "", "wet": "", "later": "" } },
@@ -117,15 +135,15 @@
     },
     "watering_tip_opened": {
       "area": "care", "since": 159, "was": ["how_opened"],
-      "when": "«Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks)",
+      "when": "«Как?» opened on a watering card (the watering tip; open by itself for a plant's first 3 checks)",
       "use": ["plant"]
     },
-    "check_undone": {
-      "area": "care", "since": 159,
+    "watering_undone": {
+      "area": "care", "since": 167, "was": ["check_undone"],
       "when": "«×» on the newest answer in the plant card's «История», confirmed",
       "use": ["plant"],
       "props": {
-        "answer": { "type": "enum", "desc": "the answer taken back, in `plant_checked` words (drip irrigation: `dry` is «Работает», `wet` «Поправлено»)", "values": { "dry": "", "wet": "" } },
+        "answer": { "type": "enum", "desc": "the answer taken back, in `watering_task_finished` words; a «Полито сегодня» is `dry`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "", "wet": "" } },
         "restored": { "type": "bool", "desc": "the entry had the state before it (since v152), so the interval and next check went back" }
       }
     },
@@ -911,7 +929,7 @@
     },
     "answer_undone": {
       "area": "care", "since": 152, "removed": 159,
-      "when": "«×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type`",
+      "when": "«×» on the newest answer in the plant card's «История», confirmed; replaced by `watering_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type`",
       "use": ["plant"],
       "props": {
         "answer": { "type": "enum", "values": { "water": "", "wet": "", "ok": "", "fix": "" } },

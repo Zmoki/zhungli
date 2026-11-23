@@ -66,9 +66,11 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card | `answer`: `dry` / `wet` / `later`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`from`: `card` (plant card only)<br>the [plant props](#plant-props) | v7 |
-| `watering_tip_opened`<br>was `how_opened` | «Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v159 |
-| `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `plant_checked` words (drip irrigation: `dry` is «Работает», `wet` «Поправлено»)<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v159 |
+| `watering_task_finished` | «Полито» or «Ещё влажно» on a watering card on «Сегодня» (the words depend on how the plant grows: «Долито» / «Вода есть», «Вода сменена», drip irrigation «Работает» / «Поправлено») | `answer`: `dry` (watered, it was dry) / `wet` (still wet, no water needed); drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>the [plant props](#plant-props) | v167 |
+| `watering_task_snoozed` | «Завтра» on a watering card on «Сегодня» | the [plant props](#plant-props) | v167 |
+| `watering_logged` | «Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's) | the [plant props](#plant-props) | v167 |
+| `watering_tip_opened`<br>was `how_opened` | «Как?» opened on a watering card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v159 |
+| `watering_undone`<br>was `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `watering_task_finished` words; a «Полито сегодня» is `dry`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v167 |
 | `day_completed` | last check of the day done | `done_today` | v7 |
 | `show_all_clicked` | «show all» on Today | none | v7 |
 | `greenhouse_task_shown` | vent cards («Проветрите теплицу») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: vent cards shown (one per plant) | v164 |
@@ -223,12 +225,13 @@ No longer sent; old data keeps them. Hidden in PostHog.
 
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
+| `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card; split into `watering_task_finished` (`dry` / `wet`), `watering_task_snoozed` (`later`) and `watering_logged` (`from: card`) | `answer`: `dry` / `wet` / `later`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`from`: `card` (plant card only)<br>the [plant props](#plant-props) | v7–v166 |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
 | `greenhouse_removed` | greenhouse removed from the vent card; replaced by `plant_setting_greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
 | `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `plant_setting_prune_toggled`, `plant_setting_prune_schedule_changed` and `plant_setting_prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
 | `feeding_logged` | plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`) | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133–v161 |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
-| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
+| `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `watering_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
 | `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `plant_setting_bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `plant_setting_grow_changed` | `on` | v69–v75 |
 
