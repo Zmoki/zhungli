@@ -640,7 +640,7 @@ function importStep(n, moved = true, how = '') {
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
-    track('import_step', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
+    track('import_step_shown', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
 }
 // Step 3's main button. Text waiting to be read: «Найти растения». Plants in the list (found now, or from an
@@ -775,7 +775,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
       ? '<p class="mt-10 error-note small">Это резервная копия Жунглей, а не ответ ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
       : `<p class="mt-10 error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>`;
     announce(note.textContent);
-    track('import_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    track('import_answer_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
     importGo();
     return;
   }
@@ -810,7 +810,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
     imp.info.unread = (imp.info.unread || 0) + res.bad;
   }
   saveImport();
-  track('import_read', {
+  track('import_answer_read', {
     via, how, found: fresh.length, total: imp.items.length, repeated: res.items.length - fresh.length, unread: res.bad, cut: res.cut,
     repaired: res.repaired, matched: fresh.filter((it) => it.card).length, ...(via === 'file' && { file_ext: ext }),
   });
@@ -1007,7 +1007,7 @@ Object.assign(ACTS, {
     });
     el.focus();
   },
-  'import-show'() { showPrompt(); track('import_prompt_shown'); },
+  'import-show'() { showPrompt(); track('import_prompt_opened'); },
   'import-read'() { importPasted('button'); },
   'import-step'(el) { importStep(Number(el.dataset.to)); },
   'import-via'(el) { imp.via = el.dataset.via; importStep(3); },
