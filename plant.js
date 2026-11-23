@@ -1071,6 +1071,8 @@ async function saveNote(el, id, act) {
 }
 function stepInterval(el, id, act) {
   const r = S.plants[id];
+  if (intRun && intRun.id !== id) sendIntRun();
+  if (!intRun) intRun = { id, from: Math.round(r.interval) };
   r.interval = clamp(Math.round(r.interval) + (act === 'int-plus' ? 1 : -1), 1, 60);
   if (r.lastWater) {
     const next = addDays(r.lastWater, r.interval);
@@ -1079,8 +1081,17 @@ function stepInterval(el, id, act) {
   save();
   $('#int-val').textContent = days(r.interval);
   $('#glance').innerHTML = glanceHtml(plant(id));
-  // A run of − / + taps is one change: sent once, 1.2 s after the last tap.
-  clearTimeout(intTimer);
-  intTimer = setTimeout(() => { if (S.plants[id]) track('plant_setting_watering_schedule_changed', { every: Math.round(S.plants[id].interval), how: 'stepper', ...kindOf(id) }); }, 1200);
+  clearTimeout(intRun.timer);
+  intRun.timer = setTimeout(sendIntRun, 1200);
 }
-let intTimer;
+// A run of − / + taps on one plant is one change: sent 1.2 s after the last tap, or at once when the app hides
+// (app.js) or another plant's run starts. Nothing when it ends where it began.
+let intRun = null;
+function sendIntRun() {
+  const run = intRun;
+  intRun = null;
+  if (!run) return;
+  clearTimeout(run.timer);
+  const r = S.plants[run.id], every = r && Math.round(r.interval);
+  if (r && every !== run.from) track('plant_setting_watering_schedule_changed', { every, how: 'stepper', ...kindOf(run.id) });
+}

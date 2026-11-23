@@ -285,7 +285,7 @@
     },
     "plant_setting_name_changed": {
       "area": "plant", "since": 166, "was": ["plant_named"],
-      "when": "nickname set"
+      "when": "nickname set or changed (clearing it sends nothing)"
     },
     "plant_deleted": {
       "area": "plant", "since": 7,
@@ -309,7 +309,7 @@
     },
     "plant_setting_lux_changed": {
       "area": "plant", "since": 166, "was": ["lux_entered"],
-      "when": "lux reading saved",
+      "when": "lux reading saved (clearing it sends nothing)",
       "props": { "from": { "type": "enum", "values": { "light_tab": "", "card": "" } } }
     },
     "plant_setting_spot_added": {
@@ -335,7 +335,7 @@
     "plant_setting_watering_schedule_changed": {
       "area": "plant", "since": 166, "was": ["check_interval_set"],
       "when": "how often the watering check comes, changed in the plant card's «Как растёт»: a chip for drip irrigation (it doesn't learn), or − / + for the others",
-      "note": "A run of − / + taps sends one event, 1.2 s after the last tap.",
+      "note": "A run of − / + taps sends one event, 1.2 s after the last tap (at once when the app hides), and none if it ends where it began.",
       "use": ["plant"],
       "props": {
         "every": { "type": "int", "desc": "days; chips: 7, 14, 21 or 28", "was": ["days"] },

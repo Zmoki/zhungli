@@ -248,6 +248,7 @@ document.addEventListener('visibilitychange', () => {
     const expected = addFlow && addFlow.sheet === 'import' && (addFlow.promptCopied || addFlow.picking);
     if (sheet.open && !expected) endAddFlow(true);
     endQuick('left_app');
+    sendIntRun();
     reportVitals();
     flushStats();
     return;
