@@ -86,10 +86,10 @@ function startAddFlow(sheetName) {
 }
 function endAddFlow(leftApp = false) {
   // What the catalog lacks: sent whether or not something was added in the end.
-  if (addFlow && addFlow.missed) track('catalog_missed', { query: addFlow.missed, added: addFlow.done });
+  if (addFlow && addFlow.missed) track('add_catalog_missed', { query: addFlow.missed, added: addFlow.done });
   if (!leftApp) customDraft = null; // the sheet is closing: a kept «Новое растение» draft goes with it
   if (addFlow && !addFlow.done) {
-    track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp,
+    track('add_abandoned', { part: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp,
       ...(addFlow.sheet === 'import' && imp && { step: imp.step }) });
   }
   addFlow = null;
@@ -108,11 +108,12 @@ function catalogHtml(changeFor) {
       ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
 }
 // `back`: returning from «Своё растение» or AI import, so the ticks stay and it isn't a new opening.
-function openAdd(back = false) {
+// `from`: `empty` (an empty page) or `help` (name help); otherwise the tab it was opened on.
+function openAdd(back = false, from = '') {
   if (!back) picked = new Set();
   if (!sheet.open) endAddFlow(); // the close event doesn't fire in every browser
   startAddFlow('catalog');
-  if (!back) track('add_opened', { from: tab });
+  if (!back) track('add_opened', { from: from || tab });
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
@@ -213,14 +214,14 @@ function catalogSearch(changeFor) {
     }
     if (changeFor) { if (raw) cardSearched = true; return; }
     if (e.detail === 'restore') return;
-    // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
+    // The last search that found nothing goes out once, when the sheet closes (add_catalog_missed):
     // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
     if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
     if (raw) {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
-        track('catalog_searched', { found: any, ...(typo && any && { typo: true }) });
+        track('add_catalog_searched', { found: any, ...(typo && any && { typo: true }) });
       }, 1200);
     }
   });
@@ -250,9 +251,9 @@ const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
 // What was typed in «Новое растение» before ← to the catalog: it comes back if the form is opened again
 // while the add sheet stays open (cleared when the sheet closes or the plant is added).
 let customDraft = null;
-function openCustom(species = '', from = 'button', back = '') {
+function openCustom(species = '', from = 'sheet', back = '') {
   startAddFlow('custom');
-  track('custom_opened', { from });
+  track('add_custom_opened', { from });
   const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
     ${subHead('Новое растение', back, from === 'search_miss' ? species : '')}
@@ -297,6 +298,10 @@ function openCustom(species = '', from = 'button', back = '') {
   // tells whether two fields are enough.
   let tuned = false;
   form.querySelector('.tune').addEventListener('input', (e) => { if (e.target.name !== 'name') tuned = true; });
+  // The form's own funnel: which fields people change (never the values) and whether they open «Тонкая настройка».
+  const FIELD = { species: 'species', like: 'like', name: 'name', type: 'medium', lmin: 'light', lmax: 'light', every: 'every', tip: 'tip' };
+  form.addEventListener('change', (e) => { if (FIELD[e.target.name]) track('add_custom_field_changed', { field: FIELD[e.target.name] }); });
+  form.querySelector('.tune summary').addEventListener('click', (e) => { if (!e.currentTarget.parentElement.open) track('add_custom_tune_opened'); });
   if (!species) form.species.focus();
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -323,7 +328,7 @@ function openCustom(species = '', from = 'button', back = '') {
     initBonus(S);
     save();
     closeSheet();
-    track('plants_added', { count: 1, generic_count: 0, source: 'custom', medium: S.custom[id].type, catalog_id: base.id, tuned });
+    track('add_finished', { count: 1, generic_count: 0, source: 'custom', medium: S.custom[id].type, catalog_id: base.id, tuned });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -513,17 +518,17 @@ const importBase = (it) => {
 // the empty first screen.
 const nameHelpLink = (from, text) => `<p class="mt-8 small name-help"><button class="linkish" data-act="name-help" data-from="${from}">${text}</button></p>`;
 function openNameHelp(from, back = '', q = '') {
-  track('name_help_opened', { from });
+  track('add_help_opened', { from });
   if (addFlow) addFlow.sheet = 'help';
   const search = back
     ? `<button class="mt-10 btn primary wide" data-act="add-back" data-to="name-help"${q ? ` data-q="${esc(q)}"` : ''}>${I('search')}Искать в каталоге</button>`
-    : `<button class="mt-10 btn primary wide" data-act="add-plant">${I('search')}Искать в каталоге</button>`;
+    : `<button class="mt-10 btn primary wide" data-act="add-plant" data-from="help">${I('search')}Искать в каталоге</button>`;
   $('#sheet-body').innerHTML = `
     ${subHead('Как узнать, что за растение', back, q)}
     <div class="info"><b>Сфотографируйте</b>Лист целиком и растение сбоку, при дневном свете.</div>
     <div class="info"><b>Спросите приложение</b>Умную камеру в приложении Яндекс или Google Lens. Они покажут похожие растения с названиями.</div>
     <div class="info"><b>Или спросите ИИ</b>Отправьте фото в Алису, GigaChat или ChatGPT: ИИ определит растения и сразу соберёт список для Жунглей.
-      <button class="mt-10 btn wide" data-act="add-import">${I('bot')}Перенести из чата с ИИ</button></div>
+      <button class="mt-10 btn wide" data-act="add-import" data-from="help">${I('bot')}Перенести из чата с ИИ</button></div>
     <div class="info"><b>Найдите в каталоге</b>Сорт не знаете: берите карточку без сорта, например «Диффенбахия». Даже род неясен: «Своё растение» и в нём «На что похоже».
       ${search}</div>`;
   // The way back returns focus to the link that was tapped (there can be two: under the search and after it).
@@ -563,13 +568,14 @@ function loadImport() {
   } catch (e) { return null; }
 }
 const clearImport = () => { try { localStorage.removeItem(IMPORT_KEY); } catch (e) { /* nothing kept */ } };
-function openImport(back = '') {
+// `from`: `sheet` (the add sheet), `help` (name help) or `empty` (an empty page).
+function openImport(back = '', from = '') {
   startAddFlow('import');
   const kept = loadImport();
   imp = kept || { step: 1, copied: false, via: '', found: 0, items: [], picked: new Set(), carry: '', info: { via: new Set(), parts: 0, cut: false, repaired: false, unread: 0, ext: '' } };
   imp.back = back;
   imp.found = 0;
-  track('import_opened', kept ? { restored: true, step: imp.step } : {});
+  track('add_import_opened', { from, ...(kept && { restored: true, step: imp.step }) });
   // Leaving for the AI chat after copying is the expected path, not abandoning (see visibilitychange).
   if (addFlow) addFlow.promptCopied = imp.copied;
   importStep(imp.step, false);
@@ -640,7 +646,7 @@ function importStep(n, moved = true, how = '') {
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
-    track('import_step_shown', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
+    track('add_import_step_shown', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
 }
 // Step 3's main button. Text waiting to be read: «Найти растения». Plants in the list (found now, or from an
@@ -775,7 +781,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
       ? '<p class="mt-10 error-note small">Это резервная копия Жунглей, а не ответ ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
       : `<p class="mt-10 error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>`;
     announce(note.textContent);
-    track('import_answer_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    track('add_import_answer_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
     importGo();
     return;
   }
@@ -810,7 +816,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
     imp.info.unread = (imp.info.unread || 0) + res.bad;
   }
   saveImport();
-  track('import_answer_read', {
+  track('add_import_answer_read', {
     via, how, found: fresh.length, total: imp.items.length, repeated: res.items.length - fresh.length, unread: res.bad, cut: res.cut,
     repaired: res.repaired, matched: fresh.filter((it) => it.card).length, ...(via === 'file' && { file_ext: ext }),
   });
@@ -904,7 +910,7 @@ function addImported() {
   save();
   const noSpot = list.filter((it) => !it.spot).length;
   const carded = list.filter((it) => it.card);
-  track('plants_added', {
+  track('add_finished', {
     count: list.length, generic_count: carded.filter((it) => it.card.generic).length, catalog_ids: carded.map((it) => it.card.id),
     own_count: list.length - carded.length, guess_count: list.filter((it) => it.guess).length,
     found: imp.items.length, already: imp.items.filter((it) => it.dup).length,
@@ -941,10 +947,14 @@ $('#ai-file-input').addEventListener('change', (e) => {
 /* ---------- Taps while adding ---------- */
 Object.assign(ACTS, {
   // Choosing another way to add ends the quick picks (see endQuick).
-  'add-plant'() { endQuick('catalog'); openAdd(); },
+  'add-plant'(el) { endQuick('catalog'); openAdd(false, el.dataset.from || ''); },
   // From inside the add sheet, the next sheet gets a way back to it.
-  'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
-  'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
+  'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'sheet', el.closest('#sheet') ? 'add-custom' : ''); },
+  'add-import'(el) {
+    endQuick('import');
+    const inSheet = !!el.closest('#sheet');
+    openImport(inSheet ? 'add-import' : '', el.dataset.from || (inSheet ? 'sheet' : 'empty'));
+  },
   // From the add sheet the way back keeps the search; from the empty screen the sheet only closes.
   'name-help'(el) {
     const inAdd = !!el.closest('#sheet');
@@ -955,7 +965,7 @@ Object.assign(ACTS, {
     if (form) customDraft = { ...Object.fromEntries(new FormData(form)), tuneOpen: form.querySelector('.tune').open };
     openAdd(true);
     if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])${el.dataset.from ? `[data-from="${el.dataset.from}"]` : ''}`)?.focus(); return; }
-    // The search comes back as it was, but it isn't a new search: catalog_searched isn't sent again.
+    // The search comes back as it was, but it isn't a new search: add_catalog_searched isn't sent again.
     const q = $('#pick-q');
     q.value = el.dataset.q;
     q.dispatchEvent(new CustomEvent('input', { detail: 'restore' }));
@@ -984,7 +994,7 @@ Object.assign(ACTS, {
   'import-copy'(el) {
     if (addFlow) addFlow.promptCopied = true;
     copyPrompt(el, (how) => {
-      track('import_prompt_copied', { how });
+      track('add_import_prompt_copied', { how });
       if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
       // Copied, or shown to copy by hand: either way the next step opens up, and copying is no longer the main action.
       // Kept on the device: people go to the AI chat right from here, and the app may reload meanwhile.
@@ -1007,7 +1017,7 @@ Object.assign(ACTS, {
     });
     el.focus();
   },
-  'import-show'() { showPrompt(); track('import_prompt_opened'); },
+  'import-show'() { showPrompt(); track('add_import_prompt_opened'); },
   'import-read'() { importPasted('button'); },
   'import-step'(el) { importStep(Number(el.dataset.to)); },
   'import-via'(el) { imp.via = el.dataset.via; importStep(3); },
@@ -1015,7 +1025,7 @@ Object.assign(ACTS, {
   'import-more'(el) { importStep(3, true, el.dataset.how); },
   'import-copy-again'(el) {
     copyPrompt(el, (how) => {
-      track('import_prompt_copied', { how, from: 'again' });
+      track('add_import_prompt_copied', { how, from: 'again' });
       if (!el.isConnected) return;
       const ok = how === 'exec' || how === 'clipboard';
       el.innerHTML = ok ? `${I('check')}Скопировано` : 'Скопируйте из поля выше';

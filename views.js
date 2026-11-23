@@ -529,12 +529,18 @@ let qsReported = false;
 // The ticks stay, so coming back to the same screen keeps them.
 function endQuick(then) {
   if (!qsPicked.size || qsReported) return;
-  track('quick_abandoned', { picked: qsPicked.size, then });
+  track('add_abandoned', { part: 'quick', from: tab, picked: qsPicked.size, then });
   qsReported = true;
 }
 // «Добавить» under the tiles. The word after the number can hide on a narrow screen with large text (style.css).
 const qsAddText = (n) => (n ? `${I('plus')}Добавить ${n}<span class="qs-noun"> ${plural(n, 'растение', 'растения', 'растений')}</span>` : 'Ничего не выбрано');
+// The quick tiles drawn by themselves: once per launch and day for each tab. Not while the stories cover them
+// (the stories send their own), so the first screen and the stories' close check again with quickShownNow().
+function quickShownNow() {
+  if (!storiesDlg.open && $('[data-act="qs-pick"]') && firstShow('quick_' + tab)) track('add_quick_shown', { from: tab });
+}
 function quickStart() {
+  if (appStarted && !storiesDlg.open && firstShow('quick_' + tab)) track('add_quick_shown', { from: tab });
   const tiles = QUICK.map(([k, label]) => {
     const on = qsPicked.has(k);
     return `<button class="qs${on ? ' on' : ''}" data-act="qs-pick" data-key="${k}" aria-pressed="${on}">
@@ -544,15 +550,16 @@ function quickStart() {
   return `<p class="mt-14 qs-title"><b>Что у вас растёт?</b> Отметьте, а остальное найдём в каталоге.</p>
     <div class="qs-grid">${tiles}</div>
     <button class="mt-12 btn primary wide" data-act="qs-add" id="qs-add"${n ? '' : ' disabled'}>${qsAddText(n)}</button>
-    <button class="mt-8 btn ghost wide" data-act="add-plant">${I('search')}Другие растения</button>
-    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import">Перенести из чата с ИИ</button></p>
+    <button class="mt-8 btn ghost wide" data-act="add-plant" data-from="empty">${I('search')}Другие растения</button>
+    <p class="mt-12 small muted">Растений много? <button class="linkish" data-act="add-import" data-from="empty">Перенести из чата с ИИ</button></p>
     <p class="mt-8 small muted name-help">Не знаете название? <button class="linkish" data-act="name-help" data-from="empty">Как узнать</button></p>`;
 }
 // After adding from the catalog or the quick picks: one plant opens its card, several go to «Растения».
-function addFromCatalog(keys, source) {
+// `from`: where the quick tiles were (a tab or the stories).
+function addFromCatalog(keys, source, from) {
   const ids = addPlants(keys);
   if (!ids.length) return;
-  track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source });
+  track('add_finished', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source, ...(from && { from }) });
   save();
   if (ids.length === 1) { openPlant(ids[0], 'settings', ['name', 'place']); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); return; }
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
@@ -779,6 +786,7 @@ Object.assign(ACTS, {
   'qs-pick'(el) {
     const k = el.dataset.key;
     if (qsPicked.has(k)) qsPicked.delete(k); else qsPicked.add(k);
+    track('add_quick_ticked', { on: qsPicked.has(k), catalog_id: k, from: tab });
     qsReported = false;
     el.classList.toggle('on', qsPicked.has(k));
     el.setAttribute('aria-pressed', qsPicked.has(k));
@@ -789,7 +797,7 @@ Object.assign(ACTS, {
   'qs-add'() {
     const keys = [...qsPicked];
     qsPicked = new Set();
-    addFromCatalog(keys, 'quick');
+    addFromCatalog(keys, 'quick', tab);
   },
   'st-filter'(el) {
     plantSt = el.dataset.st;
