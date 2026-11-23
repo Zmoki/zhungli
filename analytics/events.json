@@ -529,6 +529,7 @@
     "import_step_shown": {
       "area": "import", "since": 165, "was": ["import_step"],
       "when": "AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение»)",
+      "note": "Sent on every move, unlike the care `*_shown` events (once a day). An import reopened where it stopped sends `import_opened` with `step` instead.",
       "props": {
         "step": { "type": "int", "desc": "1–4" },
         "from_step": { "type": "int", "desc": "the step left (lower: «Назад»)", "was": ["from"] },
