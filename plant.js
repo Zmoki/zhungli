@@ -803,7 +803,7 @@ Object.assign(ACTS, {
     $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
     $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
     $('#rinse-wrap .last-done')?.focus();
-    track('rinse_logged', { from: 'card' });
+    track('bath_logged');
     toast('Промывка записана 🚿', () => {
       undo();
       if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); $('[data-act="rinse-done"]')?.focus(); }
@@ -870,7 +870,7 @@ Object.assign(ACTS, {
     if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); return; } // saves
     if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('feed_lamp_toggled', { on }); return; }
     if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_toggled', { on }); return; }
-    if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on }); return; }
+    if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on, from: 'card' }); return; }
     if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
     if (f === 'repotted') { r.repotted = on ? today() : false; track('repot_toggled', { on }); }
     save();

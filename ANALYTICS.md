@@ -71,10 +71,12 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `plant_checked` words (drip irrigation: `dry` is «Работает», `wet` «Поправлено»)<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v159 |
 | `day_completed` | last check of the day done | `done_today` | v7 |
 | `show_all_clicked` | «show all» on Today | none | v7 |
-| `greenhouse_vented` | «Проветрено» on the vent card | none | v7 |
-| `greenhouse_removed` | greenhouse removed from the vent card | none | v7 |
-| `quarantine_checked` | «Осмотрено» on a new plant's pest check | none | v131 |
-| `bonus_done` | bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`, pruning `prune_task_finished` since v163) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card, up to v162) / `feedback` («Написать» on «Как вам Жунгли?») | v7 |
+| `greenhouse_task_shown` | vent cards («Проветрите теплицу») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: vent cards shown (one per plant) | v164 |
+| `greenhouse_task_finished`<br>was `greenhouse_vented` | «Проветрено» on the vent card | none | v164 |
+| `quarantine_task_shown` | pest checks («Осмотрите на вредителей») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: pest checks shown (one per new plant) | v164 |
+| `quarantine_task_finished`<br>was `quarantine_checked` | «Осмотрено» on a new plant's pest check («Уже не новое» is `quarantine_toggled` `from: task`) | none | v164 |
+| `bonus_shown` | «Если есть силы» bonus tasks drawn on «Сегодня», once per launch and day, while the app is on screen; the feeding day, pruning and the bath day have their own. The funnel's first step: count devices. | `count`: bonus tasks shown (dust, turning, medium care, backup, feedback) | v164 |
+| `bonus_finished`<br>was `bonus_done` | bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`, pruning `prune_task_finished` since v163) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card, up to v162) / `feedback` («Написать» on «Как вам Жунгли?») | v164 |
 | `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162, pruning `prune_task_snoozed` since v163) | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` (up to v162) / `bath` (the bath day, up to v159) / `feed` (the feeding day, up to v161) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
 | `feed_day_shown` | the «День подкормки» card drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: plants on the card (due by their own schedule) | v162 |
 | `feed_day_finished` | «Подкормлено» on the «День подкормки» card | `count`: plants ticked as fed<br>`of`: plants on the card; the unticked ones come back in 3 days | v162 |
@@ -87,7 +89,6 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `prune_task_shown` | «Обрежьте: …» tasks drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: pruning tasks shown (one per plant) | v163 |
 | `prune_task_finished` | «Обрезано» on a «Обрежьте: …» task (before v163: `bonus_done` `kind: prune`) | none | v163 |
 | `prune_task_snoozed` | «Через 3 дня» on a «Обрежьте: …» task (before v163: `bonus_skipped` `kind: prune`) | none | v163 |
-| `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | `from`: `card` | v137 |
 | `winter_hint_hidden` | «Понятно» on the winter light hint on «Сегодня» | none | v132 |
 
 ### Plant card and the plants list
@@ -106,7 +107,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v76 |
 | `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `every`: `7` / `14` / `21` / `28`; days (was `days`)<br>the [plant props](#plant-props) | v119 |
 | `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v106 |
-| `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card | `on` | v7 |
+| `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card, or «Без теплицы» on the vent card | `on`<br>`from`: `card` / `task` («Без теплицы» on the vent card, confirmed); since v164 (before: card only; the vent card sent `greenhouse_removed`) | v7 |
 | `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`<br>`from`: `card` / `task` | v131 |
 | `repot_toggled` | «Недавно пересажено» in the plant card | `on` | v154 |
 | `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | the [plant props](#plant-props) | v132 |
@@ -118,6 +119,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `prune_schedule_changed` | how often chip under «Звать на обрезку?» in the plant card | `every`: `14` / `30` / `60` / `300` (once a year); days | v163 |
 | `prune_months_changed` | a month chip under «Звать на обрезку?» in the plant card | `months`: how many months are on now | v163 |
 | `prune_logged`<br>was `reminder_logged` | «Обрезано сегодня» in the plant card's «Обрезка» | none | v163 |
+| `bath_logged`<br>was `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | none | v164 |
 | `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v159 |
 | `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` | v68 |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` | v67 |
@@ -221,6 +223,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
+| `greenhouse_removed` | greenhouse removed from the vent card; replaced by `greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
 | `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `prune_toggled`, `prune_schedule_changed` and `prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
 | `feeding_logged` | plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`) | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133–v161 |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |

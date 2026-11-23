@@ -223,7 +223,14 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 // «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
 // `bathOff` and `feedOff` keep the unticked ones across redraws.
 let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
-let bathShownOn = '', feedShownOn = '', pruneShownOn = ''; // the day bath_day_shown / feed_day_shown / prune_task_shown went out in this launch
+// A card kind's «shown» event (the funnels' first step): once per launch and day, only while the app is on screen
+// (a hidden start waits for the render on becoming visible), never for the stories' sample garden.
+const shownOn = {};
+function firstShow(kind) {
+  if (sampleDraw || document.hidden || shownOn[kind] === today()) return false;
+  shownOn[kind] = today();
+  return true;
+}
 // True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
 let sampleDraw = false;
 const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
@@ -308,6 +315,8 @@ function viewToday() {
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
 
+  if (inspects.length && firstShow('quarantine')) track('quarantine_task_shown', { count: inspects.length });
+  if (vents.length && firstShow('greenhouse')) track('greenhouse_task_shown', { count: vents.length });
   inspects.forEach((p) => {
     html += taskCard({
       p, task: 'Осмотрите на вредителей',
@@ -360,13 +369,13 @@ function viewToday() {
     if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
   }
   const bathCard = bp && bp.shown ? bathHtml(bp) : '';
-  // The funnel's first step: the card's question was on screen (once per launch and day; a hidden start waits for
-  // the render on becoming visible).
-  if (bathCard && !sampleDraw && !document.hidden && bathStep === 0 && bathShownOn !== t) { bathShownOn = t; track('bath_day_shown', { count: bp.offer.length }); }
+  if (bathCard && bathStep === 0 && firstShow('bath')) track('bath_day_shown', { count: bp.offer.length });
   const feedTask = bonus.find((b) => b.key.startsWith('feed:'));
-  if (feedTask && !sampleDraw && !document.hidden && feedShownOn !== t) { feedShownOn = t; track('feed_day_shown', { count: feedTask.pick.length }); }
+  if (feedTask && firstShow('feed')) track('feed_day_shown', { count: feedTask.pick.length });
   const pruneTasks = bonus.filter((b) => b.key.startsWith('prune:')).length;
-  if (pruneTasks && !sampleDraw && !document.hidden && pruneShownOn !== t) { pruneShownOn = t; track('prune_task_shown', { count: pruneTasks }); }
+  if (pruneTasks && firstShow('prune')) track('prune_task_shown', { count: pruneTasks });
+  const otherBonus = bonus.length - pruneTasks - (feedTask ? 1 : 0);
+  if (otherBonus && firstShow('bonus')) track('bonus_shown', { count: otherBonus });
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
@@ -664,11 +673,11 @@ Object.assign(ACTS, {
     const undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭︎', undo);
   },
   'vent-done'(el, id) {
-    const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_vented');
+    const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_task_finished');
     afterTask('Свежий воздух! 🌬️', undo);
   },
   'inspect-done'(el, id) {
-    const undo = snapshot(); S.plants[id].inspected = today(); logToday({ id, a: 'inspect' }); track('quarantine_checked');
+    const undo = snapshot(); S.plants[id].inspected = today(); logToday({ id, a: 'inspect' }); track('quarantine_task_finished');
     afterTask(isNew(plant(id)) && diff(S.plants[id].bought, today()) + 7 >= NEW_DAYS ? 'Карантин позади: можно ставить к остальным 🌿' : 'Осмотрено 🔍 Загляну через неделю', undo);
   },
   'inspect-off'(el, id) {
@@ -676,7 +685,7 @@ Object.assign(ACTS, {
   },
   async 'vent-off'(el, id) {
     if (await ask({ title: 'Теплица больше не нужна?', text: 'Больше не позову проветривать.', ok: 'Не нужна' })) {
-      const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_removed'); afterTask('Ура, без теплицы! 🎉', undo);
+      const undo = snapshot(); S.plants[id].greenhouse = false; track('greenhouse_toggled', { on: false, from: 'task' }); afterTask('Ура, без теплицы! 🎉', undo);
     }
   },
   how(el, id) {
@@ -732,7 +741,7 @@ Object.assign(ACTS, {
     const b = bonusTasks().find((x) => x.key === el.dataset.key);
     bonusDone(el.dataset.key);
     if (el.dataset.key.startsWith('prune:')) track('prune_task_finished');
-    else track('bonus_done', { kind: el.dataset.key.split(':')[0] });
+    else track('bonus_finished', { kind: el.dataset.key.split(':')[0] });
     logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
     afterTask('Бонус засчитан ✨', undo);
   },
@@ -745,7 +754,7 @@ Object.assign(ACTS, {
   // The feedback task asks once: «Написать» (the link opens Telegram) and «Не нужно» both put it away for good.
   'feedback-answer'(el) {
     S.bonus.feedback = today();
-    track(el.dataset.wrote ? 'bonus_done' : 'bonus_skipped', { kind: 'feedback' });
+    track(el.dataset.wrote ? 'bonus_finished' : 'bonus_skipped', { kind: 'feedback' });
     save();
     // After the link has done its job: re-rendering now would remove it mid-click.
     setTimeout(() => { render(); if (!el.dataset.wrote) toast('Хорошо, больше не спрошу 🙂'); }, 0);
