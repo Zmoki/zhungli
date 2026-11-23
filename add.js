@@ -89,7 +89,7 @@ function endAddFlow(leftApp = false) {
   if (addFlow && addFlow.missed) track('add_catalog_missed', { query: addFlow.missed, added: addFlow.done });
   if (!leftApp) customDraft = null; // the sheet is closing: a kept «Новое растение» draft goes with it
   if (addFlow && !addFlow.done) {
-    track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp,
+    track('add_abandoned', { part: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp,
       ...(addFlow.sheet === 'import' && imp && { step: imp.step }) });
   }
   addFlow = null;
@@ -108,11 +108,12 @@ function catalogHtml(changeFor) {
       ${groups[c].map((d) => pickRow(d, changeFor, nowId)).join('')}</div>`).join('')}<div id="pick-end"></div>`;
 }
 // `back`: returning from «Своё растение» or AI import, so the ticks stay and it isn't a new opening.
-function openAdd(back = false) {
+// `from`: `empty` (an empty page) or `help` (name help); otherwise the tab it was opened on.
+function openAdd(back = false, from = '') {
   if (!back) picked = new Set();
   if (!sheet.open) endAddFlow(); // the close event doesn't fire in every browser
   startAddFlow('catalog');
-  if (!back) track('add_opened', { from: tab });
+  if (!back) track('add_opened', { from: from || tab });
   $('#sheet-body').innerHTML = `
     <div class="sheet-head"><h2 class="m-0">Добавить растения</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
@@ -250,7 +251,7 @@ const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
 // What was typed in «Новое растение» before ← to the catalog: it comes back if the form is opened again
 // while the add sheet stays open (cleared when the sheet closes or the plant is added).
 let customDraft = null;
-function openCustom(species = '', from = 'button', back = '') {
+function openCustom(species = '', from = 'sheet', back = '') {
   startAddFlow('custom');
   track('add_custom_opened', { from });
   const like = GENERIC_TYPES()[0];
@@ -297,6 +298,10 @@ function openCustom(species = '', from = 'button', back = '') {
   // tells whether two fields are enough.
   let tuned = false;
   form.querySelector('.tune').addEventListener('input', (e) => { if (e.target.name !== 'name') tuned = true; });
+  // The form's own funnel: which fields people change (never the values) and whether they open «Тонкая настройка».
+  const FIELD = { species: 'species', like: 'like', name: 'name', type: 'medium', lmin: 'light', lmax: 'light', every: 'every', tip: 'tip' };
+  form.addEventListener('change', (e) => { if (FIELD[e.target.name]) track('add_custom_field_changed', { field: FIELD[e.target.name] }); });
+  form.querySelector('.tune summary').addEventListener('click', (e) => { if (!e.currentTarget.parentElement.open) track('add_custom_tune_opened'); });
   if (!species) form.species.focus();
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -517,13 +522,13 @@ function openNameHelp(from, back = '', q = '') {
   if (addFlow) addFlow.sheet = 'help';
   const search = back
     ? `<button class="mt-10 btn primary wide" data-act="add-back" data-to="name-help"${q ? ` data-q="${esc(q)}"` : ''}>${I('search')}Искать в каталоге</button>`
-    : `<button class="mt-10 btn primary wide" data-act="add-plant">${I('search')}Искать в каталоге</button>`;
+    : `<button class="mt-10 btn primary wide" data-act="add-plant" data-from="help">${I('search')}Искать в каталоге</button>`;
   $('#sheet-body').innerHTML = `
     ${subHead('Как узнать, что за растение', back, q)}
     <div class="info"><b>Сфотографируйте</b>Лист целиком и растение сбоку, при дневном свете.</div>
     <div class="info"><b>Спросите приложение</b>Умную камеру в приложении Яндекс или Google Lens. Они покажут похожие растения с названиями.</div>
     <div class="info"><b>Или спросите ИИ</b>Отправьте фото в Алису, GigaChat или ChatGPT: ИИ определит растения и сразу соберёт список для Жунглей.
-      <button class="mt-10 btn wide" data-act="add-import">${I('bot')}Перенести из чата с ИИ</button></div>
+      <button class="mt-10 btn wide" data-act="add-import" data-from="help">${I('bot')}Перенести из чата с ИИ</button></div>
     <div class="info"><b>Найдите в каталоге</b>Сорт не знаете: берите карточку без сорта, например «Диффенбахия». Даже род неясен: «Своё растение» и в нём «На что похоже».
       ${search}</div>`;
   // The way back returns focus to the link that was tapped (there can be two: under the search and after it).
@@ -563,13 +568,14 @@ function loadImport() {
   } catch (e) { return null; }
 }
 const clearImport = () => { try { localStorage.removeItem(IMPORT_KEY); } catch (e) { /* nothing kept */ } };
-function openImport(back = '') {
+// `from`: `sheet` (the add sheet), `help` (name help) or `empty` (an empty page).
+function openImport(back = '', from = '') {
   startAddFlow('import');
   const kept = loadImport();
   imp = kept || { step: 1, copied: false, via: '', found: 0, items: [], picked: new Set(), carry: '', info: { via: new Set(), parts: 0, cut: false, repaired: false, unread: 0, ext: '' } };
   imp.back = back;
   imp.found = 0;
-  track('add_import_opened', kept ? { restored: true, step: imp.step } : {});
+  track('add_import_opened', { from, ...(kept && { restored: true, step: imp.step }) });
   // Leaving for the AI chat after copying is the expected path, not abandoning (see visibilitychange).
   if (addFlow) addFlow.promptCopied = imp.copied;
   importStep(imp.step, false);
@@ -941,10 +947,14 @@ $('#ai-file-input').addEventListener('change', (e) => {
 /* ---------- Taps while adding ---------- */
 Object.assign(ACTS, {
   // Choosing another way to add ends the quick picks (see endQuick).
-  'add-plant'() { endQuick('catalog'); openAdd(); },
+  'add-plant'(el) { endQuick('catalog'); openAdd(false, el.dataset.from || ''); },
   // From inside the add sheet, the next sheet gets a way back to it.
-  'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'button', el.closest('#sheet') ? 'add-custom' : ''); },
-  'add-import'(el) { endQuick('import'); openImport(el.closest('#sheet') ? 'add-import' : ''); },
+  'add-custom'(el) { openCustom(el.dataset.q || '', el.dataset.q ? 'search_miss' : 'sheet', el.closest('#sheet') ? 'add-custom' : ''); },
+  'add-import'(el) {
+    endQuick('import');
+    const inSheet = !!el.closest('#sheet');
+    openImport(inSheet ? 'add-import' : '', el.dataset.from || (inSheet ? 'sheet' : 'empty'));
+  },
   // From the add sheet the way back keeps the search; from the empty screen the sheet only closes.
   'name-help'(el) {
     const inAdd = !!el.closest('#sheet');

@@ -323,6 +323,8 @@ function endStory(slide) {
   const box = document.createElement('div');
   box.className = 'st-end';
   if (kind === 'tiles') {
+    // The quick tiles, as on an empty page: shown once per opening of the stories.
+    if (!storyQuickShown) { storyQuickShown = true; track('add_quick_shown', { from: 'stories' }); }
     // Only the tiles: the button comes with the first tick. Other ways to add (catalog, AI chat, a backup) wait on the empty «Сегодня».
     const n = ticked.size;
     box.innerHTML = `<h2 tabindex="-1">Что у вас растёт?</h2><p class="lead">Отметьте, что есть, а остальное найдём в каталоге.</p>
@@ -396,10 +398,10 @@ function resumeStory() {
   const slide = $('#story-slide');
   if (slide && storiesDlg.open) playStory(slide, STORIES[storyI]);
 }
-let storyFrom = '';
+let storyFrom = '', storyQuickShown = false;
 // `at`: the story to start on (the last one for the way to the home screen).
 function openStories(from, at = 0) {
-  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from;
+  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from; storyQuickShown = false;
   S.storiesSeen = today();
   save();
   track('stories_opened', { from });
@@ -418,10 +420,14 @@ function closeStories(how) {
 }
 function trackStoriesClosed(how) {
   const last = storyMax === STORIES.length - 1;
-  // Which last story was seen (by the iPhone guide it showed), and tiles ticked there but never added.
+  // Which last story was seen (by the iPhone guide it showed).
   const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
-  track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined,
-    ticked: last && end === 'tiles' && how !== 'add' && ticked.size ? ticked.size : undefined });
+  track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined });
+  // Tiles ticked there but never added: left like the quick tiles on an empty page.
+  if (last && end === 'tiles' && how !== 'add' && ticked.size) {
+    const then = { left: 'left_app', followed: 'left_app', catalog: 'catalog', import: 'import', restore: 'restore' }[how] || 'closed';
+    track('add_abandoned', { part: 'quick', from: 'stories', picked: ticked.size, then });
+  }
 }
 // Leaving the app with the stories open (another app, the home screen, closing the tab) may be the last thing that
 // happens: the page can be gone before they're closed. So it counts as closing them, sent before app.js flushes the
@@ -450,6 +456,7 @@ storiesDlg.addEventListener('close', () => {
   if (storyAway) storyAway = false; // closed while away: already counted when they left
   else trackStoriesClosed(how);
   storiesDlg.innerHTML = '';
+  quickShownNow(); // the quick tiles on the empty page under them are seen only now
   // An update that came while they were open waited for this. Only when they were simply closed: otherwise
   // something else is starting (a restore's file picker, a toast about added or restored plants).
   if (how === 'close') checkUpdate();
@@ -501,13 +508,14 @@ Object.assign(ACTS, {
   'story-tick'(el) {
     const k = el.dataset.key;
     if (ticked.has(k)) ticked.delete(k); else ticked.add(k);
+    track('add_quick_ticked', { on: ticked.has(k), catalog_id: k, from: 'stories' });
     showStory();
     $(`#stories [data-key="${k}"]`)?.focus();
   },
   'story-add'() {
     const keys = [...ticked];
     closeStories('add');
-    addFromCatalog(keys, 'stories');
+    addFromCatalog(keys, 'quick', 'stories');
   },
   // Plants saved as a copy in Safari, on the way to the home-screen app (the hint there says to restore it here).
 });

@@ -468,20 +468,15 @@
     "add_opened": {
       "area": "add", "since": 23,
       "when": "«Добавить растения» sheet opened",
-      "props": { "from": { "type": "enum", "values": "tab", "desc": "tab it was opened from" } }
+      "props": { "from": { "type": "enum", "desc": "the tab it was opened on, or (since v171) `empty`: «Другие растения» on an empty page, `help`: «Искать в каталоге» in name help", "values": { "today": "", "plants": "", "light": "", "room": "", "empty": "", "help": "" } } }
     },
     "add_finished": {
       "area": "add", "since": 171, "was": ["plants_added"],
       "when": "plants added from the picker, the custom form or AI import",
       "props": {
         "count": { "type": "int" },
-        "source": { "type": "enum", "values": {
-          "catalog": "",
-          "quick": "tiles on an empty screen",
-          "stories": "tiles in the last story",
-          "custom": "",
-          "import": ""
-        } },
+        "source": { "type": "enum", "values": { "catalog": "", "quick": "the quick tiles, on an empty page or in the last story (`from`)", "stories": "before v171: tiles in the last story; now `quick` with `from: stories`", "custom": "", "import": "" } },
+        "from": { "type": "enum", "desc": "quick: where the tiles were; since v171", "values": { "today": "", "plants": "", "light": "", "room": "", "stories": "the last story" } },
         "generic_count": { "type": "int", "desc": "how many are generic catalog cards" },
         "catalog_ids": { "type": "catalog_ids", "desc": "catalog, quick and stories picks; import: plants matched to catalog cards" },
         "via": { "type": "enum", "desc": "import", "values": { "paste": "", "file": "", "both": "" } },
@@ -505,14 +500,38 @@
     "add_custom_opened": {
       "area": "add", "since": 171, "was": ["custom_opened"],
       "when": "own plant form opened",
-      "props": { "from": { "type": "enum", "values": { "button": "«Своё растение» under «Не нашли своё?»", "search_miss": "«Добавить как своё» after a catalog search found nothing" } } }
+      "props": { "from": { "type": "enum", "values": { "sheet": "«Своё растение» under «Не нашли своё?» (before v171: `button`)", "search_miss": "«Добавить как своё» after a catalog search found nothing" } } }
     },
-    "add_quick_abandoned": {
-      "area": "add", "since": 171, "was": ["quick_abandoned"],
-      "when": "tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app",
+    "add_custom_field_changed": {
+      "area": "add", "since": 171,
+      "when": "a field of the own plant form changed (text fields on leaving them)",
+      "note": "Never the value.",
+      "props": { "field": { "type": "enum", "values": { "species": "«Что это за растение»", "like": "«На что похоже»", "name": "«Имя»", "medium": "«В чём растёт»", "light": "light from or to", "every": "«Проверять каждые … дней»", "tip": "«Шпаргалка»" } } }
+    },
+    "add_custom_tune_opened": {
+      "area": "add", "since": 171,
+      "when": "«Тонкая настройка» opened in the own plant form"
+    },
+    "add_quick_shown": {
+      "area": "add", "since": 171,
+      "when": "the quick tiles («Что у вас растёт?») drawn by themselves: on an empty page once per launch and day for each tab (not while the stories cover it: then once they close), in the stories once per opening. The funnel's first step: count devices.",
+      "props": { "from": { "type": "enum", "values": { "today": "", "plants": "", "light": "", "room": "", "stories": "the last story" } } }
+    },
+    "add_quick_ticked": {
+      "area": "add", "since": 171,
+      "when": "a quick tile ticked or unticked",
+      "props": {
+        "on": { "type": "bool", "desc": "`true`: ticked" },
+        "catalog_id": { "type": "catalog_id" },
+        "from": { "type": "enum", "values": { "today": "", "plants": "", "light": "", "room": "", "stories": "the last story" } }
+      }
+    },
+    "quick_abandoned": {
+      "area": "add", "since": 70, "removed": 171,
+      "when": "tiles on an empty screen were ticked but not added; replaced by `add_abandoned` `part: quick`",
       "props": {
         "picked": { "type": "int", "desc": "how many ticked" },
-        "then": { "type": "enum", "desc": "what they turned to instead of «Добавить»; they may still add there", "values": { "catalog": "", "import": "", "restore": "", "left_app": "" } }
+        "then": { "type": "enum", "values": { "catalog": "", "import": "", "restore": "", "left_app": "" } }
       }
     },
     "add_help_opened": {
@@ -539,9 +558,11 @@
     },
     "add_abandoned": {
       "area": "add", "since": 23,
-      "when": "add sheet closed without adding",
+      "when": "a way of adding left without adding: the add sheet closed, or quick tiles ticked but not added (once, when the person turns to another way of adding, leaves the app or closes the stories)",
       "props": {
-        "sheet": { "type": "enum", "desc": "last one shown", "values": { "catalog": "", "custom": "", "import": "", "help": "" } },
+        "part": { "type": "enum", "desc": "the part left: the add sheet's last one shown, or the quick tiles", "was": ["sheet"], "values": { "catalog": "", "custom": "", "import": "", "help": "", "quick": "since v171; before: `quick_abandoned`" } },
+        "from": { "type": "enum", "desc": "quick: where the tiles were", "values": { "today": "", "plants": "", "light": "", "room": "", "stories": "the last story" } },
+        "then": { "type": "enum", "desc": "quick: what they turned to instead of «Добавить»; they may still add there", "values": { "catalog": "", "import": "", "restore": "", "left_app": "", "closed": "the stories closed" } },
         "searched": { "type": "bool" },
         "no_results": { "type": "bool", "desc": "last search found nothing" },
         "picked": { "type": "int" },
@@ -554,6 +575,7 @@
       "area": "import", "since": 171, "was": ["import_opened"],
       "when": "AI import sheet opened",
       "props": {
+        "from": { "type": "enum", "desc": "since v171", "values": { "sheet": "the add sheet", "help": "name help", "empty": "«Перенести из чата с ИИ» on an empty page" } },
         "restored": { "type": "bool", "desc": "it opened where an unfinished import stopped (kept on the device for 3 hours)" },
         "step": { "type": "int", "desc": "with `restored`" }
       }
@@ -649,7 +671,7 @@
     "stories_closed": {
       "area": "stories", "since": 115,
       "when": "the stories closed",
-      "note": "Leaving the app may be the last event, so it's sent then (after the Telegram button as `telegram`); coming back sends `stories_opened` `return`, so each open has one close and a device can have several: count its last one.",
+      "note": "Leaving the app may be the last event, so it's sent then (after the Telegram button as `telegram`); coming back sends `stories_opened` `return`, so each open has one close and a device can have several: count its last one. Tiles ticked in the last story but not added are `add_abandoned` `part: quick, from: stories` (before v171: `ticked` here).",
       "props": {
         "from": { "type": "enum", "desc": "as in `stories_opened` for this run of them (`return` never: the first open's)", "values": { "auto": "", "settings": "", "home_icon": "", "install_card": "", "install_hint": "" } },
         "reached": { "type": "int", "desc": "the furthest story seen (1–6)" },
@@ -669,8 +691,7 @@
           "ios_26": "Safari 26 steps",
           "ios_old": "older Safari steps",
           "ios_other": "text steps: iPad, other browsers"
-        } },
-        "ticked": { "type": "int", "desc": "tiles ticked there but not added" }
+        } }
       }
     },
 
