@@ -1034,11 +1034,14 @@ document.addEventListener('keydown', (e) => {
 function addSpot(id, how) {
   const s = $('#f-new-spot').value.trim();
   if (!s) { spotForm(false); return; }
+  const moved = S.plants[id].spot !== s;
   S.plants[id].spot = s;
   const fresh = !S.spots.includes(s);
   if (fresh) S.spots.push(s);
   save();
-  track('app_setting_spot_changed', { action: 'added', from: 'card', how, new_spot: fresh });
+  // A spot typed that's already in the list is only a pick for this plant.
+  if (fresh) track('app_setting_spot_changed', { action: 'added', from: 'card', how });
+  else if (moved) track('plant_setting_spot_changed');
   const box = $('#spot-chips');
   let chip = [...box.querySelectorAll('[data-act="spot"]')].find((c) => c.dataset.spot === s);
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }
