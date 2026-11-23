@@ -78,27 +78,27 @@
         "$referring_domain": { "type": "code", "desc": "`start` only, once per arrival (a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself)" }
       }
     },
-    "tab_viewed": {
-      "area": "app", "since": 7,
+    "app_tab_opened": {
+      "area": "app", "since": 168, "was": ["tab_viewed"],
       "when": "tab switch",
       "props": { "tab": { "type": "enum", "values": "tab" } }
     },
-    "news_opened": {
-      "area": "app", "since": 10,
+    "app_news_opened": {
+      "area": "app", "since": 168, "was": ["news_opened"],
       "when": "«Что нового» opened (header ✨ or settings)",
       "props": { "had_new": { "type": "bool", "desc": "there were unseen changes" } }
     },
-    "settings_opened": {
-      "area": "app", "since": 88,
+    "app_settings_opened": {
+      "area": "app", "since": 168, "was": ["settings_opened"],
       "when": "settings opened from the header"
     },
-    "privacy_opened": {
-      "area": "app", "since": 88,
+    "app_privacy_opened": {
+      "area": "app", "since": 168, "was": ["privacy_opened"],
       "when": "link to the privacy page tapped",
       "props": { "from": { "type": "enum", "values": { "stats_notice": "", "settings": "", "news": "", "other": "no `data-from` around the link" } } }
     },
-    "author_link_clicked": {
-      "area": "app", "since": 8,
+    "app_author_link_clicked": {
+      "area": "app", "since": 168, "was": ["author_link_clicked"],
       "when": "author link in settings, «Что нового» or a failed AI import",
       "props": {
         "target": { "type": "enum", "values": { "website": "", "telegram": "", "threads": "Polina's profile" } },
@@ -760,28 +760,28 @@
       "when": "«Понятно» on the Telegram hint"
     },
 
-    "limit_changed": {
-      "area": "settings", "since": 7,
+    "app_setting_limit_changed": {
+      "area": "settings", "since": 168, "was": ["limit_changed"],
       "when": "plants-per-day limit changed",
       "props": { "limit": { "type": "int" } }
     },
-    "pets_toggled": {
-      "area": "settings", "since": 130,
+    "app_setting_pets_toggled": {
+      "area": "settings", "since": 168, "was": ["pets_toggled"],
       "when": "«Дома есть кошка или собака» in settings",
       "props": { "on": { "type": "bool" } }
     },
-    "bath_day_toggled": {
-      "area": "settings", "since": 160,
+    "app_setting_bath_day_toggled": {
+      "area": "settings", "since": 168, "was": ["bath_day_toggled"],
       "when": "«Банный день» checkbox in the app's settings",
       "props": { "on": { "type": "bool", "desc": "`true`: switched on, which sets every 120 days" } }
     },
-    "bath_day_schedule_changed": {
-      "area": "settings", "since": 160,
+    "app_setting_bath_day_schedule_changed": {
+      "area": "settings", "since": 168, "was": ["bath_day_schedule_changed"],
       "when": "«Как часто купать каждое растение» chip under «Банный день» in the app's settings",
       "props": { "every": { "type": "enum", "desc": "days", "values": { "60": "", "120": "", "180": "" } } }
     },
-    "backup_exported": {
-      "area": "settings", "since": 7,
+    "app_data_exported": {
+      "area": "settings", "since": 168, "was": ["backup_exported"],
       "when": "backup downloaded",
       "props": {
         "from": { "type": "enum", "desc": "absent from Settings", "values": {
@@ -791,17 +791,17 @@
         } }
       }
     },
-    "backup_imported": {
-      "area": "settings", "since": 7,
+    "app_data_imported": {
+      "area": "settings", "since": 168, "was": ["backup_imported"],
       "when": "backup restored"
     },
-    "data_reset": {
-      "area": "settings", "since": 90,
+    "app_data_reset": {
+      "area": "settings", "since": 168, "was": ["data_reset"],
       "when": "«Начать с чистого листа» confirmed in settings",
       "note": "`plants_total` is how many were erased."
     },
-    "stats_enabled": {
-      "area": "settings", "since": 7,
+    "app_setting_stats_enabled": {
+      "area": "settings", "since": 168, "was": ["stats_enabled"],
       "when": "stats switched back on"
     },
 
@@ -924,7 +924,7 @@
     },
     "bath_day_changed": {
       "area": "settings", "since": 137, "removed": 160,
-      "when": "«Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either)",
+      "when": "«Банный день» in the app's settings turned on, off, or its interval changed; replaced by `app_setting_bath_day_toggled` and `app_setting_bath_day_schedule_changed` (`every: 120` was either)",
       "props": { "every": { "type": "enum", "values": { "0": "off", "60": "", "120": "", "180": "" } } }
     },
     "answer_undone": {

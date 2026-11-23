@@ -56,11 +56,11 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `app_opened` | app starts, or returns after 30+ min in background | `tasks_due`: tasks waiting on Today at that moment (watering checks shown and greenhouse vents, not «Если есть силы»)<br>`how`: `start` / `resume` / `privacy_return` (reloaded on the way back from the privacy page, within 30 min; not a new launch) / `retry` (reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch)<br>`ready_ms`: ms from navigation start until the first screen is built; not for `resume`, nor when started in background<br>`$referring_domain`: `start` only, once per arrival (a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself) | v7 |
-| `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` | v7 |
-| `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes | v10 |
-| `settings_opened` | settings opened from the header | none | v88 |
-| `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` / `other` (no `data-from` around the link) | v88 |
-| `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile)<br>`from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` / `other` (no `data-from` around the link) | v8 |
+| `app_tab_opened`<br>was `tab_viewed` | tab switch | `tab`: `today` / `plants` / `light` / `room` | v168 |
+| `app_news_opened`<br>was `news_opened` | «Что нового» opened (header ✨ or settings) | `had_new`: there were unseen changes | v168 |
+| `app_settings_opened`<br>was `settings_opened` | settings opened from the header | none | v168 |
+| `app_privacy_opened`<br>was `privacy_opened` | link to the privacy page tapped | `from`: `stats_notice` / `settings` / `news` / `other` (no `data-from` around the link) | v168 |
+| `app_author_link_clicked`<br>was `author_link_clicked` | author link in settings, «Что нового» or a failed AI import | `target`: `website` / `telegram` / `threads` (Polina's profile)<br>`from`: `settings` / `news` / `import` / `catalog` (search found nothing) / `feedback_task` / `other` (no `data-from` around the link) | v168 |
 
 ### Today: checks and tasks
 
@@ -184,14 +184,14 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `limit_changed` | plants-per-day limit changed | `limit` | v7 |
-| `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v130 |
-| `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: `true`: switched on, which sets every 120 days | v160 |
-| `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v160 |
-| `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v7 |
-| `backup_imported` | backup restored | none | v7 |
-| `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v90 |
-| `stats_enabled` | stats switched back on | none | v7 |
+| `app_setting_limit_changed`<br>was `limit_changed` | plants-per-day limit changed | `limit` | v168 |
+| `app_setting_pets_toggled`<br>was `pets_toggled` | «Дома есть кошка или собака» in settings | `on` | v168 |
+| `app_setting_bath_day_toggled`<br>was `bath_day_toggled` | «Банный день» checkbox in the app's settings | `on`: `true`: switched on, which sets every 120 days | v168 |
+| `app_setting_bath_day_schedule_changed`<br>was `bath_day_schedule_changed` | «Как часто купать каждое растение» chip under «Банный день» in the app's settings | `every`: `60` / `120` / `180`; days | v168 |
+| `app_data_exported`<br>was `backup_exported` | backup downloaded | `from`: `task` (the «Резервная копия» bonus task) / `install_hint` (the iPhone «add to home screen» hint, to move plants into the home-screen app) / `in_app_hint` (another app's browser, to move plants to Safari or the browser); absent from Settings | v168 |
+| `app_data_imported`<br>was `backup_imported` | backup restored | none | v168 |
+| `app_data_reset`<br>was `data_reset` | «Начать с чистого листа» confirmed in settings. `plants_total` is how many were erased. | none | v168 |
+| `app_setting_stats_enabled`<br>was `stats_enabled` | stats switched back on | none | v168 |
 
 ### Room tab
 
@@ -230,7 +230,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | `greenhouse_removed` | greenhouse removed from the vent card; replaced by `plant_setting_greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
 | `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `plant_setting_prune_toggled`, `plant_setting_prune_schedule_changed` and `plant_setting_prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
 | `feeding_logged` | plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`) | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133–v161 |
-| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
+| `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `app_setting_bath_day_toggled` and `app_setting_bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
 | `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `watering_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
 | `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `plant_setting_bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
 | `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `plant_setting_grow_changed` | `on` | v69–v75 |
@@ -249,7 +249,8 @@ No longer sent; old data keeps them. Hidden in PostHog.
 1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix, and the prefix tells a care action from a setting:
    - care actions (tasks on «Сегодня», «…сегодня» buttons in the plant card) use the care's prefix: `watering_*`, `feed_*`, `prune_*`, `bath_*`, `bath_day_*` (the app's «Банный день»);
    - anything set in the plant card's «Настройки», care settings included, is `plant_setting_*` (`plant_setting_feed_lamp_toggled`, not `feed_lamp_toggled`); the same setting changed elsewhere (the Light tab, «Без теплицы» on a task) keeps that name, with `from`;
-   - the rest of the plant card is `plant_*`, the Plants tab `plants_*`; app settings keep their feature's prefix (`bath_day_toggled`).
+   - the rest of the plant card is `plant_*`, the Plants tab `plants_*`;
+   - the app itself is `app_*` (`app_opened`, `app_tab_opened`), its settings `app_setting_*` (`app_setting_bath_day_toggled`; the bath day card on «Сегодня» stays `bath_day_*`), backups and data `app_data_*`.
 2. Add or change the event in `events.json`. Reuse prop names and value lists that exist (`plant` props, `medium`, `catalog_id`…). A `text` prop needs `why` and a line in `privacy.html`.
 3. Renamed an event or a prop? Keep the old name in `was`: the ingest function translates it for phones still on an old version. Gone? Set `removed` to the first version without it; don't delete it.
 4. `node tools/events.js --write`, then `node tools/events.js` must report no problems.
