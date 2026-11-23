@@ -687,7 +687,7 @@
     },
     "app_install_hint_hidden": {
       "area": "install", "since": 168, "was": ["install_hint_hidden"],
-      "when": "home screen hint closed",
+      "when": "an install hint closed: the home screen hint, the mini app's, or the one in Telegram's browser",
       "props": {
         "where": { "type": "enum", "was": ["kind"], "values": {
           "ios_added": "iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon",
@@ -697,7 +697,7 @@
           "ios_moved": "iPhone, after the backup",
           "install": "Android or computer",
           "telegram": "mini app",
-          "telegram_browser": "Telegram's browser: «Понятно» on «Удобнее в приложении Телеграма» (since v169; before: `telegram_hint_hidden`)",
+          "telegram_browser": "Telegram's browser, «Понятно» on «Удобнее в приложении Телеграма»; since v169, before that `telegram_hint_hidden`",
           "in_app": "another app's browser on iPhone or Android"
         } }
       }
@@ -757,7 +757,7 @@
       "when": "«Открыть» in Telegram's browser (opens the mini app): on the install card or the hint",
       "props": {
         "has_plants": { "type": "bool" },
-        "from": { "type": "enum", "desc": "since v169", "values": { "card": "the install card (no plants yet)", "hint": "the hint «Удобнее в приложении Телеграма» / «Растения здесь могут потеряться»" } }
+        "from": { "type": "enum", "desc": "since v169", "values": { "card": "the install card, no plants yet", "hint": "the hint «Удобнее в приложении Телеграма» / «Растения здесь могут потеряться»" } }
       }
     },
     "telegram_hint_hidden": {
