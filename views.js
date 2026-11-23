@@ -104,7 +104,7 @@ let installFirstShown = false;
 function installFirst() {
   const kind = installWhere();
   if (!kind) return '';
-  if (!installFirstShown) { installFirstShown = true; track('install_first_shown', { where: kind }); }
+  if (!installFirstShown) { installFirstShown = true; track('app_install_card_shown', { where: kind }); }
   const { where } = PLACE;
   const stay = (label) => `<button class="btn ghost" data-act="stay-browser" data-kind="${kind}">${label}</button>`;
   if (kind === 'telegram_browser') {
@@ -760,15 +760,15 @@ Object.assign(ACTS, {
     setTimeout(() => { render(); if (!el.dataset.wrote) toast('Хорошо, больше не спрошу 🙂'); }, 0);
   },
   'show-all'() { showAll = true; track('show_all_clicked'); render(); },
-  'stay-browser'(el) { S.stayBrowser = today(); track('install_declined', { where: el.dataset.kind }); save(); render(); },
-  'home-added'() { S.homeIcon = today(); track('install_hint_hidden', { where: 'ios_added' }); save(); render(); },
-  'hide-install'(el) { S.hideInstall = true; track('install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
+  'stay-browser'(el) { S.stayBrowser = today(); track('app_install_card_declined', { where: el.dataset.kind }); save(); render(); },
+  'home-added'() { S.homeIcon = today(); track('app_install_hint_hidden', { where: 'ios_added' }); save(); render(); },
+  'hide-install'(el) { S.hideInstall = true; track('app_install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
   install() {
     const ask = installPrompt;
     if (!ask) return;
     installPrompt = null; // the browser's prompt works once
     try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
-    ask.userChoice.then(({ outcome }) => { track('install_prompt_answered', { outcome }); render(); }, () => render());
+    ask.userChoice.then(({ outcome }) => { track('app_install_prompt_answered', { outcome }); render(); }, () => render());
   },
   'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_clicked'); },
   'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },

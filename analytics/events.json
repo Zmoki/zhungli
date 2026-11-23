@@ -674,19 +674,19 @@
       }
     },
 
-    "install_first_shown": {
-      "area": "install", "since": 92,
+    "app_install_card_shown": {
+      "area": "install", "since": 168, "was": ["install_first_shown"],
       "when": "no plants yet, and the plant picker is replaced by the way to install (once per launch)",
       "note": "On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device.",
       "props": { "where": { "type": "enum", "values": "install_where" } }
     },
-    "install_declined": {
-      "area": "install", "since": 92,
+    "app_install_card_declined": {
+      "area": "install", "since": 168, "was": ["install_declined"],
       "when": "«Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows",
       "props": { "where": { "type": "enum", "values": "install_where" } }
     },
-    "install_hint_hidden": {
-      "area": "install", "since": 7,
+    "app_install_hint_hidden": {
+      "area": "install", "since": 168, "was": ["install_hint_hidden"],
       "when": "home screen hint closed",
       "props": {
         "where": { "type": "enum", "was": ["kind"], "values": {
@@ -701,8 +701,8 @@
         } }
       }
     },
-    "install_prompt_answered": {
-      "area": "install", "since": 159, "was": ["install_prompt"],
+    "app_install_prompt_answered": {
+      "area": "install", "since": 168, "was": ["install_prompt_answered", "install_prompt"],
       "when": "Android or computer: «Установить» on the install hint, after the browser's dialog",
       "props": { "outcome": { "type": "enum", "values": { "accepted": "", "dismissed": "" } } }
     },
