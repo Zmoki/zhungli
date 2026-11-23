@@ -287,6 +287,26 @@ function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = ''
     <div class="hint" id="how-${esc(fold.id)}"${fold.open ? '' : ' hidden'}>${esc(hint)}</div></div>`
     : `${who || hint ? `<div class="hint">${who ? `Кого: ${who.map(typedHtml).join(', ')}. ` : ''}${esc(hint)}</div>` : ''}${after}</div>`}`;
 }
+// Bonus tasks that aren't care: Today cards of their own (`today_bonus_task_*`); the rest are `care_bonus_task_*`.
+const TODAY_BONUS = ['backup', 'feedback'];
+const bonusKind = (key) => key.split(':')[0];
+function trackBonus(what, key) {
+  const kind = bonusKind(key), notCare = TODAY_BONUS.includes(kind);
+  if (what === 'finished') track(notCare ? 'today_bonus_task_finished' : 'care_bonus_task_finished', { kind });
+  else if (what === 'snoozed') track(notCare ? 'today_bonus_task_snoozed' : 'care_bonus_task_snoozed', { kind });
+  else track('today_bonus_task_dismissed', { kind });
+}
+// Today's progress when the app goes to background (app.js): only if Today was drawn today in this launch, it had
+// tasks, and something changed since the last report.
+let todayLeftSent = '';
+function todayLeft() {
+  if (shownOn.today !== today() || !allPlants().length) return;
+  const { total, doneMain } = todayPlan();
+  const key = `${today()}:${total}:${doneMain}`;
+  if (!total || key === todayLeftSent) return;
+  todayLeftSent = key;
+  track('today_left', { total, done: doneMain });
+}
 // «Как?» on check cards: open for a plant's first checks (HOW_OPEN answers), folded after; a tap keeps its choice for the session.
 const HOW_OPEN = 3, howOpen = new Map();
 
@@ -315,8 +335,9 @@ function viewToday() {
       <span class="muted small">${doneMain} из ${total}</span></div><div class="bar"><i data-w="${pct}"></i></div></div>`;
   }
 
-  if (inspects.length && firstShow('quarantine')) track('quarantine_task_shown', { count: inspects.length });
-  if (vents.length && firstShow('greenhouse')) track('greenhouse_task_shown', { count: vents.length });
+  if (shown.length && firstShow('watering')) track('care_watering_task_shown', { count: shown.length, waiting });
+  if (inspects.length && firstShow('quarantine')) track('care_quarantine_task_shown', { count: inspects.length });
+  if (vents.length && firstShow('greenhouse')) track('care_greenhouse_task_shown', { count: vents.length });
   inspects.forEach((p) => {
     html += taskCard({
       p, task: 'Осмотрите на вредителей',
@@ -369,13 +390,20 @@ function viewToday() {
     if (!(bp && bp.shown)) { bathStep = 0; bathPicked = []; bathOff = new Set(); } // a bath day put off or over starts from the question next time
   }
   const bathCard = bp && bp.shown ? bathHtml(bp) : '';
-  if (bathCard && bathStep === 0 && firstShow('bath')) track('bath_day_shown', { count: bp.offer.length });
+  if (bathCard && bathStep === 0 && firstShow('bath')) track('care_bath_day_shown', { count: bp.offer.length });
   const feedTask = bonus.find((b) => b.key.startsWith('feed:'));
-  if (feedTask && firstShow('feed')) track('feed_day_shown', { count: feedTask.pick.length });
+  if (feedTask && firstShow('feed')) track('care_feed_day_shown', { count: feedTask.pick.length });
   const pruneTasks = bonus.filter((b) => b.key.startsWith('prune:')).length;
-  if (pruneTasks && firstShow('prune')) track('prune_task_shown', { count: pruneTasks });
-  const otherBonus = bonus.length - pruneTasks - (feedTask ? 1 : 0);
-  if (otherBonus && firstShow('bonus')) track('bonus_shown', { count: otherBonus });
+  if (pruneTasks && firstShow('prune')) track('care_prune_task_shown', { count: pruneTasks });
+  // Other bonus tasks: care ones (dust, turning, medium care) as one card kind; the backup and feedback tasks
+  // aren't care, so each is a Today card of its own.
+  const careBonus = bonus.filter((b) => !b.key.startsWith('prune:') && !b.key.startsWith('feed:') && !TODAY_BONUS.includes(bonusKind(b.key))).length;
+  if (careBonus && firstShow('bonus')) track('care_bonus_task_shown', { count: careBonus });
+  bonus.filter((b) => TODAY_BONUS.includes(bonusKind(b.key))).forEach((b) => {
+    if (firstShow('bonus_' + bonusKind(b.key))) track('today_bonus_task_shown', { kind: bonusKind(b.key) });
+  });
+  // Today as a whole: how many tasks (none on a day off), how many done, and how many wait for tomorrow.
+  if (firstShow('today')) track('today_shown', { total, done: doneMain, waiting, bonus: bonus.length + (bathCard ? 1 : 0) });
   if (bonus.length || bathCard) {
     html += `<h2 class="h-ic">${I('sparkles')}Если есть силы</h2>${bathCard}`;
     bonus.forEach((b) => {
@@ -669,22 +697,22 @@ function viewRoom() {
 const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
 Object.assign(ACTS, {
   water(el, id) {
-    const undo = snapshot(); actWater(id); track('watering_task_finished', { answer: 'dry', ...kindOf(id) });
+    const undo = snapshot(); actWater(id); track('care_watering_task_finished', { answer: 'dry', ...kindOf(id) });
     afterTask(wayOf(plant(id)).fixed ? 'Автополив работает ✅' : WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo);
   },
   wet(el, id) {
-    const undo = snapshot(); actWet(id); track('watering_task_finished', { answer: 'wet', ...kindOf(id) });
+    const undo = snapshot(); actWet(id); track('care_watering_task_finished', { answer: 'wet', ...kindOf(id) });
     afterTask(wayOf(plant(id)).fixed ? `Отлично! Проверю систему ещё раз ${rel(S.plants[id].nextCheck)} 🔧` : `Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo);
   },
   later(el, id) {
-    const undo = snapshot(); actLater(id); track('watering_task_snoozed', kindOf(id)); afterTask('Перенесено на завтра ⏭︎', undo);
+    const undo = snapshot(); actLater(id); track('care_watering_task_snoozed', kindOf(id)); afterTask('Перенесено на завтра ⏭︎', undo);
   },
   'vent-done'(el, id) {
-    const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_task_finished');
+    const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('care_greenhouse_task_finished');
     afterTask('Свежий воздух! 🌬️', undo);
   },
   'inspect-done'(el, id) {
-    const undo = snapshot(); S.plants[id].inspected = today(); logToday({ id, a: 'inspect' }); track('quarantine_task_finished');
+    const undo = snapshot(); S.plants[id].inspected = today(); logToday({ id, a: 'inspect' }); track('care_quarantine_task_finished');
     afterTask(isNew(plant(id)) && diff(S.plants[id].bought, today()) + 7 >= NEW_DAYS ? 'Карантин позади: можно ставить к остальным 🌿' : 'Осмотрено 🔍 Загляну через неделю', undo);
   },
   'inspect-off'(el, id) {
@@ -700,9 +728,9 @@ Object.assign(ACTS, {
     document.getElementById('how-' + id).hidden = !open;
     el.setAttribute('aria-expanded', open);
     howOpen.set(id, open);
-    if (open) track('watering_tip_opened', kindOf(id));
+    if (open) track('care_watering_task_tip_opened', kindOf(id));
   },
-  'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('bath_day_started'); },
+  'bath-yes'() { bathStep = 1; bathRender('[data-act="bath-go"]'); track('care_bath_day_started'); },
   'bath-cancel'() { bathStep = 0; bathOff = new Set(); bathRender('[data-act="bath-yes"]'); },
   'plant-pick'(el) {
     const off = pickOff(el.dataset.kind), id = el.dataset.pick, on = off.has(id);
@@ -715,10 +743,10 @@ Object.assign(ACTS, {
     bathPicked = tiles.filter((x) => x.getAttribute('aria-pressed') === 'true').map((x) => x.dataset.pick);
     if (!bathPicked.length) { toast('Отметьте, кого купаем'); return; }
     bathStep = 2; bathRender('[data-act="bath-done"]');
-    track('bath_day_picked', { count: bathPicked.length, of: tiles.length });
+    track('care_bath_day_picked', { count: bathPicked.length, of: tiles.length });
   },
   'bath-back'() { bathStep = 1; bathRender('[data-act="bath-go"]'); },
-  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('bath_day_snoozed'); toast('Ок, через 3 дня 🙂'); },
+  'bath-skip'() { S.snooze.bath = addDays(today(), 3); save(); render(); track('care_bath_day_snoozed'); toast('Ок, через 3 дня 🙂'); },
   // A rinse is a thorough watering: it counts as one, and the plant's rinse restarts.
   'bath-done'() {
     const undo = snapshot(), ids = bathPicked.filter((id) => S.plants[id]);
@@ -728,7 +756,7 @@ Object.assign(ACTS, {
     bathStep = 0; bathPicked = []; bathOff = new Set();
     logToday({ a: 'bonus:bath', title: 'Банный день' });
     const left = bathPlan().due;
-    track('bath_day_finished', { count: ids.length, left: left.length });
+    track('care_bath_day_finished', { count: ids.length, left: left.length });
     afterTask(left.length ? `Все чистые 🛁 В следующий раз: ${nameList(left)}` : 'Все чистые 🛁 До следующего круга', undo);
   },
   'bonus-done'(el) {
@@ -740,33 +768,33 @@ Object.assign(ACTS, {
       fed.forEach(feedDone);
       boxes.filter((x) => !on(x)).forEach((x) => { S.snooze['feed:' + x.dataset.pick] = addDays(today(), 3); });
       feedOff = new Set();
-      track('feed_day_finished', { count: fed.length, of: boxes.length });
+      track('care_feed_day_finished', { count: fed.length, of: boxes.length });
       logToday({ a: 'bonus:feed', title: 'День подкормки' });
       afterTask(fed.length === boxes.length ? 'Все накормлены 🍽️' : `Подкормлено: ${plantsN(fed.length)} 🍽️`, undo);
       return;
     }
     const b = bonusTasks().find((x) => x.key === el.dataset.key);
     bonusDone(el.dataset.key);
-    if (el.dataset.key.startsWith('prune:')) track('prune_task_finished');
-    else track('bonus_finished', { kind: el.dataset.key.split(':')[0] });
+    if (el.dataset.key.startsWith('prune:')) track('care_prune_task_finished');
+    else trackBonus('finished', el.dataset.key);
     logToday({ id: b?.p?.id, a: 'bonus:' + el.dataset.key, title: b?.title });
     afterTask('Бонус засчитан ✨', undo);
   },
   'bonus-skip'(el) {
-    if (el.dataset.key.startsWith('feed:')) track('feed_day_snoozed', { count: bonusKeys(el.dataset.key).length });
-    else if (el.dataset.key.startsWith('prune:')) track('prune_task_snoozed');
-    else track('bonus_skipped', { kind: el.dataset.key.split(':')[0] });
+    if (el.dataset.key.startsWith('feed:')) track('care_feed_day_snoozed', { count: bonusKeys(el.dataset.key).length });
+    else if (el.dataset.key.startsWith('prune:')) track('care_prune_task_snoozed');
+    else trackBonus('snoozed', el.dataset.key);
     bonusKeys(el.dataset.key).forEach((k) => { S.snooze[k] = addDays(today(), 3); }); save(); render(); toast('Ок, через 3 дня 🙂');
   },
   // The feedback task asks once: «Написать» (the link opens Telegram) and «Не нужно» both put it away for good.
   'feedback-answer'(el) {
     S.bonus.feedback = today();
-    track(el.dataset.wrote ? 'bonus_finished' : 'bonus_skipped', { kind: 'feedback' });
+    trackBonus(el.dataset.wrote ? 'finished' : 'dismissed', 'feedback');
     save();
     // After the link has done its job: re-rendering now would remove it mid-click.
     setTimeout(() => { render(); if (!el.dataset.wrote) toast('Хорошо, больше не спрошу 🙂'); }, 0);
   },
-  'show-all'() { showAll = true; track('show_all_clicked'); render(); },
+  'show-all'() { showAll = true; track('today_show_all_clicked'); render(); },
   'stay-browser'(el) { S.stayBrowser = today(); track('app_install_card_declined', { where: el.dataset.kind }); save(); render(); },
   'home-added'() { S.homeIcon = today(); track('app_install_hint_hidden', { where: 'ios_added' }); save(); render(); },
   'hide-install'(el) { S.hideInstall = true; track('app_install_hint_hidden', el.dataset.kind ? { where: el.dataset.kind } : {}); save(); render(); },
@@ -778,7 +806,7 @@ Object.assign(ACTS, {
     ask.userChoice.then(({ outcome }) => { track('app_install_prompt_answered', { outcome }); render(); }, () => render());
   },
   'tg-home'() { if (window.tgHome) window.tgHome.add(); track('app_install_hint_clicked', { where: 'telegram' }); },
-  'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },
+  'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('today_winter_hint_hidden'); },
   'stats-ok'() { S.statsNotice = true; save(); render(); },
   'stats-off'() { statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); },
   'open-mini-app'(el) { track('app_install_mini_app_clicked', { has_plants: Object.keys(S.plants).length > 0, from: el.dataset.from }); flushStats(); }, // the link opens Telegram

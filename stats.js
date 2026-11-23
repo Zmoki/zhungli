@@ -210,5 +210,5 @@ function newVisit() {
 
 // Catalog ids aren't personal (custom plants are sent as 'custom').
 const kindOf = (id) => { const d = def(id), r = S.plants[id]; return { catalog_id: isCustom(id) ? 'custom' : d.id, medium: mediumIn(r, d), watering: wateringIn(r, d) || 'none', generic: !!d.generic }; };
-// A check answer in «История» → the word watering_task_finished sent for it (drip irrigation: «Работает» is dry, «Поправлено» wet).
+// A check answer in «История» → the word care_watering_task_finished sent for it (drip irrigation: «Работает» is dry, «Поправлено» wet).
 const UNDO_ANSWER = { water: 'dry', ok: 'dry', wet: 'wet', fix: 'wet' };
