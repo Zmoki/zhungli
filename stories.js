@@ -398,10 +398,11 @@ function resumeStory() {
   const slide = $('#story-slide');
   if (slide && storiesDlg.open) playStory(slide, STORIES[storyI]);
 }
-let storyFrom = '', storyQuickShown = false;
+// storyQuickReported: the ticks were reported as left (once, until a new tick), as qsReported for an empty page.
+let storyFrom = '', storyQuickShown = false, storyQuickReported = false;
 // `at`: the story to start on (the last one for the way to the home screen).
 function openStories(from, at = 0) {
-  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from; storyQuickShown = false;
+  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from; storyQuickShown = false; storyQuickReported = false;
   S.storiesSeen = today();
   save();
   track('stories_opened', { from });
@@ -424,9 +425,10 @@ function trackStoriesClosed(how) {
   const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
   track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined });
   // Tiles ticked there but never added: left like the quick tiles on an empty page.
-  if (last && end === 'tiles' && how !== 'add' && ticked.size) {
-    const then = { left: 'left_app', followed: 'left_app', catalog: 'catalog', import: 'import', restore: 'restore' }[how] || 'closed';
+  if (last && end === 'tiles' && how !== 'add' && ticked.size && !storyQuickReported) {
+    const then = { left: 'left_app', followed: 'left_app', telegram: 'left_app', restored: 'restore' }[how] || 'closed';
     track('add_abandoned', { part: 'quick', from: 'stories', picked: ticked.size, then });
+    storyQuickReported = true;
   }
 }
 // Leaving the app with the stories open (another app, the home screen, closing the tab) may be the last thing that
@@ -508,6 +510,7 @@ Object.assign(ACTS, {
   'story-tick'(el) {
     const k = el.dataset.key;
     if (ticked.has(k)) ticked.delete(k); else ticked.add(k);
+    storyQuickReported = false;
     track('add_quick_ticked', { on: ticked.has(k), catalog_id: k, from: 'stories' });
     showStory();
     $(`#stories [data-key="${k}"]`)?.focus();
