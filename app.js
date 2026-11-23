@@ -148,7 +148,7 @@ function afterTask(msg, undo) {
   const before = document.querySelectorAll('.task:not(.bonus):not(.done-row)').length;
   render();
   toast(msg, undo);
-  if (before > 0 && pendingCount() === 0) { confetti(); track('day_completed', { done_today: (S.log[today()] || []).length }); }
+  if (before > 0 && pendingCount() === 0) { confetti(); track('today_finished', { done_today: (S.log[today()] || []).length }); }
 }
 
 // Sizes from data-l / data-w (percent), set through CSSOM: the CSP forbids inline style attributes.
@@ -248,6 +248,7 @@ document.addEventListener('visibilitychange', () => {
     const expected = addFlow && addFlow.sheet === 'import' && (addFlow.promptCopied || addFlow.picking);
     if (sheet.open && !expected) endAddFlow(true);
     endQuick('left_app');
+    todayLeft();
     sendIntRun();
     reportVitals();
     flushStats();

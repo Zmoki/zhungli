@@ -808,7 +808,7 @@ Object.assign(ACTS, {
     $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refreshHistory(id);
     $('#water-box').innerHTML = waterBox(plant(id)); $('#glance').innerHTML = glanceHtml(plant(id));
     $('#rinse-wrap .last-done')?.focus();
-    track('bath_logged');
+    track('care_bath_logged');
     toast('Промывка записана 🚿', () => {
       undo();
       if (sheet.open && cardFor === id && $('#rinse-wrap')) { $('#rinse-wrap').innerHTML = rinseBox(plant(id)); $('#water-box').innerHTML = waterBox(plant(id)); refreshHistory(id); $('[data-act="rinse-done"]')?.focus(); }
@@ -826,7 +826,7 @@ Object.assign(ACTS, {
     feedDone(id); save();
     $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
     $('#feed-box .last-done')?.focus();
-    track('feed_logged');
+    track('care_feed_logged');
     toast('Подкормка записана 🍽️', () => {
       undo();
       if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
@@ -891,12 +891,12 @@ Object.assign(ACTS, {
     if (!(await ask({ title: `Убрать отметку «${word}»?`, text: h.was ? 'Следующая проверка и интервал станут как до этой отметки.' : 'Отметка уйдёт из истории.', ok: 'Убрать', danger: true }))) return;
     const undo = snapshot();
     undoAnswer(id);
-    track('watering_undone', { answer: UNDO_ANSWER[h.a] || h.a, restored: !!h.was, ...kindOf(id) });
+    track('care_watering_undone', { answer: UNDO_ANSWER[h.a] || h.a, restored: !!h.was, ...kindOf(id) });
     save(); render(); openPlant(id, 'history'); $('#cp-history')?.focus();
     toast('Отметка убрана', () => { undo(); if (sheet.open && cardFor === id) openPlant(id, 'history'); });
   },
   'water-now'(el, id) {
-    const undo = snapshot(); actWater(id); track('watering_logged', kindOf(id)); save(); closeSheet(); toast(actWords(plant(id)).done, undo);
+    const undo = snapshot(); actWater(id); track('care_watering_logged', kindOf(id)); save(); closeSheet(); toast(actWords(plant(id)).done, undo);
   },
   spot(el, id) {
     if (S.plants[id].spot !== el.dataset.spot) track('plant_setting_spot_changed');
@@ -972,7 +972,7 @@ Object.assign(ACTS, {
     $(`#remind-${k}`).innerHTML = remindMore(id, k);
     $(`#remind-${k} .last-done`)?.focus();
     refreshHistory(id);
-    if (k === 'prune') track('prune_logged');
+    if (k === 'prune') track('care_prune_logged');
     // Undo also redraws the reminder and the history in the card, if it's still open.
     toast(REMINDERS[k].toast, () => {
       undo();

@@ -2,7 +2,8 @@
   "about": "Tracking plan: every analytics event, its props and history. The source for ANALYTICS.md, the old-name translation in functions/ingest/batch.js and the PostHog event descriptions. Edit here, then run node tools/events.js --write. Types: int, number, bool, enum (has values), catalog_id (a catalog id or custom), catalog_ids (a list of them), code (a name from the app's code, never typed by the user), text (may hold text from outside the app's code; needs why). since / removed: app version. was: old names, translated by the ingest function.",
   "areas": {
     "app": "Launch, tabs and pages",
-    "care": "Today: checks and tasks",
+    "today": "Today page: progress, and its cards that aren't care",
+    "care": "Care actions: tasks on «Сегодня» and logs in the plant card",
     "plant": "Plant card and the plants list",
     "add": "Adding plants",
     "import": "AI import",
@@ -106,21 +107,21 @@
       }
     },
 
-    "watering_task_finished": {
-      "area": "care", "since": 167,
+    "care_watering_task_finished": {
+      "area": "care", "since": 172, "was": ["watering_task_finished"],
       "when": "«Полито» or «Ещё влажно» on a watering card on «Сегодня» (the words depend on how the plant grows: «Долито» / «Вода есть», «Вода сменена», drip irrigation «Работает» / «Поправлено»)",
       "use": ["plant"],
       "props": {
         "answer": { "type": "enum", "desc": "drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "watered, it was dry", "wet": "still wet, no water needed" } }
       }
     },
-    "watering_task_snoozed": {
-      "area": "care", "since": 167,
+    "care_watering_task_snoozed": {
+      "area": "care", "since": 172, "was": ["watering_task_snoozed"],
       "when": "«Завтра» on a watering card on «Сегодня»",
       "use": ["plant"]
     },
-    "watering_logged": {
-      "area": "care", "since": 167,
+    "care_watering_logged": {
+      "area": "care", "since": 172, "was": ["watering_logged"],
       "when": "«Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's)",
       "use": ["plant"]
     },
@@ -133,57 +134,58 @@
         "from": { "type": "enum", "values": { "card": "plant card only" } }
       }
     },
-    "watering_tip_opened": {
-      "area": "care", "since": 159, "was": ["how_opened"],
+    "care_watering_task_tip_opened": {
+      "area": "care", "since": 172, "was": ["watering_tip_opened", "how_opened"],
       "when": "«Как?» opened on a watering card (the watering tip; open by itself for a plant's first 3 checks)",
       "use": ["plant"]
     },
-    "watering_undone": {
-      "area": "care", "since": 167, "was": ["check_undone"],
+    "care_watering_undone": {
+      "area": "care", "since": 172, "was": ["watering_undone", "check_undone"],
       "when": "«×» on the newest answer in the plant card's «История», confirmed",
       "use": ["plant"],
       "props": {
-        "answer": { "type": "enum", "desc": "the answer taken back, in `watering_task_finished` words; a «Полито сегодня» is `dry`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "", "wet": "" } },
+        "answer": { "type": "enum", "desc": "the answer taken back, in `care_watering_task_finished` words; a «Полито сегодня» is `dry`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»", "values": { "dry": "", "wet": "" } },
         "restored": { "type": "bool", "desc": "the entry had the state before it (since v152), so the interval and next check went back" }
       }
     },
-    "day_completed": {
-      "area": "care", "since": 7,
+    "today_finished": {
+      "area": "today", "since": 172, "was": ["day_completed"],
       "when": "last check of the day done",
       "props": { "done_today": { "type": "int" } }
     },
-    "show_all_clicked": {
-      "area": "care", "since": 7,
+    "today_show_all_clicked": {
+      "area": "today", "since": 172, "was": ["show_all_clicked"],
       "when": "«show all» on Today"
     },
-    "greenhouse_task_shown": {
-      "area": "care", "since": 164,
+    "care_greenhouse_task_shown": {
+      "area": "care", "since": 172, "was": ["greenhouse_task_shown"],
       "when": "vent cards («Проветрите теплицу») drawn on «Сегодня», once per launch and day, while the app is on screen",
       "note": "The funnel's first step: count devices.",
       "props": { "count": { "type": "int", "desc": "vent cards shown (one per plant)" } }
     },
-    "greenhouse_task_finished": {
-      "area": "care", "since": 164, "was": ["greenhouse_vented"],
+    "care_greenhouse_task_finished": {
+      "area": "care", "since": 172, "was": ["greenhouse_task_finished", "greenhouse_vented"],
       "when": "«Проветрено» on the vent card"
     },
-    "quarantine_task_shown": {
-      "area": "care", "since": 164,
+    "care_quarantine_task_shown": {
+      "area": "care", "since": 172, "was": ["quarantine_task_shown"],
       "when": "pest checks («Осмотрите на вредителей») drawn on «Сегодня», once per launch and day, while the app is on screen",
       "note": "The funnel's first step: count devices.",
       "props": { "count": { "type": "int", "desc": "pest checks shown (one per new plant)" } }
     },
-    "quarantine_task_finished": {
-      "area": "care", "since": 164, "was": ["quarantine_checked"],
+    "care_quarantine_task_finished": {
+      "area": "care", "since": 172, "was": ["quarantine_task_finished", "quarantine_checked"],
       "when": "«Осмотрено» on a new plant's pest check («Уже не новое» is `plant_setting_quarantine_toggled` `from: task`)"
     },
     "bonus_shown": {
-      "area": "care", "since": 164,
+      "area": "care", "since": 164, "removed": 172,
       "when": "«Если есть силы» bonus tasks drawn on «Сегодня», once per launch and day, while the app is on screen; the feeding day, pruning and the bath day have their own",
-      "note": "The funnel's first step: count devices.",
+      "note": "The funnel's first step: count devices. Split by kind in v172: the care kinds are `care_bonus_task_shown`, `backup` and `feedback` are `today_bonus_task_shown`. Not translated at ingest.",
       "props": { "count": { "type": "int", "desc": "bonus tasks shown (dust, turning, medium care, backup, feedback)" } }
     },
     "bonus_finished": {
-      "area": "care", "since": 164, "was": ["bonus_done"],
+      "area": "care", "since": 164, "removed": 172,
+      "note": "Split by kind in v172: the care kinds are `care_bonus_task_*`, `backup` and `feedback` are `today_bonus_task_*`. Not translated at ingest (nor its older name `bonus_done`).",
       "when": "bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`, pruning `prune_task_finished` since v163)",
       "props": {
         "kind": { "type": "enum", "values": {
@@ -197,7 +199,8 @@
       }
     },
     "bonus_skipped": {
-      "area": "care", "since": 7,
+      "area": "care", "since": 7, "removed": 172,
+      "note": "Split by kind in v172: the care kinds are `care_bonus_task_*`, `backup` and `feedback` are `today_bonus_task_*`. Not translated at ingest.",
       "when": "bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162, pruning `prune_task_snoozed` since v163)",
       "props": {
         "kind": { "type": "enum", "values": {
@@ -210,41 +213,128 @@
         } }
       }
     },
-    "feed_day_shown": {
-      "area": "care", "since": 162,
+    "care_watering_task_shown": {
+      "area": "care", "since": 172,
+      "when": "watering cards drawn on «Сегодня», once per launch and day, while the app is on screen",
+      "note": "The funnel's first step: count devices.",
+      "props": {
+        "count": { "type": "int", "desc": "watering cards shown" },
+        "waiting": { "type": "int", "desc": "more checks due but over the daily limit («Ещё N растений подождут до завтра»)" }
+      }
+    },
+    "care_bonus_task_shown": {
+      "area": "care", "since": 172,
+      "when": "«Если есть силы» care bonus tasks (dust, turning, medium care) drawn on «Сегодня», once per launch and day, while the app is on screen; the feeding day, pruning and the bath day have their own. Before v172: `bonus_shown`, which also counted the backup and feedback tasks.",
+      "note": "The funnel's first step: count devices.",
+      "props": { "count": { "type": "int", "desc": "care bonus tasks shown" } }
+    },
+    "care_bonus_task_finished": {
+      "area": "care", "since": 172,
+      "when": "a care bonus task done. Before v172: `bonus_finished` with these kinds.",
+      "props": {
+        "kind": { "type": "enum", "values": {
+          "dust": "", "rotate": "",
+          "flush": "clay pebbles",
+          "leach": "mineral medium",
+          "roots": "aquarium"
+        } }
+      }
+    },
+    "care_bonus_task_snoozed": {
+      "area": "care", "since": 172,
+      "when": "«Через 3 дня» on a care bonus task. Before v172: `bonus_skipped` with these kinds.",
+      "props": {
+        "kind": { "type": "enum", "values": {
+          "dust": "", "rotate": "",
+          "flush": "clay pebbles",
+          "leach": "mineral medium",
+          "roots": "aquarium"
+        } }
+      }
+    },
+    "today_shown": {
+      "area": "today", "since": 172,
+      "when": "«Сегодня» drawn with plants, once per launch and day, while the app is on screen",
+      "note": "A day with `total: 0` is a day off («Сегодня отдыхаем»).",
+      "props": {
+        "total": { "type": "int", "desc": "today's tasks: checks, vents and pest checks, done or not (the «X из Y» bar)" },
+        "done": { "type": "int", "desc": "done so far today" },
+        "waiting": { "type": "int", "desc": "checks due but over the daily limit" },
+        "bonus": { "type": "int", "desc": "«Если есть силы» cards, the bath day included" }
+      }
+    },
+    "today_left": {
+      "area": "today", "since": 172,
+      "when": "the app goes to background on a day with tasks, after «Сегодня» was drawn in this launch; only when the progress changed since the last report",
+      "note": "The day's last `today_left` shows how far people got.",
+      "props": {
+        "total": { "type": "int", "desc": "today's tasks, as in `today_shown`" },
+        "done": { "type": "int", "desc": "done so far today" }
+      }
+    },
+    "today_bonus_task_shown": {
+      "area": "today", "since": 172,
+      "when": "a bonus task that isn't care drawn on «Сегодня», once per launch and day for each, while the app is on screen. Before v172: part of `bonus_shown`.",
+      "props": {
+        "kind": { "type": "enum", "values": { "backup": "«Резервная копия»", "feedback": "«Как вам Жунгли?»" } }
+      }
+    },
+    "today_bonus_task_finished": {
+      "area": "today", "since": 172,
+      "when": "«Написать» on «Как вам Жунгли?» (the backup task is done by saving the file: `app_data_exported` `from: task`). Before v172: `bonus_finished` `kind: feedback`.",
+      "props": {
+        "kind": { "type": "enum", "values": { "feedback": "«Как вам Жунгли?»" } }
+      }
+    },
+    "today_bonus_task_snoozed": {
+      "area": "today", "since": 172,
+      "when": "«Через 3 дня» on the backup task. Before v172: `bonus_skipped` `kind: backup`.",
+      "props": {
+        "kind": { "type": "enum", "values": { "backup": "«Резервная копия»" } }
+      }
+    },
+    "today_bonus_task_dismissed": {
+      "area": "today", "since": 172,
+      "when": "«Не нужно» on «Как вам Жунгли?» (it doesn't ask again). Before v172: `bonus_skipped` `kind: feedback`.",
+      "props": {
+        "kind": { "type": "enum", "values": { "feedback": "«Как вам Жунгли?»" } }
+      }
+    },
+    "care_feed_day_shown": {
+      "area": "care", "since": 172, "was": ["feed_day_shown"],
       "when": "the «День подкормки» card drawn on «Сегодня», once per launch and day, while the app is on screen",
       "note": "The funnel's first step: count devices.",
       "props": { "count": { "type": "int", "desc": "plants on the card (due by their own schedule)" } }
     },
-    "feed_day_finished": {
-      "area": "care", "since": 162,
+    "care_feed_day_finished": {
+      "area": "care", "since": 172, "was": ["feed_day_finished"],
       "when": "«Подкормлено» on the «День подкормки» card",
       "props": {
         "count": { "type": "int", "desc": "plants ticked as fed" },
         "of": { "type": "int", "desc": "plants on the card; the unticked ones come back in 3 days" }
       }
     },
-    "feed_day_snoozed": {
-      "area": "care", "since": 162,
+    "care_feed_day_snoozed": {
+      "area": "care", "since": 172, "was": ["feed_day_snoozed"],
       "when": "«Через 3 дня» on the «День подкормки» card (before v162: `bonus_skipped` `kind: feed`)",
       "props": { "count": { "type": "int", "desc": "plants on the card" } }
     },
-    "bath_day_shown": {
-      "area": "care", "since": 161,
+    "care_bath_day_shown": {
+      "area": "care", "since": 172, "was": ["bath_day_shown"],
       "when": "the bath day card's step 1 («Устраиваем сегодня банный день?») drawn on «Сегодня», once per launch and day",
       "note": "The funnel's first step: count devices.",
       "props": { "count": { "type": "int", "desc": "plants offered today (at most `BATH_MAX`)" } }
     },
-    "bath_day_started": {
-      "area": "care", "since": 137,
+    "care_bath_day_started": {
+      "area": "care", "since": 172, "was": ["bath_day_started"],
       "when": "step 1 of the bath day card: «Да!» on «Устраиваем сегодня банный день?»"
     },
-    "bath_day_snoozed": {
-      "area": "care", "since": 160,
+    "care_bath_day_snoozed": {
+      "area": "care", "since": 172, "was": ["bath_day_snoozed"],
       "when": "step 1 of the bath day card: «Через 3 дня» (before v160: `bonus_skipped` `kind: bath`)"
     },
-    "bath_day_picked": {
-      "area": "care", "since": 160,
+    "care_bath_day_picked": {
+      "area": "care", "since": 172, "was": ["bath_day_picked"],
       "when": "step 2 of the bath day card: «Пошли купать!» after ticking who gets bathed",
       "note": "Sent again after «Назад» and a new pick, so count devices or take a device's last pick.",
       "props": {
@@ -252,30 +342,30 @@
         "of": { "type": "int", "desc": "plants offered (at most `BATH_MAX`, dry pots only)" }
       }
     },
-    "bath_day_finished": {
-      "area": "care", "since": 160, "was": ["bath_day_done"],
+    "care_bath_day_finished": {
+      "area": "care", "since": 172, "was": ["bath_day_finished", "bath_day_done"],
       "when": "step 3 of the bath day card: «Промыто»",
       "props": {
         "count": { "type": "int", "desc": "bathed", "was": ["n"] },
         "left": { "type": "int", "desc": "plants still due a rinse" }
       }
     },
-    "prune_task_shown": {
-      "area": "care", "since": 163,
+    "care_prune_task_shown": {
+      "area": "care", "since": 172, "was": ["prune_task_shown"],
       "when": "«Обрежьте: …» tasks drawn on «Сегодня», once per launch and day, while the app is on screen",
       "note": "The funnel's first step: count devices.",
       "props": { "count": { "type": "int", "desc": "pruning tasks shown (one per plant)" } }
     },
-    "prune_task_finished": {
-      "area": "care", "since": 163,
+    "care_prune_task_finished": {
+      "area": "care", "since": 172, "was": ["prune_task_finished"],
       "when": "«Обрезано» on a «Обрежьте: …» task (before v163: `bonus_done` `kind: prune`)"
     },
-    "prune_task_snoozed": {
-      "area": "care", "since": 163,
+    "care_prune_task_snoozed": {
+      "area": "care", "since": 172, "was": ["prune_task_snoozed"],
       "when": "«Через 3 дня» on a «Обрежьте: …» task (before v163: `bonus_skipped` `kind: prune`)"
     },
-    "winter_hint_hidden": {
-      "area": "care", "since": 132,
+    "today_winter_hint_hidden": {
+      "area": "today", "since": 172, "was": ["winter_hint_hidden"],
       "when": "«Понятно» on the winter light hint on «Сегодня»"
     },
 
@@ -415,8 +505,8 @@
       "when": "«Зимой стоит под лампой?» in the plant card",
       "props": { "on": { "type": "bool" } }
     },
-    "feed_logged": {
-      "area": "plant", "since": 162,
+    "care_feed_logged": {
+      "area": "care", "since": 172, "was": ["feed_logged"],
       "when": "«Подкормлено сегодня» in the plant card's «Подкормка» (before v162: `feeding_logged` `from: card`)"
     },
     "plant_setting_prune_toggled": {
@@ -434,12 +524,12 @@
       "when": "a month chip under «Звать на обрезку?» in the plant card",
       "props": { "months": { "type": "int", "desc": "how many months are on now" } }
     },
-    "prune_logged": {
-      "area": "plant", "since": 163, "was": ["reminder_logged"],
+    "care_prune_logged": {
+      "area": "care", "since": 172, "was": ["prune_logged", "reminder_logged"],
       "when": "«Обрезано сегодня» in the plant card's «Обрезка»"
     },
-    "bath_logged": {
-      "area": "plant", "since": 164, "was": ["rinse_logged"],
+    "care_bath_logged": {
+      "area": "care", "since": 172, "was": ["bath_logged", "rinse_logged"],
       "when": "«Промыто сегодня» in the plant card's «Промывка грунта»"
     },
     "plant_setting_bath_toggled": {
