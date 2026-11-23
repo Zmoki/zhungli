@@ -470,7 +470,8 @@ storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
   if (e.key === 'ArrowRight') goStory(1, 'key');
   if (e.key === 'ArrowLeft') goStory(-1, 'key');
-  if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); if (held) resumeStory(); else pauseStory(); }
+  // Space held down repeats its keydown: only the first press toggles.
+  if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); if (e.repeat) return; if (held) resumeStory(); else pauseStory(); }
 });
 storiesDlg.addEventListener('pointerdown', (e) => {
   if (e.target.closest('button, a, input')) return;
