@@ -1,2 +1,3 @@
-# Local Claude Code settings (preview server config)
-.claude/
+# Local Claude Code settings (preview server config); the project's skills are shared
+.claude/*
+!.claude/skills/
