@@ -962,7 +962,7 @@
       "area": "room", "since": 174,
       "when": "the Room tab drawn with plants, once per launch and day, while the app is on screen",
       "props": {
-        "rooms": { "type": "int" },
+        "rooms": { "type": "int", "desc": "all rooms, with plants or not" },
         "with_reading": { "type": "int", "desc": "rooms with a temperature and humidity reading" },
         "days_since_reading": { "type": "int", "desc": "days since the newest reading (0: today); not sent without one" }
       }

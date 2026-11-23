@@ -223,7 +223,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `room_climate_changed`<br>was `room_saved` | a room's temperature and humidity saved («Записать» on the Room tab) | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v168 |
-| `room_shown` | the Room tab drawn with plants, once per launch and day, while the app is on screen | `rooms`<br>`with_reading`: rooms with a temperature and humidity reading<br>`days_since_reading`: days since the newest reading (0: today); not sent without one | v174 |
+| `room_shown` | the Room tab drawn with plants, once per launch and day, while the app is on screen | `rooms`: all rooms, with plants or not<br>`with_reading`: rooms with a temperature and humidity reading<br>`days_since_reading`: days since the newest reading (0: today); not sent without one | v174 |
 
 ### Errors and speed
 

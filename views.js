@@ -681,7 +681,7 @@ function viewRoom() {
   // Whether the rooms have readings and how fresh the newest is: once per launch and day, with plants.
   if (ps.length && firstShow('room')) {
     const read = S.rooms.filter((r) => r.t != null && r.h != null);
-    const dated = read.filter((r) => r.d), days = dated.length ? Math.min(...dated.map((r) => diff(r.d, today()))) : undefined;
+    const dated = read.filter((r) => r.d), days = dated.length ? Math.max(0, Math.min(...dated.map((r) => diff(r.d, today())))) : undefined;
     track('room_shown', { rooms: S.rooms.length, with_reading: read.length, ...(days !== undefined && { days_since_reading: days }) });
   }
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
