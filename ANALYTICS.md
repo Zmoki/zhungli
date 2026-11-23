@@ -125,7 +125,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `bath_logged`<br>was `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | none | v164 |
 | `plant_setting_bath_toggled`<br>was `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v166 |
 | `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` | v68 |
-| `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` | v67 |
+| `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found`: at least one plant matched | v67 |
 
 ### Adding plants
 
