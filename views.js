@@ -223,6 +223,8 @@ const winterHint = (hasPlants) => (!hasPlants || !winterOf() || S.winterSeen ===
 // «Кого купаем?» and «День подкормки» pick plants from rows like the catalog's, all ticked;
 // `bathOff` and `feedOff` keep the unticked ones across redraws.
 let bathStep = 0, bathPicked = [], bathOff = new Set(), feedOff = new Set();
+// True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
+let sampleDraw = false;
 // A card kind's «shown» event (the funnels' first step): once per launch and day, only while the app is on screen
 // (a hidden start waits for the render on becoming visible), never for the stories' sample garden.
 const shownOn = {};
@@ -231,8 +233,6 @@ function firstShow(kind) {
   shownOn[kind] = today();
   return true;
 }
-// True while the stories draw a sample garden (onSample): that draw must not reset the user's picks.
-let sampleDraw = false;
 const pickOff = (kind) => (kind === 'feed' ? feedOff : bathOff);
 // A plant's photo, or its silhouette in today's mood.
 const picOf = (p) => (photoOf(p.id) ? `<img src="${photoOf(p.id)}" alt="">` : plantSvg(p, mood(p)[2]));
