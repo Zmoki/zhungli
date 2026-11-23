@@ -662,15 +662,15 @@ function viewRoom() {
 const WATER_CHEERS = ['Напоено! 💧', 'Глоток счастья 💧', 'Кап-кап, спасибо! 💧'];
 Object.assign(ACTS, {
   water(el, id) {
-    const undo = snapshot(); actWater(id); track('plant_checked', { answer: 'dry', ...kindOf(id) });
+    const undo = snapshot(); actWater(id); track('watering_task_finished', { answer: 'dry', ...kindOf(id) });
     afterTask(wayOf(plant(id)).fixed ? 'Автополив работает ✅' : WATER_CHEERS[Math.floor(Math.random() * WATER_CHEERS.length)], undo);
   },
   wet(el, id) {
-    const undo = snapshot(); actWet(id); track('plant_checked', { answer: 'wet', ...kindOf(id) });
+    const undo = snapshot(); actWet(id); track('watering_task_finished', { answer: 'wet', ...kindOf(id) });
     afterTask(wayOf(plant(id)).fixed ? `Отлично! Проверю систему ещё раз ${rel(S.plants[id].nextCheck)} 🔧` : `Ок, загляну к ${plant(id).title} ${rel(S.plants[id].nextCheck)} 👌`, undo);
   },
   later(el, id) {
-    const undo = snapshot(); actLater(id); track('plant_checked', { answer: 'later', ...kindOf(id) }); afterTask('Перенесено на завтра ⏭︎', undo);
+    const undo = snapshot(); actLater(id); track('watering_task_snoozed', kindOf(id)); afterTask('Перенесено на завтра ⏭︎', undo);
   },
   'vent-done'(el, id) {
     const undo = snapshot(); S.plants[id].ventLast = today(); logToday({ id, a: 'vent' }); track('greenhouse_task_finished');
