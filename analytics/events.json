@@ -746,7 +746,7 @@
 
     "stories_opened": {
       "area": "stories", "since": 115,
-      "when": "«Как работают Жунгли» opened: by itself on the first launch, by «Показать, как», or from settings",
+      "when": "«Как работают Жунгли» opened: by itself on the first launch, from the install card or hint, or from settings",
       "props": {
         "from": { "type": "enum", "values": {
           "auto": "",
@@ -754,7 +754,8 @@
           "home_icon": "first launch of the iPhone home-screen app: opens on the last story",
           "install_card": "no plants yet, straight to the last story",
           "install_hint": "iPhone, plants already added, straight to the last story",
-          "return": "back in the app to stories still open: not a way in, see `left` in `stories_closed`"
+          "return": "back in the app to stories still open: not a way in, see `left` in `stories_closed`",
+          "today": "«Показать, как» on «Сегодня», in early versions, seen up to v115"
         } }
       }
     },
@@ -774,13 +775,30 @@
           "telegram": "went to the mini app",
           "restored": "the mini app got plants from Telegram's cloud while they were open",
           "followed": "left the app from a last story with steps out of here: to Safari, or to the home screen after «На экран Домой»",
-          "left": "left the app with them open anywhere else"
+          "left": "left the app with them open anywhere else",
+          "open_browser": "early versions: the last story's link to open the app in the browser"
         } },
         "ending": { "type": "enum", "desc": "if the last story was seen", "values": {
           "tiles": "", "telegram": "", "in_app": "",
           "ios_26": "Safari 26 steps",
           "ios_old": "older Safari steps",
           "ios_other": "text steps: iPad, other browsers"
+        } },
+        "paused": { "type": "int", "desc": "times the animation was paused (press and hold, or Space); since v173" }
+      }
+    },
+    "stories_story_shown": {
+      "area": "stories", "since": 173,
+      "when": "a story shown: the first one when they open, then each move on or back",
+      "note": "The time to the next one is how long a story was watched (coming back to the app after leaving sends no new one). Going back: `story` < `from_story`.",
+      "props": {
+        "story": { "type": "int", "desc": "the story shown (1–6; 6 is the last, with the plant tiles or the install steps)" },
+        "from_story": { "type": "int", "desc": "the story before it; 0 when they open" },
+        "how": { "type": "enum", "values": {
+          "open": "they opened on it",
+          "tap": "a tap on the story: the left third goes back, the rest goes on",
+          "key": "← / → keys",
+          "button": "«Дальше» / «Назад», the buttons shown with keyboard focus"
         } }
       }
     },

@@ -391,7 +391,7 @@ function playStory(slide, s) {
 }
 // Press and hold pauses the animation (as in any stories); letting go starts it over. Space does the same.
 let holdTimer = null, held = false;
-function pauseStory() { held = true; stopStory(); storiesDlg.classList.add('held'); }
+function pauseStory() { held = true; storyHolds++; stopStory(); storiesDlg.classList.add('held'); }
 function resumeStory() {
   held = false;
   storiesDlg.classList.remove('held');
@@ -399,19 +399,22 @@ function resumeStory() {
   if (slide && storiesDlg.open) playStory(slide, STORIES[storyI]);
 }
 // storyQuickReported: the ticks were reported as left (once, until a new tick), as qsReported for an empty page.
-let storyFrom = '', storyQuickShown = false, storyQuickReported = false;
+let storyFrom = '', storyQuickShown = false, storyQuickReported = false, storyHolds = 0;
 // `at`: the story to start on (the last one for the way to the home screen).
 function openStories(from, at = 0) {
-  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from; storyQuickShown = false; storyQuickReported = false;
+  storyI = at; storyMax = 0; storyEnded = ''; ticked = new Set(); storySeen = new Set(); storyAway = false; storyFrom = from; storyQuickShown = false; storyQuickReported = false; storyHolds = 0;
   S.storiesSeen = today();
   save();
   track('stories_opened', { from });
+  track('stories_story_shown', { story: at + 1, from_story: 0, how: 'open' });
   storiesDlg.showModal();
   showStory().querySelector('h2')?.focus();
 }
-function goStory(d) {
+// `how`: what moved them on or back (a tap on the story, an arrow key, the «Дальше» / «Назад» buttons).
+function goStory(d, how) {
   const i = Math.max(0, Math.min(STORIES.length - 1, storyI + d));
   if (i === storyI) return;
+  track('stories_story_shown', { story: i + 1, from_story: storyI + 1, how });
   storyI = i;
   showStory().querySelector('h2')?.focus();
 }
@@ -423,7 +426,7 @@ function trackStoriesClosed(how) {
   const last = storyMax === STORIES.length - 1;
   // Which last story was seen (by the iPhone guide it showed).
   const end = storyEnd(), ending = end === 'ios' ? `ios_${safariKind() || 'other'}` : end;
-  track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined });
+  track('stories_closed', { from: storyFrom, reached: storyMax + 1, seen: storySeen.size, how, ending: last ? ending : undefined, paused: storyHolds });
   // Tiles ticked there but never added: left like the quick tiles on an empty page.
   if (last && end === 'tiles' && how !== 'add' && ticked.size && !storyQuickReported) {
     const then = { left: 'left_app', followed: 'left_app', telegram: 'left_app', restored: 'restore' }[how] || 'closed';
@@ -465,9 +468,10 @@ storiesDlg.addEventListener('close', () => {
 });
 storiesDlg.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea')) return;
-  if (e.key === 'ArrowRight') goStory(1);
-  if (e.key === 'ArrowLeft') goStory(-1);
-  if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); if (held) resumeStory(); else pauseStory(); }
+  if (e.key === 'ArrowRight') goStory(1, 'key');
+  if (e.key === 'ArrowLeft') goStory(-1, 'key');
+  // Space held down repeats its keydown: only the first press toggles.
+  if (e.key === ' ' && !e.target.closest('button, a')) { e.preventDefault(); if (e.repeat) return; if (held) resumeStory(); else pauseStory(); }
 });
 storiesDlg.addEventListener('pointerdown', (e) => {
   if (e.target.closest('button, a, input')) return;
@@ -484,7 +488,7 @@ storiesDlg.addEventListener('click', (e) => {
   if (storiesDlg.dataset.justHeld) { delete storiesDlg.dataset.justHeld; return; } // that was a hold, not a tap
   if (e.target.closest('button, a, input, .st-end .qs-grid')) return;
   const r = storiesDlg.getBoundingClientRect();
-  goStory(e.clientX < r.left + r.width / 3 ? -1 : 1);
+  goStory(e.clientX < r.left + r.width / 3 ? -1 : 1, 'tap');
 });
 addEventListener('resize', () => { if (storiesDlg.open) fitPhones(storiesDlg); });
 
@@ -504,8 +508,8 @@ Object.assign(ACTS, {
   // Settings keep a way back to them, in the same place every time.
   'stories-help'() { closeSheet(); openStories('settings'); },
   'stories-install'(el) { openStories(el.dataset.from || 'install_card', STORIES.length - 1); },
-  'story-next'() { goStory(1); },
-  'story-prev'() { goStory(-1); },
+  'story-next'() { goStory(1, 'button'); },
+  'story-prev'() { goStory(-1, 'button'); },
   'story-close'(el) { closeStories(el.dataset.storyEnd || 'close'); },
   'story-tick'(el) {
     const k = el.dataset.key;
