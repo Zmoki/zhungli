@@ -813,14 +813,14 @@ Object.assign(ACTS, {
     S.rooms.push(newRoom('r' + Date.now().toString(36), name)); save(); render();
     if (el.dataset.from === 'settings') openSettings();
     toast('Комната добавлена. Выберите её в карточках растений 🪴');
-    track('app_setting_room_added', { rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
+    track('app_setting_room_changed', { action: 'added', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
   async 'room-rename'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);
     const name = rm && ((await ask({ title: 'Новое название комнаты', input: { value: rm.name }, ok: 'Сохранить' })) || '');
     if (name && name !== rm.name) {
       rm.name = name; save(); render(); if (el.dataset.from === 'settings') openSettings();
-      track('app_setting_room_renamed', { from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
+      track('app_setting_room_changed', { action: 'renamed', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
     }
   },
   async 'room-del'(el) {
@@ -831,6 +831,6 @@ Object.assign(ACTS, {
     Object.values(S.plants).forEach((r) => { if (roomOf(r) === rm) r.room = rest[0].id; });
     S.rooms = rest; save(); render();
     if (el.dataset.from === 'settings') openSettings();
-    track('app_setting_room_removed', { rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
+    track('app_setting_room_changed', { action: 'removed', rooms: S.rooms.length, from: el.dataset.from === 'settings' ? 'settings' : 'room_tab' });
   },
 });

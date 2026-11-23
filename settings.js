@@ -180,11 +180,11 @@ Object.assign(ACTS, {
     if (there.length && !(await ask({ title: `Убрать место «${sp}»?`, text: `Здесь ${plantsN(there.length)}. Они останутся без места.`, ok: 'Убрать', danger: true }))) return;
     there.forEach((r) => { r.spot = ''; });
     S.spots = S.spots.filter((x) => x !== sp); save(); openSettings();
-    track('app_setting_spot_removed', { plants: there.length });
+    track('app_setting_spot_changed', { action: 'removed', from: 'settings', plants: there.length });
   },
   async 'spot-add'() {
     const sp = await ask({ title: 'Как называется место?', input: { placeholder: 'Например, «Подоконник»' }, ok: 'Добавить' });
-    if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); track('app_setting_spot_added', { from: 'settings' }); }
+    if (sp && sp.trim() && !S.spots.includes(sp.trim())) { S.spots.push(sp.trim()); save(); openSettings(); track('app_setting_spot_changed', { action: 'added', from: 'settings' }); }
   },
   export(el) {
     doExport(); track('app_data_exported', el.dataset.from ? { from: el.dataset.from } : {});

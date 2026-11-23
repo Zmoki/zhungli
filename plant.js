@@ -1038,7 +1038,7 @@ function addSpot(id, how) {
   const fresh = !S.spots.includes(s);
   if (fresh) S.spots.push(s);
   save();
-  track('app_setting_spot_added', { from: 'card', how, new_spot: fresh });
+  track('app_setting_spot_changed', { action: 'added', from: 'card', how, new_spot: fresh });
   const box = $('#spot-chips');
   let chip = [...box.querySelectorAll('[data-act="spot"]')].find((c) => c.dataset.spot === s);
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }

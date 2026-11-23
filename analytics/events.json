@@ -337,7 +337,7 @@
     },
     "plant_setting_spot_changed": {
       "area": "plant", "since": 168,
-      "when": "another spot chip picked in the plant card (no spot name sent); a new spot typed there is `app_setting_spot_added` `from: card`"
+      "when": "another spot chip picked in the plant card (no spot name sent); a new spot typed there is `app_setting_spot_changed` `action: added, from: card`"
     },
     "plant_setting_grow_changed": {
       "area": "plant", "since": 166, "was": ["grow_changed"],
@@ -814,44 +814,51 @@
         "rooms": { "type": "int", "desc": "how many rooms" }
       }
     },
-    "app_setting_room_added": {
-      "area": "settings", "since": 168, "was": ["room_added"],
-      "when": "a room added (no room name sent)",
-      "props": {
-        "rooms": { "type": "int", "desc": "how many now" },
-        "from": { "type": "enum", "desc": "since v168", "values": { "settings": "«+ комната» in the app's settings", "room_tab": "«Добавить комнату» on the Room tab" } }
-      }
-    },
-    "app_setting_room_renamed": {
+    "app_setting_room_changed": {
       "area": "settings", "since": 168,
-      "when": "a room renamed (no room name sent)",
+      "when": "the list of rooms changed: a room added, renamed or removed (its plants move to another room); no room name sent",
       "props": {
-        "from": { "type": "enum", "values": { "settings": "the room chip in the app's settings (one room)", "room_tab": "the pencil on the Room tab" } }
-      }
-    },
-    "app_setting_room_removed": {
-      "area": "settings", "since": 168, "was": ["room_removed"],
-      "when": "a room removed, its plants moved to another room (no room name sent)",
-      "props": {
+        "action": { "type": "enum", "values": { "added": "", "renamed": "", "removed": "" } },
         "rooms": { "type": "int", "desc": "how many now" },
-        "from": { "type": "enum", "desc": "since v168", "values": { "settings": "× on the room chip in the app's settings", "room_tab": "× on the Room tab" } }
+        "from": { "type": "enum", "values": { "settings": "the rooms in the app's settings", "room_tab": "the Room tab" } }
       }
     },
-    "app_setting_spot_added": {
-      "area": "settings", "since": 168, "was": ["plant_setting_spot_added", "spot_added"],
-      "when": "a spot added: in the app's settings, or typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing)",
+    "app_setting_spot_changed": {
+      "area": "settings", "since": 168,
+      "when": "the list of spots changed: a spot added in the app's settings or typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing), or removed in the app's settings (confirmed if plants stood there)",
       "note": "Never the spot's name.",
       "props": {
-        "from": { "type": "enum", "desc": "since v168 (before: card only)", "values": { "settings": "«+ место» in the app's settings", "card": "«+ место» in the plant card" } },
-        "how": { "type": "enum", "desc": "card", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
-        "new_spot": { "type": "bool", "desc": "card: not in the spot list before" }
+        "action": { "type": "enum", "values": { "added": "", "removed": "" } },
+        "from": { "type": "enum", "values": { "settings": "the spots in the app's settings", "card": "«+ место» in the plant card" } },
+        "plants": { "type": "int", "desc": "removed: plants left without a spot" },
+        "how": { "type": "enum", "desc": "added from the card", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
+        "new_spot": { "type": "bool", "desc": "added from the card: not in the spot list before" }
       }
     },
-    "app_setting_spot_removed": {
-      "area": "settings", "since": 168,
-      "when": "× on a spot in the app's settings, confirmed if plants stood there (no spot name sent)",
+    "room_added": {
+      "area": "room", "since": 67, "removed": 168,
+      "when": "a room added (no room name sent); replaced by `app_setting_room_changed` `action: added`",
+      "props": { "rooms": { "type": "int" } }
+    },
+    "room_removed": {
+      "area": "room", "since": 67, "removed": 168,
+      "when": "a room removed (no room name sent); replaced by `app_setting_room_changed` `action: removed`",
+      "props": { "rooms": { "type": "int" } }
+    },
+    "plant_setting_spot_added": {
+      "area": "plant", "since": 166, "removed": 168,
+      "when": "a spot typed in the plant card's new spot field and added; replaced by `app_setting_spot_changed` `action: added, from: card`",
       "props": {
-        "plants": { "type": "int", "desc": "plants left without a spot" }
+        "how": { "type": "enum", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
+        "new_spot": { "type": "bool", "desc": "not in the spot list before" }
+      }
+    },
+    "spot_added": {
+      "area": "plant", "since": 94, "removed": 166,
+      "when": "a spot typed in the plant card's new spot field and added; renamed `plant_setting_spot_added` in v166, now `app_setting_spot_changed` `action: added, from: card`",
+      "props": {
+        "how": { "type": "enum", "values": { "button": "+", "enter": "Enter, «Готово» on a phone" } },
+        "new_spot": { "type": "bool", "desc": "not in the spot list before" }
       }
     },
 
