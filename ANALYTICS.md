@@ -112,7 +112,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `plant_opened` | plant card opened by a tap | `tab`: `settings` («Настройки») / `notes` («Заметки») / `history` («История»); the tab it opened on (since v166)<br>the [plant props](#plant-props) | v88 |
+| `plant_opened` | plant card opened by a tap | `tab`: `settings` («Настройки») / `notes` («Заметки») / `history` («История»); the tab it opened on (since v166)<br>`from`: `today` / `plants` / `light` / `room`; the app's tab it was opened from (since v174); in practice `today` or `plants`: rows on Light and Room don't open cards<br>the [plant props](#plant-props) | v88 |
 | `plant_tab_opened` | another tab of the plant card opened by a tap or the arrow keys (the tab it opens on is `tab` in `plant_opened`) | `tab`: `settings` («Настройки») / `notes` («Заметки») / `history` («История») | v166 |
 | `plant_setting_opened`<br>was `settings_row_opened` | a row of the plant card's «Настройки» opened | `row`: `name` / `card` / `place` / `light` / `gh` / `way` / `feed` / `prune` / `rinse` / `bought` / `repot` / `rest` | v166 |
 | `plant_setting_name_changed`<br>was `plant_named` | nickname set or changed (clearing it sends nothing) | none | v166 |
@@ -212,11 +212,18 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `app_setting_spot_changed` | the list of spots changed: a spot added in the app's settings, or a new one typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing), or removed in the app's settings (confirmed if plants stood there). Never the spot's name. | `action`: `added` / `removed`<br>`from`: `settings` (the spots in the app's settings) / `card` («+ место» in the plant card)<br>`plants`: removed: plants left without a spot<br>`how`: `button` (+) / `enter` (Enter, «Готово» on a phone); added from the card | v168 |
 | `app_data_change_dropped`<br>was `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | none | v170 |
 
+### Light tab
+
+| Event | When | Properties | Since |
+| --- | --- | --- | --- |
+| `light_shown` | the Light tab drawn with plants, once per launch and day, while the app is on screen | `plants`: plants on the tab<br>`measured`: plants with a lux reading («замерено N из M») | v174 |
+
 ### Room tab
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
 | `room_climate_changed`<br>was `room_saved` | a room's temperature and humidity saved («Записать» on the Room tab) | `temp`: rounded<br>`humidity`: rounded<br>`rooms`: how many rooms | v168 |
+| `room_shown` | the Room tab drawn with plants, once per launch and day, while the app is on screen | `rooms`: all rooms, with plants or not<br>`with_reading`: rooms with a temperature and humidity reading<br>`days_since_reading`: days since the newest reading (0: today); not sent without one | v174 |
 
 ### Errors and speed
 
@@ -273,7 +280,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 
 1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix, and the prefix tells a care action from a setting:
    - care actions (tasks on «Сегодня», «…сегодня» buttons in the plant card) are `care_` plus the care: `care_watering_*`, `care_feed_*`, `care_prune_*`, `care_bath_*`, `care_bath_day_*` (the app's «Банный день»), `care_bonus_task_*`; a task is `care_<care>_task_shown` / `_finished` / `_snoozed`, and what's inside a task goes after it (`care_watering_task_tip_opened` for «Как?»);
-   - the «Сегодня» page itself is `today_*`: its progress (`today_shown`, `today_left`, `today_finished`), its own controls (`today_show_all_clicked`) and cards that aren't care (`today_bonus_task_*`: the backup and feedback tasks);
+   - the «Сегодня» page itself is `today_*`: its progress (`today_shown`, `today_left`, `today_finished`), its own controls (`today_show_all_clicked`) and cards that aren't care (`today_bonus_task_*`: the backup and feedback tasks); the Light and Room tabs likewise are `light_*` and `room_*` (`light_shown`, `room_shown`, `room_climate_changed`);
    - anything set in the plant card's «Настройки», care settings included, is `plant_setting_*` (`plant_setting_feed_lamp_toggled`, not `feed_lamp_toggled`); the same setting changed elsewhere (the Light tab, «Без теплицы» on a task) keeps that name, with `from`;
    - the rest of the plant card is `plant_*`, the Plants tab `plants_*`;
    - adding plants is `add_*`, named by the add sheet's part: `add_catalog_*`, `add_custom_*`, `add_help_*`, `add_quick_*` (the quick tiles, on empty pages and in the last story), `add_import_*` (AI import); plants added in any way is `add_finished` `{source}`;

@@ -219,7 +219,7 @@ document.addEventListener('click', (e) => {
   if (el.dataset.open) {
     const id = el.dataset.open;
     openPlant(id);
-    if (plant(id)) track('plant_opened', { ...kindOf(id), tab: cardTab });
+    if (plant(id)) track('plant_opened', { ...kindOf(id), tab: cardTab, from: tab });
     return;
   }
   const id = el.dataset.id;
