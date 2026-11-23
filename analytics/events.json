@@ -920,7 +920,7 @@
       }
     },
     "app_data_change_dropped": {
-      "area": "health", "since": 170, "was": ["tab_synced"],
+      "area": "settings", "since": 170, "was": ["tab_synced"],
       "when": "a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead"
     },
 

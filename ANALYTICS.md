@@ -194,6 +194,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `app_setting_stats_enabled`<br>was `stats_enabled` | stats switched back on | none | v168 |
 | `app_setting_room_changed` | the list of rooms changed: a room added, renamed or removed (its plants move to another room); no room name sent | `action`: `added` / `renamed` / `removed`<br>`rooms`: how many now<br>`from`: `settings` (the rooms in the app's settings) / `room_tab` (the Room tab) | v168 |
 | `app_setting_spot_changed` | the list of spots changed: a spot added in the app's settings, or a new one typed in the plant card's new spot field (it then becomes the plant's spot; empty field: nothing), or removed in the app's settings (confirmed if plants stood there). Never the spot's name. | `action`: `added` / `removed`<br>`from`: `settings` (the spots in the app's settings) / `card` («+ место» in the plant card)<br>`plants`: removed: plants left without a spot<br>`how`: `button` (+) / `enter` (Enter, «Готово» on a phone); added from the card | v168 |
+| `app_data_change_dropped`<br>was `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | none | v170 |
 
 ### Room tab
 
@@ -210,7 +211,6 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `$web_vitals` | app goes to background or closes, with the values that changed since the last report. INP leaves out the time a native `prompt`/`confirm` was open, so it can be lower than in CrUX. From the browser's own timings: FCP everywhere; LCP, INP and CLS where supported. | `$web_vitals_FCP_value`: ms<br>`$web_vitals_LCP_value`: ms<br>`$web_vitals_INP_value`: ms<br>`$web_vitals_CLS_value`<br>`$pathname`<br>`visit`: random id; a visit starts at launch or with `app_opened` `resume`, and INP starts over with it; a visit can report several times, so take its last values | v86 |
 | `app_health_tap_slowed`<br>was `slow_tap` | a tap or key press took 200+ ms until the next frame, at most 10 per visit. The time a native `prompt`/`confirm` was open is taken out (it's the user's) | `target`: the control's `data-act`, `tab-<tab>`, `open-plant` or static element id<br>`event`: the one whose handlers ran longest: `pointerup`, `click`, `keydown`…<br>`duration`: ms<br>`input_delay`: ms<br>`processing`: ms<br>`presentation`: ms | v170 |
 | `app_health_viewport_stuck`<br>was `viewport_stuck` | iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch | `before`: height when stuck, CSS pixels<br>`full`: tallest height seen at this width<br>`after`: height 0.3 s after the re-measure | v170 |
-| `app_data_change_dropped`<br>was `tab_synced` | a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead | none | v170 |
 
 ### Every tap and field
 
