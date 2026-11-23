@@ -7,7 +7,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.join(__dirname, '..');
+// The served app files; paths below are relative to it.
+const ROOT = path.join(__dirname, '..', 'app');
 // UI files and what they draw, in the order people meet them.
 const SCREENS = [
   ['views.js', '«Сегодня», «Растения», «Свет», «Комната»'],
@@ -26,6 +27,7 @@ const SCREENS = [
 const PAGES = [
   ['index.html', 'Страница приложения'],
   ['privacy.html', 'Конфиденциальность'],
+  ['404.html', 'Страница не найдена'],
   ['manifest.webmanifest', 'Значок на экране «Домой»'],
 ];
 const CATALOG = 'plants.js';

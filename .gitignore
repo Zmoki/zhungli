@@ -1,3 +1,5 @@
 # Local Claude Code settings (preview server config); the project's skills are shared
 .claude/*
 !.claude/skills/
+# Local wrangler pages dev cache
+.wrangler/

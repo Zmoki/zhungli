@@ -123,7 +123,7 @@ function propsIn(expr, out = { keys: new Set(), groups: new Set(), dynamic: fals
   if (!found || /\|\|\s*\{/.test(expr)) out.dynamic = true;
   return out;
 }
-const appFiles = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js')).sort();
+const appFiles = fs.readdirSync(path.join(ROOT, 'app')).filter((f) => f.endsWith('.js')).sort().map((f) => `app/${f}`);
 const calls = [];
 for (const file of appFiles) {
   const src = read(file);
