@@ -86,7 +86,7 @@ function startAddFlow(sheetName) {
 }
 function endAddFlow(leftApp = false) {
   // What the catalog lacks: sent whether or not something was added in the end.
-  if (addFlow && addFlow.missed) track('catalog_missed', { query: addFlow.missed, added: addFlow.done });
+  if (addFlow && addFlow.missed) track('add_catalog_missed', { query: addFlow.missed, added: addFlow.done });
   if (!leftApp) customDraft = null; // the sheet is closing: a kept «Новое растение» draft goes with it
   if (addFlow && !addFlow.done) {
     track('add_abandoned', { sheet: addFlow.sheet, searched: addFlow.searched, no_results: addFlow.no_results, picked: addFlow.picked, left_app: leftApp,
@@ -213,14 +213,14 @@ function catalogSearch(changeFor) {
     }
     if (changeFor) { if (raw) cardSearched = true; return; }
     if (e.detail === 'restore') return;
-    // The last search that found nothing goes out once, when the sheet closes (catalog_missed):
+    // The last search that found nothing goes out once, when the sheet closes (add_catalog_missed):
     // a pause mid-word or a fixed typo isn't sent. Clearing the box keeps it.
     if (addFlow && raw) addFlow.missed = any ? '' : raw.slice(0, 40);
     if (raw) {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         if (addFlow) { addFlow.searched = true; addFlow.no_results = !any; }
-        track('catalog_searched', { found: any, ...(typo && any && { typo: true }) });
+        track('add_catalog_searched', { found: any, ...(typo && any && { typo: true }) });
       }, 1200);
     }
   });
@@ -252,7 +252,7 @@ const GENERIC_TYPES = () => PLANTS.filter((d) => d.generic && !d.hidden);
 let customDraft = null;
 function openCustom(species = '', from = 'button', back = '') {
   startAddFlow('custom');
-  track('custom_opened', { from });
+  track('add_custom_opened', { from });
   const like = GENERIC_TYPES()[0];
   $('#sheet-body').innerHTML = `
     ${subHead('Новое растение', back, from === 'search_miss' ? species : '')}
@@ -323,7 +323,7 @@ function openCustom(species = '', from = 'button', back = '') {
     initBonus(S);
     save();
     closeSheet();
-    track('plants_added', { count: 1, generic_count: 0, source: 'custom', medium: S.custom[id].type, catalog_id: base.id, tuned });
+    track('add_finished', { count: 1, generic_count: 0, source: 'custom', medium: S.custom[id].type, catalog_id: base.id, tuned });
     toast('Добро пожаловать в джунгли! 🌱');
   });
   openSheet();
@@ -513,7 +513,7 @@ const importBase = (it) => {
 // the empty first screen.
 const nameHelpLink = (from, text) => `<p class="mt-8 small name-help"><button class="linkish" data-act="name-help" data-from="${from}">${text}</button></p>`;
 function openNameHelp(from, back = '', q = '') {
-  track('name_help_opened', { from });
+  track('add_help_opened', { from });
   if (addFlow) addFlow.sheet = 'help';
   const search = back
     ? `<button class="mt-10 btn primary wide" data-act="add-back" data-to="name-help"${q ? ` data-q="${esc(q)}"` : ''}>${I('search')}Искать в каталоге</button>`
@@ -569,7 +569,7 @@ function openImport(back = '') {
   imp = kept || { step: 1, copied: false, via: '', found: 0, items: [], picked: new Set(), carry: '', info: { via: new Set(), parts: 0, cut: false, repaired: false, unread: 0, ext: '' } };
   imp.back = back;
   imp.found = 0;
-  track('import_opened', kept ? { restored: true, step: imp.step } : {});
+  track('add_import_opened', kept ? { restored: true, step: imp.step } : {});
   // Leaving for the AI chat after copying is the expected path, not abandoning (see visibilitychange).
   if (addFlow) addFlow.promptCopied = imp.copied;
   importStep(imp.step, false);
@@ -640,7 +640,7 @@ function importStep(n, moved = true, how = '') {
   if (n === 4) renderImportList();
   if (moved) {
     $('#imp-q').focus();
-    track('import_step_shown', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
+    track('add_import_step_shown', { step: n, from_step: from, ...(n > 2 && { via: imp.via }), ...(how && { how }) });
   }
 }
 // Step 3's main button. Text waiting to be read: «Найти растения». Plants in the list (found now, or from an
@@ -775,7 +775,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
       ? '<p class="mt-10 error-note small">Это резервная копия Жунглей, а не ответ ИИ. Её можно восстановить в настройках: «Резервная копия» → «Восстановить».</p>'
       : `<p class="mt-10 error-note small">${{ unreadable: 'Не получилось открыть этот файл.', too_big: `В ${where} слишком много текста для списка растений. Похоже, это не то.`, empty: 'Файл пустой.' }[res.error] || `В ${where} не нашлось списка растений.`} Нужен ответ ИИ на запрос из шага 1.</p>`;
     announce(note.textContent);
-    track('import_answer_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
+    track('add_import_answer_failed', { via, how, length: text ? text.length : 0, reason: res.error, ...(via === 'file' && { file_ext: ext }), ...(res.diag || {}) });
     importGo();
     return;
   }
@@ -810,7 +810,7 @@ function readImport(text, via, ext = '', fail = '', how = via) {
     imp.info.unread = (imp.info.unread || 0) + res.bad;
   }
   saveImport();
-  track('import_answer_read', {
+  track('add_import_answer_read', {
     via, how, found: fresh.length, total: imp.items.length, repeated: res.items.length - fresh.length, unread: res.bad, cut: res.cut,
     repaired: res.repaired, matched: fresh.filter((it) => it.card).length, ...(via === 'file' && { file_ext: ext }),
   });
@@ -904,7 +904,7 @@ function addImported() {
   save();
   const noSpot = list.filter((it) => !it.spot).length;
   const carded = list.filter((it) => it.card);
-  track('plants_added', {
+  track('add_finished', {
     count: list.length, generic_count: carded.filter((it) => it.card.generic).length, catalog_ids: carded.map((it) => it.card.id),
     own_count: list.length - carded.length, guess_count: list.filter((it) => it.guess).length,
     found: imp.items.length, already: imp.items.filter((it) => it.dup).length,
@@ -955,7 +955,7 @@ Object.assign(ACTS, {
     if (form) customDraft = { ...Object.fromEntries(new FormData(form)), tuneOpen: form.querySelector('.tune').open };
     openAdd(true);
     if (!el.dataset.q) { $(`#sheet [data-act="${el.dataset.to}"]:not([data-q])${el.dataset.from ? `[data-from="${el.dataset.from}"]` : ''}`)?.focus(); return; }
-    // The search comes back as it was, but it isn't a new search: catalog_searched isn't sent again.
+    // The search comes back as it was, but it isn't a new search: add_catalog_searched isn't sent again.
     const q = $('#pick-q');
     q.value = el.dataset.q;
     q.dispatchEvent(new CustomEvent('input', { detail: 'restore' }));
@@ -984,7 +984,7 @@ Object.assign(ACTS, {
   'import-copy'(el) {
     if (addFlow) addFlow.promptCopied = true;
     copyPrompt(el, (how) => {
-      track('import_prompt_copied', { how });
+      track('add_import_prompt_copied', { how });
       if (!el.isConnected) return; // the sheet was closed (maybe reopened) meanwhile
       // Copied, or shown to copy by hand: either way the next step opens up, and copying is no longer the main action.
       // Kept on the device: people go to the AI chat right from here, and the app may reload meanwhile.
@@ -1007,7 +1007,7 @@ Object.assign(ACTS, {
     });
     el.focus();
   },
-  'import-show'() { showPrompt(); track('import_prompt_opened'); },
+  'import-show'() { showPrompt(); track('add_import_prompt_opened'); },
   'import-read'() { importPasted('button'); },
   'import-step'(el) { importStep(Number(el.dataset.to)); },
   'import-via'(el) { imp.via = el.dataset.via; importStep(3); },
@@ -1015,7 +1015,7 @@ Object.assign(ACTS, {
   'import-more'(el) { importStep(3, true, el.dataset.how); },
   'import-copy-again'(el) {
     copyPrompt(el, (how) => {
-      track('import_prompt_copied', { how, from: 'again' });
+      track('add_import_prompt_copied', { how, from: 'again' });
       if (!el.isConnected) return;
       const ok = how === 'exec' || how === 'clipboard';
       el.innerHTML = ok ? `${I('check')}Скопировано` : 'Скопируйте из поля выше';

@@ -370,7 +370,7 @@
         "to_generic": { "type": "bool" },
         "same_medium": { "type": "bool", "desc": "the plant's medium is the new card's" },
         "notes_moved": { "type": "bool", "desc": "edited tips turned into notes" },
-        "searched": { "type": "bool", "desc": "something was typed in the search; searches there send no `catalog_searched`" }
+        "searched": { "type": "bool", "desc": "something was typed in the search; searches there send no `add_catalog_searched`" }
       }
     },
     "plant_setting_greenhouse_toggled": {
@@ -470,8 +470,8 @@
       "when": "«Добавить растения» sheet opened",
       "props": { "from": { "type": "enum", "values": "tab", "desc": "tab it was opened from" } }
     },
-    "plants_added": {
-      "area": "add", "since": 7,
+    "add_finished": {
+      "area": "add", "since": 171, "was": ["plants_added"],
       "when": "plants added from the picker, the custom form or AI import",
       "props": {
         "count": { "type": "int" },
@@ -502,34 +502,34 @@
         "tuned": { "type": "bool", "desc": "custom: light, interval, type or tip changed by hand in «Тонкая настройка»" }
       }
     },
-    "custom_opened": {
-      "area": "add", "since": 23,
+    "add_custom_opened": {
+      "area": "add", "since": 171, "was": ["custom_opened"],
       "when": "own plant form opened",
       "props": { "from": { "type": "enum", "values": { "button": "«Своё растение» under «Не нашли своё?»", "search_miss": "«Добавить как своё» after a catalog search found nothing" } } }
     },
-    "quick_abandoned": {
-      "area": "add", "since": 70,
+    "add_quick_abandoned": {
+      "area": "add", "since": 171, "was": ["quick_abandoned"],
       "when": "tiles on an empty screen were ticked but not added: once, when the person turns to another way of adding or leaves the app",
       "props": {
         "picked": { "type": "int", "desc": "how many ticked" },
         "then": { "type": "enum", "desc": "what they turned to instead of «Добавить»; they may still add there", "values": { "catalog": "", "import": "", "restore": "", "left_app": "" } }
       }
     },
-    "name_help_opened": {
-      "area": "add", "since": 124,
+    "add_help_opened": {
+      "area": "add", "since": 171, "was": ["name_help_opened"],
       "when": "«Как узнать, что за растение» opened",
       "props": { "from": { "type": "enum", "values": { "search": "link under the catalog search", "not_found": "search found nothing", "empty": "first screen with no plants" } } }
     },
-    "catalog_searched": {
-      "area": "add", "since": 23,
+    "add_catalog_searched": {
+      "area": "add", "since": 171, "was": ["catalog_searched"],
       "when": "catalog search typed (1.2 s pause, no search text sent)",
       "props": {
         "found": { "type": "bool" },
         "typo": { "type": "bool", "desc": "`true` when only the typo-forgiving pass found something" }
       }
     },
-    "catalog_missed": {
-      "area": "add", "since": 70,
+    "add_catalog_missed": {
+      "area": "add", "since": 171, "was": ["catalog_missed"],
       "when": "the add sheet closed after a search that found nothing: once, with the last such search (a fixed typo or a later hit clears it)",
       "note": "To learn which plants the catalog lacks.",
       "props": {
@@ -550,18 +550,18 @@
       }
     },
 
-    "import_opened": {
-      "area": "import", "since": 23,
+    "add_import_opened": {
+      "area": "import", "since": 171, "was": ["import_opened"],
       "when": "AI import sheet opened",
       "props": {
         "restored": { "type": "bool", "desc": "it opened where an unfinished import stopped (kept on the device for 3 hours)" },
         "step": { "type": "int", "desc": "with `restored`" }
       }
     },
-    "import_step_shown": {
-      "area": "import", "since": 165, "was": ["import_step"],
+    "add_import_step_shown": {
+      "area": "import", "since": 171, "was": ["import_step_shown", "import_step"],
       "when": "AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение»)",
-      "note": "Sent on every move, unlike the care `*_shown` events (once a day). An import reopened where it stopped sends `import_opened` with `step` instead.",
+      "note": "Sent on every move, unlike the care `*_shown` events (once a day). An import reopened where it stopped sends `add_import_opened` with `step` instead.",
       "props": {
         "step": { "type": "int", "desc": "1–4" },
         "from_step": { "type": "int", "desc": "the step left (lower: «Назад»)", "was": ["from"] },
@@ -569,8 +569,8 @@
         "how": { "type": "enum", "values": { "more": "«Вставить ещё часть»", "continue": "«Вставить продолжение», the answer broke off" } }
       }
     },
-    "import_prompt_copied": {
-      "area": "import", "since": 12,
+    "add_import_prompt_copied": {
+      "area": "import", "since": 171, "was": ["import_prompt_copied"],
       "when": "«Скопировать запрос» in AI import, or «Скопировать ещё раз» under the shown prompt",
       "props": {
         "how": { "type": "enum", "values": {
@@ -582,12 +582,12 @@
         "from": { "type": "enum", "values": { "again": "the button under the shown prompt" } }
       }
     },
-    "import_prompt_opened": {
-      "area": "import", "since": 165, "was": ["import_prompt_shown"],
+    "add_import_prompt_opened": {
+      "area": "import", "since": 171, "was": ["import_prompt_opened", "import_prompt_shown"],
       "when": "«Не вставляется? Показать запрос» in AI import: copying didn't reach the AI chat"
     },
-    "import_answer_read": {
-      "area": "import", "since": 165, "was": ["import_read"],
+    "add_import_answer_read": {
+      "area": "import", "since": 171, "was": ["import_answer_read", "import_read"],
       "when": "a pasted answer or a picked file had plants (import step 3)",
       "props": {
         "via": { "type": "enum", "values": "import_via" },
@@ -602,13 +602,13 @@
         "file_ext": { "type": "enum", "values": "file_ext", "desc": "files" }
       }
     },
-    "import_answer_failed": {
-      "area": "import", "since": 165, "was": ["import_failed"],
+    "add_import_answer_failed": {
+      "area": "import", "since": 171, "was": ["import_answer_failed", "import_failed"],
       "when": "a pasted answer or a picked file has no plant list",
       "note": "No text or file content is sent.",
       "props": {
         "via": { "type": "enum", "values": "import_via" },
-        "how": { "type": "enum", "desc": "as in `import_answer_read`", "values": { "paste": "", "button": "", "file": "" } },
+        "how": { "type": "enum", "desc": "as in `add_import_answer_read`", "values": { "paste": "", "button": "", "file": "" } },
         "length": { "type": "int", "desc": "of the text" },
         "file_ext": { "type": "enum", "values": "file_ext", "desc": "files only, never the name" },
         "reason": { "type": "enum", "values": {

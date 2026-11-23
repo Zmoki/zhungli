@@ -529,7 +529,7 @@ let qsReported = false;
 // The ticks stay, so coming back to the same screen keeps them.
 function endQuick(then) {
   if (!qsPicked.size || qsReported) return;
-  track('quick_abandoned', { picked: qsPicked.size, then });
+  track('add_quick_abandoned', { picked: qsPicked.size, then });
   qsReported = true;
 }
 // «Добавить» under the tiles. The word after the number can hide on a narrow screen with large text (style.css).
@@ -552,7 +552,7 @@ function quickStart() {
 function addFromCatalog(keys, source) {
   const ids = addPlants(keys);
   if (!ids.length) return;
-  track('plants_added', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source });
+  track('add_finished', { count: ids.length, generic_count: ids.filter((i) => def(i).generic).length, catalog_ids: ids.map((i) => def(i).id), source });
   save();
   if (ids.length === 1) { openPlant(ids[0], 'settings', ['name', 'place']); render(); toast('Добро пожаловать в джунгли! Дайте имя и выберите место 🌱'); return; }
   tab = 'plants'; closeSheet(); window.scrollTo(0, 0);
