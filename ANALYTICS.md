@@ -74,7 +74,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `greenhouse_task_shown` | vent cards («Проветрите теплицу») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: vent cards shown (one per plant) | v164 |
 | `greenhouse_task_finished`<br>was `greenhouse_vented` | «Проветрено» on the vent card | none | v164 |
 | `quarantine_task_shown` | pest checks («Осмотрите на вредителей») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: pest checks shown (one per new plant) | v164 |
-| `quarantine_task_finished`<br>was `quarantine_checked` | «Осмотрено» on a new plant's pest check («Уже не новое» is `quarantine_toggled` `from: task`) | none | v164 |
+| `quarantine_task_finished`<br>was `quarantine_checked` | «Осмотрено» on a new plant's pest check («Уже не новое» is `plant_setting_quarantine_toggled` `from: task`) | none | v164 |
 | `bonus_shown` | «Если есть силы» bonus tasks drawn on «Сегодня», once per launch and day, while the app is on screen; the feeding day, pruning and the bath day have their own. The funnel's first step: count devices. | `count`: bonus tasks shown (dust, turning, medium care, backup, feedback) | v164 |
 | `bonus_finished`<br>was `bonus_done` | bonus task done (the feeding day is `feed_day_finished`, the bath day `bath_day_finished`, pruning `prune_task_finished` since v163) | `kind`: `dust` / `rotate` / `flush` (clay pebbles) / `leach` (mineral medium) / `roots` (aquarium) / `prune` (a reminder turned on in the plant card, up to v162) / `feedback` («Написать» on «Как вам Жунгли?») | v164 |
 | `bonus_skipped` | bonus task snoozed («Через 3 дня»), or «Не нужно» on «Как вам Жунгли?» (the bath day is `bath_day_snoozed` since v160, the feeding day `feed_day_snoozed` since v162, pruning `prune_task_snoozed` since v163) | `kind`: `dust` / `rotate` / `flush` / `leach` / `roots` / `prune` (up to v162) / `bath` (the bath day, up to v159) / `feed` (the feeding day, up to v161) / `backup` (the backup task) / `feedback` («Не нужно» on «Как вам Жунгли?») | v7 |
@@ -95,32 +95,33 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `plant_opened` | plant card opened by a tap | the [plant props](#plant-props) | v88 |
-| `settings_row_opened` | a row of the plant card's «Настройки» opened | `row`: `name` / `card` / `place` / `light` / `gh` / `way` / `feed` / `prune` / `rinse` / `bought` / `repot` / `rest` | v142 |
-| `plant_named` | nickname set | none | v7 |
+| `plant_opened` | plant card opened by a tap | `tab`: `settings` («Настройки») / `notes` («Заметки») / `history` («История»); the tab it opened on (since v166)<br>the [plant props](#plant-props) | v88 |
+| `plant_tab_opened` | another tab of the plant card opened by a tap or the arrow keys (the tab it opens on is `tab` in `plant_opened`) | `tab`: `settings` («Настройки») / `notes` («Заметки») / `history` («История») | v166 |
+| `plant_setting_opened`<br>was `settings_row_opened` | a row of the plant card's «Настройки» opened | `row`: `name` / `card` / `place` / `light` / `gh` / `way` / `feed` / `prune` / `rinse` / `bought` / `repot` / `rest` | v166 |
+| `plant_setting_name_changed`<br>was `plant_named` | nickname set or changed (clearing it sends nothing) | none | v166 |
 | `plant_deleted` | plant deleted | none | v7 |
-| `photo_added` | photo added to a plant | none | v7 |
-| `photo_removed` | photo removed from a plant (back to the drawing) | none | v75 |
-| `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back)<br>`note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` | v9 |
-| `lux_entered` | lux reading saved | `from`: `light_tab` / `card` | v7 |
-| `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing). Never the spot's name. | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v94 |
-| `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v76 |
-| `check_interval_set` | an interval chip tapped in the plant card (drip irrigation, which doesn't learn) | `every`: `7` / `14` / `21` / `28`; days (was `days`)<br>the [plant props](#plant-props) | v119 |
-| `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v106 |
-| `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card, or «Без теплицы» on the vent card | `on`<br>`from`: `card` / `task` («Без теплицы» on the vent card, confirmed); since v164 (before: card only; the vent card sent `greenhouse_removed`) | v7 |
-| `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`<br>`from`: `card` / `task` | v131 |
-| `repot_toggled` | «Недавно пересажено» in the plant card | `on` | v154 |
-| `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | the [plant props](#plant-props) | v132 |
-| `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days`: days at rest<br>the [plant props](#plant-props) | v132 |
-| `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `0` (off) / `14` / `30` / `90` | v133 |
-| `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card | `on` | v133 |
+| `plant_photo_added`<br>was `photo_added` | photo added to a plant | none | v166 |
+| `plant_photo_removed`<br>was `photo_removed` | photo removed from a plant (back to the drawing) | none | v166 |
+| `plant_note_changed`<br>was `note_changed` | cheat sheet note changed in the plant card | `action`: `add` / `edit` / `remove` / `reset` (back to catalog) / `restore` (removed tips back)<br>`note`: `water` / `soil` / `cond` / `tip` / `own` / `catalog` | v166 |
+| `plant_setting_lux_changed`<br>was `lux_entered` | lux reading saved (clearing it sends nothing) | `from`: `light_tab` / `card` | v166 |
+| `plant_setting_spot_added`<br>was `spot_added` | a spot typed in the plant card's new spot field and added (empty field: nothing). Never the spot's name. | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v166 |
+| `plant_setting_grow_changed`<br>was `grow_changed` | «В чём растёт» or «Как поливаю» changed in the plant card | `medium`: a [`medium` value](#value-lists)<br>`from_medium`: a [`medium` value](#value-lists)<br>`watering`: a [`watering` value](#value-lists)<br>`from_watering`: a [`watering` value](#value-lists)<br>`settle`: counted as repotting | v166 |
+| `plant_setting_watering_schedule_changed`<br>was `check_interval_set` | how often the watering check comes, changed in the plant card's «Как растёт»: a chip for drip irrigation (it doesn't learn), or − / + for the others. A run of − / + taps sends one event, 1.2 s after the last tap (at once when the app hides), and none if it ends where it began. | `every`: days; chips: 7, 14, 21 or 28 (was `days`)<br>`how`: `chips` (drip irrigation) / `stepper` («Проверять примерно каждые» − / +); since v166 (before: chips only)<br>the [plant props](#plant-props) | v166 |
+| `plant_setting_card_changed`<br>was `card_changed` | a plant moved to another catalog card («Сменить карточку» in the plant card) | `from_catalog_id` (was `from_card`)<br>`catalog_id`: the new card (was `to_card`)<br>`from_generic`<br>`to_generic`<br>`same_medium`: the plant's medium is the new card's<br>`notes_moved`: edited tips turned into notes<br>`searched`: something was typed in the search; searches there send no `catalog_searched` | v166 |
+| `plant_setting_greenhouse_toggled`<br>was `greenhouse_toggled` | «Стоит в теплице или под колпаком?» in the plant card, or «Без теплицы» on the vent card | `on`<br>`from`: `card` / `task` («Без теплицы» on the vent card, confirmed); since v164 (before: card only; the vent card sent `greenhouse_removed`) | v166 |
+| `plant_setting_quarantine_toggled`<br>was `quarantine_toggled` | «Недавно купили» in the plant card, or «Уже не новое» on the task | `on`<br>`from`: `card` / `task` | v166 |
+| `plant_setting_repot_toggled`<br>was `repot_toggled` | «Недавно пересажено» in the plant card | `on` | v166 |
+| `plant_setting_rest_started`<br>was `rest_started` | «Сбросила листья» / «Ушла в зимний покой» in the plant card | the [plant props](#plant-props) | v166 |
+| `plant_setting_rest_ended`<br>was `rest_ended` | «Появился новый лист» / «Пошли новые ловушки» | `days`: days at rest<br>the [plant props](#plant-props) | v166 |
+| `plant_setting_feed_schedule_changed`<br>was `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `0` (off) / `14` / `30` / `90` | v166 |
+| `plant_setting_feed_lamp_toggled`<br>was `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card | `on` | v166 |
 | `feed_logged` | «Подкормлено сегодня» in the plant card's «Подкормка» (before v162: `feeding_logged` `from: card`) | none | v162 |
-| `prune_toggled` | «Звать на обрезку?» in the plant card's «Обрезка» | `on`: `true`: switched on, with the card's start interval and months | v163 |
-| `prune_schedule_changed` | how often chip under «Звать на обрезку?» in the plant card | `every`: `14` / `30` / `60` / `300` (once a year); days | v163 |
-| `prune_months_changed` | a month chip under «Звать на обрезку?» in the plant card | `months`: how many months are on now | v163 |
+| `plant_setting_prune_toggled`<br>was `prune_toggled` | «Звать на обрезку?» in the plant card's «Обрезка» | `on`: `true`: switched on, with the card's start interval and months | v166 |
+| `plant_setting_prune_schedule_changed`<br>was `prune_schedule_changed` | how often chip under «Звать на обрезку?» in the plant card | `every`: `14` / `30` / `60` / `300` (once a year); days | v166 |
+| `plant_setting_prune_months_changed`<br>was `prune_months_changed` | a month chip under «Звать на обрезку?» in the plant card | `months`: how many months are on now | v166 |
 | `prune_logged`<br>was `reminder_logged` | «Обрезано сегодня» in the plant card's «Обрезка» | none | v163 |
 | `bath_logged`<br>was `rinse_logged` | «Промыто сегодня» in the plant card's «Промывка грунта» | none | v164 |
-| `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v159 |
+| `plant_setting_bath_toggled`<br>was `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v166 |
 | `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` | v68 |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found` | v67 |
 
@@ -223,13 +224,13 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | Event | When | Properties | Sent in |
 | --- | --- | --- | --- |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
-| `greenhouse_removed` | greenhouse removed from the vent card; replaced by `greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
-| `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `prune_toggled`, `prune_schedule_changed` and `prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
+| `greenhouse_removed` | greenhouse removed from the vent card; replaced by `plant_setting_greenhouse_toggled` `on: false, from: task` | none | v7–v163 |
+| `reminder_changed` | «Звать на обрезку?» or its options changed in the plant card; replaced by `plant_setting_prune_toggled`, `plant_setting_prune_schedule_changed` and `plant_setting_prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день» | `kind`: `prune` / `rinse` (before «Банный день»)<br>`action`: `on` / `off` / `every` / `months`<br>`every`: `14` / `30` / `60` / `300`; days, unless off<br>`months`: how many months are on, unless off | v120–v162 |
 | `feeding_logged` | plants noted as fed; replaced by `feed_day_finished` (`from: day`) and `feed_logged` (`from: card`) | `from`: `day` («Подкормлено» on «День подкормки») / `card` («Подкормлено сегодня»)<br>`count`: how many fed (was `n`)<br>`of`: `day` only: how many were listed | v133–v161 |
 | `bath_day_changed` | «Банный день» in the app's settings turned on, off, or its interval changed; replaced by `bath_day_toggled` and `bath_day_schedule_changed` (`every: 120` was either) | `every`: `0` (off) / `60` / `120` / `180` | v137–v159 |
 | `answer_undone` | «×» on the newest answer in the plant card's «История», confirmed; replaced by `check_undone` (other answer words). Up to v158 its plant props were `plant_kind` and `plant_type` | `answer`: `water` / `wet` / `ok` / `fix`<br>`restored`<br>the [plant props](#plant-props) | v152–v158 |
-| `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
-| `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed` | `on` | v69–v75 |
+| `bath_opt_out` | «Звать в банный день?» in the plant card; replaced by `plant_setting_bath_toggled` (`on` the other way round) | `on`: `true` for «Нет» | v137–v158 |
+| `wick_toggled` | «Фитильный полив» ticked or unticked in the plant card; replaced by `plant_setting_grow_changed` | `on` | v69–v75 |
 
 ## Value lists
 
@@ -242,7 +243,10 @@ No longer sent; old data keeps them. Hidden in PostHog.
 
 [`analytics/events.json`](analytics/events.json) is the tracking plan and the source of truth: every event, its props, types, values and history. The tables above, the old-name translation in `functions/ingest/batch.js` and the PostHog event descriptions are made from it.
 
-1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix: `bath_day_*` is the app's «Банный день» (settings and the card on «Сегодня»), `bath_*` one plant's choice in its card.
+1. Call `track('noun_verb', { … })`: snake_case, past tense, props free of personal text. One tap sends one event (`ui_clicked` aside). A feature's events share a prefix, and the prefix tells a care action from a setting:
+   - care actions (tasks on «Сегодня», «…сегодня» buttons in the plant card) use the care's prefix: `watering_*`, `feed_*`, `prune_*`, `bath_*`, `bath_day_*` (the app's «Банный день»);
+   - anything set in the plant card's «Настройки», care settings included, is `plant_setting_*` (`plant_setting_feed_lamp_toggled`, not `feed_lamp_toggled`); the same setting changed elsewhere (the Light tab, «Без теплицы» on a task) keeps that name, with `from`;
+   - the rest of the plant card is `plant_*`, the Plants tab `plants_*`; app settings keep their feature's prefix (`bath_day_toggled`).
 2. Add or change the event in `events.json`. Reuse prop names and value lists that exist (`plant` props, `medium`, `catalog_id`…). A `text` prop needs `why` and a line in `privacy.html`.
 3. Renamed an event or a prop? Keep the old name in `was`: the ingest function translates it for phones still on an old version. Gone? Set `removed` to the first version without it; don't delete it.
 4. `node tools/events.js --write`, then `node tools/events.js` must report no problems.
