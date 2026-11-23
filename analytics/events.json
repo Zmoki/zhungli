@@ -526,9 +526,10 @@
         "step": { "type": "int", "desc": "with `restored`" }
       }
     },
-    "import_step": {
-      "area": "import", "since": 157,
+    "import_step_shown": {
+      "area": "import", "since": 165, "was": ["import_step"],
       "when": "AI import moved to another step by a tap («Отправлено, дальше», a format, «Проверить список», «Назад», «Вставить ещё часть», «Вставить продолжение»)",
+      "note": "Sent on every move, unlike the care `*_shown` events (once a day). An import reopened where it stopped sends `import_opened` with `step` instead.",
       "props": {
         "step": { "type": "int", "desc": "1–4" },
         "from_step": { "type": "int", "desc": "the step left (lower: «Назад»)", "was": ["from"] },
@@ -549,12 +550,12 @@
         "from": { "type": "enum", "values": { "again": "the button under the shown prompt" } }
       }
     },
-    "import_prompt_shown": {
-      "area": "import", "since": 80,
+    "import_prompt_opened": {
+      "area": "import", "since": 165, "was": ["import_prompt_shown"],
       "when": "«Не вставляется? Показать запрос» in AI import: copying didn't reach the AI chat"
     },
-    "import_read": {
-      "area": "import", "since": 157,
+    "import_answer_read": {
+      "area": "import", "since": 165, "was": ["import_read"],
       "when": "a pasted answer or a picked file had plants (import step 3)",
       "props": {
         "via": { "type": "enum", "values": "import_via" },
@@ -569,13 +570,13 @@
         "file_ext": { "type": "enum", "values": "file_ext", "desc": "files" }
       }
     },
-    "import_failed": {
-      "area": "import", "since": 12,
+    "import_answer_failed": {
+      "area": "import", "since": 165, "was": ["import_failed"],
       "when": "a pasted answer or a picked file has no plant list",
       "note": "No text or file content is sent.",
       "props": {
         "via": { "type": "enum", "values": "import_via" },
-        "how": { "type": "enum", "desc": "as in `import_read`", "values": { "paste": "", "button": "", "file": "" } },
+        "how": { "type": "enum", "desc": "as in `import_answer_read`", "values": { "paste": "", "button": "", "file": "" } },
         "length": { "type": "int", "desc": "of the text" },
         "file_ext": { "type": "enum", "values": "file_ext", "desc": "files only, never the name" },
         "reason": { "type": "enum", "values": {
