@@ -241,9 +241,9 @@ function setRemind(id, kind, x, action) {
   $(`#remind-${kind}`).innerHTML = remindMore(id, kind);
   // Pruning is the only reminder now: another kind would need its own events in analytics/events.json.
   if (kind !== 'prune') return;
-  if (action === 'every') track('prune_schedule_changed', { every: x.every });
-  else if (action === 'months') track('prune_months_changed', { months: x.months.length });
-  else if (action === 'on' || action === 'off') track('prune_toggled', { on: action === 'on' });
+  if (action === 'every') track('plant_setting_prune_schedule_changed', { every: x.every });
+  else if (action === 'months') track('plant_setting_prune_months_changed', { months: x.months.length });
+  else if (action === 'on' || action === 'off') track('plant_setting_prune_toggled', { on: action === 'on' });
 }
 const intHint = (p) => `Подстраивается по вашим ответам «${labelsOf(p)[0]}» и «${labelsOf(p)[1]}».`;
 // How often it's checked: a stepper for a learned interval; for a system that waters by itself, chips
@@ -389,6 +389,11 @@ function showCardTab(k, focus) {
     $('#cp-' + t).hidden = !on;
   });
   if (focus) $('#ct-' + k).focus();
+}
+// A tab chosen by a tap or the arrow keys; the tab the card opens on goes with `plant_opened`.
+function pickCardTab(k, focus) {
+  if (k !== cardTab) track('plant_tab_opened', { tab: k });
+  showCardTab(k, focus);
 }
 
 // The plant's «Настройки»: four groups of folding rows. Each row shows its current value (rowValues) and opens on
@@ -580,7 +585,7 @@ $('#photo-input').addEventListener('change', async (e) => {
     if (window.photoChanged) window.photoChanged(photoFor, url);
     openPlant(photoFor);
     render();
-    track('photo_added');
+    track('plant_photo_added');
     toast('Красотка! 📸');
   } catch (err) { toast('Не получилось открыть фото'); }
 });
@@ -681,7 +686,7 @@ function setCard(id, key) {
 }
 
 // «Другая карточка»: the add sheet's catalog and search (catalogHtml, catalogSearch in add.js); a tap picks the new card.
-// Searches here aren't reported as catalog searches: only whether one was made goes with `card_changed`.
+// Searches here aren't reported as catalog searches: only whether one was made goes with `plant_setting_card_changed`.
 let cardSearched = false;
 function openCardPicker(id) {
   const d = def(id);
@@ -744,7 +749,7 @@ function changeWay(id, f, value) {
   noteEdit = null;
   refreshCheat(id);
   heroChanged(id);
-  track('grow_changed', { medium: p.type, watering: p.watering || 'none', from_medium: res.from.medium, from_watering: res.from.watering || 'none', settle: res.settle });
+  track('plant_setting_grow_changed', { medium: p.type, watering: p.watering || 'none', from_medium: res.from.medium, from_watering: res.from.watering || 'none', settle: res.settle });
 }
 
 document.addEventListener('change', (e) => {
@@ -754,7 +759,7 @@ document.addEventListener('change', (e) => {
   const id = el.dataset.id;
   const r = S.plants[id];
   if (!r) return;
-  if (f === 'name') { r.name = el.value.trim(); if (r.name) track('plant_named'); }
+  if (f === 'name') { r.name = el.value.trim(); if (r.name) track('plant_setting_name_changed'); }
   if (f === 'species') {
     const v = el.value.trim();
     if (!v || v === def(id).species) delete r.species; else r.species = v;
@@ -768,7 +773,7 @@ document.addEventListener('change', (e) => {
   if (f === 'lux') {
     const v = parseInt(el.value, 10);
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
-    if (r.lux) track('lux_entered', { from: tab === 'light' ? 'light_tab' : 'card' });
+    if (r.lux) track('plant_setting_lux_changed', { from: tab === 'light' ? 'light_tab' : 'card' });
   }
   save();
   if (sheet.open && ['lux', 'name', 'species'].includes(f)) heroChanged(id);
@@ -793,7 +798,7 @@ Object.assign(ACTS, {
     const key = el.dataset.row, body = $(`#srb-${key}`), open = el.getAttribute('aria-expanded') !== 'true';
     el.setAttribute('aria-expanded', open); body.hidden = !open;
     if (open) openRows.add(key); else openRows.delete(key);
-    if (open) track('settings_row_opened', { row: key });
+    if (open) track('plant_setting_opened', { row: key });
   },
   'rinse-done'(el, id) {
     const undo = snapshot(), p = plant(id);
@@ -814,7 +819,7 @@ Object.assign(ACTS, {
     S.plants[id].feedEvery = n; save();
     $('#feed-box').innerHTML = feedBox(plant(id));
     $(`[data-act="feed-every"][data-n="${n}"]`).focus();
-    track('feed_schedule_changed', { every: n });
+    track('plant_setting_feed_schedule_changed', { every: n });
   },
   'feed-done'(el, id) {
     const undo = snapshot();
@@ -836,7 +841,7 @@ Object.assign(ACTS, {
     if (!fixed) r.interval = Math.min(Math.round(r.interval * 2), 45);
     const next = addDays(r.lastWater || today(), Math.round(r.interval));
     r.nextCheck = next < today() ? today() : next;
-    save(); track('rest_started', kindOf(id));
+    save(); track('plant_setting_rest_started', kindOf(id));
     openPlant(id); toast('Хорошо, пусть отдыхает 🌙');
   },
   'rest-end'(el, id) {
@@ -845,7 +850,7 @@ Object.assign(ACTS, {
     delete r.resting;
     const next = addDays(today(), Math.round(r.interval));
     if (r.nextCheck > next) r.nextCheck = next;
-    save(); track('rest_ended', { days, ...kindOf(id) });
+    save(); track('plant_setting_rest_ended', { days, ...kindOf(id) });
     openPlant(id); toast('Ура, проснулась! 🌱');
   },
   photo(el, id) { photoFor = id; $('#photo-input').click(); },
@@ -855,7 +860,7 @@ Object.assign(ACTS, {
       if (window.photoRemoved) window.photoRemoved(id);
       openPlant(id);
       render();
-      track('photo_removed');
+      track('plant_photo_removed');
       toast('Фото убрано');
     }
   },
@@ -868,11 +873,11 @@ Object.assign(ACTS, {
     // Boxes redrawn with the chips inside get the focus back on the same answer.
     const refocus = () => $(`[data-act="yes-no"][data-field="${f}"]${k ? `[data-kind="${k}"]` : ''}[data-v="${el.dataset.v}"]`)?.focus();
     if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); return; } // saves
-    if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('feed_lamp_toggled', { on }); return; }
-    if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('bath_toggled', { on }); return; }
-    if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('greenhouse_toggled', { on, from: 'card' }); return; }
-    if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('quarantine_toggled', { on, from: 'card' }); }
-    if (f === 'repotted') { r.repotted = on ? today() : false; track('repot_toggled', { on }); }
+    if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('plant_setting_feed_lamp_toggled', { on }); return; }
+    if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('plant_setting_bath_toggled', { on }); return; }
+    if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('plant_setting_greenhouse_toggled', { on, from: 'card' }); return; }
+    if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('plant_setting_quarantine_toggled', { on, from: 'card' }); }
+    if (f === 'repotted') { r.repotted = on ? today() : false; track('plant_setting_repot_toggled', { on }); }
     save();
     const p = plant(id);
     $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
@@ -908,7 +913,7 @@ Object.assign(ACTS, {
     const res = setCard(id, el.dataset.key);
     if (!res) return;
     save();
-    track('card_changed', { from_catalog_id: res.from.id, catalog_id: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
+    track('plant_setting_card_changed', { from_catalog_id: res.from.id, catalog_id: res.to.id, from_generic: !!res.from.generic, to_generic: !!res.to.generic,
       same_medium: res.sameMedium, notes_moved: res.moved, searched: cardSearched });
     ACTS['card-back'](el, id);
     const undo = () => {
@@ -919,9 +924,9 @@ Object.assign(ACTS, {
     };
     toast(`Теперь карточка «${res.to.species}».${res.sameMedium ? '' : ` Способ выращивания прежний: ${MEDIA[mediumIn(S.plants[id], res.to)].name.toLowerCase()}.`}`, undo);
   },
-  'card-notes'() { showCardTab('notes'); },
-  'card-settings'() { showCardTab('settings'); },
-  'card-history'() { showCardTab('history'); },
+  'card-notes'() { pickCardTab('notes'); },
+  'card-settings'() { pickCardTab('settings'); },
+  'card-history'() { pickCardTab('history'); },
   'room-pick'(el, id) {
     S.plants[id].room = el.dataset.room; save();
     el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el));
@@ -934,14 +939,14 @@ Object.assign(ACTS, {
     const r = S.plants[id];
     delete r.own[el.dataset.key];
     if (!Object.keys(r.own).length) delete r.own;
-    track('note_changed', { action: 'reset', note: el.dataset.key });
+    track('plant_note_changed', { action: 'reset', note: el.dataset.key });
     noteEdit = null; save(); refreshCheat(id);
   },
   'note-restore'(el, id) {
     const r = S.plants[id];
     NOTE_KEYS.forEach(([k]) => { if (r.own && r.own[k] === '') delete r.own[k]; });
     if (r.own && !Object.keys(r.own).length) delete r.own;
-    track('note_changed', { action: 'restore', note: 'catalog' });
+    track('plant_note_changed', { action: 'restore', note: 'catalog' });
     save(); refreshCheat(id);
   },
   'remind-every'(el, id) {
@@ -986,7 +991,7 @@ Object.assign(ACTS, {
     const p = plant(id);
     $('#glance').innerHTML = glanceHtml(p);
     $('#water-box').innerHTML = waterBox(p);
-    track('check_interval_set', { every: n, ...kindOf(id) });
+    track('plant_setting_watering_schedule_changed', { every: n, how: 'chips', ...kindOf(id) });
   },
   async delete(el, id) {
     if (await ask({ title: `Убрать «${plant(id).title}» из коллекции?`, text: 'Отметки, заметки и фото этого растения удалятся.', ok: 'Убрать', danger: true })) {
@@ -1031,7 +1036,7 @@ function addSpot(id, how) {
   const fresh = !S.spots.includes(s);
   if (fresh) S.spots.push(s);
   save();
-  track('spot_added', { how, new_spot: fresh });
+  track('plant_setting_spot_added', { how, new_spot: fresh });
   const box = $('#spot-chips');
   let chip = [...box.querySelectorAll('[data-act="spot"]')].find((c) => c.dataset.spot === s);
   if (!chip) { $('[data-act="spot-form"]').insertAdjacentHTML('beforebegin', spotChip(id, s, false)); chip = $('[data-act="spot-form"]').previousElementSibling; }
@@ -1053,7 +1058,7 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
   const k = keys[(next + keys.length) % keys.length];
   track('ui_clicked', { target: 'card-' + k }); // counted like a tap on the tab
-  showCardTab(k, true);
+  pickCardTab(k, true);
 });
 
 async function saveNote(el, id, act) {
@@ -1061,7 +1066,7 @@ async function saveNote(el, id, act) {
   const text = act === 'note-del' ? '' : $('#note-text').value.trim();
   if (act === 'note-del' && (key[0] === 'n' || !careOf(def(id), S.plants[id])[key]) && !(await ask({ title: 'Удалить заметку?', ok: 'Удалить', danger: true }))) return;
   const action = setNote(id, key, text);
-  if (action) track('note_changed', { action, note: noteKind(key) });
+  if (action) track('plant_note_changed', { action, note: noteKind(key) });
   noteEdit = null; save(); refreshCheat(id);
 }
 function stepInterval(el, id, act) {
@@ -1074,4 +1079,8 @@ function stepInterval(el, id, act) {
   save();
   $('#int-val').textContent = days(r.interval);
   $('#glance').innerHTML = glanceHtml(plant(id));
+  // A run of − / + taps is one change: sent once, 1.2 s after the last tap.
+  clearTimeout(intTimer);
+  intTimer = setTimeout(() => { if (S.plants[id]) track('plant_setting_watering_schedule_changed', { every: Math.round(S.plants[id].interval), how: 'stepper', ...kindOf(id) }); }, 1200);
 }
+let intTimer;

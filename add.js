@@ -142,7 +142,7 @@ const subHead = (title, back, q = '') => `<div class="sheet-head">${back
   : ''}<h2 class="m-0">${title}</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>`;
 // The catalog's search. Changing a plant's card (`changeFor`, see openCardPicker in plant.js), searches send no
-// events: whether one was made goes with `card_changed`.
+// events: whether one was made goes with `plant_setting_card_changed`.
 let pinWatch = null;
 function catalogSearch(changeFor) {
   // The search stays at the top while the list scrolls; once it's stuck there it gets the sheet's solid fill,

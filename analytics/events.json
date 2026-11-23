@@ -156,7 +156,7 @@
     },
     "quarantine_task_finished": {
       "area": "care", "since": 164, "was": ["quarantine_checked"],
-      "when": "«Осмотрено» on a new plant's pest check («Уже не новое» is `quarantine_toggled` `from: task`)"
+      "when": "«Осмотрено» on a new plant's pest check («Уже не новое» is `plant_setting_quarantine_toggled` `from: task`)"
     },
     "bonus_shown": {
       "area": "care", "since": 164,
@@ -264,46 +264,56 @@
     "plant_opened": {
       "area": "plant", "since": 88,
       "when": "plant card opened by a tap",
-      "use": ["plant"]
+      "use": ["plant"],
+      "props": {
+        "tab": { "type": "enum", "desc": "the tab it opened on (since v166)", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } }
+      }
     },
-    "settings_row_opened": {
-      "area": "plant", "since": 142,
+    "plant_tab_opened": {
+      "area": "plant", "since": 166,
+      "when": "another tab of the plant card opened by a tap or the arrow keys (the tab it opens on is `tab` in `plant_opened`)",
+      "props": {
+        "tab": { "type": "enum", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } }
+      }
+    },
+    "plant_setting_opened": {
+      "area": "plant", "since": 166, "was": ["settings_row_opened"],
       "when": "a row of the plant card's «Настройки» opened",
       "props": {
         "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "way": "", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
       }
     },
-    "plant_named": {
-      "area": "plant", "since": 7,
+    "plant_setting_name_changed": {
+      "area": "plant", "since": 166, "was": ["plant_named"],
       "when": "nickname set"
     },
     "plant_deleted": {
       "area": "plant", "since": 7,
       "when": "plant deleted"
     },
-    "photo_added": {
-      "area": "plant", "since": 7,
+    "plant_photo_added": {
+      "area": "plant", "since": 166, "was": ["photo_added"],
       "when": "photo added to a plant"
     },
-    "photo_removed": {
-      "area": "plant", "since": 75,
+    "plant_photo_removed": {
+      "area": "plant", "since": 166, "was": ["photo_removed"],
       "when": "photo removed from a plant (back to the drawing)"
     },
-    "note_changed": {
-      "area": "plant", "since": 9,
+    "plant_note_changed": {
+      "area": "plant", "since": 166, "was": ["note_changed"],
       "when": "cheat sheet note changed in the plant card",
       "props": {
         "action": { "type": "enum", "values": { "add": "", "edit": "", "remove": "", "reset": "back to catalog", "restore": "removed tips back" } },
         "note": { "type": "enum", "values": { "water": "", "soil": "", "cond": "", "tip": "", "own": "", "catalog": "" } }
       }
     },
-    "lux_entered": {
-      "area": "plant", "since": 7,
+    "plant_setting_lux_changed": {
+      "area": "plant", "since": 166, "was": ["lux_entered"],
       "when": "lux reading saved",
       "props": { "from": { "type": "enum", "values": { "light_tab": "", "card": "" } } }
     },
-    "spot_added": {
-      "area": "plant", "since": 94,
+    "plant_setting_spot_added": {
+      "area": "plant", "since": 166, "was": ["spot_added"],
       "when": "a spot typed in the plant card's new spot field and added (empty field: nothing)",
       "note": "Never the spot's name.",
       "props": {
@@ -311,8 +321,8 @@
         "new_spot": { "type": "bool", "desc": "not in the spot list before" }
       }
     },
-    "grow_changed": {
-      "area": "plant", "since": 76,
+    "plant_setting_grow_changed": {
+      "area": "plant", "since": 166, "was": ["grow_changed"],
       "when": "«В чём растёт» or «Как поливаю» changed in the plant card",
       "props": {
         "medium": { "type": "enum", "values": "medium" },
@@ -322,14 +332,18 @@
         "settle": { "type": "bool", "desc": "counted as repotting" }
       }
     },
-    "check_interval_set": {
-      "area": "plant", "since": 119,
-      "when": "an interval chip tapped in the plant card (drip irrigation, which doesn't learn)",
+    "plant_setting_watering_schedule_changed": {
+      "area": "plant", "since": 166, "was": ["check_interval_set"],
+      "when": "how often the watering check comes, changed in the plant card's «Как растёт»: a chip for drip irrigation (it doesn't learn), or − / + for the others",
+      "note": "A run of − / + taps sends one event, 1.2 s after the last tap.",
       "use": ["plant"],
-      "props": { "every": { "type": "enum", "desc": "days", "values": { "7": "", "14": "", "21": "", "28": "" }, "was": ["days"] } }
+      "props": {
+        "every": { "type": "int", "desc": "days; chips: 7, 14, 21 or 28", "was": ["days"] },
+        "how": { "type": "enum", "desc": "since v166 (before: chips only)", "values": { "chips": "drip irrigation", "stepper": "«Проверять примерно каждые» − / +" } }
+      }
     },
-    "card_changed": {
-      "area": "plant", "since": 106,
+    "plant_setting_card_changed": {
+      "area": "plant", "since": 166, "was": ["card_changed"],
       "when": "a plant moved to another catalog card («Сменить карточку» in the plant card)",
       "props": {
         "from_catalog_id": { "type": "catalog_id", "was": ["from_card"] },
@@ -341,45 +355,45 @@
         "searched": { "type": "bool", "desc": "something was typed in the search; searches there send no `catalog_searched`" }
       }
     },
-    "greenhouse_toggled": {
-      "area": "plant", "since": 7,
+    "plant_setting_greenhouse_toggled": {
+      "area": "plant", "since": 166, "was": ["greenhouse_toggled"],
       "when": "«Стоит в теплице или под колпаком?» in the plant card, or «Без теплицы» on the vent card",
       "props": {
         "on": { "type": "bool" },
         "from": { "type": "enum", "desc": "since v164 (before: card only; the vent card sent `greenhouse_removed`)", "values": { "card": "", "task": "«Без теплицы» on the vent card, confirmed" } }
       }
     },
-    "quarantine_toggled": {
-      "area": "plant", "since": 131,
+    "plant_setting_quarantine_toggled": {
+      "area": "plant", "since": 166, "was": ["quarantine_toggled"],
       "when": "«Недавно купили» in the plant card, or «Уже не новое» on the task",
       "props": {
         "on": { "type": "bool" },
         "from": { "type": "enum", "values": { "card": "", "task": "" } }
       }
     },
-    "repot_toggled": {
-      "area": "plant", "since": 154,
+    "plant_setting_repot_toggled": {
+      "area": "plant", "since": 166, "was": ["repot_toggled"],
       "when": "«Недавно пересажено» in the plant card",
       "props": { "on": { "type": "bool" } }
     },
-    "rest_started": {
-      "area": "plant", "since": 132,
+    "plant_setting_rest_started": {
+      "area": "plant", "since": 166, "was": ["rest_started"],
       "when": "«Сбросила листья» / «Ушла в зимний покой» in the plant card",
       "use": ["plant"]
     },
-    "rest_ended": {
-      "area": "plant", "since": 132,
+    "plant_setting_rest_ended": {
+      "area": "plant", "since": 166, "was": ["rest_ended"],
       "when": "«Появился новый лист» / «Пошли новые ловушки»",
       "use": ["plant"],
       "props": { "days": { "type": "int", "desc": "days at rest" } }
     },
-    "feed_schedule_changed": {
-      "area": "plant", "since": 133,
+    "plant_setting_feed_schedule_changed": {
+      "area": "plant", "since": 166, "was": ["feed_schedule_changed"],
       "when": "«Как часто» in the plant card's «Подкормка»",
       "props": { "every": { "type": "enum", "values": { "14": "", "30": "", "90": "", "0": "off" } } }
     },
-    "feed_lamp_toggled": {
-      "area": "plant", "since": 133,
+    "plant_setting_feed_lamp_toggled": {
+      "area": "plant", "since": 166, "was": ["feed_lamp_toggled"],
       "when": "«Зимой стоит под лампой?» in the plant card",
       "props": { "on": { "type": "bool" } }
     },
@@ -387,18 +401,18 @@
       "area": "plant", "since": 162,
       "when": "«Подкормлено сегодня» in the plant card's «Подкормка» (before v162: `feeding_logged` `from: card`)"
     },
-    "prune_toggled": {
-      "area": "plant", "since": 163,
+    "plant_setting_prune_toggled": {
+      "area": "plant", "since": 166, "was": ["prune_toggled"],
       "when": "«Звать на обрезку?» in the plant card's «Обрезка»",
       "props": { "on": { "type": "bool", "desc": "`true`: switched on, with the card's start interval and months" } }
     },
-    "prune_schedule_changed": {
-      "area": "plant", "since": 163,
+    "plant_setting_prune_schedule_changed": {
+      "area": "plant", "since": 166, "was": ["prune_schedule_changed"],
       "when": "how often chip under «Звать на обрезку?» in the plant card",
       "props": { "every": { "type": "enum", "desc": "days", "values": { "14": "", "30": "", "60": "", "300": "once a year" } } }
     },
-    "prune_months_changed": {
-      "area": "plant", "since": 163,
+    "plant_setting_prune_months_changed": {
+      "area": "plant", "since": 166, "was": ["prune_months_changed"],
       "when": "a month chip under «Звать на обрезку?» in the plant card",
       "props": { "months": { "type": "int", "desc": "how many months are on now" } }
     },
@@ -410,8 +424,8 @@
       "area": "plant", "since": 164, "was": ["rinse_logged"],
       "when": "«Промыто сегодня» in the plant card's «Промывка грунта»"
     },
-    "bath_toggled": {
-      "area": "plant", "since": 159,
+    "plant_setting_bath_toggled": {
+      "area": "plant", "since": 166, "was": ["bath_toggled"],
       "when": "«Звать в банный день?» in the plant card",
       "props": { "on": { "type": "bool", "desc": "`true` for «Да»: the plant joins the bath day" } }
     },
@@ -869,11 +883,11 @@
 
     "greenhouse_removed": {
       "area": "care", "since": 7, "removed": 164,
-      "when": "greenhouse removed from the vent card; replaced by `greenhouse_toggled` `on: false, from: task`"
+      "when": "greenhouse removed from the vent card; replaced by `plant_setting_greenhouse_toggled` `on: false, from: task`"
     },
     "reminder_changed": {
       "area": "plant", "since": 120, "removed": 163,
-      "when": "«Звать на обрезку?» or its options changed in the plant card; replaced by `prune_toggled`, `prune_schedule_changed` and `prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день»",
+      "when": "«Звать на обрезку?» or its options changed in the plant card; replaced by `plant_setting_prune_toggled`, `plant_setting_prune_schedule_changed` and `plant_setting_prune_months_changed`. `kind: rinse` is the per-plant rinse reminder that became «Банный день»",
       "props": {
         "kind": { "type": "enum", "values": { "prune": "", "rinse": "before «Банный день»" } },
         "action": { "type": "enum", "values": { "on": "", "off": "", "every": "", "months": "" } },
@@ -906,12 +920,12 @@
     },
     "bath_opt_out": {
       "area": "plant", "since": 137, "removed": 159,
-      "when": "«Звать в банный день?» in the plant card; replaced by `bath_toggled` (`on` the other way round)",
+      "when": "«Звать в банный день?» in the plant card; replaced by `plant_setting_bath_toggled` (`on` the other way round)",
       "props": { "on": { "type": "bool", "desc": "`true` for «Нет»" } }
     },
     "wick_toggled": {
       "area": "plant", "since": 69, "removed": 76,
-      "when": "«Фитильный полив» ticked or unticked in the plant card; replaced by `grow_changed`",
+      "when": "«Фитильный полив» ticked or unticked in the plant card; replaced by `plant_setting_grow_changed`",
       "props": { "on": { "type": "bool" } }
     }
   }

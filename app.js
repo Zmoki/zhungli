@@ -216,7 +216,12 @@ document.addEventListener('click', (e) => {
     window.scrollTo(0, 0);
     return;
   }
-  if (el.dataset.open) { if (plant(el.dataset.open)) track('plant_opened', kindOf(el.dataset.open)); openPlant(el.dataset.open); return; }
+  if (el.dataset.open) {
+    const id = el.dataset.open;
+    openPlant(id);
+    if (plant(id)) track('plant_opened', { ...kindOf(id), tab: cardTab });
+    return;
+  }
   const id = el.dataset.id;
   const act = el.dataset.act;
   if (ACTS[act]) ACTS[act](el, id, act);
