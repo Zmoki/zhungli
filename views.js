@@ -610,6 +610,8 @@ function viewLight() {
     return `<header class="hello head-row"><div><h1>Свет</h1></div>${headButtons()}</header>
       ${emptyCard('Свет для каждого растения', 'Добавьте растения, и я покажу, кому сколько света нужно, а по замерам люксметром подскажу, кого переставить ближе к окну.', { short: 'Добавьте растения, и я покажу, кому сколько света нужно.' })}`;
   }
+  // How much of the collection is measured: once per launch and day.
+  if (firstShow('light')) track('light_shown', { plants: ps.length, measured });
   return `<header class="hello head-row"><div><h1>Свет</h1><div class="date">замерено ${measured} из ${ps.length}</div></div>${headButtons()}</header>
     <p class="small muted">Замеряйте люксметром у листьев днём. Подойдёт и приложение для телефона.</p>
     <h2>От самых светолюбивых</h2>
@@ -676,6 +678,12 @@ function viewRoom() {
   const one = S.rooms[0];
   const date = many ? roomsN(S.rooms.length)
     : one.t != null ? 'замер: ' + (one.d === today() ? 'сегодня' : rel(one.d)) : 'замеров пока нет';
+  // Whether the rooms have readings and how fresh the newest is: once per launch and day, with plants.
+  if (ps.length && firstShow('room')) {
+    const read = S.rooms.filter((r) => r.t != null && r.h != null);
+    const dated = read.filter((r) => r.d), days = dated.length ? Math.min(...dated.map((r) => diff(r.d, today()))) : undefined;
+    track('room_shown', { rooms: S.rooms.length, with_reading: read.length, ...(days !== undefined && { days_since_reading: days }) });
+  }
   return `<header class="hello head-row"><div><h1>${many ? 'Комнаты' : 'Комната'}</h1><div class="date">${esc(date)}</div></div>${headButtons()}</header>
     ${ps.length ? '' : emptyCard('Температура и влажность', 'Добавьте растения, и я подскажу, какая температура и влажность удобны именно им.', { short: 'Добавьте растения, и я подскажу, какой климат им нужен.' })}
     <p class="small muted">Впишите, что показывает датчик рядом с растениями, и я скажу, кому некомфортно.</p>

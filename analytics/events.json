@@ -11,6 +11,7 @@
     "install": "Home screen",
     "telegram": "Telegram",
     "settings": "Settings",
+    "light": "Light tab",
     "room": "Room tab",
     "health": "Errors and speed",
     "ui": "Every tap and field"
@@ -374,7 +375,8 @@
       "when": "plant card opened by a tap",
       "use": ["plant"],
       "props": {
-        "tab": { "type": "enum", "desc": "the tab it opened on (since v166)", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } }
+        "tab": { "type": "enum", "desc": "the tab it opened on (since v166)", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } },
+        "from": { "type": "enum", "values": "tab", "desc": "the app's tab it was opened from (since v174); in practice `today` or `plants`: rows on Light and Room don't open cards" }
       }
     },
     "plant_tab_opened": {
@@ -946,6 +948,23 @@
         "temp": { "type": "int", "desc": "rounded" },
         "humidity": { "type": "int", "desc": "rounded" },
         "rooms": { "type": "int", "desc": "how many rooms" }
+      }
+    },
+    "light_shown": {
+      "area": "light", "since": 174,
+      "when": "the Light tab drawn with plants, once per launch and day, while the app is on screen",
+      "props": {
+        "plants": { "type": "int", "desc": "plants on the tab" },
+        "measured": { "type": "int", "desc": "plants with a lux reading («замерено N из M»)" }
+      }
+    },
+    "room_shown": {
+      "area": "room", "since": 174,
+      "when": "the Room tab drawn with plants, once per launch and day, while the app is on screen",
+      "props": {
+        "rooms": { "type": "int" },
+        "with_reading": { "type": "int", "desc": "rooms with a temperature and humidity reading" },
+        "days_since_reading": { "type": "int", "desc": "days since the newest reading (0: today); not sent without one" }
       }
     },
     "app_setting_room_changed": {
