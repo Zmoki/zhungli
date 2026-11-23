@@ -66,11 +66,11 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `watering_task_finished` | «Полито» or «Ещё влажно» on a watering card on «Сегодня» (the words depend on how the plant grows: «Долито» / «Вода есть», «Вода сменена», drip irrigation «Работает» / «Поправлено») | `answer`: `dry` (watered (it was dry)) / `wet` (still wet, no water needed); drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>the [plant props](#plant-props) | v167 |
+| `watering_task_finished` | «Полито» or «Ещё влажно» on a watering card on «Сегодня» (the words depend on how the plant grows: «Долито» / «Вода есть», «Вода сменена», drip irrigation «Работает» / «Поправлено») | `answer`: `dry` (watered, it was dry) / `wet` (still wet, no water needed); drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>the [plant props](#plant-props) | v167 |
 | `watering_task_snoozed` | «Завтра» on a watering card on «Сегодня» | the [plant props](#plant-props) | v167 |
 | `watering_logged` | «Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's) | the [plant props](#plant-props) | v167 |
-| `watering_tip_opened`<br>was `how_opened` | «Как?» opened on a check card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v159 |
-| `watering_undone`<br>was `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `watering_task_finished` words (a «Полито сегодня» is `dry`) (drip irrigation: `dry` is «Работает», `wet` «Поправлено»)<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v167 |
+| `watering_tip_opened`<br>was `how_opened` | «Как?» opened on a watering card (the watering tip; open by itself for a plant's first 3 checks) | the [plant props](#plant-props) | v159 |
+| `watering_undone`<br>was `check_undone` | «×» on the newest answer in the plant card's «История», confirmed | `answer`: `dry` / `wet`; the answer taken back, in `watering_task_finished` words; a «Полито сегодня» is `dry`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`restored`: the entry had the state before it (since v152), so the interval and next check went back<br>the [plant props](#plant-props) | v167 |
 | `day_completed` | last check of the day done | `done_today` | v7 |
 | `show_all_clicked` | «show all» on Today | none | v7 |
 | `greenhouse_task_shown` | vent cards («Проветрите теплицу») drawn on «Сегодня», once per launch and day, while the app is on screen. The funnel's first step: count devices. | `count`: vent cards shown (one per plant) | v164 |
