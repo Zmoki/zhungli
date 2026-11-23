@@ -72,7 +72,7 @@
           "start": "",
           "resume": "",
           "privacy_return": "reloaded on the way back from the privacy page, within 30 min; not a new launch",
-          "retry": "reloaded itself after a script or the stylesheet failed, see `start_retried`; not a new launch"
+          "retry": "reloaded itself after a script or the stylesheet failed, see `app_health_start_retried`; not a new launch"
         } },
         "ready_ms": { "type": "int", "desc": "ms from navigation start until the first screen is built; not for `resume`, nor when started in background" },
         "$referring_domain": { "type": "code", "desc": "`start` only, once per arrival (a reload with the same referrer sends none): where the app was opened from, as a known source from `REF_SOURCES` in `app.js` (`google.com`, `t.me`, `vk.com`…; Android apps by package), `other` for any other site, or `$direct` (no referrer, or the app itself)" }
@@ -866,8 +866,8 @@
       }
     },
 
-    "js_error": {
-      "area": "health", "since": 23,
+    "app_health_script_failed": {
+      "area": "health", "since": 170, "was": ["js_error"],
       "when": "script error, at most 5 per page load",
       "props": {
         "message": { "type": "text", "desc": "150 chars", "why": "to fix errors; the browser's error message, from the app's code" },
@@ -875,8 +875,8 @@
         "line": { "type": "int" }
       }
     },
-    "start_retried": {
-      "area": "health", "since": 89,
+    "app_health_start_retried": {
+      "area": "health", "since": 170, "was": ["start_retried"],
       "when": "the page reloaded itself once because a script or the stylesheet failed to load, or a script didn't fit the others (usually a flaky network on the first launch of a new version); sent after the reload",
       "props": {
         "reason": { "type": "enum", "values": { "script_failed": "", "style_failed": "", "SyntaxError": "", "ReferenceError": "" } },
@@ -898,8 +898,8 @@
         "visit": { "type": "code", "desc": "random id; a visit starts at launch or with `app_opened` `resume`, and INP starts over with it; a visit can report several times, so take its last values" }
       }
     },
-    "slow_tap": {
-      "area": "health", "since": 86,
+    "app_health_tap_slowed": {
+      "area": "health", "since": 170, "was": ["slow_tap"],
       "when": "a tap or key press took 200+ ms until the next frame, at most 10 per visit. The time a native `prompt`/`confirm` was open is taken out (it's the user's)",
       "props": {
         "target": { "type": "code", "desc": "the control's `data-act`, `tab-<tab>`, `open-plant` or static element id" },
@@ -910,8 +910,8 @@
         "presentation": { "type": "int", "desc": "ms" }
       }
     },
-    "viewport_stuck": {
-      "area": "health", "since": 74,
+    "app_health_viewport_stuck": {
+      "area": "health", "since": 170, "was": ["viewport_stuck"],
       "when": "iPhone home-screen app or Telegram mini app: after the keyboard, the screen height stayed short and the app made iOS re-measure it; at most 3 per launch",
       "props": {
         "before": { "type": "int", "desc": "height when stuck, CSS pixels" },
@@ -919,15 +919,15 @@
         "after": { "type": "int", "desc": "height 0.3 s after the re-measure" }
       }
     },
-    "tab_synced": {
-      "area": "health", "since": 90,
+    "app_data_change_dropped": {
+      "area": "health", "since": 170, "was": ["tab_synced"],
       "when": "a change in a stale window wasn't saved: another window (browser or installed app, which share storage on Android and computers) had saved newer data, so this one took it instead"
     },
 
     "ui_clicked": {
       "area": "ui", "since": 91,
       "when": "any tap on a button, link or other control (fields are `field_changed`); also arrow keys on the plant card's tabs (`card-<tab>`)",
-      "props": { "target": { "type": "code", "desc": "the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `slow_tap`); links: `link-<data-out or href>`" } }
+      "props": { "target": { "type": "code", "desc": "the control's `data-act`, `tab-<tab>`, `open-plant` or static element id (as in `app_health_tap_slowed`); links: `link-<data-out or href>`" } }
     },
     "field_changed": {
       "area": "ui", "since": 91,

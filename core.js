@@ -26,7 +26,7 @@ function reportError(message, source, line) {
   // «Script error.» comes from scripts of other sites (e.g. extensions) and has no details.
   if (errorsSent >= 5 || /^Script error\.?$/.test(String(message))) return;
   errorsSent++;
-  try { track('js_error', { message: String(message || '').slice(0, 150), source: fileOf(source), line: line || 0 }); } catch (e) { /* stats not ready yet */ }
+  try { track('app_health_script_failed', { message: String(message || '').slice(0, 150), source: fileOf(source), line: line || 0 }); } catch (e) { /* stats not ready yet */ }
 }
 // A refused save from a stale window (see save()) stops its action on purpose: not an error.
 window.addEventListener('error', (e) => { if (e.error && e.error.stale) e.preventDefault(); else reportError(e.message, e.filename, e.lineno); });
@@ -53,7 +53,7 @@ addEventListener('load', () => {
     const last = JSON.parse(sessionStorage.getItem('zhungli.retry') || 'null');
     if (last) {
       sessionStorage.removeItem('zhungli.retry');
-      try { track('start_retried', { ...last, ok: appStarted && !broken }); } catch (e) { /* stats didn't load */ }
+      try { track('app_health_start_retried', { ...last, ok: appStarted && !broken }); } catch (e) { /* stats didn't load */ }
     }
     if (!broken || sessionStorage.getItem('zhungli.retriedFor') === APP_VERSION) return;
     sessionStorage.setItem('zhungli.retriedFor', APP_VERSION);

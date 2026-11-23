@@ -257,7 +257,7 @@ function adoptStored(json, dropped) {
   let raw = null;
   try { raw = JSON.parse(json); } catch (e) { /* empty */ }
   S = prepare(raw);
-  if (dropped) track('tab_synced');
+  if (dropped) track('app_data_change_dropped');
   // An undo here would bring back this window's old data over the new one.
   if (document.querySelector('.toast .undo')) document.querySelector('.toast').remove();
   if (sheet.open) closeSheet(); else render();

@@ -156,7 +156,7 @@ function settleTaps() {
     // Once per tap, even if it crossed the line with an entry that came late.
     if (duration < SLOW_TAP || visit.slow.has(id) || visit.slow.size >= 10) return;
     visit.slow.add(id);
-    track('slow_tap', {
+    track('app_health_tap_slowed', {
       target: e.name || 'none', event: e.event, duration: Math.round(duration),
       input_delay: Math.round(e.procStart - e.start),
       processing: Math.round(e.procEnd - e.procStart - held),

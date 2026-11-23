@@ -285,7 +285,7 @@ if (IOS && (navigator.standalone || MINI_APP)) {
     scrollTo(0, y);
     sheet.scrollTop = inSheet;
     // Whether it happens and whether this helps: at most 3 reports per launch.
-    if (reported++ < 3) setTimeout(() => track('viewport_stuck', { before, full, after: innerHeight }), 300);
+    if (reported++ < 3) setTimeout(() => track('app_health_viewport_stuck', { before, full, after: innerHeight }), 300);
     remember();
   };
   // Check after the keyboard has had time to slide away, and again in case it was still moving.
