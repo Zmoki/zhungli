@@ -291,9 +291,9 @@ function taskCard({ cls = '', p, icon, name, sub, subHtml, quip, task, pick = ''
 const TODAY_BONUS = ['backup', 'feedback'];
 const bonusKind = (key) => key.split(':')[0];
 function trackBonus(what, key) {
-  const kind = bonusKind(key), today = TODAY_BONUS.includes(kind);
-  if (what === 'finished') track(today ? 'today_bonus_task_finished' : 'care_bonus_task_finished', { kind });
-  else if (what === 'snoozed') track(today ? 'today_bonus_task_snoozed' : 'care_bonus_task_snoozed', { kind });
+  const kind = bonusKind(key), notCare = TODAY_BONUS.includes(kind);
+  if (what === 'finished') track(notCare ? 'today_bonus_task_finished' : 'care_bonus_task_finished', { kind });
+  else if (what === 'snoozed') track(notCare ? 'today_bonus_task_snoozed' : 'care_bonus_task_snoozed', { kind });
   else track('today_bonus_task_dismissed', { kind });
 }
 // Today's progress when the app goes to background (app.js): only if Today was drawn today in this launch, it had
