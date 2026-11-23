@@ -697,6 +697,7 @@
           "ios_moved": "iPhone, after the backup",
           "install": "Android or computer",
           "telegram": "mini app",
+          "telegram_browser": "Telegram's browser: «Понятно» on «Удобнее в приложении Телеграма» (since v169; before: `telegram_hint_hidden`)",
           "in_app": "another app's browser on iPhone or Android"
         } }
       }
@@ -711,12 +712,13 @@
       "when": "the browser reports Жунгли was installed (from the hint or the browser's own menu)"
     },
 
-    "tg_home_screen_clicked": {
-      "area": "telegram", "since": 159, "was": ["tg_home_screen_tapped"],
-      "when": "mini app: «Добавить» on the home screen hint (Telegram's own dialog)"
+    "app_install_hint_clicked": {
+      "area": "telegram", "since": 169, "was": ["tg_home_screen_clicked", "tg_home_screen_tapped"],
+      "when": "mini app: «Добавить» on the home screen hint (Telegram's own dialog); «Не нужно» there is `app_install_hint_hidden` `where: telegram`",
+      "props": { "where": { "type": "enum", "desc": "since v169", "values": { "telegram": "mini app" } } }
     },
-    "cloud_checked": {
-      "area": "telegram", "since": 36,
+    "app_data_cloud_checked": {
+      "area": "telegram", "since": 169, "was": ["cloud_checked"],
       "when": "mini app: first cloud check after launch",
       "props": {
         "result": { "type": "enum", "values": { "restored": "", "uploaded": "", "same": "", "both_empty": "", "damaged": "", "error": "" } },
@@ -724,16 +726,16 @@
         "local_plants": { "type": "int" }
       }
     },
-    "cloud_error": {
-      "area": "telegram", "since": 36,
+    "app_data_cloud_failed": {
+      "area": "telegram", "since": 169, "was": ["cloud_error"],
       "when": "mini app: Telegram CloudStorage refused a read or write (once per kind per launch)",
       "props": {
         "op": { "type": "enum", "values": { "read": "", "write": "", "parse": "", "photo_read": "", "photo_write": "", "photo_parse": "" } },
         "error": { "type": "text", "desc": "Telegram's error text, up to 80 characters", "why": "to fix sync; it comes from Telegram, never from the user" }
       }
     },
-    "photos_synced": {
-      "area": "telegram", "since": 37,
+    "app_data_photos_synced": {
+      "area": "telegram", "since": 169, "was": ["photos_synced"],
       "when": "mini app: photos synced through Telegram's cloud (only when something happened)",
       "props": {
         "uploaded": { "type": "int" },
@@ -742,22 +744,25 @@
         "skipped": { "type": "int", "desc": "didn't fit the 1024-key limit" }
       }
     },
-    "cloud_restored": {
-      "area": "telegram", "since": 30,
+    "app_data_cloud_restored": {
+      "area": "telegram", "since": 169, "was": ["cloud_restored"],
       "when": "mini app: plants restored from Telegram CloudStorage on this phone",
       "props": {
         "plants": { "type": "int" },
         "tasks_due": { "type": "int", "desc": "as in `app_opened`: the launch event went out before the restore" }
       }
     },
-    "mini_app_link_clicked": {
-      "area": "telegram", "since": 33,
-      "when": "«Открыть» on the Telegram-browser hint (opens the mini app)",
-      "props": { "has_plants": { "type": "bool" } }
+    "app_install_mini_app_clicked": {
+      "area": "telegram", "since": 169, "was": ["mini_app_link_clicked"],
+      "when": "«Открыть» in Telegram's browser (opens the mini app): on the install card or the hint",
+      "props": {
+        "has_plants": { "type": "bool" },
+        "from": { "type": "enum", "desc": "since v169", "values": { "card": "the install card (no plants yet)", "hint": "the hint «Удобнее в приложении Телеграма» / «Растения здесь могут потеряться»" } }
+      }
     },
     "telegram_hint_hidden": {
-      "area": "telegram", "since": 23,
-      "when": "«Понятно» on the Telegram hint"
+      "area": "telegram", "since": 23, "removed": 169,
+      "when": "«Понятно» on the Telegram hint; replaced by `app_install_hint_hidden` `where: telegram_browser`"
     },
 
     "app_setting_limit_changed": {

@@ -110,7 +110,7 @@ function installFirst() {
   if (kind === 'telegram_browser') {
     return hintCard('sprout', 'Сначала откройте Жунгли в Телеграме',
       'Это браузер внутри Телеграма: здесь растения могут потеряться. В приложении Телеграма они хранятся в облаке.',
-      `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>${stay('Остаться здесь')}`);
+      `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app" data-from="card">${I('sprout')}Открыть</a>${stay('Остаться здесь')}`);
   }
   // The steps themselves are in the last story («Показать, как»), drawn for this browser and its version.
   const how = '<button class="btn primary" data-act="stories-install">Показать, как</button>';
@@ -137,7 +137,7 @@ function currentHint() {
   const gated = (!hasPlants && (installWhere() || S.stayBrowser)) || stayingNow();
   // Telegram's in-app browser loses data: offer the mini app (its plants live in Telegram's cloud).
   if (IN_TELEGRAM && !MINI_APP && !S.hideTelegram && !gated) {
-    const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app">${I('sprout')}Открыть</a>`;
+    const open = `<a class="btn ok" href="${MINI_APP_LINK}" data-act="open-mini-app" data-from="hint">${I('sprout')}Открыть</a>`;
     // Nothing to lose yet: a friendly invite, not a warning.
     if (!hasPlants) {
       return hintCard('sprout', 'Удобнее в приложении Телеграма',
@@ -770,12 +770,12 @@ Object.assign(ACTS, {
     try { Promise.resolve(ask.prompt()).catch(() => {}); } catch (err) { /* the browser refused: userChoice settles anyway */ }
     ask.userChoice.then(({ outcome }) => { track('app_install_prompt_answered', { outcome }); render(); }, () => render());
   },
-  'tg-home'() { if (window.tgHome) window.tgHome.add(); track('tg_home_screen_clicked'); },
+  'tg-home'() { if (window.tgHome) window.tgHome.add(); track('app_install_hint_clicked', { where: 'telegram' }); },
   'winter-ok'() { S.winterSeen = winterOf(); save(); render(); track('winter_hint_hidden'); },
   'stats-ok'() { S.statsNotice = true; save(); render(); },
   'stats-off'() { statsQueue = []; S.settings.stats = false; S.statsNotice = true; save(); render(); toast('Статистика выключена'); },
-  'open-mini-app'() { track('mini_app_link_clicked', { has_plants: Object.keys(S.plants).length > 0 }); flushStats(); }, // the link opens Telegram
-  'hide-telegram'() { S.hideTelegram = true; track('telegram_hint_hidden'); save(); render(); },
+  'open-mini-app'(el) { track('app_install_mini_app_clicked', { has_plants: Object.keys(S.plants).length > 0, from: el.dataset.from }); flushStats(); }, // the link opens Telegram
+  'hide-telegram'() { S.hideTelegram = true; track('app_install_hint_hidden', { where: 'telegram_browser' }); save(); render(); },
   'qs-pick'(el) {
     const k = el.dataset.key;
     if (qsPicked.has(k)) qsPicked.delete(k); else qsPicked.add(k);

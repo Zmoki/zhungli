@@ -165,7 +165,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | --- | --- | --- | --- |
 | `app_install_card_shown`<br>was `install_first_shown` | no plants yet, and the plant picker is replaced by the way to install (once per launch). On iPhone the home-screen app gets a new device id, so compare installs with this event as a ratio, not per device. | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v168 |
 | `app_install_card_declined`<br>was `install_declined` | «Остаться в браузере» / «Остаться здесь» on that card: the plant picker shows | `where`: `ios` (browser on iPhone or iPad) / `ios_added` (same, after «Уже добавили») / `in_app` (another app's browser) / `telegram_browser` | v168 |
-| `app_install_hint_hidden`<br>was `install_hint_hidden` | home screen hint closed | `where`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `in_app` (another app's browser on iPhone or Android) (was `kind`) | v168 |
+| `app_install_hint_hidden`<br>was `install_hint_hidden` | home screen hint closed | `where`: `ios_added` (iPhone, no plants yet: «Уже добавили» on the install-first card; the browser then points to the icon) / `ios_empty` (older versions: «Уже на экране» there) / `ios_move` (iPhone, move with a backup: «Уже на экране») / `ios_icon_move` (same after «Уже добавили»: «Не нужно» on «Перенесите растения в иконку») / `ios_moved` (iPhone, after the backup) / `install` (Android or computer) / `telegram` (mini app) / `telegram_browser` (Telegram's browser: «Понятно» on «Удобнее в приложении Телеграма» (since v169; before: `telegram_hint_hidden`)) / `in_app` (another app's browser on iPhone or Android) (was `kind`) | v168 |
 | `app_install_prompt_answered`<br>was `install_prompt_answered`, `install_prompt` | Android or computer: «Установить» on the install hint, after the browser's dialog | `outcome`: `accepted` / `dismissed` | v168 |
 | `app_installed` | the browser reports Жунгли was installed (from the hint or the browser's own menu) | none | v85 |
 
@@ -173,13 +173,12 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 
 | Event | When | Properties | Since |
 | --- | --- | --- | --- |
-| `tg_home_screen_clicked`<br>was `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog) | none | v159 |
-| `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`<br>`cloud_plants`<br>`local_plants` | v36 |
-| `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`<br>`error`: Telegram's error text, up to 80 characters | v36 |
-| `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`<br>`downloaded`<br>`removed`: of removed plants or removed photos<br>`skipped`: didn't fit the 1024-key limit | v37 |
-| `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants`<br>`tasks_due`: as in `app_opened`: the launch event went out before the restore | v30 |
-| `mini_app_link_clicked` | «Открыть» on the Telegram-browser hint (opens the mini app) | `has_plants` | v33 |
-| `telegram_hint_hidden` | «Понятно» on the Telegram hint | none | v23 |
+| `app_install_hint_clicked`<br>was `tg_home_screen_clicked`, `tg_home_screen_tapped` | mini app: «Добавить» on the home screen hint (Telegram's own dialog); «Не нужно» there is `app_install_hint_hidden` `where: telegram` | `where`: `telegram` (mini app); since v169 | v169 |
+| `app_data_cloud_checked`<br>was `cloud_checked` | mini app: first cloud check after launch | `result`: `restored` / `uploaded` / `same` / `both_empty` / `damaged` / `error`<br>`cloud_plants`<br>`local_plants` | v169 |
+| `app_data_cloud_failed`<br>was `cloud_error` | mini app: Telegram CloudStorage refused a read or write (once per kind per launch) | `op`: `read` / `write` / `parse` / `photo_read` / `photo_write` / `photo_parse`<br>`error`: Telegram's error text, up to 80 characters | v169 |
+| `app_data_photos_synced`<br>was `photos_synced` | mini app: photos synced through Telegram's cloud (only when something happened) | `uploaded`<br>`downloaded`<br>`removed`: of removed plants or removed photos<br>`skipped`: didn't fit the 1024-key limit | v169 |
+| `app_data_cloud_restored`<br>was `cloud_restored` | mini app: plants restored from Telegram CloudStorage on this phone | `plants`<br>`tasks_due`: as in `app_opened`: the launch event went out before the restore | v169 |
+| `app_install_mini_app_clicked`<br>was `mini_app_link_clicked` | «Открыть» in Telegram's browser (opens the mini app): on the install card or the hint | `has_plants`<br>`from`: `card` (the install card (no plants yet)) / `hint` (the hint «Удобнее в приложении Телеграма» / «Растения здесь могут потеряться»); since v169 | v169 |
 
 ### Settings
 
@@ -228,6 +227,7 @@ No longer sent; old data keeps them. Hidden in PostHog.
 | --- | --- | --- | --- |
 | `plant_checked` | answer on a check card, or «Полито сегодня» in the plant card; split into `watering_task_finished` (`dry` / `wet`), `watering_task_snoozed` (`later`) and `watering_logged` (`from: card`) | `answer`: `dry` / `wet` / `later`; drip irrigation: `dry` is «Работает», `wet` «Поправлено»<br>`from`: `card` (plant card only)<br>the [plant props](#plant-props) | v7–v166 |
 | `import_clipboard` | only in preview builds of AI import (v154–155), never on main | `result` | v154–v155 |
+| `telegram_hint_hidden` | «Понятно» on the Telegram hint; replaced by `app_install_hint_hidden` `where: telegram_browser` | none | v23–v168 |
 | `room_added` | a room added (no room name sent); replaced by `app_setting_room_changed` `action: added` | `rooms` | v67–v167 |
 | `room_removed` | a room removed (no room name sent); replaced by `app_setting_room_changed` `action: removed` | `rooms` | v67–v167 |
 | `plant_setting_spot_added` | a spot typed in the plant card's new spot field and added; replaced by `app_setting_spot_changed` `action: added, from: card` | `how`: `button` (+) / `enter` (Enter, «Готово» on a phone)<br>`new_spot`: not in the spot list before | v166–v167 |

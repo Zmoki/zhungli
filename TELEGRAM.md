@@ -83,7 +83,7 @@ Telegram CloudStorage belongs to the Telegram account, so plants follow the pers
 - **Pieces:** `f_<plantId>_<i>`, 4000 characters each, at most 800 pieces in all (the rest of the keys are for the plants).
 - Photos sync after the plants are reconciled. Newer photos and removals win over older ones, and photos of removed plants are deleted.
 
-Before changing sync, test it with a fake `Telegram.WebApp` and CloudStorage. Sync events (`cloud_checked`, `cloud_restored`, `cloud_error`, `photos_synced`) are in [ANALYTICS.md](ANALYTICS.md).
+Before changing sync, test it with a fake `Telegram.WebApp` and CloudStorage. Sync events (`app_data_cloud_checked`, `app_data_cloud_restored`, `app_data_cloud_failed`, `app_data_photos_synced`) are in [ANALYTICS.md](ANALYTICS.md).
 
 ## Hosting
 
