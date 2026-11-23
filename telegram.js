@@ -71,7 +71,7 @@
   const cloudError = (op, err) => {
     if (!err || reported.has(op)) return;
     reported.add(op);
-    track('cloud_error', { op, error: String(err).slice(0, 80) });
+    track('app_data_cloud_failed', { op, error: String(err).slice(0, 80) });
   };
   let cs = null;
   let cloudChunks = [];
@@ -121,7 +121,7 @@
   const report = (result, cloudPlants) => {
     if (checked) return;
     checked = true;
-    track('cloud_checked', { result, cloud_plants: cloudPlants, local_plants: plantsIn(S) });
+    track('app_data_cloud_checked', { result, cloud_plants: cloudPlants, local_plants: plantsIn(S) });
   };
   // Photos sync only against reconciled plants: while a pull is running, S may lack plants
   // added elsewhere, and syncPhotos would delete their photos in the cloud.
@@ -166,7 +166,7 @@
           storiesYield();
           toast('Растения загружены из Телеграма 🌿');
           report('restored', plantsIn(cloud));
-          track('cloud_restored', { plants: plantsIn(S), tasks_due: pendingCount() });
+          track('app_data_cloud_restored', { plants: plantsIn(S), tasks_due: pendingCount() });
           schedulePhotos();
         } else if (plantsIn(S) && ((!cloudHasPlants && !cloud.syncV) || localAt > cloudAt)) {
           // An empty copy left by an older version never beats real plants;
@@ -359,7 +359,7 @@
       if (changed) await writeManifest();
       saveMeta(meta);
       if (redrawn.length) { if (sheet.open) redrawn.forEach(heroPhotoChanged); else render(); }
-      if (stats.uploaded || stats.downloaded || stats.removed || stats.skipped) track('photos_synced', stats);
+      if (stats.uploaded || stats.downloaded || stats.removed || stats.skipped) track('app_data_photos_synced', stats);
     } finally {
       syncMeta = null;
       photoBusy = false;
