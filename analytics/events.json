@@ -462,7 +462,7 @@
     "plants_searched": {
       "area": "plant", "since": 67,
       "when": "search on the Plants tab typed (1.2 s pause, no search text sent)",
-      "props": { "found": { "type": "int" } }
+      "props": { "found": { "type": "bool", "desc": "at least one plant matched" } }
     },
 
     "add_opened": {
