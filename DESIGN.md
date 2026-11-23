@@ -108,5 +108,5 @@ It follows the system, or Telegram's theme in the mini app. Same meanings and la
 ## Brand
 
 - **Name:** Жунгли, a playful «джунгли».
-- **Icon** (`icons/icon.svg`): a sprout in a smiling orange pot on a sun-yellow square with a pale sun circle.
+- **Icon** (`app/icons/icon.svg`): a sprout in a smiling orange pot on a sun-yellow square with a pale sun circle.
 - **Telegram welcome picture:** see [TELEGRAM.md](TELEGRAM.md).

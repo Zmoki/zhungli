@@ -13,7 +13,7 @@ The bot has no backend: it doesn't answer messages and sends nothing. Everything
 BotFather settings:
 - **Mini App:** enabled, URL `https://zhungli.zmoki.xyz/tg`. This adds an Open button to the bot's profile.
 - **Menu button:** «Жунгли», same URL. It sits next to the message field.
-- **Profile photo:** the app icon (`icons/icon-512.png`).
+- **Profile photo:** the app icon (`app/icons/icon-512.png`).
 
 ### What people see in Telegram
 
