@@ -11,10 +11,15 @@ function greeting() {
   return 'Добрый вечер';
 }
 
-// Grid cards show every tag of the plant card as a badge, in the same order (tagsOf in plant.js): an icon in a white
-// circle, the word for screen readers.
+// Grid cards show the plant card's tags as badges, in the same order (tagsOf in plant.js): an icon in a white circle,
+// the word for screen readers. One row of at most 4: with more, the 4th is «+N» for the rest, whose words it keeps.
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
-const plantBadges = (p) => tagsOf(p).map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('');
+function plantBadges(p) {
+  const tags = tagsOf(p), shown = tags.length > 4 ? tags.slice(0, 3) : tags, rest = tags.slice(shown.length);
+  const words = rest.map((t) => t.word + t.sr).join(', ');
+  return shown.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')
+    + (rest.length ? `<span class="badge more" title="${cap(words)}"><span aria-hidden="true">+${rest.length}</span><span class="sr-only">${words}</span></span>` : '');
+}
 
 // How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
 // «Сверху»), and keys for the Plants filter, so every plant in water can be found there. Left out: a watering that is the
