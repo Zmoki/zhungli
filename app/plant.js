@@ -333,7 +333,7 @@ function tagsOf(p) {
   const next = g.noChecks ? '' : ` Следующая проверка ${esc(rel(p.nextCheck))}.`;
   const lux = p.lux ? `Здесь ${kLux(p.lux)} ${LK}, а нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}.` : '';
   if (p.toxic) tag('skin', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
-  if (pets === 'toxic') tag('pets', 'danger', 'paw-print', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
+  if (pets === 'toxic') tag('pets', 'danger', 'paw-toxic', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
   if (isNew(p)) tag('new', 'danger', 'biohazard', 'на карантине', `На карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}`,
     `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
   states(p).forEach((k) => {

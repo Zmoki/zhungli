@@ -38,7 +38,7 @@ Statuses have their own hues, the same in the plant card's tags, grid badges, fi
 
 | Status | Color | Face |
 |---|---|---|
-| едкий сок, опасно (toxic to pets), на карантине | red (`--st-danger`) | hand, paw-print, biohazard |
+| едкий сок, опасно (toxic to pets), на карантине | red (`--st-danger`) | hand, paw-toxic (the paw turned the other way, so toxic and safe differ by shape, not only color), biohazard |
 | суховато (мутновато, пустовато, неясно) | orange (`--st-need`) | frown |
 | темновато | plum (`--st-dim`) | meh |
 | ярковато | sun (`--st-hot`) | annoyed |

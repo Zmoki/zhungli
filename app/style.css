@@ -378,7 +378,7 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .card-warns { margin-top: 14px; }
 /* Danger (sap, toxic to pets, quarantine) is red; safe for pets green */
 .mood.pets.toxic, .gh.pets.toxic, .pet-tag.toxic, .gh.danger, .mood.danger { color: var(--st-danger); }
-.mood.pets.safe, .pet-tag.safe { color: var(--st-fine); }
+.mood.pets.safe, .gh.pets.safe, .pet-tag.safe { color: var(--st-fine); }
 .pet-tag { font-weight: 800; white-space: nowrap; }
 .pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
 .info.warn { background: var(--red-soft); }

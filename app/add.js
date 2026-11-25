@@ -73,7 +73,7 @@ function typoMatcher(readings) {
 function pickRow(d, changeFor, nowId) {
   // The same words as the plant card's tags; screen readers hear «для питомцев» too.
   const pets = petsOn() && { toxic: 'опасно', safe: 'безопасно' }[petsOf(d)];
-  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? `<span class="pet-tag ${petsOf(d)}">${I('paw-print')}${pets}<span class="sr-only"> для питомцев</span></span> · ` : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
+  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? `<span class="pet-tag ${petsOf(d)}">${I(petsOf(d) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}<span class="sr-only"> для питомцев</span></span> · ` : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
   const now = !!changeFor && nowId === d.id;
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
   return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
