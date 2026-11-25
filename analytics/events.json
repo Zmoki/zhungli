@@ -123,7 +123,7 @@
     },
     "care_watering_logged": {
       "area": "care", "since": 172, "was": ["watering_logged"],
-      "when": "«Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's)",
+      "when": "«Полито сегодня» in the plant card's «Полив» (words depend on how the plant grows, like the card's); since v175 the card stays open",
       "use": ["plant"]
     },
     "plant_checked": {
@@ -386,11 +386,26 @@
         "tab": { "type": "enum", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } }
       }
     },
+    "plant_tag_opened": {
+      "area": "plant", "since": 175,
+      "when": "a tag under the plant's words in the plant card tapped and its bubble opened (closing it sends nothing)",
+      "use": ["plant"],
+      "props": {
+        "tag": { "type": "enum", "desc": "the tag's kind; the same values as `plants_filtered` `status` where both have it", "values": {
+          "sap": "«едкий сок»", "pets": "«опасно»: toxic to pets", "new": "«на карантине»",
+          "need": "«суховато», «мутновато», «пустовато» or «неясно» (by `watering` and `medium`)", "watered": "«напоено»", "dim": "«темновато»", "hot": "«ярковато»", "fine": "«хорошо»",
+          "pets_safe": "«безопасно»: safe for pets", "greenhouse": "«в теплице»", "rest": "«отдыхает»",
+          "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
+          "wick": "", "reservoir": "", "tray": "", "drip": "" } },
+        "position": { "type": "int", "desc": "the tag's place in the row, from 1" },
+        "count": { "type": "int", "desc": "how many tags the row has" }
+      }
+    },
     "plant_setting_opened": {
       "area": "plant", "since": 166, "was": ["settings_row_opened"],
       "when": "a row of the plant card's «Настройки» opened",
       "props": {
-        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "way": "", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
+        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "every": "«Проверка», since v175 (before: inside `way`)", "way": "", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
       }
     },
     "plant_setting_name_changed": {
@@ -449,7 +464,7 @@
       "use": ["plant"],
       "props": {
         "every": { "type": "int", "desc": "days; chips: 7, 14, 21 or 28", "was": ["days"] },
-        "how": { "type": "enum", "desc": "since v166 (before: chips only)", "values": { "chips": "drip irrigation", "stepper": "«Проверять примерно каждые» − / +" } }
+        "how": { "type": "enum", "desc": "since v166 (before: chips only)", "values": { "chips": "drip irrigation", "stepper": "− / + under «Проверять примерно каждые» (since v175 its own row, «Проверка»)" } }
       }
     },
     "plant_setting_card_changed": {
@@ -488,12 +503,12 @@
     },
     "plant_setting_rest_started": {
       "area": "plant", "since": 166, "was": ["rest_started"],
-      "when": "«Сбросила листья» / «Ушла в зимний покой» in the plant card",
+      "when": "«Да» on «Сейчас в покое?» in the plant card (before v175: the «Сбросила листья» / «Ушла в зимний покой» button)",
       "use": ["plant"]
     },
     "plant_setting_rest_ended": {
       "area": "plant", "since": 166, "was": ["rest_ended"],
-      "when": "«Появился новый лист» / «Пошли новые ловушки»",
+      "when": "«Нет» on «Сейчас в покое?» in the plant card (since v175), or the button in the rest box above the tabs («Появился новый лист» / «Пошли новые ловушки»)",
       "use": ["plant"],
       "props": { "days": { "type": "int", "desc": "days at rest" } }
     },
