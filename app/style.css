@@ -536,6 +536,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
   content: ''; position: absolute; top: -10px; left: var(--ax, 24px); width: 16px; height: 16px; transform: rotate(45deg);
   background: var(--sheet-solid); border: 2px solid var(--edge); border-right: 0; border-bottom: 0; border-radius: 3px 0 0 0;
 }
+/* Over the tag: the arrow points down */
+.tag-tip.up::before { top: auto; bottom: -10px; transform: rotate(225deg); }
 /* Tabs share the row by their label; with large text they wrap instead of cutting a label */
 .seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 24px 0 16px; border-radius: var(--radius); background: var(--card); }
 .seg-tab {

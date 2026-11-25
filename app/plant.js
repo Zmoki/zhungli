@@ -354,7 +354,7 @@ function refreshTags(p) {
   const box = $('#tags');
   if (box) box.innerHTML = tagsHtml(p);
 }
-// A tag's bubble: opens under the tapped tag, over what's below (nothing moves). Closes on the same tag, a tap
+// A tag's bubble: opens under the tapped tag (or over it near the screen's bottom), over the content (nothing moves). Closes on the same tag, a tap
 // elsewhere or Esc. Screen readers hear its text.
 function closeTag() {
   const tip = $('#tag-tip'), on = $('.ptag[aria-expanded="true"]');
@@ -369,7 +369,14 @@ function toggleTag(el, id) {
   if (!t || !tip) return;
   tip.innerHTML = `<b>${I(t.icon)}${t.title}</b>${t.text}`;
   tip.hidden = false;
-  tip.style.top = `${el.offsetTop + el.offsetHeight + 12}px`;
+  // Under the tag; when that runs past the bottom of the screen and there's room above (below the strip under ×),
+  // over it instead. If neither fits, it stays under and the card scrolls just enough to show it.
+  const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
+  const r = el.getBoundingClientRect(), h = tip.offsetHeight;
+  const up = r.bottom + 12 + h > vh - 8 && r.top - 12 - h >= 84;
+  tip.classList.toggle('up', up);
+  tip.style.top = `${up ? el.offsetTop - h - 12 : el.offsetTop + el.offsetHeight + 12}px`;
+  if (!up) tip.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   tip.style.setProperty('--ax', `${el.offsetLeft + el.offsetWidth / 2 - 10}px`);
   el.setAttribute('aria-expanded', 'true');
   announce(`${t.title}. ${tip.textContent.slice(t.title.length)}`);
