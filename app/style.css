@@ -343,8 +343,10 @@ button { cursor: pointer; }
 .pcard .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .pcard .pic img.fill { object-fit: cover; filter: blur(14px) saturate(1.1); transform: scale(1.15); }
 /* Grid cards show every tag of the plant card as a badge, in its order (TAGS.md): a column up the picture's left edge
-   from the bottom corner, the next column beside it when the picture is full. The words are in the tags and filter chips */
+   from the bottom corner (the next column beside it when the picture is full), and the red warnings (at most 3) up the
+   right edge. The words are in the tags and filter chips */
 .pcard .badges { position: absolute; left: 7px; top: 7px; bottom: 7px; display: flex; flex-direction: column-reverse; flex-wrap: wrap; align-content: flex-start; gap: 4px; }
+.pcard .badges.warn { left: auto; right: 7px; }
 .pcard .badge { width: 32px; height: 32px; }
 .pcard .badge .ic { width: 20px; height: 20px; stroke-width: 2.4; }
 .pcard b { font-size: 1rem; font-weight: 900; line-height: 1.2; padding: 0 4px; }

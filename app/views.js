@@ -12,9 +12,14 @@ function greeting() {
 }
 
 // Grid cards show every tag of the plant card as a badge, in the same order (tagsOf in plant.js): an icon in a white
-// circle, the word for screen readers.
+// circle, the word for screen readers. Two columns up from the picture's bottom corners: the red warnings (quarantine,
+// sap, toxic to pets) on the right, the rest on the left.
+const WARN_TAGS = ['new', 'sap', 'pets'];
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
-const plantBadges = (p) => tagsOf(p).map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('');
+function plantBadges(p) {
+  const tags = tagsOf(p), col = (list, cls) => (list.length ? `<span class="${cls}">${list.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')}</span>` : '');
+  return col(tags.filter((t) => !WARN_TAGS.includes(t.key)), 'badges') + col(tags.filter((t) => WARN_TAGS.includes(t.key)), 'badges warn');
+}
 
 // How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
 // «Сверху»), and keys for the Plants filter, so every plant in water can be found there. Left out: a watering that is the
@@ -444,7 +449,7 @@ function spotGroups(ps, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${plantBadges(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p)}</div>
         <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
