@@ -46,7 +46,7 @@ Three words, used the same in the UI, code and docs:
 
 Each kind of tag has its own hue, the same on tags, badges and filter chips (the kind is a class: `.need`, `.danger`, `.greenhouse`…). Every tag with its word, icon, color and bubble is in [TAGS.md](TAGS.md). Toxic and safe for pets differ by shape too: the paw on «опасно» is turned the other way.
 
-Grid badges on pictures are white glass (`--glass-photo`) with the status color on the icon, in two columns up from the picture's bottom corners: the red warnings (на карантине, едкий сок, опасно) on the right, the rest on the left. The pot's face stays clear in between. Plant card tags are white (`--sheet-solid`) with the color on the word, the icon and the border.
+Grid badges on pictures are white glass (`--glass-photo`) with the status color on the icon, in two columns up from the picture's bottom corners. On the right the pet paw (опасно or безопасно, always in the bottom corner, so it's found by place and shape, not only color), then на карантине and едкий сок; the rest on the left. The pot's face stays clear in between. Plant card tags are white (`--sheet-solid`) with the color on the word, the icon and the border.
 
 ## Buttons
 
