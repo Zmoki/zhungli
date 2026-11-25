@@ -42,24 +42,24 @@ Tags go from what changes most to what never changes, so the smiles come first a
 
 Every way of growing but «Сверху» has a tag. The data is `badge: [icon, word]` on `MEDIA` and `WATERING` in `state.js`.
 
-| Key | In «Как растёт» | Word | Icon |
+| Key | Chosen in | Word | Icon |
 |---|---|---|---|
-| `soil` | medium (`MEDIA`) | в грунте | shovel |
-| `dry` | medium (`MEDIA`) | в грунте для суккулентов | droplet-off |
-| `sphagnum` | medium (`MEDIA`) | в сфагнуме | leaf |
-| `bark` | medium (`MEDIA`) | в коре | layers |
-| `coco` | medium (`MEDIA`) | в кокосе | tree-palm |
-| `mineral` | medium (`MEDIA`) | в минеральной смеси | mountain |
-| `leca` | medium (`MEDIA`) | в керамзите | grip |
-| `water` | medium (`MEDIA`) | в воде | glass-water |
-| `mount` | medium (`MEDIA`) | на блоке | tree-deciduous |
-| `terrarium` | medium (`MEDIA`) | в террариуме | flask-round |
-| `aquarium` | medium (`MEDIA`) | в аквариуме | fish |
-| `bottom` | watering (`WATERING`) | полив снизу | arrow-up-from-line |
-| `wick` | watering (`WATERING`) | на фитиле | cable |
-| `reservoir` | watering (`WATERING`) | с резервуаром | cylinder |
-| `tray` | watering (`WATERING`) | в поддоне | droplets |
-| `drip` | watering (`WATERING`) | на автополиве | timer |
+| `soil` | «В чём растёт» (`MEDIA`) | в грунте | shovel |
+| `dry` | «В чём растёт» (`MEDIA`) | в грунте для суккулентов | droplet-off |
+| `sphagnum` | «В чём растёт» (`MEDIA`) | в сфагнуме | leaf |
+| `bark` | «В чём растёт» (`MEDIA`) | в коре | layers |
+| `coco` | «В чём растёт» (`MEDIA`) | в кокосе | tree-palm |
+| `mineral` | «В чём растёт» (`MEDIA`) | в минеральной смеси | mountain |
+| `leca` | «В чём растёт» (`MEDIA`) | в керамзите | grip |
+| `water` | «В чём растёт» (`MEDIA`) | в воде | glass-water |
+| `mount` | «В чём растёт» (`MEDIA`) | на блоке | tree-deciduous |
+| `terrarium` | «В чём растёт» (`MEDIA`) | в террариуме | flask-round |
+| `aquarium` | «В чём растёт» (`MEDIA`) | в аквариуме | fish |
+| `bottom` | «Как поливаю» (`WATERING`) | полив снизу | arrow-up-from-line |
+| `wick` | «Как поливаю» (`WATERING`) | на фитиле | cable |
+| `reservoir` | «Как поливаю» (`WATERING`) | с резервуаром | cylinder |
+| `tray` | «Как поливаю» (`WATERING`) | в поддоне | droplets |
+| `drip` | «Как поливаю» (`WATERING`) | на автополиве | timer |
 
 A plant gets up to two way tags, medium first. Left out:
 
