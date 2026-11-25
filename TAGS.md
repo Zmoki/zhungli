@@ -11,7 +11,7 @@ A tag's key is the same everywhere: the `data-tag` attribute, `plant_tag_opened`
 | Place | Looks like | Which tags |
 |---|---|---|
 | Plant card, the row under the quote | tag: icon and word; a tap opens a bubble | all of the plant's tags, at most 2 ways |
-| Grid card, over the picture | badge: icon in a white circle; the word is its `title` and for screen readers | the same as the plant card, in one row of at most 4: with 5 or more, 3 and «+N» for the rest (its `title` and screen readers name them) |
+| Grid card, over the picture | badge: icon in a white circle; the word is its `title` and for screen readers | the same as the plant card, in a column up the left edge from the bottom corner; a second column beside it when the picture is full (5 badges on a phone) |
 | Plants tab filter (6 or more plants) | chip: icon and word | one chip per key that any plant has; ways also when the name says them |
 | Catalog row in «Добавить» | pet tag (`.pet-tag`): only «опасно» or «безопасно» | when pets are on in «Настройки» |
 

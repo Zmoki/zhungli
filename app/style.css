@@ -342,12 +342,11 @@ button { cursor: pointer; }
 /* Whole photo, uncropped; empty edges are a blurred copy of the same photo */
 .pcard .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .pcard .pic img.fill { object-fit: cover; filter: blur(14px) saturate(1.1); transform: scale(1.15); }
-/* Grid cards show the plant card's tags as badges, in its order (TAGS.md): one row of at most 4 at the picture's bottom,
-   up to 32 px each and smaller when 4 don't fit; «+N» stands for the rest. The words are in the tags and filter chips */
-.pcard .badges { position: absolute; left: 7px; right: 7px; bottom: 7px; display: grid; grid-template-columns: repeat(4, minmax(0, 32px)); gap: 4px; }
-.pcard .badge { width: 100%; aspect-ratio: 1; }
-.pcard .badge .ic { width: 62%; height: 62%; stroke-width: 2.4; }
-.pcard .badge.more { color: var(--ink); font-size: 0.824rem; font-weight: 900; line-height: 1; }
+/* Grid cards show every tag of the plant card as a badge, in its order (TAGS.md): a column up the picture's left edge
+   from the bottom corner, the next column beside it when the picture is full. The words are in the tags and filter chips */
+.pcard .badges { position: absolute; left: 7px; top: 7px; bottom: 7px; display: flex; flex-direction: column-reverse; flex-wrap: wrap; align-content: flex-start; gap: 4px; }
+.pcard .badge { width: 32px; height: 32px; }
+.pcard .badge .ic { width: 20px; height: 20px; stroke-width: 2.4; }
 .pcard b { font-size: 1rem; font-weight: 900; line-height: 1.2; padding: 0 4px; }
 .pcard small { color: var(--muted); font-size: 0.824rem; font-weight: 700; line-height: 1.5; padding: 0 4px; }
 /* Next watering check: a drop and the day («сегодня», «через 4 дня») in watering blue */
