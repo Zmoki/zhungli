@@ -12,15 +12,13 @@ function greeting() {
 }
 
 // Grid cards show every tag of the plant card as a badge, in the same order (tagsOf in plant.js): an icon in a white
-// circle, the word for screen readers. Two columns up from the picture's bottom corners: on the right the pet paw
-// (toxic or safe, always at the bottom), sap, then quarantine on top; the rest on the left, greenhouse on top.
+// circle, the word for screen readers. Two columns up from the picture's bottom corners: safety on the right (the pet
+// paw, always at the bottom, sap, quarantine), the rest on the left.
 const RIGHT_TAGS = ['pets', 'pets_safe', 'sap', 'new'];
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
 function plantBadges(p) {
   const tags = tagsOf(p), col = (list, cls) => (list.length ? `<span class="${cls}">${list.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')}</span>` : '');
-  const right = RIGHT_TAGS.map((k) => tags.find((t) => t.key === k)).filter(Boolean);
-  const left = tags.filter((t) => !RIGHT_TAGS.includes(t.key) && t.key !== 'greenhouse').concat(tags.filter((t) => t.key === 'greenhouse'));
-  return col(left, 'badges') + col(right, 'badges right');
+  return col(tags.filter((t) => !RIGHT_TAGS.includes(t.key)), 'badges') + col(tags.filter((t) => RIGHT_TAGS.includes(t.key)), 'badges right');
 }
 
 // How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
@@ -475,12 +473,12 @@ function stateFilter(ps) {
   const chip = (k, label, cls = k || 'all') => `<button class="st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
-  // In the plant card's tag order (TAGS.md): now, for a while, always, how it grows.
+  // In the plant card's tag order (TAGS.md): the plant (now, rest, how it grows, greenhouse), then safety.
   const pet = (icon, w) => `${I(icon)}<span>${w}<span class="sr-only"> для питомцев</span></span>`;
-  const kinds = [...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]),
-    ['new', `${I('biohazard')}на карантине`, 'danger'], ['rest', `${I('moon')}отдыхают`], ['greenhouse', `${I('house-heart')}в теплице`],
-    ['sap', `${I('hand')}едкий сок`, 'danger'], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
-    ...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way'])];
+  const kinds = [...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]), ['rest', `${I('moon')}отдыхают`],
+    ...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way']),
+    ['greenhouse', `${I('house-heart')}в теплице`], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
+    ['sap', `${I('hand')}едкий сок`, 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger']];
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${kinds.filter(([k]) => n[k]).map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`;
 }
