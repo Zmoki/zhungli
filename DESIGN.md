@@ -58,7 +58,7 @@ Statuses have their own hues, the same on tags, badges and filter chips (the kin
 | хорошо, безопасно (for pets) | green (`--st-fine`) | smile, paw-print |
 | в теплице | fuchsia (`--st-gh`) | house-heart |
 | отдыхает | grey (`--st-rest`) | moon |
-| how it grows, when not an ordinary pot | teal (`--st-grow`) | the way's icon: glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (на минералке), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром), timer (на автополиве) |
+| how it grows, when not an ordinary pot | teal (`--st-grow`) | the way's icon: glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (в минеральной смеси), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром), timer (на автополиве) |
 
 Grid badges on pictures are white glass (`--glass-photo`) with the status color on the icon. Plant card tags are white (`--sheet-solid`) with the color on the word, the icon and the border.
 
