@@ -13,13 +13,14 @@ function greeting() {
 
 // Grid cards show every tag of the plant card as a badge, in the same order (tagsOf in plant.js): an icon in a white
 // circle, the word for screen readers. Two columns up from the picture's bottom corners: on the right the pet paw
-// (toxic or safe, always at the bottom), quarantine and sap; the rest on the left.
-const RIGHT_TAGS = ['pets', 'pets_safe', 'new', 'sap'];
+// (toxic or safe, always at the bottom), sap, then quarantine on top; the rest on the left, greenhouse on top.
+const RIGHT_TAGS = ['pets', 'pets_safe', 'sap', 'new'];
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
 function plantBadges(p) {
   const tags = tagsOf(p), col = (list, cls) => (list.length ? `<span class="${cls}">${list.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')}</span>` : '');
   const right = RIGHT_TAGS.map((k) => tags.find((t) => t.key === k)).filter(Boolean);
-  return col(tags.filter((t) => !RIGHT_TAGS.includes(t.key)), 'badges') + col(right, 'badges right');
+  const left = tags.filter((t) => !RIGHT_TAGS.includes(t.key) && t.key !== 'greenhouse').concat(tags.filter((t) => t.key === 'greenhouse'));
+  return col(left, 'badges') + col(right, 'badges right');
 }
 
 // How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
