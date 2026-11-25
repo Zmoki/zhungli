@@ -344,7 +344,7 @@ function tagsOf(p) {
     tag(k, k, STATES[k][0], word, upFirst(word), text);
   });
   if (pets === 'safe') tag('safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
-  if (p.greenhouse) tag('gh', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
+  if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
   if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, upFirst(`${restDoes(p)}без подкормки.`));
   growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k); tag(k, 'way', icon, word, upFirst(word), (MEDIA[k] || WATERING[k]).hint || ''); });
   return out;
@@ -357,7 +357,7 @@ function fineText(p) {
   if (p.nextCheck <= today()) return `Первая проверка сегодня. ${fullStop(esc(waterTask(p)))}`;
   return `Полив пока не нужен. Следующая проверка ${esc(rel(p.nextCheck))}.`;
 }
-const tagsHtml = (p) => tagsOf(p).map((t) => `<button class="ptag ${t.cls}" data-act="tag" data-id="${esc(p.id)}" data-tag="${t.key}" aria-expanded="false" aria-controls="tag-tip">${I(t.icon)}${t.word}${t.sr ? `<span class="sr-only">${t.sr}</span>` : ''}</button>`).join('')
+const tagsHtml = (p) => tagsOf(p).map((t) => `<button class="tag ${t.cls}" data-act="tag" data-id="${esc(p.id)}" data-tag="${t.key}" aria-expanded="false" aria-controls="tag-tip">${I(t.icon)}<span>${t.word}${t.sr ? `<span class="sr-only">${t.sr}</span>` : ''}</span></button>`).join('')
   + '<div class="tag-tip" id="tag-tip" hidden></div>';
 // Redraws the tags after a change in the card (closes an open bubble).
 function refreshTags(p) {
@@ -367,7 +367,7 @@ function refreshTags(p) {
 // A tag's bubble: opens under the tapped tag (or over it near the screen's bottom), over the content (nothing moves).
 // Closes on the same tag, a tap elsewhere, Esc, focus moving on, or the phone turning. Screen readers hear its text.
 function closeTag() {
-  const tip = $('#tag-tip'), on = $('.ptag[aria-expanded="true"]');
+  const tip = $('#tag-tip'), on = $('.tag[aria-expanded="true"]');
   if (tip) tip.hidden = true;
   if (on) on.setAttribute('aria-expanded', 'false');
   return on;
@@ -391,7 +391,7 @@ function toggleTag(el, id) {
   el.setAttribute('aria-expanded', 'true');
   announce(`${t.title}. ${tip.textContent.slice(t.title.length)}`);
 }
-document.addEventListener('click', (e) => { if (!e.target.closest('.ptag, .tag-tip')) closeTag(); });
+document.addEventListener('click', (e) => { if (!e.target.closest('.tag, .tag-tip')) closeTag(); });
 // Focus moving on (Tab) closes it too, even to the next tag (one in the row below would be under it).
 document.addEventListener('focusin', (e) => { if (e.target.getAttribute?.('aria-expanded') !== 'true' && !e.target.closest?.('.tag-tip')) closeTag(); });
 // Turning the phone rewraps the tags: the bubble would point at the wrong one. Height alone changes as browser bars hide.
@@ -635,7 +635,7 @@ function settingsHtml(id, p, ls, spots) {
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div>`)
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
           <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-hint">
-          ${ls ? `<p class="mt-6 small"><span class="tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}
+          ${ls ? `<p class="mt-6 small"><span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}
           <p class="mt-6 small muted" id="lux-hint">Нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}. Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
     + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse, false, '', 'gh-hint')}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}

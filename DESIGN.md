@@ -30,11 +30,23 @@ Bright flat fills always carry dark `--on-color` text. Each color has one job:
 | Beige | `--beige` | Common actions, settings, adding (`.btn.primary`, `.import-cta`), editable blocks. A darker beige (`--band`) is the title band of a plant settings group. |
 | Blue | `--sky`, `--blue` for text | Watering (`.btn.water`) and the next check line on grid cards. |
 | Green | `--leafy` | Done, OK (`.btn.ok`). |
-| Pink | `--gum`, `--air` | Greenhouse and airing (`.btn.air`, the greenhouse badge). |
+| Pink | `--gum`, `--air` | Greenhouse and airing (`.btn.air`). |
 | Red | `--danger` | Deleting (`.btn.danger`). |
 | Leaf green | `--quote` | The plant's own words (`.quip`). Never used for anything editable. |
 
-Statuses have their own hues, the same in the plant card's tags, grid badges, filters and the Light tab tags:
+### Tags, badges, chips
+
+Three words, used the same in the UI, code and docs:
+
+| Word | In Russian texts | What it is | Where | Class |
+|---|---|---|---|---|
+| **tag** | метка | an icon and a word about the plant | the plant card's row under the quote (tap for a bubble), the pet label in the catalog | `.tag`, `.pet-tag`; the Light tab's colored word is `.light-tag` |
+| **badge** | значок | an icon only, in a white circle | grid cards, over the picture | `.badge` |
+| **chip** | — | a choice you press | «Да» / «Нет», places, filters | `.chip`, `.st-chip` (the Plants tab filter) |
+
+One fact can be both: «в теплице» is a tag in the plant card and a badge on its grid card.
+
+Statuses have their own hues, the same on tags, badges and filter chips (the kind is a class: `.need`, `.danger`, `.greenhouse`…):
 
 | Status | Color | Face |
 |---|---|---|
