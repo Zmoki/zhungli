@@ -28,7 +28,7 @@ Bright flat fills always carry dark `--on-color` text. Each color has one job:
 | Color | Token | Used for |
 |---|---|---|
 | Beige | `--beige` | Common actions, settings, adding (`.btn.primary`, `.import-cta`), editable blocks. A darker beige (`--band`) is the title band of a plant settings group. |
-| Blue | `--sky`, `--blue` for text | Watering (`.btn.water`) and the next check line on grid cards. |
+| Blue | `--sky`, `--blue` for text | Watering (`.btn.water`) and the next check line on grid cards (at the card's bottom, so the lines of a row match). |
 | Green | `--leafy` | Done, OK (`.btn.ok`). |
 | Pink | `--gum`, `--air` | Greenhouse and airing (`.btn.air`). |
 | Red | `--danger` | Deleting (`.btn.danger`). |

@@ -452,7 +452,7 @@ function spotGroups(ps, room) {
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
       html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p)}</div>
-        <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
+        <b>${typedHtml(p.title)}</b>${p.name ? `<small>${typedHtml(p.species)}</small>` : ''}<small class="next">${wayOf(p).noChecks ? esc(wayOf(p).name) : `${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}`}</small></button>`;
     });
     html += `</div></section>`;
   });
