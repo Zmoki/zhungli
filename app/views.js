@@ -26,21 +26,25 @@ const petBadge = (p) => {
     : v === 'safe' ? badgeHtml('safe', 'paw-print', 'безопасно для питомцев') : '';
 };
 
-// An unusual way of growing («в воде», «на фитиле»…): up to two tags in the plant card, and on grid cards one badge
-// (the medium's first), so badges don't pile up over the picture.
-// Keys go to the status filter too, so every plant in water can be found there. Left out: a watering that is
-// the medium's usual one (clay pebbles on a reservoir), and a card's own medium on a `noBadge` card
-// (tillandsia). The badge itself is left out when the plant's name or species already says it
-// («Черенки в воде», «Растение в аквариуме»).
+// How it grows: up to two tags in the plant card (the medium, then the watering; every way but «Сверху»). An unusual
+// way («в воде», «на фитиле»…) is also one badge on grid cards (the medium's first, so badges don't pile up over the
+// picture) and a key for the status filter, so every plant in water can be found there; an ordinary one (`plain`:
+// «в грунте», «в коре», «полив снизу») is a tag only. Left out: a watering that is the medium's usual one (clay pebbles
+// on a reservoir), a card's own medium on a `noBadge` card (tillandsia), and a way the plant's name or species
+// already says, with «в» or «на» («Черенки в воде», «Орхидея на коре»).
 const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
-function growKeys(p) {
+const plainWay = (k) => !!(MEDIA[k] || WATERING[k] || {}).plain;
+function growKeys(p, all = false) {
   const keys = [];
   if (growBadge(p.type) && !(p.type === p.cardType && def(p.id).noBadge)) keys.push(p.type);
   if (growBadge(p.watering) && p.watering !== MEDIA[p.type].watering) keys.push(p.watering);
-  return keys;
+  return all ? keys : keys.filter((k) => !plainWay(k));
 }
-const saysWay = (p, k) => norm(`${p.title} ${p.species}`).includes(growBadge(k)[1]);
-const growTags = (p, n) => growKeys(p).filter((k) => !saysWay(p, k)).slice(0, n);
+const saysWay = (p, k) => {
+  const name = norm(`${p.title} ${p.species}`), w = growBadge(k)[1];
+  return [w, w.replace(/^в /, 'на '), w.replace(/^на /, 'в ')].some((x) => name.includes(x));
+};
+const growTags = (p, n, all = false) => growKeys(p, all).filter((k) => !saysWay(p, k)).slice(0, n);
 const growBadges = (p) => growTags(p, 1).map((k) => badgeHtml('way', ...growBadge(k))).join('');
 
 function ava(p, cls = 'ava') {

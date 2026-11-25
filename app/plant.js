@@ -347,7 +347,7 @@ function tagsOf(p) {
   if (pets === 'safe') tag('pets_safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
   if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
   if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, upFirst(`${restDoes(p)}без подкормки.`));
-  growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k); tag(k, 'way', icon, word, upFirst(word), (MEDIA[k] || WATERING[k]).hint || ''); });
+  growTags(p, 2, true).forEach((k) => { const [icon, word] = growBadge(k), w = MEDIA[k] || WATERING[k]; tag(k, 'way', icon, word, upFirst(word), w.tagHint || w.hint || ''); });
   return out;
 }
 // «хорошо»: no watering due and the light is fine. On a first check day before any answer the plant isn't called dry
