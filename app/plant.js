@@ -159,9 +159,11 @@ function feedBox(p) {
 // A plant moved to a card without `rest` while resting still gets the way back.
 // «Покой» in «Сейчас»: «Сейчас в покое?» with «Да» / «Нет», like the rows next to it. For a card without rest,
 // greyed out with why. A plant moved to such a card while resting can still answer «Нет».
+// Drip irrigation keeps its interval at rest (startRest), so only feeding changes for it.
+const restDoes = (p) => (wayOf(p).fixed ? '' : 'проверка вдвое реже, ');
 const restHint = (p) => (resting(p)
-  ? hintLines('Проверяю вдвое реже, на подкормку не зову.', `«Нет», когда ${esc(p.rest ? p.rest.end.toLowerCase() : 'снова растёт')}.`)
-  : hintLines('Обычный уход.', p.rest ? `«Да», когда ${esc(p.rest.start.toLowerCase())}: проверка вдвое реже, без подкормки.` : ''));
+  ? hintLines(wayOf(p).fixed ? 'На подкормку не зову.' : 'Проверяю вдвое реже, на подкормку не зову.', `«Нет», когда ${esc(p.rest ? p.rest.end.toLowerCase() : 'снова растёт')}.`)
+  : hintLines('Обычный уход.', p.rest ? `«Да», когда ${esc(p.rest.start.toLowerCase())}: ${restDoes(p)}без подкормки.` : ''));
 const restRowBody = (p) => {
   const off = !p.rest && !resting(p);
   return `${off ? whyNot('У этого растения не бывает покоя.') : ''}<div class="field">${askYesNo('Сейчас в покое?', 'rest', p.id, !!resting(p), off, '', 'rest-hint')}
@@ -338,14 +340,22 @@ function tagsOf(p) {
     `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
   states(p).forEach((k) => {
     const word = stateWord(k, p);
-    const text = { need: fullStop(esc(waterTask(p))), watered: next.trim(), dim: lux, hot: lux, fine: `Сегодня ничего делать не нужно.${next}` }[k];
+    const text = { need: fullStop(esc(waterTask(p))), watered: next.trim(), dim: lux, hot: lux, fine: fineText(p) }[k];
     tag(k, k, STATES[k][0], word, upFirst(word), text);
   });
   if (pets === 'safe') tag('safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
   if (p.greenhouse) tag('gh', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
-  if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, 'Проверки реже, без подкормки.');
+  if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, upFirst(`${restDoes(p)}без подкормки.`));
   growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k); tag(k, 'way', icon, word, upFirst(word), (MEDIA[k] || WATERING[k]).hint || ''); });
   return out;
+}
+// «хорошо»: no watering due and the light is fine. On a first check day before any answer the plant isn't called dry
+// (states), but the check is on «Сегодня», so it's said here too. Other tasks (quarantine, feeding) have their own tags or rows.
+function fineText(p) {
+  const g = wayOf(p);
+  if (g.noChecks) return 'Поливать не нужно, корни в воде аквариума.';
+  if (p.nextCheck <= today()) return `Первая проверка сегодня. ${fullStop(esc(waterTask(p)))}`;
+  return `Полив пока не нужен. Следующая проверка ${esc(rel(p.nextCheck))}.`;
 }
 const tagsHtml = (p) => tagsOf(p).map((t) => `<button class="ptag ${t.cls}" data-act="tag" data-id="${esc(p.id)}" data-tag="${t.key}" aria-expanded="false" aria-controls="tag-tip">${I(t.icon)}${t.word}${t.sr ? `<span class="sr-only">${t.sr}</span>` : ''}</button>`).join('')
   + '<div class="tag-tip" id="tag-tip" hidden></div>';
@@ -354,8 +364,8 @@ function refreshTags(p) {
   const box = $('#tags');
   if (box) box.innerHTML = tagsHtml(p);
 }
-// A tag's bubble: opens under the tapped tag (or over it near the screen's bottom), over the content (nothing moves). Closes on the same tag, a tap
-// elsewhere or Esc. Screen readers hear its text.
+// A tag's bubble: opens under the tapped tag (or over it near the screen's bottom), over the content (nothing moves).
+// Closes on the same tag, a tap elsewhere, Esc, focus moving on, or the phone turning. Screen readers hear its text.
 function closeTag() {
   const tip = $('#tag-tip'), on = $('.ptag[aria-expanded="true"]');
   if (tip) tip.hidden = true;
@@ -382,6 +392,11 @@ function toggleTag(el, id) {
   announce(`${t.title}. ${tip.textContent.slice(t.title.length)}`);
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.ptag, .tag-tip')) closeTag(); });
+// Focus moving on (Tab) closes it too, even to the next tag (one in the row below would be under it).
+document.addEventListener('focusin', (e) => { if (e.target.getAttribute?.('aria-expanded') !== 'true' && !e.target.closest?.('.tag-tip')) closeTag(); });
+// Turning the phone rewraps the tags: the bubble would point at the wrong one. Height alone changes as browser bars hide.
+let tagW = innerWidth;
+addEventListener('resize', () => { if (innerWidth !== tagW) { tagW = innerWidth; closeTag(); } });
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const on = closeTag();
