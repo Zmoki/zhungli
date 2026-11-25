@@ -562,8 +562,10 @@
         "status": { "type": "enum", "values": {
           "all": "", "need": "", "dim": "", "hot": "", "watered": "", "fine": "", "greenhouse": "",
           "new": "in quarantine", "rest": "at rest", "pets": "toxic to pets",
+          "sap": "sap irritates skin, since v176", "pets_safe": "safe for pets, since v176",
+          "soil": "since v176", "dry": "since v176", "sphagnum": "since v176", "bark": "since v176", "coco": "since v176",
           "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
-          "wick": "", "reservoir": "", "tray": "", "drip": ""
+          "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": ""
         } }
       }
     },

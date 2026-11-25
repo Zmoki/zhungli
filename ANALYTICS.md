@@ -154,7 +154,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `plant_setting_prune_schedule_changed`<br>was `prune_schedule_changed` | how often chip under «Звать на обрезку?» in the plant card | `every`: `14` / `30` / `60` / `300` (once a year); days | v166 |
 | `plant_setting_prune_months_changed`<br>was `prune_months_changed` | a month chip under «Звать на обрезку?» in the plant card | `months`: how many months are on now | v166 |
 | `plant_setting_bath_toggled`<br>was `bath_toggled` | «Звать в банный день?» in the plant card | `on`: `true` for «Да»: the plant joins the bath day | v166 |
-| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `wick` / `reservoir` / `tray` / `drip` | v68 |
+| `plants_filtered` | a status or way-of-growing chip tapped under the Plants search | `status`: `all` / `need` / `dim` / `hot` / `watered` / `fine` / `greenhouse` / `new` (in quarantine) / `rest` (at rest) / `pets` (toxic to pets) / `sap` (sap irritates skin, since v176) / `pets_safe` (safe for pets, since v176) / `soil` (since v176) / `dry` (since v176) / `sphagnum` (since v176) / `bark` (since v176) / `coco` (since v176) / `mineral` / `leca` / `water` / `mount` / `terrarium` / `aquarium` / `bottom` (since v176) / `wick` / `reservoir` / `tray` / `drip` | v68 |
 | `plants_searched` | search on the Plants tab typed (1.2 s pause, no search text sent) | `found`: at least one plant matched | v67 |
 
 ### Adding plants

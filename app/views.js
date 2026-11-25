@@ -11,41 +11,27 @@ function greeting() {
   return 'Добрый вечер';
 }
 
-// Round badges on grid cards, after the status faces: greenhouse (fuchsia), quarantine (red), rest (grey), pets.
-// The plant card shows them as tags with words (tagsOf in plant.js).
+// Grid cards show every tag of the plant card as a badge, in the same order (tagsOf in plant.js): an icon in a white
+// circle, the word for screen readers.
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
-const plantBadges = (p) => (p.greenhouse ? badgeHtml('greenhouse', 'house-heart', 'в теплице') : '')
-  + (isNew(p) ? badgeHtml('danger', 'biohazard', 'на карантине') : '')
-  + (resting(p) ? badgeHtml('rest', 'moon', 'отдыхает') : '')
-  + petBadge(p);
-// Pets, with «Дома есть кошка или собака» on: toxic is a red paw turned the other way, safe a green paw, so the two
-// differ by shape too, not only by color.
-const petBadge = (p) => {
-  const v = petsOn() && petsOf(p);
-  return v === 'toxic' ? badgeHtml('danger', 'paw-toxic', 'опасно для питомцев')
-    : v === 'safe' ? badgeHtml('safe', 'paw-print', 'безопасно для питомцев') : '';
-};
+const plantBadges = (p) => tagsOf(p).map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('');
 
-// How it grows: up to two tags in the plant card (the medium, then the watering; every way but «Сверху»). An unusual
-// way («в воде», «на фитиле»…) is also one badge on grid cards (the medium's first, so badges don't pile up over the
-// picture) and a key for the status filter, so every plant in water can be found there; an ordinary one (`plain`:
-// «в грунте», «в коре», «полив снизу») is a tag only. Left out: a watering that is the medium's usual one (clay pebbles
-// on a reservoir), a card's own medium on a `noBadge` card (tillandsia), and a way the plant's name or species
-// already says, with «в» or «на» («Черенки в воде», «Орхидея на коре»).
+// How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
+// «Сверху»), and keys for the Plants filter, so every plant in water can be found there. Left out: a watering that is the
+// medium's usual one (clay pebbles on a reservoir), a card's own medium on a `noBadge` card (tillandsia), and, for the
+// tag only, a way the plant's name or species already says, with «в» or «на» («Черенки в воде», «Орхидея на коре»).
 const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
-const plainWay = (k) => !!(MEDIA[k] || WATERING[k] || {}).plain;
-function growKeys(p, all = false) {
+function growKeys(p) {
   const keys = [];
   if (growBadge(p.type) && !(p.type === p.cardType && def(p.id).noBadge)) keys.push(p.type);
   if (growBadge(p.watering) && p.watering !== MEDIA[p.type].watering) keys.push(p.watering);
-  return all ? keys : keys.filter((k) => !plainWay(k));
+  return keys;
 }
 const saysWay = (p, k) => {
   const name = norm(`${p.title} ${p.species}`), w = growBadge(k)[1];
   return [w, w.replace(/^в /, 'на '), w.replace(/^на /, 'в ')].some((x) => name.includes(x));
 };
-const growTags = (p, n, all = false) => growKeys(p, all).filter((k) => !saysWay(p, k)).slice(0, n);
-const growBadges = (p) => growTags(p, 1).map((k) => badgeHtml('way', ...growBadge(k))).join('');
+const growTags = (p, n) => growKeys(p).filter((k) => !saysWay(p, k)).slice(0, n);
 
 function ava(p, cls = 'ava') {
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${picOf(p)}</button>`;
@@ -458,7 +444,7 @@ function spotGroups(ps, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateBadges(p, st)}${plantBadges(p)}${growBadges(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${plantBadges(p)}</span></div>
         <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
@@ -470,7 +456,8 @@ function spotGroups(ps, room) {
 // The chips also teach which face means what.
 let plantSt = '';
 // Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
-const filterKeys = (p, st = states(p)) => [...st, ...(p.greenhouse ? ['greenhouse'] : []), ...(isNew(p) ? ['new'] : []), ...(resting(p) ? ['rest'] : []), ...(petsOn() && petsOf(p) === 'toxic' ? ['pets'] : []), ...growKeys(p)];
+// Filter keys: every tag kind of the plant card, plus the growing ways its name says (those have no tag).
+const filterKeys = (p) => [...new Set([...tagsOf(p).map((t) => t.key), ...growKeys(p)])];
 function stateFilter(ps) {
   const n = {};
   const due = [];
@@ -481,13 +468,14 @@ function stateFilter(ps) {
   const chip = (k, label, cls = k || 'all') => `<button class="st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
+  // In the plant card's tag order: danger, status, safe for pets, greenhouse, rest, how it grows.
+  const pet = (icon, w) => `${I(icon)}<span>${w}<span class="sr-only"> для питомцев</span></span>`;
+  const kinds = [['sap', `${I('hand')}едкий сок`, 'danger'], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger'],
+    ...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]), ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
+    ['greenhouse', `${I('house-heart')}в теплице`], ['rest', `${I('moon')}отдыхают`],
+    ...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way'])];
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
-    ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
-    ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
-    ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'rest') : ''}
-    ${n.new ? chip('new', `${I('biohazard')}на карантине <span class="n">${n.new}</span>`, 'danger') : ''}
-    ${n.pets ? chip('pets', `${I('paw-toxic')}<span>опасно<span class="sr-only"> для питомцев</span></span> <span class="n">${n.pets}</span>`, 'danger') : ''}
-    ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
+    ${kinds.filter(([k]) => n[k]).map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`;
 }
 
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.

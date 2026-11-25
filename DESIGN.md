@@ -44,7 +44,7 @@ Three words, used the same in the UI, code and docs:
 | **badge** | значок | an icon only, in a white circle | grid cards, over the picture | `.badge` |
 | **chip** | — | a choice you press | «Да» / «Нет», places, filters | `.chip`, `.st-chip` (the Plants tab filter) |
 
-One fact can be both: «в теплице» is a tag in the plant card and a badge on its grid card.
+Every tag of the plant card is also a badge on its grid card, in the same order, and a chip in the Plants filter: «в теплице» is all three.
 
 Statuses have their own hues, the same on tags, badges and filter chips (the kind is a class: `.need`, `.danger`, `.greenhouse`…):
 
@@ -58,7 +58,7 @@ Statuses have their own hues, the same on tags, badges and filter chips (the kin
 | хорошо, безопасно (for pets) | green (`--st-fine`) | smile, paw-print |
 | в теплице | fuchsia (`--st-gh`) | house-heart |
 | отдыхает | grey (`--st-rest`) | moon |
-| how it grows (every way but «Сверху»; the ordinary ones, `plain`, are tags only, without a grid badge or filter chip) | teal (`--st-grow`) | the way's icon: shovel (в грунте), droplet-off (в грунте для суккулентов), leaf (в сфагнуме), layers (в коре), tree-palm (в кокосе), arrow-up-from-line (полив снизу), glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (в минеральной смеси), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром), timer (на автополиве) |
+| how it grows (every way but «Сверху») | teal (`--st-grow`) | the way's icon: shovel (в грунте), droplet-off (в грунте для суккулентов), leaf (в сфагнуме), layers (в коре), tree-palm (в кокосе), arrow-up-from-line (полив снизу), glass-water (в воде), fish (в аквариуме), grip (в керамзите), mountain (в минеральной смеси), tree-deciduous (на блоке), flask-round (в террариуме), cable (на фитиле), cylinder (с резервуаром), timer (на автополиве) |
 
 Grid badges on pictures are white glass (`--glass-photo`) with the status color on the icon. Plant card tags are white (`--sheet-solid`) with the color on the word, the icon and the border.
 
