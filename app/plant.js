@@ -325,7 +325,8 @@ function heroPhotoChanged(id) {
 }
 
 // Tags under the quote: danger first (sap, toxic to pets, quarantine), then the status, safe for pets, greenhouse, rest
-// and how it grows. Each is a button: a tap opens a bubble with what it means (toggleTag). Facts that were here before
+// and how it grows. Each is a button: a tap opens a bubble with what it means (toggleTag). Keys are the `tag` values
+// of `plant_tag_opened`, the same as `plants_filtered`'s `status` where both have it. Facts that were here before
 // (interval, light, temperature, medium) are in the settings rows and in «Заметки».
 const fullStop = (t) => (/[.!?]$/.test(t) ? t : `${t}.`);
 const dayMonth = (iso) => parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -334,7 +335,7 @@ function tagsOf(p) {
   const tag = (key, cls, icon, word, title, text, sr = '') => out.push({ key, cls, icon, word, title, text, sr });
   const next = g.noChecks ? '' : ` Следующая проверка ${esc(rel(p.nextCheck))}.`;
   const lux = p.lux ? `Здесь ${kLux(p.lux)} ${LK}, а нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}.` : '';
-  if (p.toxic) tag('skin', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
+  if (p.toxic) tag('sap', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
   if (pets === 'toxic') tag('pets', 'danger', 'paw-toxic', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
   if (isNew(p)) tag('new', 'danger', 'biohazard', 'на карантине', `На карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}`,
     `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
@@ -343,7 +344,7 @@ function tagsOf(p) {
     const text = { need: fullStop(esc(waterTask(p))), watered: next.trim(), dim: lux, hot: lux, fine: fineText(p) }[k];
     tag(k, k, STATES[k][0], word, upFirst(word), text);
   });
-  if (pets === 'safe') tag('safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
+  if (pets === 'safe') tag('pets_safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
   if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
   if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, upFirst(`${restDoes(p)}без подкормки.`));
   growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k); tag(k, 'way', icon, word, upFirst(word), (MEDIA[k] || WATERING[k]).hint || ''); });
@@ -390,6 +391,8 @@ function toggleTag(el, id) {
   tip.style.setProperty('--ax', `${el.offsetLeft + el.offsetWidth / 2 - 10}px`);
   el.setAttribute('aria-expanded', 'true');
   announce(`${t.title}. ${tip.textContent.slice(t.title.length)}`);
+  const all = [...el.parentElement.querySelectorAll('.tag')];
+  track('plant_tag_opened', { tag: t.key, position: all.indexOf(el) + 1, count: all.length, ...kindOf(id) });
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.tag, .tag-tip')) closeTag(); });
 // Focus moving on (Tab) closes it too, even to the next tag (one in the row below would be under it).

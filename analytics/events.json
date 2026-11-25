@@ -386,6 +386,21 @@
         "tab": { "type": "enum", "values": { "settings": "«Настройки»", "notes": "«Заметки»", "history": "«История»" } }
       }
     },
+    "plant_tag_opened": {
+      "area": "plant", "since": 175,
+      "when": "a tag under the plant's words in the plant card tapped and its bubble opened (closing it sends nothing)",
+      "use": ["plant"],
+      "props": {
+        "tag": { "type": "enum", "desc": "the tag's kind; the same values as `plants_filtered` `status` where both have it", "values": {
+          "sap": "«едкий сок»", "pets": "«опасно»: toxic to pets", "new": "«на карантине»",
+          "need": "«суховато», «мутновато», «пустовато» or «неясно» (by `watering` and `medium`)", "watered": "«напоено»", "dim": "«темновато»", "hot": "«ярковато»", "fine": "«хорошо»",
+          "pets_safe": "«безопасно»: safe for pets", "greenhouse": "«в теплице»", "rest": "«отдыхает»",
+          "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
+          "wick": "", "reservoir": "", "tray": "", "drip": "" } },
+        "position": { "type": "int", "desc": "the tag's place in the row, from 1" },
+        "count": { "type": "int", "desc": "how many tags the row has" }
+      }
+    },
     "plant_setting_opened": {
       "area": "plant", "since": 166, "was": ["settings_row_opened"],
       "when": "a row of the plant card's «Настройки» opened",
