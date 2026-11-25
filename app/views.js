@@ -475,7 +475,7 @@ function stateFilter(ps) {
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
     ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'rest') : ''}
     ${n.new ? chip('new', `${I('biohazard')}на карантине <span class="n">${n.new}</span>`, 'danger') : ''}
-    ${n.pets ? chip('pets', `${I('paw-print')}опасно для питомцев <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
+    ${n.pets ? chip('pets', `${I('paw-print')}опасно<span class="sr-only"> для питомцев</span> <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
 
