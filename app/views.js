@@ -26,8 +26,8 @@ const petBadge = (p) => {
     : v === 'safe' ? badgeHtml('safe', 'paw-print', 'безопасно для питомцев') : '';
 };
 
-// Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
-// plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
+// An unusual way of growing («в воде», «на фитиле»…): up to two tags in the plant card, and on grid cards one badge
+// (the medium's first), so badges don't pile up over the picture.
 // Keys go to the status filter too, so every plant in water can be found there. Left out: a watering that is
 // the medium's usual one (clay pebbles on a reservoir), and a card's own medium on a `noBadge` card
 // (tillandsia). The badge itself is left out when the plant's name or species already says it
@@ -473,7 +473,7 @@ function stateFilter(ps) {
   ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
   // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
   const sel = n[plantSt] ? plantSt : '';
-  // Same chips as in the plant card; the chosen one gets a ring in its own color.
+  // The same words and colors as the plant card's tags; the chosen chip gets a ring in its own color.
   const chip = (k, label, cls = k || 'all') => `<button class="st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
