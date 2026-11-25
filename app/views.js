@@ -11,26 +11,13 @@ function greeting() {
   return 'Добрый вечер';
 }
 
-// Little greenhouse badge next to the status
-// Greenhouse badge: a round icon on grid cards, a worded chip like the status ones in the plant card.
-const ghBadge = (p, words) => (!p.greenhouse ? ''
-  : words ? `<span class="mood hero-mood greenhouse">${I('house-heart')}в теплице</span>`
-    : `<span class="gh" title="В теплице">${I('house-heart')}<span class="sr-only">в теплице</span></span>`) + newBadge(p, words);
-// A new plant in quarantine: the same kind of badge, in the plant card only as words.
-const newBadge = (p, words) => (!isNew(p) ? ''
-  : words ? `<span class="mood hero-mood greenhouse">${I('biohazard')}на карантине</span>`
-    : `<span class="gh" title="На карантине">${I('biohazard')}<span class="sr-only">на карантине</span></span>`) + restBadge(p, words);
-// With pets at home: a paw on the plant. The plant card says toxic or safe; grid cards mark only the toxic.
-const petBadge = (p, words) => {
-  const v = petsOn() && petsOf(p);
-  if (!v || (!words && v !== 'toxic')) return '';
-  const label = v === 'toxic' ? 'ядовито для питомцев' : 'безопасно для питомцев';
-  return words ? `<span class="mood hero-mood pets ${v}">${I('paw-print')}${label}</span>`
-    : `<span class="gh pets ${v}" title="Ядовито для питомцев">${I('paw-print')}<span class="sr-only">${label}</span></span>`;
-};
-const restBadge = (p, words) => (!resting(p) ? ''
-  : words ? `<span class="mood hero-mood greenhouse">${I('moon')}отдыхает</span>`
-    : `<span class="gh" title="Отдыхает">${I('moon')}<span class="sr-only">отдыхает</span></span>`) + (words ? '' : petBadge(p));
+// Round badges on grid cards, after the status faces: greenhouse (fuchsia), quarantine (red), rest (grey), toxic to pets
+// (red, only with «Дома есть кошка или собака» on). The plant card shows them as tags with words (tagsOf in plant.js).
+const roundBadge = (cls, icon, word) => `<span class="gh ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
+const ghBadge = (p) => (p.greenhouse ? roundBadge('', 'house-heart', 'в теплице') : '')
+  + (isNew(p) ? roundBadge('danger', 'biohazard', 'на карантине') : '')
+  + (resting(p) ? roundBadge('rest', 'moon', 'отдыхает') : '')
+  + (petsOn() && petsOf(p) === 'toxic' ? roundBadge('pets toxic', 'paw-print', 'опасно для питомцев') : '');
 
 // Badges for an unusual way of growing («в воде», «на фитиле»…), as the greenhouse one: worded chips in the
 // plant card, and on grid cards one icon (the medium's first), so badges don't pile up over the picture.
@@ -46,11 +33,8 @@ function growKeys(p) {
   return keys;
 }
 const saysWay = (p, k) => norm(`${p.title} ${p.species}`).includes(growBadge(k)[1]);
-const growBadges = (p, words) => growKeys(p).filter((k) => !saysWay(p, k)).slice(0, words ? 2 : 1).map((k) => {
-  const [icon, word] = growBadge(k);
-  return words ? `<span class="mood hero-mood way">${I(icon)}${word}</span>`
-    : `<span class="gh way" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
-}).join('');
+const growTags = (p, n) => growKeys(p).filter((k) => !saysWay(p, k)).slice(0, n);
+const growBadges = (p) => growTags(p, 1).map((k) => roundBadge('way', ...growBadge(k))).join('');
 
 function ava(p, cls = 'ava') {
   return `<button class="${cls}" data-open="${esc(p.id)}" aria-label="Открыть ${esc(p.title)}">${picOf(p)}</button>`;
@@ -463,7 +447,7 @@ function spotGroups(ps, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, false, st)}${ghBadge(p)}${growBadges(p)}</span></div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, st).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}<span class="badges">${stateChips(p, st)}${ghBadge(p)}${growBadges(p)}</span></div>
         <b>${typedHtml(p.title)}</b><small>${p.name ? typedHtml(p.species) + '<br>' : ''}${wayOf(p).noChecks ? `<span class="next">${esc(wayOf(p).name)}</span>` : `<span class="next">${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}</span>`}</small></button>`;
     });
     html += `</div></section>`;
@@ -489,9 +473,9 @@ function stateFilter(ps) {
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${Object.keys(STATES).filter((k) => n[k]).map((k) => chip(k, `${I(STATES[k][0])}${word(k)} <span class="n">${n[k]}</span>`)).join('')}
     ${n.greenhouse ? chip('greenhouse', `${I('house-heart')}в теплице <span class="n">${n.greenhouse}</span>`) : ''}
-    ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'greenhouse') : ''}
-    ${n.new ? chip('new', `${I('biohazard')}на карантине <span class="n">${n.new}</span>`, 'greenhouse') : ''}
-    ${n.pets ? chip('pets', `${I('paw-print')}ядовиты для питомцев <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
+    ${n.rest ? chip('rest', `${I('moon')}отдыхают <span class="n">${n.rest}</span>`, 'rest') : ''}
+    ${n.new ? chip('new', `${I('biohazard')}на карантине <span class="n">${n.new}</span>`, 'danger') : ''}
+    ${n.pets ? chip('pets', `${I('paw-print')}опасно для питомцев <span class="n">${n.pets}</span>`, 'pets toxic') : ''}
     ${[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => n[k] && growBadge(k)).map((k) => chip(k, `${I(growBadge(k)[0])}${growBadge(k)[1]} <span class="n">${n[k]}</span>`, 'way')).join('')}</div>`;
 }
 

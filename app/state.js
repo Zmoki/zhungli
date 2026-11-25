@@ -94,7 +94,7 @@ const WATERING = {
     task: 'Загляните в поддон и долейте воды, если её мало',
     hint: 'Не буду звать поливать, а напомню заглянуть в поддон, есть ли вода.',
     water: 'Горшок всё время стоит в поддоне с 1–2 см воды. Так растут болотные растения, обычным комнатным вода в поддоне вредна.' },
-  drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'пора проверить',
+  drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'неясно',
     fixed: true, picks: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14,
     recheck: (iv) => Math.max(3, Math.round(iv / 4)),
     task: 'Проверьте автополив: шланги и капельницы целы, таймер работает, грунт влажный',
@@ -490,10 +490,8 @@ function mood(p, st = states(p)) {
 }
 // The word for a state on one plant: a reservoir is «пустовато», a plant in water «мутновато».
 const stateWord = (k, p) => (k === 'need' && wayOf(p).need) || STATES[k][1];
-// Status chips: faces only on grid cards (the word for screen readers), face and word in the plant card.
-const stateChips = (p, words, st = states(p)) => st.map((k) => (words
-  ? `<span class="mood hero-mood ${k}">${I(STATES[k][0])}${stateWord(k, p)}</span>`
-  : `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`)).join('');
+// Status faces on grid cards, the word for screen readers; the plant card has them as tags with words (tagsOf).
+const stateChips = (p, st = states(p)) => st.map((k) => `<span class="mood ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`).join('');
 
 // The first «20–25 °C» in the card's conditions, plus its floor: «не ниже 16 °C» if given, else the range's low end.
 function tempRange(p) {

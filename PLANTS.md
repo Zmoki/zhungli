@@ -72,7 +72,7 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато» |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
 | `tray` в поддоне с водой | the tray (`bog`: offered only on cards that use it, the Venus flytrap and sundew) | «Долито» / «Вода есть», due status «пустовато» |
-| `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «пора проверить» |
+| `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «неясно» |
 
 Drip irrigation (`fixed` in `WATERING`) waters by itself, so its checks look at the system and nothing is learned:
 - **Interval:** the person's pick from chips in the plant card (1, 2, 3 or 4 weeks; 2 by default), not the stepper.
@@ -125,7 +125,7 @@ A new plant starts with the card's `every`. Plants added together get their firs
 
 | Key | Word | When |
 |---|---|---|
-| `need` | суховато (a reservoir: пустовато, water: мутновато, drip irrigation: пора проверить) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
+| `need` | суховато (a reservoir: пустовато, water: мутновато, drip irrigation: неясно) | A check is due today or earlier. Not on the first check day of a plant nobody has answered about yet. |
 | `watered` | напоено | Watered today (not for drip irrigation, where it's only a check). |
 | `dim` | темновато | Lux reading under the card's minimum. |
 | `hot` | ярковато | Lux reading over the maximum × 1.25. |
@@ -153,7 +153,7 @@ With several rooms, the plant grid groups plants by room and spot («Кухня 
 
 ## Cheat sheet
 
-The card's tips (`water`, `soil`, `cond`, `tip`) can be edited, hidden and restored for one plant; the catalog stays untouched. Own notes are added on top. Toxic plants get a warning, and generic types a note that their tips are approximate.
+The card's tips (`water`, `soil`, `cond`, `tip`) can be edited, hidden and restored for one plant; the catalog stays untouched. Own notes are added on top. Toxic plants get a tag under the quote, and generic types a note that their tips are approximate.
 
 ## Adding plants
 

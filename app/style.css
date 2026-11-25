@@ -11,8 +11,6 @@
   --sheet-solid: #ffffff;
   /* The plant's own voice: leaf green, so it never looks like an editable beige block */
   --quote: #d7f5e0; --quote-edge: #8fd1a8;
-  /* Short facts about a plant (the plant card's glance): info, not controls, so not beige */
-  --info-bg: #ebe6f7; --info-ink: #3b2d66;
   --ink: #2a2118;
   --muted: #4a3b2e;
   --line: rgba(42, 33, 24, .12);
@@ -36,7 +34,7 @@
   --blob-1: #ffe197; --blob-2: #aee0b3; --blob-3: #bcd8ef;
   /* Status chips over photos: white glass, the status color on the face and the word (7:1 even over black) */
   --glass-photo: rgba(255, 255, 255, .9);
-  --st-need: #7a3200; --st-fine: #1a522e; --st-watered: #00478f; --st-dim: #4a2fb0; --st-hot: #614600; --st-gh: #94003a; --st-grow: #004a4f;
+  --st-need: #7a3200; --st-fine: #1a522e; --st-watered: #00478f; --st-dim: #4a2fb0; --st-hot: #614600; --st-danger: #94003a; --st-gh: #7d1068; --st-grow: #004a4f; --st-rest: #555555;
   /* Plant drawings */
   --leaf: #33b067; --leaf-2: #1f8a4c; --leaf-3: #8ee3ae; --bloom: #ff7fb0; --glass: #d3e8ff; --coleus: #e2457e; --trunk: #8a5a3c;
   /* Text accents and soft fills (older names, still used across the app) */
@@ -75,7 +73,6 @@
     --field: #2a2338;
     --bubble: #352c47;
     --quote: #1f4a33; --quote-edge: #2f6b4b;
-    --info-bg: #2d2840; --info-ink: #e2dcff;
     --ink: #fff6ea;
     --muted: #efe5d8;
     --line: rgba(255, 246, 234, .14);
@@ -103,7 +100,7 @@
     --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
     --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
     --glass-photo: rgba(34, 28, 46, .9);
-    --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
+    --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-danger: #ffb2d0; --st-gh: #f2b3e8; --st-grow: #7fdcd6; --st-rest: #c9c9c9;
     --surface: #2a2338;
     --credits: #22344a;
   }
@@ -115,7 +112,6 @@
   --field: #2a2338;
   --bubble: #352c47;
   --quote: #1f4a33; --quote-edge: #2f6b4b;
-  --info-bg: #2d2840; --info-ink: #e2dcff;
   --ink: #fff6ea;
   --muted: #efe5d8;
   --line: rgba(255, 246, 234, .14);
@@ -143,7 +139,7 @@
   --shadow-soft: 0 2px 10px rgba(0, 0, 0, .3);
   --blob-1: #4a3d1c; --blob-2: #1e4636; --blob-3: #263c67;
   --glass-photo: rgba(34, 28, 46, .9);
-  --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-gh: #ffb2d0; --st-grow: #7fdcd6;
+  --st-need: #ffb685; --st-fine: #83d8a3; --st-watered: #99ccff; --st-dim: #cac2ff; --st-hot: #ffba05; --st-danger: #ffb2d0; --st-gh: #f2b3e8; --st-grow: #7fdcd6; --st-rest: #c9c9c9;
   --surface: #2a2338;
   --credits: #22344a;
 }
@@ -378,10 +374,10 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .chip:disabled, .btn:disabled, .toggle input:disabled { opacity: .45; cursor: default; }
 .toggle:has(input:disabled), .field label.toggle:has(input:disabled) { color: var(--muted); cursor: default; }
 .why-not:empty { display: none; }
-/* Sap and pet warnings: a gap from the notes above */
+/* What pets may know, in «Заметки»: a gap from the notes above */
 .card-warns { margin-top: 14px; }
-/* Pets: a paw, red-ish when toxic, green when safe */
-.mood.pets.toxic, .gh.pets.toxic, .pet-tag.toxic { color: var(--st-gh); }
+/* Danger (sap, toxic to pets, quarantine) is red; safe for pets green */
+.mood.pets.toxic, .gh.pets.toxic, .pet-tag.toxic, .gh.danger, .mood.danger { color: var(--st-danger); }
 .mood.pets.safe, .pet-tag.safe { color: var(--st-fine); }
 .pet-tag { font-weight: 800; white-space: nowrap; }
 .pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
@@ -410,8 +406,8 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .hero-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .hero-pic img.fill { object-fit: cover; filter: blur(16px) saturate(1.1); transform: scale(1.15); }
 .hero-acts { display: flex; flex-wrap: wrap; gap: 8px; }
-/* Photo buttons, then the status chips under them, at the top left: the chips stay off the pot's face */
-.hero-top { position: absolute; top: 30px; left: 16px; right: 72px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+/* Photo buttons at the top left, off the pot's face */
+.hero-top { position: absolute; top: 30px; left: 16px; right: 72px; }
 .hero-photo {
   min-height: 48px; padding: 0 16px 0 12px; border-radius: 99px;
   display: inline-flex; align-items: center; gap: .4em; font-weight: 900; color: var(--ink);
@@ -419,8 +415,6 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
   box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow);
 }
 .hero .icon-btn, .hero-bar .icon-btn { background: var(--glass-strong); }
-.hero-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-.hero-badges:empty { display: none; }
 .hero-mood {
   display: inline-flex; align-items: center; gap: .3em;
   font-size: 0.941rem; font-weight: 900; padding: 5px 14px 5px 8px; border-radius: 99px; border: 2px solid var(--chip-ring);
@@ -435,6 +429,7 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .mood.dim { color: var(--st-dim); }
 .mood.hot { color: var(--st-hot); }
 .gh, .mood.greenhouse { color: var(--st-gh); }
+.gh.rest, .mood.rest { color: var(--st-rest); }
 /* How it grows when it's not an ordinary pot («в воде», «на фитиле»): teal, same shapes as the greenhouse badge */
 .gh.way, .mood.way { color: var(--st-grow); }
 /* Greenhouse badge: a round chip as tall as the status chip */
@@ -510,11 +505,37 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .hl-iv { display: flex; align-items: center; gap: 8px; padding: 2px 10px; color: var(--blue); font-weight: 800; font-size: 0.882rem; }
 .hl-iv .ic { width: 18px; height: 18px; flex: none; }
 
-/* Plant card: short facts, tabs, setting groups, the 4-week rhythm */
-.glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
-/* Short facts in their own colors (--info-*): info about the plant, not controls, so not beige */
-.glance li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: var(--info-bg); color: var(--info-ink); font-size: 0.882rem; font-weight: 800; }
-.glance .ic { width: 18px; height: 18px; flex: none; }
+/* Plant card: tags, tabs, setting groups, the 4-week rhythm */
+/* Tags under the quote: danger first, then status, greenhouse, rest and how it grows. White, the color only on the
+   word, the icon and the border. A tap opens a bubble (.tag-tip) that floats over what's below, so nothing moves */
+.tags { position: relative; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.ptag {
+  display: inline-flex; align-items: center; gap: .35em; min-height: 44px; padding: 6px 14px 6px 10px; border-radius: 99px;
+  border: 2px solid currentColor; background: var(--sheet-solid); color: var(--ink); font-size: 0.941rem; font-weight: 900; white-space: nowrap;
+}
+.ptag .ic { width: 18px; height: 18px; stroke-width: 2.4; flex: none; }
+.ptag[aria-expanded="true"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+.ptag.need { color: var(--st-need); }
+.ptag.watered { color: var(--st-watered); }
+.ptag.dim { color: var(--st-dim); }
+.ptag.hot { color: var(--st-hot); }
+.ptag:is(.fine, .safe) { color: var(--st-fine); }
+.ptag.danger { color: var(--st-danger); }
+.ptag.greenhouse { color: var(--st-gh); }
+.ptag.rest { color: var(--st-rest); }
+.ptag.way { color: var(--st-grow); }
+/* top and the arrow's --ax are set in plant.js from the tapped tag */
+.tag-tip {
+  position: absolute; left: 0; right: 0; z-index: 5; padding: 12px 16px; border-radius: 20px;
+  background: var(--sheet-solid); color: var(--ink); border: 2px solid var(--edge); box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+}
+.tag-tip[hidden] { display: none; }
+.tag-tip b { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.tag-tip b .ic { width: 18px; height: 18px; flex: none; }
+.tag-tip::before {
+  content: ''; position: absolute; top: -10px; left: var(--ax, 24px); width: 16px; height: 16px; transform: rotate(45deg);
+  background: var(--sheet-solid); border: 2px solid var(--edge); border-right: 0; border-bottom: 0; border-radius: 3px 0 0 0;
+}
 /* Tabs share the row by their label; with large text they wrap instead of cutting a label */
 .seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 24px 0 16px; border-radius: var(--radius); background: var(--card); }
 .seg-tab {
