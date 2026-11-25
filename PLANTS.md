@@ -91,7 +91,7 @@ Picking another way than the card's:
 - The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.
 - The drawing stays the card's: a dracaena moved into water is still drawn as a dracaena.
 
-Every way of growing but «Сверху» gets a teal tag in the plant card and a badge on grid cards (`badge` in `MEDIA`, `WATERING`; looks in [DESIGN.md](DESIGN.md)). A tag is left out when the plant's name or species already says it, with «в» or «на» («Черенки в воде», «Орхидея на коре»), and a medium's usual watering (clay pebbles on a reservoir) gets none. A tillandsia's own `mount` gets no badge or chip (`noBadge`): it may hang or sit on a shelf. The Plants filter has a chip for each way that has plants, the plants whose name says it included.
+Every way of growing but «Сверху» gets a teal tag in the plant card, a badge on grid cards and a Plants filter chip. Which ways show and when is in [TAGS.md](TAGS.md#ways). A tillandsia's own `mount` gets none (`noBadge`): it may hang or sit on a shelf.
 
 ## Reminders
 

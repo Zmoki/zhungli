@@ -468,11 +468,11 @@ function stateFilter(ps) {
   const chip = (k, label, cls = k || 'all') => `<button class="st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
-  // In the plant card's tag order: danger, status, safe for pets, greenhouse, rest, how it grows.
+  // In the plant card's tag order (TAGS.md): now, for a while, always, how it grows.
   const pet = (icon, w) => `${I(icon)}<span>${w}<span class="sr-only"> для питомцев</span></span>`;
-  const kinds = [['sap', `${I('hand')}едкий сок`, 'danger'], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger'],
-    ...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]), ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
-    ['greenhouse', `${I('house-heart')}в теплице`], ['rest', `${I('moon')}отдыхают`],
+  const kinds = [...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]),
+    ['new', `${I('biohazard')}на карантине`, 'danger'], ['rest', `${I('moon')}отдыхают`], ['greenhouse', `${I('house-heart')}в теплице`],
+    ['sap', `${I('hand')}едкий сок`, 'danger'], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
     ...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way'])];
   return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
     ${kinds.filter(([k]) => n[k]).map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`;

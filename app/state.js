@@ -470,9 +470,9 @@ function lightStatus(p) {
 
 // Light status words, the same in the plant card, the cards grid and the Light tab.
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'отлично' };
-// Face and word per state, from most to least urgent (also the order of the filter chips).
-// Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
-const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+// Face and word per state, in the order of the plant card's tags and the filter chips (water, then light, then fine).
+// Each has its own color: check orange, watered blue, too dark plum, too bright sun, fine green.
+const STATES = { need: ['frown', 'суховато'], watered: ['laugh', 'напоено'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], fine: ['smile', 'хорошо'] };
 // Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
 // A plant nobody has answered about yet isn't called dry on its first check day: we don't know yet.
 function states(p) {

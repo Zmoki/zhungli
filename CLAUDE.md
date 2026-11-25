@@ -19,7 +19,7 @@ Static PWA, vanilla JS, no build step. Deployed by Cloudflare Pages on push to `
 - **License:** all rights reserved (see LICENSE), not open source. Every served file starts with the copyright header (`/*! … */` in JS/CSS, `<!-- … -->` in HTML/SVG); add it to new files.
 - **Ideas:** improvement ideas go to GitHub issues with the `idea` label.
 - **Git:** every change goes in its own PR, branched from an up-to-date `main`. Never base a branch on another PR's branch; for parallel work use a git worktree. If two open PRs bump the version, the later one updates its bump after the first is merged. Squash-merge only when asked, then delete the branch.
-- **Docs:** [PLANTS.md](PLANTS.md), [TASKS.md](TASKS.md), [TELEGRAM.md](TELEGRAM.md), [DESIGN.md](DESIGN.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README. Images go in `images/` (app icons stay in `app/icons/`).
+- **Docs:** [PLANTS.md](PLANTS.md), [TASKS.md](TASKS.md), [TELEGRAM.md](TELEGRAM.md), [DESIGN.md](DESIGN.md), [TAGS.md](TAGS.md). Update them with the behavior they describe. Keep each fact in one place: don't repeat docs content here or in README. Images go in `images/` (app icons stay in `app/icons/`).
 
 ## Run locally
 
