@@ -78,7 +78,17 @@ function pickPreview(d) {
   const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
   const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
   const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div>${pets ? '<p class="prev-note">Метка видна, если в настройках есть кошка или собака.</p>' : ''}</section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></section>`;
+}
+// As days in core.js: «8 дней».
+const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
+// The card as the plant card's «Настройки» → «Карточка ухода» shows it (cardNow in plant.js): picture, name, light,
+// how often it's checked and what it grows in; not a control, so a quiet border and no plus.
+function cardNowPreview(d) {
+  const m = MEDIUM[d.type] || {};
+  const way = [lc(NAMES[d.type] || d.type), m.pot && d.watering && d.watering !== 'top' ? lc(NAMES[d.watering] || d.watering) : ''].filter(Boolean).join(', ');
+  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, m.noChecks ? '' : `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
+  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
@@ -198,7 +208,7 @@ function card(d) {
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
-<div class="blks">${pickPreview(d)}<div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
+<div class="blks">${pickPreview(d)}${cardNowPreview(d)}<div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
 <div class="col">${block('Заметки', notes, 'b-notes')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section></div></div>
 </article>`;
 }
@@ -309,9 +319,9 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
-/* In «В каталоге»: some air under the band, the row centered in its column, a quiet note under it */
+/* In «В каталоге» and «В настройках растения»: some air under the band, the row centered in its column */
 .prev .pick { margin: 16px auto 4px; }
-.prev-note { max-width: 420px; margin: 6px auto 0; font-size: .882rem; color: var(--muted); text-align: center; }
+.pick.card-now { border-color: var(--line); }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -336,10 +346,10 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 /* Blocks of a card, named as in the app, each under a beige band like a settings group */
 .blk { margin-top: 14px; min-width: 0; }
-/* Phone: one column in reading order, «В каталоге» first; wide screens: «Настройки» and «Метки и задачи» on the left, «В каталоге», «Заметки» and «Реплики» on the right */
+/* Phone: one column in reading order; wide screens: «Настройки», «Метки и задачи», «В каталоге» on the left, «Заметки», «Реплики», «В настройках растения» on the right */
 .blks { display: flex; flex-direction: column; }
 .col { display: contents; }
-.prev { order: 0; } .b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
+.b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; } .prev { order: 5; } .prev.now { order: 6; }
 .quips { margin: 0; padding-left: 1.3em; }
 .quips li + li { margin-top: 4px; }
 /* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
@@ -350,8 +360,10 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .head .tile { width: 100%; }
   .name { padding-top: 0; }
   .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; align-items: start; }
-  /* «Настройки» on the left beside «В каталоге» and «Заметки»; «Метки и задачи» and «Реплики» start on one level below */
-  .b-set { grid-area: 1 / 1 / 3 / 2; } .prev { grid-area: 1 / 2; } .b-notes { grid-area: 2 / 2; } .b-tags { grid-area: 3 / 1; } .b-quips { grid-area: 3 / 2; }
+  /* Three rows, each pair starting on one level: «Настройки» and «Заметки», «Метки и задачи» and «Реплики», then the card as the
+     app shows it: «В каталоге» and «В настройках растения» */
+  .b-set { grid-area: 1 / 1; } .b-notes { grid-area: 1 / 2; } .b-tags { grid-area: 2 / 1; } .b-quips { grid-area: 2 / 2; }
+  .prev { grid-area: 3 / 1; } .prev.now { grid-area: 3 / 2; }
   .blk { margin-top: 0; }
 }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
