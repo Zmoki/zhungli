@@ -567,7 +567,7 @@ function rowValues(p) {
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
-    prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
+    prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
     bought: [isNew(p) ? `да, на карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
     repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
