@@ -78,7 +78,7 @@ function pickPreview(d) {
   const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
   const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
   const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div>${pets ? '<p class="prev-note">Метка видна, если в настройках есть кошка или собака.</p>' : ''}</section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
@@ -309,8 +309,9 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
-/* In «В каталоге»: some air under the band, the row centered in its column */
+/* In «В каталоге»: some air under the band, the row centered in its column, a quiet note under it */
 .prev .pick { margin: 16px auto 4px; }
+.prev-note { max-width: 420px; margin: 6px auto 0; font-size: .882rem; color: var(--muted); text-align: center; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -335,7 +336,7 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 /* Blocks of a card, named as in the app, each under a beige band like a settings group */
 .blk { margin-top: 14px; min-width: 0; }
-/* Phone: one column in reading order; wide screens: «Настройки» and «Метки и задачи» on the left, «Заметки» and «Реплики» on the right */
+/* Phone: one column in reading order, «В каталоге» first; wide screens: «Настройки» and «Метки и задачи» on the left, «В каталоге», «Заметки» and «Реплики» on the right */
 .blks { display: flex; flex-direction: column; }
 .col { display: contents; }
 .prev { order: 0; } .b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
