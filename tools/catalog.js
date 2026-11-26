@@ -159,9 +159,9 @@ function card(d) {
   ].join('');
   const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
-<header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
-${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}
-${block('Настройки', settings)}${block('Заметки', notes)}${block('Метки, задачи, реплики', tags)}${block('Только в каталоге', catalog)}
+<div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
+${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
+<div class="blks">${block('Настройки', settings)}${block('Заметки', notes)}${block('Метки, задачи, реплики', tags)}${block('Только в каталоге', catalog)}</div>
 </article>`;
 }
 
@@ -215,7 +215,7 @@ function page() {
 html { font-size: 17px; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 1rem; line-height: 1.5; }
 button { font: inherit; color: inherit; cursor: pointer; }
-main { max-width: 1180px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 1400px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 2rem; font-weight: 900; margin: 0 0 4px; text-wrap: balance; }
 .lead { color: var(--muted); margin: 0 0 20px; max-width: 65ch; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
@@ -264,7 +264,7 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .cat-head .ic { width: 1em; height: 1em; color: var(--muted); transition: transform .15s; }
 .cat-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .cat-head .ic { transition: none; } }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr)); gap: 16px; align-items: start; }
+.grid { display: flex; flex-direction: column; gap: 16px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 14px 18px 18px 14px; min-width: 0; scroll-margin-top: 16px; }
 .head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
 /* The picture as on a Plants grid card (.pcard .pic): a 3:4 pastel tile, the drawing low in it */
@@ -282,7 +282,21 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 /* Blocks of a card, named as in the app, each under a beige band like a settings group */
-.blk { margin-top: 14px; }
+.blk { margin-top: 14px; min-width: 0; }
+/* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
+@media (min-width: 900px) {
+  .card { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; padding: 18px; }
+  .side { position: sticky; top: 16px; align-self: start; }
+  .head { flex-direction: column; gap: 12px; margin-bottom: 0; }
+  .head .tile { width: 100%; }
+  .name { padding-top: 0; }
+  .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; align-items: start; }
+  .blk { margin-top: 0; }
+  /* Narrow columns: each label above its text, so the text gets the whole width */
+  .blks dl { grid-template-columns: 1fr; gap: 0; }
+  .blks dd { margin-bottom: 10px; }
+}
+@media (min-width: 1300px) { .blks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
 dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
 dt { font-weight: 800; color: var(--muted); font-size: .882rem; padding-top: 2px; }
