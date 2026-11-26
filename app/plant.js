@@ -569,7 +569,7 @@ function feedValue(p) {
   const every = winterNow() && p.lamp && n < 30 ? 'зимой раз в месяц' : FEED_WORDS[n];
   const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
   const pause = resting(p) ? 'пауза, пока в покое'
-    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${shortDay(until)}`)
+    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до\u00a0${shortDay(until)}`)
       : winterNow() && !p.lamp ? 'зимой пауза' : '';
   return vParts([every, pause]);
 }
@@ -593,9 +593,9 @@ function rowValues(p) {
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    // «да, на карантине до 7 янв»: one phrase, wrapping as text, with the day and month kept together.
-    bought: [isNew(p) ? `да, на карантине до ${shortDay(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
-    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${shortDay(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    // «да, на карантине до 7 янв»: one phrase, wrapping as text; «до 7 янв» stays together.
+    bought: [isNew(p) ? `да, на карантине до\u00a0${shortDay(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до\u00a0${shortDay(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
     rest: resting(p) ? [`с ${shortDay(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
