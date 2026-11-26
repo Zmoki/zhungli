@@ -214,7 +214,6 @@ function wayOf(p) {
   if (!WAYS.has(key)) {
     const M = MEDIA[m], W = WATERING[w];
     WAYS.set(key, { ...M, ...(W || {}), task: (W || M).task, verb: (W || M).verb, labels: (W || M).labels || ['Полито', 'Ещё влажно'],
-      hint: [(W || M).hint, M.careHint, FEED_WITH[M.feed] ? `Удобрение добавляйте ${FEED_WITH[M.feed]}, на день подкормки звать не буду.` : ''].filter(Boolean).join(' '),
       name: W ? `${M.name}, ${W.name.toLowerCase()}` : M.name, wet: !!(M.wet || (W && W.wet)) });
   }
   return WAYS.get(key);

@@ -561,7 +561,8 @@ function rowValues(p) {
   return {
     name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
     card: isCustom(p.id) ? ['своё растение', true] : [esc(def(p.id).species), false],
-    place: place.length ? [place.map(typedHtml).join(', '), false] : ['не выбрано', true],
+    // The room always; a spot not picked yet stays a grey «место не выбрано» after it.
+    place: [p.spot ? place.map(typedHtml).join(', ') : `${typedHtml(roomOf(p).name)}, <i class="off-part">место не выбрано</i>`, false],
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
