@@ -78,7 +78,7 @@ function pickPreview(d) {
   const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
   const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
   const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
-  return `<div class="prev"><p class="prev-k">В каталоге приложения</p><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></div>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
@@ -308,8 +308,6 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 /* The picture as on a Plants grid card (.pcard .pic): a 3:4 pastel tile, the drawing low in it */
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
-.prev { min-width: 0; }
-.prev-k { font-size: .882rem; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
@@ -338,7 +336,7 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 /* Phone: one column in reading order; wide screens: «Настройки» and «Метки и задачи» on the left, «Заметки» and «Реплики» on the right */
 .blks { display: flex; flex-direction: column; }
 .col { display: contents; }
-.prev { order: 0; margin-top: 14px; } .b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
+.prev { order: 0; } .b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
 .quips { margin: 0; padding-left: 1.3em; }
 .quips li + li { margin-top: 4px; }
 /* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
@@ -349,9 +347,8 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .head .tile { width: 100%; }
   .name { padding-top: 0; }
   .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; align-items: start; }
-  /* Two rows: «Метки и задачи» and «Реплики» start at the same height, under the taller of the blocks above */
-  .prev { grid-area: 1 / 1 / 2 / 3; margin-top: 0; }
-  .b-set { grid-area: 2 / 1; } .b-notes { grid-area: 2 / 2; } .b-tags { grid-area: 3 / 1; } .b-quips { grid-area: 3 / 2; }
+  /* «Настройки» on the left beside «В каталоге» and «Заметки»; «Метки и задачи» and «Реплики» start on one level below */
+  .b-set { grid-area: 1 / 1 / 3 / 2; } .prev { grid-area: 1 / 2; } .b-notes { grid-area: 2 / 2; } .b-tags { grid-area: 3 / 1; } .b-quips { grid-area: 3 / 2; }
   .blk { margin-top: 0; }
 }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
