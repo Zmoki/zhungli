@@ -551,7 +551,7 @@ function pickCardTab(k, focus) {
 
 // The plant's «Настройки»: four groups of folding rows. Each row shows its current value (rowValues) and opens on
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
-// Rows open when a plant's card opens: «Полив», whose button is used most. Closing it lasts while the same card is open.
+// Rows open when a plant's card opens: «Полив», whose button is used most. Closing it lasts until the card closes.
 const OPEN_ROWS = ['water'];
 let openRows = new Set(OPEN_ROWS), openRowsFor = null;
 // How feeding goes now, as feedDue decides: the schedule (monthly in winter under a lamp), then why it waits: rest,
@@ -656,7 +656,8 @@ function openPlant(id, tabKey, rows) {
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
-  if (openRowsFor !== id || rows) { openRows = new Set([...OPEN_ROWS, ...(rows || [])]); openRowsFor = id; }
+  // A card opened anew starts with the default rows; a redraw of the open card (a photo, a change of card) keeps them.
+  if (openRowsFor !== id || rows || !sheet.open) { openRows = new Set([...OPEN_ROWS, ...(rows || [])]); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
