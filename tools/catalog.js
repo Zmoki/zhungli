@@ -29,6 +29,18 @@ const ENTRIES = heads.map((m, i) => {
 const NAMES = Object.fromEntries(ENTRIES.map(([k, name]) => [k, name]));
 // Ways whose first check doesn't follow the card's interval (`start` in the entry: wayStart in state.js).
 const OWN_START = new Set(ENTRIES.filter(([, , t]) => /\bstart:/.test(t)).map(([k]) => k));
+// What a medium says about feeding and checks: `feed` ('day', 'each', 'alt', 'none'), `feedEvery`, `feedNote`, `noChecks`.
+const MEDIUM = Object.fromEntries(ENTRIES.map(([k, , t]) => [k, {
+  feed: (t.match(/\bfeed: '(\w+)'/) || [])[1],
+  feedEvery: +(t.match(/\bfeedEvery: (\d+)/) || [])[1] || 0,
+  feedNote: (t.match(/\bfeedNote: '([^']+)'/) || [])[1] || '',
+  noChecks: /\bnoChecks: true/.test(t),
+}]));
+// The app's feeding words (FEED_WITH in state.js) and the interval when nothing sets one (feedEvery in plant.js).
+const FEED_WITH = { each: 'в каждый полив', alt: 'через раз' };
+const FEED_DEFAULT = 14;
+// The pruning reminder's months when a card names none (REMINDERS.prune.start in state.js).
+const PRUNE_MONTHS = [3, 4];
 // Group order, as in the add-plants picker.
 const CAT_ORDER = JSON.parse(read('add.js').match(/const CAT_ORDER = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
 const VERSION = read('version.txt').trim();
@@ -122,7 +134,13 @@ function card(d) {
   const pets = petsOf(d.pets);
   const gaps = gapsOf(d);
   const flags = [d.hidden && 'Скрыта', d.generic && 'Общий тип'].filter(Boolean);
-  const months = d.prune && d.prune.months ? d.prune.months.map((m) => MONTHS[m - 1]).join(', ') : '';
+  const m = MEDIUM[d.type] || {};
+  const months = !d.prune || d.prune.no ? '' : d.prune.months ? d.prune.months.map((x) => MONTHS[x - 1]).join(', ')
+    : `${PRUNE_MONTHS.map((x) => MONTHS[x - 1]).join(', ')} (по умолчанию)`;
+  // As feedEvery in plant.js: the card's interval, else the medium's, else 14 days; some media feed with watering or not at all.
+  const feed = d.noFeed || m.feed === 'none' ? 'не подкармливать'
+    : FEED_WITH[m.feed] ? FEED_WITH[m.feed]
+    : `раз в ${d.feedEvery || m.feedEvery || FEED_DEFAULT} дн.${d.feedEvery || m.feedEvery ? '' : ' (по умолчанию)'}`;
   const own = [d.type, d.watering].filter((k) => OWN_START.has(k));
   const check = d.check
     ? esc(d.check)
@@ -132,8 +150,8 @@ function card(d) {
     row('Свет', `нужно ${lux(d.lux)}`),
     row('В чём растёт', esc(lc(NAMES[d.type] || d.type))),
     row('Полив', esc(lc(NAMES[d.watering || 'top'] || d.watering))),
-    row('Проверка', `раз в ${d.every} дн., дальше подстраивается по ответам`, own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
-    row('Подкормка', d.noFeed ? 'не подкармливать' : d.feedEvery ? `раз в ${d.feedEvery} дн.` : '', d.feedNote ? esc(d.feedNote) : ''),
+    row('Проверка', m.noChecks ? 'без проверок' : `раз в ${d.every} дн., дальше подстраивается по ответам`, m.noChecks ? '' : own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
+    row('Подкормка', feed, esc(d.feedNote || m.feedNote)),
     row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : months, d.prune && esc(d.prune.no || d.prune.tip || '')),
     row('Покой', d.rest ? `с «${esc(d.rest.start)}» до «${esc(d.rest.end)}»` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
     row('Новое', '', esc(d.settle || '')),
@@ -255,7 +273,7 @@ dialog::backdrop { background: rgba(26, 21, 36, .35); }
 :is(.st-chip, .pfilter-t .v).safe { color: var(--st-fine); }
 :is(.st-chip, .pfilter-t .v).danger { color: var(--st-danger); }
 :is(.st-chip, .pfilter-t .v).way { color: var(--st-grow); }
-button:focus-visible, .search input:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+button:focus-visible, .search input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 /* Groups fold on their heading, with the app's chevron (as on folding settings rows) */
 .cat { margin-bottom: 28px; }
 h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
@@ -299,7 +317,6 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   /* Two rows: «Метки и задачи» and «Реплики» start at the same height, under the taller of the blocks above */
   .b-set { grid-area: 1 / 1; } .b-notes { grid-area: 1 / 2; } .b-tags { grid-area: 2 / 1; } .b-quips { grid-area: 2 / 2; }
   .blk { margin-top: 0; }
-  /* Narrow columns: each label above its text, so the text gets the whole width */
 }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
 dl { display: flex; flex-direction: column; gap: 10px; margin: 0; padding-left: 4px; }
@@ -307,7 +324,6 @@ dl { display: flex; flex-direction: column; gap: 10px; margin: 0; padding-left: 
 dt, dd { display: inline; margin: 0; }
 dt { font-weight: 800; color: var(--muted); }
 dd .hint { display: block; color: var(--muted); font-size: .882rem; margin-top: 2px; }
-dd ul { margin: 0; padding-left: 1.1em; }
 dd.warn b { color: var(--warn); }
 dd.gap { color: var(--gap-ink); font-weight: 800; }
 .muted { color: var(--muted); }
