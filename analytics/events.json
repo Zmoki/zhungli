@@ -65,7 +65,7 @@
     "plants_total": { "type": "int", "desc": "number of plants on the device" },
     "standalone": { "type": "bool", "desc": "`true` when opened from the home screen" },
     "in_telegram": { "type": "bool", "desc": "`true` when opened inside Telegram's own browser (detectable on Android, often not on iOS)" },
-    "mini_app": { "type": "bool", "desc": "`true` when opened as the Telegram mini app (`/tg`, @ZhungliPlantsBot)" },
+    "mini_app": { "type": "bool", "desc": "`true` when opened as the Telegram mini app (`/tg`, @WeAreJunglyBot)" },
     "tg_version": { "type": "code", "desc": "mini app: Telegram's Bot API version" },
     "tg_platform": { "type": "code", "desc": "mini app: Telegram's client (ios, macos, tdesktop…)" },
     "$os": { "type": "code", "desc": "parsed from the user agent" },

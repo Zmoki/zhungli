@@ -1,9 +1,9 @@
 # Telegram
 
-Жунгли run in Telegram as a mini app of the bot [@ZhungliPlantsBot](https://t.me/ZhungliPlantsBot). It's the same app as the website, with plants stored in Telegram's cloud.
+Жунгли run in Telegram as a mini app of the bot [@WeAreJunglyBot](https://t.me/WeAreJunglyBot). It's the same app as the website, with plants stored in Telegram's cloud.
 
 - **Mini app:** `https://zhungli.zmoki.xyz/tg`
-- **Link to share:** `https://t.me/ZhungliPlantsBot?startapp`, which opens the app straight away.
+- **Link to share:** `https://t.me/WeAreJunglyBot?startapp`, which opens the app straight away.
 - **Author contact in the app:** [@zmoki](https://t.me/zmoki), for ideas and bugs.
 
 ## Bot
