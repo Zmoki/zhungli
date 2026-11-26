@@ -43,17 +43,60 @@ const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|
 
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
 const petsOf = (v) => (!v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : 'safe');
+const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
+const CATS = [...new Set(PLANTS.map((d) => d.cat))].sort((a, b) => (CAT_ORDER.indexOf(a) + 1 || 99) - (CAT_ORDER.indexOf(b) + 1 || 99));
+
+// Tag icons and words of growing media and watering ways (`badge` in state.js), as on the app's filter chips.
+const BADGES = Object.fromEntries([...read('state.js').matchAll(/^ {2}(\w+): \{ name: '[^']+'.*?badge: \['([a-z-]+)', '([^']+)'\]/gm)].map((m) => [m[1], [m[2], m[3]]]));
+// The app's icons (the sprite in index.html), only the ones this page uses.
+const indexHtml = read('index.html');
+const used = new Set(['funnel', 'search', 'x', 'chevron-right', 'paw-print', 'paw-toxic', 'triangle-alert', ...Object.values(BADGES).map((b) => b[0])]);
+const SPRITE = [...used].map((id) => (indexHtml.match(new RegExp(`<symbol id="i-${id}"[^>]*>[\\s\\S]*?</symbol>`)) || [''])[0]).join('');
+const I = (n) => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 
 // What a reviewer should look at: facts every real card is expected to have.
+const GAPS = {
+  pets: 'Нет данных о кошках и собаках',
+  petsNote: 'Ядовито, но нет симптомов',
+  prune: 'Нет совета по обрезке',
+  aka: 'Нет других названий для поиска',
+};
 function gapsOf(d) {
   if (d.generic) return [];
   const out = [];
-  if (!petsOf(d.pets)) out.push('Нет данных о кошках и собаках');
-  else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('Ядовито, но нет симптомов');
-  if (!d.prune) out.push('Нет совета по обрезке');
-  if (!d.aka) out.push('Нет других названий для поиска');
+  if (!petsOf(d.pets)) out.push('pets');
+  else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('petsNote');
+  if (!d.prune) out.push('prune');
+  if (!d.aka) out.push('aka');
   return out;
 }
+
+// Filter keys of a card; the «Фильтр» sheet has one chip per key that any card has, in these sections.
+function keysOf(d) {
+  const gaps = gapsOf(d);
+  const pets = petsOf(d.pets);
+  return [
+    `cat:${CATS.indexOf(d.cat)}`, `t:${d.type}`, d.watering && `w:${d.watering}`,
+    pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.toxic && 'sap',
+    gaps.length && 'gap', ...gaps.map((g) => `gap:${g}`),
+    d.hidden && 'hidden', d.generic && 'generic', d.big && 'big', d.humid && 'humid',
+  ].filter(Boolean);
+}
+const badge = (k) => (BADGES[k] ? `${I(BADGES[k][0])}${BADGES[k][1]}` : esc(NAMES[k] || k));
+const FILTERS = [
+  ['Группа', CATS.map((c, i) => [`cat:${i}`, esc(c), ''])],
+  ['Как растёт', [
+    ...[...new Set(PLANTS.map((d) => d.type))].map((k) => [`t:${k}`, badge(k), 'way']),
+    ...[...new Set(PLANTS.map((d) => d.watering).filter(Boolean))].map((k) => [`w:${k}`, badge(k), 'way']),
+  ]],
+  ['Безопасность', [
+    ['pets', `${I('paw-toxic')}опасно для животных`, 'danger'],
+    ['pets_safe', `${I('paw-print')}безопасно для животных`, 'safe'],
+    ['sap', `${I('triangle-alert')}едкий сок`, 'danger'],
+  ]],
+  ['Пробелы', [['gap', 'любой пробел', 'need'], ...Object.entries(GAPS).map(([k, t]) => [`gap:${k}`, t, 'need'])]],
+  ['Карточка', [['hidden', 'скрытые', ''], ['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
+];
 
 const row = (k, v, cls = '') => (v ? `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}</dd>` : '');
 function card(d) {
@@ -86,9 +129,9 @@ function card(d) {
     d.hint && `<h4>Подсказка в списке</h4><p>${esc(d.hint)}</p>`,
   ].filter(Boolean).join('');
   const search = [d.species, d.id, d.aka || '', d.cat].join(' ').toLowerCase();
-  return `<article class="card" id="${esc(d.id)}" data-cat="${esc(d.cat)}" data-gaps="${gaps.length ? 1 : 0}" data-pets="${pets}"${d.toxic ? ' data-sap="1"' : ''}${d.hidden ? ' data-hidden="1"' : ''} data-search="${esc(search)}">
-<header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.emoji)} ${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
-${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${g}</li>`).join('')}</ul>` : ''}
+  return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
+<header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
+${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}
 <dl>
 ${row('Свет', lux(d.lux))}
 ${row('Растёт в', `${esc(NAMES[d.type] || d.type)}${d.watering ? `, полив «${esc(NAMES[d.watering] || d.watering)}»` : ''}. Первая проверка через ${d.every} дн.`)}
@@ -110,124 +153,188 @@ ${row('Место', esc(d.spot || ''))}
 }
 
 function page() {
-  const cats = [...new Set(PLANTS.map((d) => d.cat))].sort((a, b) => (CAT_ORDER.indexOf(a) + 1 || 99) - (CAT_ORDER.indexOf(b) + 1 || 99));
   const n = (f) => PLANTS.filter(f).length;
   const real = n((d) => !d.generic);
-  const withGaps = n((d) => gapsOf(d).length);
   const date = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-  const chip = (attr, val, label, count) => `<button type="button" class="chip" data-f="${attr}" data-v="${esc(val)}" aria-pressed="false">${label} <span class="n">${count}</span></button>`;
-  const sections = cats.map((c) => {
+  // Filter chips, as in the app's «Фильтр» sheet: icon and word in the kind's color, a quiet count; only kinds that have cards.
+  const counts = {};
+  PLANTS.forEach((d) => keysOf(d).forEach((k) => { counts[k] = (counts[k] || 0) + 1; }));
+  const chip = (k, label, cls) => `<button type="button" class="st-chip ${cls}" data-k="${k}" aria-pressed="${!k}">${label} <span class="n">${k ? counts[k] : PLANTS.length}</span></button>`;
+  const sheet = FILTERS.map(([title, kinds]) => [title, kinds.filter(([k]) => counts[k])]).filter(([, kinds]) => kinds.length)
+    .map(([title, kinds]) => `<h3 class="filter-sec">${title}</h3><div class="st-filter" role="group" aria-label="${title}">${kinds.map(([k, label, cls]) => chip(k, label, cls)).join('')}</div>`).join('');
+  const sections = CATS.map((c, i) => {
     const list = PLANTS.filter((d) => d.cat === c);
-    return `<section class="cat" data-cat="${esc(c)}"><h2>${esc(c)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(card).join('\n')}</div></section>`;
+    return `<section class="cat"><h2><button type="button" class="cat-head" aria-expanded="true" aria-controls="cat-${i}"><span>${esc(c)} <span class="n">${list.length}</span></span>${I('chevron-right')}</button></h2><div class="grid" id="cat-${i}">${list.map(card).join('\n')}</div></section>`;
   }).join('\n');
+  const all = `все ${PLANTS.length} ${plural(PLANTS.length, 'карточка', 'карточки', 'карточек')}`;
   return `<title>Каталог Жунгли</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap">
 <style>
-/* Layout: the app's cream ground and Nunito; a filter bar, then groups of cards in one or two columns. */
+/* Layout: the app's cream ground and Nunito; search and «Фильтр» as on the Plants tab, then folding groups of cards. */
 :root {
-  --bg: #fff4e2; --card: #ffffff; --ink: #2a2118; --muted: #4a3b2e; --line: rgba(42, 33, 24, .14);
-  --chip: #f7e6c8; --chip-on: #0f4426; --on-chip-on: #ffffff;
-  --gap-bg: #ffe0c7; --gap-ink: #7a3200; --warn: #94003a;
+  --bg: #fff4e2; --card: #ffffff; --field: #ffffff; --sheet: #ffffff; --ink: #2a2118; --muted: #4a3b2e; --line: rgba(42, 33, 24, .14);
+  --chip: #f7e6c8; --gap-bg: #ffe0c7; --gap-ink: #7a3200; --warn: #94003a;
+  --st-need: #7a3200; --st-fine: #1a522e; --st-danger: #94003a; --st-grow: #004a4f;
   --font: Nunito, ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
   ${DRAW.light}
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1a1524; --card: #2a2338; --ink: #fff6ea; --muted: #efe5d8; --line: rgba(255, 246, 234, .16);
-    --chip: #3b3150; --chip-on: #a5ecc0; --on-chip-on: #1a1524;
-    --gap-bg: #4a3326; --gap-ink: #ffd27a; --warn: #ffccd6;
+    --bg: #1a1524; --card: #2a2338; --field: #2a2338; --sheet: #2a2338; --ink: #fff6ea; --muted: #efe5d8; --line: rgba(255, 246, 234, .16);
+    --chip: #3b3150; --gap-bg: #4a3326; --gap-ink: #ffd27a; --warn: #ffccd6;
+    --st-need: #ffb685; --st-fine: #83d8a3; --st-danger: #ffb2d0; --st-grow: #7fdcd6;
     ${DRAW.dark} color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1a1524; --card: #2a2338; --ink: #fff6ea; --muted: #efe5d8; --line: rgba(255, 246, 234, .16);
-  --chip: #3b3150; --chip-on: #a5ecc0; --on-chip-on: #1a1524;
-  --gap-bg: #4a3326; --gap-ink: #ffd27a; --warn: #ffccd6;
+  --bg: #1a1524; --card: #2a2338; --field: #2a2338; --sheet: #2a2338; --ink: #fff6ea; --muted: #efe5d8; --line: rgba(255, 246, 234, .16);
+  --chip: #3b3150; --gap-bg: #4a3326; --gap-ink: #ffd27a; --warn: #ffccd6;
+  --st-need: #ffb685; --st-fine: #83d8a3; --st-danger: #ffb2d0; --st-grow: #7fdcd6;
   ${DRAW.darkAttr} color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+button { font: inherit; color: inherit; cursor: pointer; }
 main { max-width: 1180px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 2rem; font-weight: 900; margin: 0 0 4px; text-wrap: balance; }
 .lead { color: var(--muted); margin: 0 0 20px; max-width: 65ch; }
-.bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
-.bar input, .bar select { font: inherit; font-size: 1rem; min-height: 44px; padding: 8px 14px; border-radius: 14px; border: 1px solid var(--edge); background: var(--card); color: var(--ink); width: 100%; max-width: 420px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { font: inherit; font-weight: 800; font-size: .94rem; min-height: 44px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--edge); background: var(--chip); color: var(--ink); cursor: pointer; white-space: nowrap; }
-.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--on-chip-on); border-color: var(--chip-on); }
-.chip .n, h2 .n { font-weight: 600; opacity: .85; font-variant-numeric: tabular-nums; }
-.chip:focus-visible, .bar input:focus-visible, .bar select:focus-visible, summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic { width: 1.15em; height: 1.15em; flex: none; vertical-align: -.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; max-width: 520px; }
+/* Search and «Фильтр»: the app's fields (.search, .pfilter in style.css) */
+.search, .pfilter { position: relative; }
+.search input { width: 100%; min-height: 52px; font: inherit; font-size: 1rem; padding: 8px 50px 8px 46px; border: 2px solid var(--edge); border-radius: 16px; background: var(--field); color: var(--ink); }
+.search input::placeholder { color: var(--muted); opacity: 1; }
+.search input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.search > .ic { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; color: var(--muted); pointer-events: none; }
+.search-x, .pfilter-x, .pfilter-end { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); }
+.search-x .ic, .pfilter-x .ic, .pfilter-end .ic { width: 22px; height: 22px; stroke-width: 2.5; }
+.pfilter-end { pointer-events: none; }
+.pfilter-open { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 8px 50px 8px 14px; text-align: left; border: 2px solid var(--edge); border-radius: 16px; background: var(--field); font-size: 1rem; }
+.pfilter-open > .ic { width: 22px; height: 22px; color: var(--muted); stroke-width: 2.2; margin-left: 1px; }
+.pfilter-t { line-height: 1.35; }
+.pfilter-t .k { color: var(--muted); font-weight: 700; }
+.pfilter-t .v { font-weight: 900; }
+.pfilter-t .v .ic { width: 18px; height: 18px; stroke-width: 2.4; vertical-align: -3px; margin-right: .25em; }
+.pfilter-t .v .n, .st-chip .n, .cat-head .n { font-size: .824rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pfilter.on .pfilter-open { border-color: var(--ink); }
 .shown { color: var(--muted); font-weight: 700; margin: 0; }
-.cat { margin-bottom: 36px; }
+/* The «Фильтр» sheet: a bottom sheet with chips in sections; one tap picks a chip and closes it */
+dialog { border: 0; padding: 0; width: 100%; max-width: 560px; max-height: 92dvh; margin: auto auto 0; border-radius: 32px 32px 0 0; background: var(--sheet); color: var(--ink); }
+dialog::backdrop { background: rgba(26, 21, 36, .35); }
+.sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 24px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.sheet-head h2 { font-size: 1.529rem; line-height: 1.15; margin: 0; }
+.sheet-x { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 2px solid var(--edge); border-radius: 50%; background: var(--chip); }
+.sheet-x .ic { width: 22px; height: 22px; stroke-width: 2.5; }
+.filter-sec { font-size: .94rem; font-weight: 900; margin: 20px 0 10px; color: var(--muted); }
+.st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-chip { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; font-size: .941rem; font-weight: 900; padding: 5px 14px 5px 10px; border-radius: 99px; border: 2px solid var(--edge); background: var(--field); color: var(--ink); white-space: nowrap; }
+.st-chip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+.st-chip[aria-pressed="true"] { border-color: currentColor; box-shadow: 0 0 0 1px currentColor; }
+:is(.st-chip, .pfilter-t .v).need { color: var(--st-need); }
+:is(.st-chip, .pfilter-t .v).safe { color: var(--st-fine); }
+:is(.st-chip, .pfilter-t .v).danger { color: var(--st-danger); }
+:is(.st-chip, .pfilter-t .v).way { color: var(--st-grow); }
+button:focus-visible, .search input:focus-visible, summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+/* Groups fold on their heading, with the app's chevron (as on folding settings rows) */
+.cat { margin-bottom: 28px; }
 h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
+.cat-head { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; font-weight: 900; text-align: left; }
+.cat-head .ic { width: 1em; height: 1em; color: var(--muted); transition: transform .15s; }
+.cat-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .cat-head .ic { transition: none; } }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr)); gap: 16px; align-items: start; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 18px; min-width: 0; scroll-margin-top: 16px; }
-.head { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
-.tile { flex: none; width: 76px; height: 76px; border-radius: 20px; display: grid; place-items: center; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 14px 18px 18px 14px; min-width: 0; scroll-margin-top: 16px; }
+.head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
+/* The picture as on a Plants grid card (.pcard .pic): a 3:4 pastel tile, the drawing low in it */
+.tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 .tile:has(> svg.v0) { background: var(--t0); } .tile:has(> svg.v1) { background: var(--t1); } .tile:has(> svg.v2) { background: var(--t2); }
 .tile:has(> svg.v3) { background: var(--t3); } .tile:has(> svg.v4) { background: var(--t4); } .tile:has(> svg.v5) { background: var(--t5); }
-.tile svg.pl { width: 84%; height: 84%; }
-.name { min-width: 0; }
+.tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }
+.name { min-width: 0; padding-top: 6px; }
 h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .id { font-family: ui-monospace, Menlo, monospace; font-size: .85rem; color: var(--muted); margin: 2px 0 0; }
-.flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
 .flags span { font-size: .82rem; font-weight: 800; padding: 1px 10px; border-radius: 99px; background: var(--chip); }
-.gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; }
+.gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
-dl { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 12px; margin: 0; }
+dl { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
 dt { font-weight: 800; color: var(--muted); font-size: .9rem; padding-top: 2px; }
 dd { margin: 0; min-width: 0; }
 dd.warn b { color: var(--warn); }
 dd.gap { color: var(--gap-ink); font-weight: 800; }
 .muted { color: var(--muted); }
-details { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+details { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; padding-left: 4px; }
 summary { cursor: pointer; font-weight: 800; color: var(--muted); min-height: 32px; display: flex; align-items: center; }
 details h4 { font-size: .95rem; margin: 12px 0 4px; }
 details p, details ul { margin: 0 0 6px; }
 details ul { padding-left: 1.2em; }
-@media (max-width: 480px) { dl { grid-template-columns: 1fr; gap: 0; } dd { margin-bottom: 8px; } }
+@media (max-width: 480px) { .tile { width: 96px; } dl { grid-template-columns: 1fr; gap: 0; } dd { margin-bottom: 8px; } }
 ${drawRules}
 </style>
+<svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
 <p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date} Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
-<input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">
-<select id="cat" aria-label="Группа"><option value="">Все группы</option>${cats.map((c) => `<option value="${esc(c)}">${esc(c)} (${n((d) => d.cat === c)})</option>`).join('')}</select>
-<div class="chips" role="group" aria-label="Отбор">${chip('gaps', '1', 'С пробелами', withGaps)}${chip('pets', 'toxic', 'Ядовиты для животных', n((d) => petsOf(d.pets) === 'toxic'))}${chip('sap', '1', 'Едкий сок', n((d) => d.toxic))}${chip('hidden', '1', 'Скрытые', n((d) => d.hidden))}</div>
+<div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
+<div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
 <p class="shown" id="shown" aria-live="polite"></p>
 </div>
 ${sections}
 </main>
+<dialog id="fsheet" aria-labelledby="fsheet-h"><div class="sheet-body">
+<div class="sheet-head"><h2 id="fsheet-h">Фильтр</h2><button type="button" class="sheet-x" id="f-close" aria-label="Закрыть">${I('x')}</button></div>
+<div class="st-filter" role="group" aria-label="Все карточки">${chip('', 'Все', '')}</div>
+${sheet}
+</div></dialog>
 <script>
 (() => {
-  const q = document.getElementById('q');
-  const chips = [...document.querySelectorAll('.chip')];
+  const $ = (id) => document.getElementById(id);
+  const q = $('q'), sheet = $('fsheet');
+  const chips = [...sheet.querySelectorAll('.st-chip')];
   const cards = [...document.querySelectorAll('.card')];
-  const shown = document.getElementById('shown');
-  const cat = document.getElementById('cat');
+  const ALL = ${JSON.stringify(all)};
+  let kind = '';
   function apply() {
     const text = q.value.trim().toLowerCase();
-    const on = chips.filter((c) => c.getAttribute('aria-pressed') === 'true');
     let count = 0;
     for (const el of cards) {
-      const ok = (!text || el.dataset.search.includes(text)) && (!cat.value || el.dataset.cat === cat.value) && on.every((c) => el.dataset[c.dataset.f] === c.dataset.v);
+      const ok = (!text || el.dataset.search.includes(text)) && (!kind || el.dataset.k.split(' ').includes(kind));
       el.hidden = !ok;
       if (ok) count++;
     }
     for (const s of document.querySelectorAll('.cat')) s.hidden = !s.querySelector('.card:not([hidden])');
-    shown.textContent = count === cards.length ? 'Показаны все: ' + count : 'Показано ' + count + ' из ' + cards.length;
+    $('q-x').hidden = !q.value;
+    $('shown').textContent = count === cards.length ? '' : 'Показано ' + count + ' из ' + cards.length;
   }
-  for (const c of chips) c.addEventListener('click', () => {
-    const was = c.getAttribute('aria-pressed') === 'true';
-    c.setAttribute('aria-pressed', String(!was));
+  function pick(k) {
+    kind = k;
+    for (const c of chips) c.setAttribute('aria-pressed', String(c.dataset.k === k));
+    const c = chips.find((x) => x.dataset.k === k);
+    $('f-value').innerHTML = k ? '<span class="v ' + c.className.replace('st-chip', '').trim() + '">' + c.innerHTML + '</span>' : ALL;
+    $('pfilter').classList.toggle('on', !!k);
+    $('f-x').hidden = !k;
+    $('f-end').hidden = !!k;
     apply();
-  });
+  }
+  $('f-open').addEventListener('click', () => sheet.showModal());
+  $('f-close').addEventListener('click', () => sheet.close());
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
+  sheet.addEventListener('close', () => $('f-open').focus());
+  for (const c of chips) c.addEventListener('click', () => { pick(c.dataset.k); sheet.close(); });
+  $('f-x').addEventListener('click', () => { pick(''); $('f-open').focus(); });
   q.addEventListener('input', apply);
-  cat.addEventListener('change', apply);
+  $('q-x').addEventListener('click', () => { q.value = ''; apply(); q.focus(); });
+  for (const b of document.querySelectorAll('.cat-head')) b.addEventListener('click', () => {
+    const open = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(open));
+    $(b.getAttribute('aria-controls')).hidden = !open;
+  });
   apply();
 })();
 </script>
