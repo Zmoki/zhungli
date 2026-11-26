@@ -87,7 +87,7 @@ const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
 function cardNowPreview(d) {
   const m = MEDIUM[d.type] || {};
   const way = [lc(NAMES[d.type] || d.type), m.pot && d.watering && d.watering !== 'top' ? lc(NAMES[d.watering] || d.watering) : ''].filter(Boolean).join(', ');
-  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
+  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, m.noChecks ? '' : `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
   return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
@@ -319,7 +319,7 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
-/* In «В каталоге»: some air under the band, the row centered in its column */
+/* In «В каталоге» and «В настройках растения»: some air under the band, the row centered in its column */
 .prev .pick { margin: 16px auto 4px; }
 .pick.card-now { border-color: var(--line); }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
