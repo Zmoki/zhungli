@@ -88,8 +88,8 @@ const SHAPE_BY_ID = {
   'alo-regal': 'arrow', 'alo-black': 'arrow', 'alo-cuc': 'arrow', 'alo-polly': 'arrow', 'alo-silver': 'arrow',
   'mon-del': 'split', 'mon-adan': 'trailing', 'phi-eru': 'heart', 'phi-birkin': 'heart', 'phi-congo': 'heart',
   'agl-siam': 'upright', 'agl-silver': 'upright', 'agl-pink': 'upright', 'dif-camille': 'upright', 'dif-gm': 'upright', spath: 'upright', zz: 'upright',
-  'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', 'ficus-genus': 'tree', raderm: 'tree', anth: 'flowering', coleus1: 'coleus', coleus2: 'coleus',
-  chamae: 'palm', rhapis: 'palm', strel1: 'palm', kolya: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
+  'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', 'ficus-genus': 'tree', raderm: 'tree', anth: 'flowering', coleus: 'coleus',
+  chamae: 'palm', rhapis: 'palm', strel: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
   // Where the name or growing medium would pick the wrong drawing.
   syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
   schlumbergera: 'trailing', kalanchoe: 'flowering',

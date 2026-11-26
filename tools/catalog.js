@@ -15,7 +15,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(`${read('plants.js')}\n${read('shapes.js')}\nthis.out = { PLANTS, CHECK_TEXT, plantSvg };`, ctx);
-// Hidden cards (`hidden: true`) are leftovers nobody can add any more: they stay in plants.js for old saved plants only.
+// Hidden cards (`hidden: true`) can't be added any more: they stay in plants.js only for saved plants, so they're left out.
 const PLANTS = ctx.out.PLANTS.filter((d) => !d.hidden);
 const { CHECK_TEXT, plantSvg } = ctx.out;
 

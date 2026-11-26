@@ -34,7 +34,7 @@ Record fields:
 | `remind` | Reminders turned on in «Обрезка»: `{ prune: { every, months } }`, days and months 1–12. See [Reminders](#reminders). |
 | `noBath` | «Нет» to «Звать в банный день?»: left out of «Банный день». |
 
-Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
+Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import. A record keeps `tone` too when its card's id changed (`migrateCardIds`), so its pot keeps its color.
 
 ### Changing the card
 
