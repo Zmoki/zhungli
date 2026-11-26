@@ -68,8 +68,8 @@ function setNote(id, key, text) {
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
 // «Полив» in «Уход»: not a folding row but always open, since «Полито сегодня» is used after about 1 in 5 card opens.
-// Its white card holds two marks (the last watering and the next check), the button (waterBox, redrawn on a watering),
-// then «Как поливаю» (wateringBox, redrawn alone so a tapped chip keeps focus). For a reservoir: the top-ups.
+// Its white card holds «Как поливаю» first (wateringBox, redrawn alone so a tapped chip keeps focus), then the button
+// and under it two marks, the last watering and the next check (waterBox, redrawn on a watering). For a reservoir: the top-ups.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
   if (g.noChecks) return whyNot('Поливать не нужно, корни в воде аквариума.');
@@ -78,8 +78,8 @@ function waterBox(p) {
   // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
   const done = p.lastWater === today();
   // The marks take focus after «Полито сегодня», which greys out (the card stays open).
-  return `<p class="wmarks" id="wmarks" tabindex="-1"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
-    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>`;
+  return `<button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>
+    <p class="wmarks" id="wmarks" tabindex="-1"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
@@ -108,7 +108,7 @@ function wateringBox(p, d) {
   // A bog way (a tray of standing water) only where the card or the plant uses it: it rots ordinary roots.
   const ways = Object.fromEntries(Object.entries(WATERING).filter(([k, w]) => !w.bog || k === p.watering || k === cardWatering(d)));
   const pot = MEDIA[p.type].pot;
-  return `<div class="field" role="group" aria-labelledby="lbl-watering" aria-describedby="watering-hint" id="watering-field"><label id="lbl-watering">Как поливаю</label>
+  return `<div class="field" role="group" aria-labelledby="lbl-watering" aria-describedby="watering-hint" id="watering-field"><span class="sr-only" id="lbl-watering">Как поливаю</span>
     <div class="chips">${wayChips(p, 'watering', ways, pot ? p.watering || 'top' : '', !pot)}</div>${whyNot(pot ? '' : waterWhyNot(p), 'watering-why')}</div>
     <div class="field" id="watering-note">${wateringNote(p, d)}</div>`;
 }
@@ -675,7 +675,7 @@ function settingsHtml(id, p, ls, spots) {
     ${setGroup('care', 'Уход',
     row('way', `<div id="way-box">${mediumBox(p, def(id))}</div>`)
     + `<div class="srow water-row"><div class="water-head"><span class="srow-t">Полив</span></div>
-      <div class="srow-body"><div id="water-box">${waterBox(p)}</div><div class="watering-in" id="watering-box">${wateringBox(p, def(id))}</div></div></div>`
+      <div class="srow-body"><div class="watering-in" id="watering-box">${wateringBox(p, def(id))}</div><div id="water-box">${waterBox(p)}</div></div></div>`
     + row('every', `<div class="field" role="group" aria-labelledby="lbl-int" aria-describedby="int-hint" id="int-field">${intBox(p)}</div>`)
     + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)

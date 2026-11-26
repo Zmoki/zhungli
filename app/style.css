@@ -513,8 +513,9 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* «Полив» on top of «Уход»: a plain block (title, two marks, the button), not a folding row */
 .water-row { padding: 0; }
 .water-head { display: flex; align-items: center; min-height: 60px; padding: 14px 20px; }
-.water-row .watering-in { margin-top: 22px; }
-/* «Как поливаю» ends the white card: its note only when there is one («Сверху» has none) */
+.water-row .watering-in { margin-bottom: 20px; }
+.water-row .water-now { margin: 0 0 12px; }
+/* «Как поливаю» opens the white card (no label: the block is «Полив»): its note only when there is one («Сверху» has none) */
 .water-row #watering-field { margin-bottom: 0; }
 .water-row #watering-note { margin: 12px 0 0; }
 .water-row #watering-note:empty, .water-row #watering-note:not(:has(*)) { display: none; }
