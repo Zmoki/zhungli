@@ -642,7 +642,7 @@ function cardNow(d) {
 }
 // The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their
 // ids, so each handler still redraws its own part (feedBox, rinseBox, mediumBox…). «Уход» goes in the order care is
-// thought about: what it grows in, watering (its marks, «Полито сегодня», how it's watered), checks, rinse, feeding, pruning.
+// thought about: what it grows in, watering (how it's watered, «Полито сегодня», the next check), checks, rinse, feeding, pruning.
 function settingsHtml(id, p, ls, spots) {
   const v = rowValues(p);
   // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
