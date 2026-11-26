@@ -72,13 +72,11 @@ const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
 // As kLux in core.js: «15 тыс».
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
-// The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a 3:4 tile with the pets badge
-// (shown in the app with «Дома есть кошка или собака» on), the name and one line: `alt`, then the hint.
+// The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a 3:4 tile, the name and one line:
+// `alt`, then the hint.
 function pickPreview(d) {
-  const p = petsOf(d.pets);
-  const badge = p ? `<span class="badge ${p === 'toxic' ? 'danger' : 'safe'}">${I(p === 'toxic' ? 'paw-toxic' : 'paw-print')}</span>` : '';
   const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe tall">${plantSvg(d, 'fine')}${badge}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe tall">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
@@ -331,12 +329,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick .pt small { color: var(--muted); font-size: .824rem; line-height: 1.5; }
 .pick .pc { color: var(--muted); flex: none; display: inline-flex; }
 .pick .pc .ic { width: 22px; height: 22px; stroke-width: 2.5; }
-.pick .pe.tall { width: 54px; height: 72px; position: relative; place-items: end center; }
+.pick .pe.tall { width: 54px; height: 72px; place-items: end center; }
 .pick .pe.tall svg.pl { width: 50px; height: 50px; margin-bottom: 6px; }
-/* The pets badge as on grid cards (.badge in style.css): an icon in a white circle */
-.badge { position: absolute; right: 3px; bottom: 3px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--field); box-shadow: 0 1px 6px rgba(0, 0, 0, .16); }
-.badge .ic { width: 14px; height: 14px; stroke-width: 2.6; }
-.badge.danger { color: var(--st-danger); } .badge.safe { color: var(--st-fine); }
 :is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
 :is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }

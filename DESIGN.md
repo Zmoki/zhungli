@@ -41,7 +41,7 @@ Three words, used the same in the UI, code and docs:
 | Word | In Russian texts | What it is | Where | Class |
 |---|---|---|---|---|
 | **tag** | метка | an icon and a word about the plant | the plant card's row under the quote (tap for a bubble) | `.tag`; the Light tab's colored word is `.light-tag` |
-| **badge** | значок | an icon only, in a white circle | grid cards and catalog rows, over the picture | `.badge` |
+| **badge** | значок | an icon only, in a white circle | grid cards, over the picture | `.badge` |
 | **chip** | — | a choice you press | «Да» / «Нет», places, filters | `.chip`, `.st-chip` (the Plants «Фильтр» sheet) |
 
 Each kind of tag has its own hue, the same on tags, badges and filter chips (the kind is a class: `.need`, `.danger`, `.greenhouse`…). Every tag with its word, icon, color and bubble is in [TAGS.md](TAGS.md). Toxic and safe for pets differ by shape too: the paw on «опасно» is turned the other way.

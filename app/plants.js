@@ -122,7 +122,7 @@ const PLANTS = [
   },
   // Genus cards: for people who know the plant but not its variety. Care that holds for the whole genus.
   {
-    id: 'alocasia', species: 'Алоказия', cat: 'Ароидные', humid: true, emoji: '🐘', toxic: true, hint: 'если сорт неизвестен',
+    id: 'alocasia', species: 'Алоказия', cat: 'Ароидные', humid: true, emoji: '🐘', toxic: true,
     alt: 'слоновье ухо',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
@@ -277,7 +277,7 @@ const PLANTS = [
     quips: ['Я крепкий парень из Конго.', 'Протрите мне листья, и я заблестю.', 'Не заливайте, я не болото.'],
   },
   {
-    id: 'aglaonema', species: 'Аглаонема', cat: 'Ароидные', emoji: '🍃', toxic: true, hint: 'если сорт неизвестен',
+    id: 'aglaonema', species: 'Аглаонема', cat: 'Ароидные', emoji: '🍃', toxic: true,
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'aglaonema, китайский вечнозелёный, chinese evergreen, silver queen, силвер квин, maria, мария, suzy, jubilee, silver bay, lady valentine, crete, black lance',
     lux: [4000, 12000], every: 7, type: 'soil',
@@ -344,7 +344,7 @@ const PLANTS = [
     quips: ['Вечером я складываю листья. Это не обида, это йога.', 'Не пересушивайте меня, прошу.', 'Сквозняк мне враг. Увлажнитель мне друг.'],
   },
   {
-    id: 'dieffenbachia', species: 'Диффенбахия', cat: 'Ароидные', emoji: '🪴', toxic: true, hint: 'если сорт неизвестен',
+    id: 'dieffenbachia', species: 'Диффенбахия', cat: 'Ароидные', emoji: '🪴', toxic: true,
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Оголившийся ствол можно срезать до 15 см, растение отрастёт ниже среза.' },
     aka: 'dieffenbachia, seguine, пятнистая, maculata, амёна, amoena, tropic snow, tiki, compacta, camouflage, star bright, snow flake',
@@ -381,7 +381,7 @@ const PLANTS = [
     quips: ['Вся магия в том, что я без фитиля.', 'Зелёная магия работает от умеренного полива.', 'Моя религия: дренаж.'],
   },
   {
-    id: 'ficus-genus', species: 'Фикус', cat: 'Пальмы, драцены и деревья', emoji: '🪴', toxic: 'skin', hint: 'если вид неизвестен',
+    id: 'ficus-genus', species: 'Фикус', cat: 'Пальмы, драцены и деревья', emoji: '🪴', toxic: 'skin',
     settle: 'После покупки или перестановки фикус может сбросить часть листьев. Обычно это проходит за несколько недель, если место светлое и его больше не менять.',
     pets: 'toxic', petsNote: 'Раздражение желудка и кожи.',
     prune: { tip: 'Регулярная обрезка не нужна, только для размера и формы. Резать над листом, без пенька, в перчатках: сок раздражает кожу.' },
