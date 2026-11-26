@@ -114,7 +114,7 @@ const FILTERS = [
 // A row: what the app shows, and an optional hint line under it (as in a settings row).
 const row = (k, v, hint = '', cls = '') => (v || hint ? `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}${hint ? `<span class="hint">${hint}</span>` : ''}</dd>` : '');
 // A block of rows under a band, named as in the app; empty blocks are left out.
-const block = (title, rows) => (rows.trim() ? `<section class="blk"><h4>${title}</h4><dl>${rows}</dl></section>` : '');
+const block = (title, rows, cls) => (rows.trim() ? `<section class="blk ${cls}"><h4>${title}</h4><dl>${rows}</dl></section>` : '');
 function card(d) {
   const pets = petsOf(d.pets);
   const gaps = gapsOf(d);
@@ -144,14 +144,13 @@ function card(d) {
     row('Важно', esc(d.tip)),
     ...(d.ways ? Object.entries(d.ways).map(([k, w]) => row(`Если в «${esc(NAMES[k] || k)}»`, [w.water && `Как поливать: ${esc(w.water)}`, w.soil && `Грунт: ${esc(w.soil)}`].filter(Boolean).join(' '))) : []),
   ].join('');
-  // Tags under the name, tasks and the plant's own words.
+  // Tags under the name and tasks.
   const tags = [
     row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'Нет данных.', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
     row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
     row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
     row('Комната', d.humid ? 'в подсказке о влажном воздухе' : ''),
-    row('Реплики', `<ul>${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul>`),
   ].join('');
   const catalog = [
     row('Группа', esc(d.cat)),
@@ -161,7 +160,8 @@ function card(d) {
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
-<div class="blks">${block('Настройки', settings)}${block('Заметки', notes)}${block('Метки, задачи, реплики', tags)}${block('Только в каталоге', catalog)}</div>
+<div class="blks"><div class="col">${block('Настройки', settings, 'b-set')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section>${block('Только в каталоге', catalog, 'b-cat')}</div>
+<div class="col">${block('Заметки', notes, 'b-notes')}</div><div class="col">${block('Метки и задачи', tags, 'b-tags')}</div></div>
 </article>`;
 }
 
@@ -283,6 +283,12 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 /* Blocks of a card, named as in the app, each under a beige band like a settings group */
 .blk { margin-top: 14px; min-width: 0; }
+/* Phone: one column in reading order; wide screens: «Настройки», «Реплики» and «Только в каталоге» share the first column */
+.blks { display: flex; flex-direction: column; }
+.col { display: contents; }
+.b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; } .b-cat { order: 5; }
+.quips { margin: 0; padding-left: 1.3em; }
+.quips li + li { margin-top: 4px; }
 /* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
 @media (min-width: 900px) {
   .card { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; padding: 18px; }
@@ -291,6 +297,7 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .head .tile { width: 100%; }
   .name { padding-top: 0; }
   .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   .blk { margin-top: 0; }
   /* Narrow columns: each label above its text, so the text gets the whole width */
   .blks dl { grid-template-columns: 1fr; gap: 0; }
