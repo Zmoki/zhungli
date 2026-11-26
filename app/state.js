@@ -16,7 +16,8 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // 'none'; feedTip: added to a reservoir's watering tip; care: a recurring bonus task, careHint: its line in the hint;
 // first: comes first among checks; noChecks: never checked;
 // organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents);
-// badge: [icon, words] shown on the plant's picture for a way that isn't an ordinary pot (also for WATERING);
+// badge: [icon, words]: the way's tag in the plant card, badge on grid cards and Plants filter chip (also for WATERING;
+// all but «Сверху» have one); tagHint: the tag bubble's text instead of `hint`;
 // watering: the medium's usual watering when it isn't from above (clay pebbles stand on a reservoir).
 // Only WATERING: fixed: the plant waters itself (drip irrigation): checks look at the system, their interval
 // is the person's pick from `picks` (days) and doesn't learn, and a check doesn't make the plant «напоено»;
@@ -24,28 +25,28 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // soilCheck: the soil is checked as for watering from above, so the card's check question still fits.
 // bog: only for bog plants (a Venus flytrap stands in water): offered only where the card or the plant has it.
 const MEDIA = {
-  soil: { name: 'Грунт', pot: true, feed: 'day', organic: true,
+  soil: { name: 'Обычный грунт', pot: true, badge: ['shovel', 'в грунте'], feed: 'day', organic: true,
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
     water: 'Когда подсохнет верхний слой, обильно. Лишнюю воду из поддона слить.',
     soil: 'Универсальный грунт, горшок с дренажным отверстием.' },
-  dry: { name: 'Грунт для суккулентов', pot: true, feed: 'none', organic: true,
+  dry: { name: 'Грунт для суккулентов', pot: true, badge: ['droplet-off', 'в грунте для суккулентов'], feed: 'none', organic: true,
     hint: 'Позову, когда грунт должен почти совсем просохнуть.',
     water: 'Только когда грунт просох почти до дна, затем обильно. Зимой совсем редко.',
     soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
-  sphagnum: { name: 'Сфагнум', pot: true, feed: 'day', first: true, organic: true,
+  sphagnum: { name: 'Мох сфагнум', pot: true, badge: ['leaf', 'в сфагнуме'], feed: 'day', first: true, organic: true,
     hint: 'Позову проверить, подсох ли сфагнум.',
     water: 'Когда сфагнум внутри подсох. Совсем не пересушивать.',
     soil: 'Живой или сухой сфагнум, не утрамбовывать.' },
   // Orchids on bark are fed weakly and regularly (orchid facts ORC-COND-49, 50): on «День подкормки», a half dose.
-  bark: { name: 'Кора', pot: true, feed: 'day', organic: true, labels: ['Полито', 'Ещё рано'],
+  bark: { name: 'Кора', pot: true, badge: ['layers', 'в коре'], feed: 'day', organic: true, labels: ['Полито', 'Ещё рано'],
     hint: 'Позову проверить, подсохла ли кора и посеребрели ли корни.',
     water: 'Когда кора почти сухая и корни серебристые: пролить насквозь или погрузить в воду, потом дать стечь. Воду из кашпо слить.',
     soil: 'Крупная кора, прозрачный горшок с отверстиями.' },
-  coco: { name: 'Кокос', pot: true, feed: 'day', organic: true,
+  coco: { name: 'Кокос', pot: true, badge: ['tree-palm', 'в кокосе'], feed: 'day', organic: true,
     hint: 'Позову проверить, подсох ли верхний слой.',
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый грунт или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
-  mineral: { name: 'Минеральный', pot: true, feed: 'each', badge: ['mountain', 'на минералке'], start: (b) => Math.max(2, Math.round(b * 0.7)),
+  mineral: { name: 'Минеральная смесь', pot: true, feed: 'each', badge: ['mountain', 'в минеральной смеси'], start: (b) => Math.max(2, Math.round(b * 0.7)),
     care: { kind: 'leach', every: 30, task: 'Промойте смесь', done: 'Промыто', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
     hint: 'Пон, пемза, цеолит и другие минеральные смеси. Позову проверить, подсохла ли смесь.', careHint: 'Раз в месяц напомню промыть смесь от солей.',
     water: 'Когда подсох верхний слой: минеральная смесь сохнет быстрее грунта. В каждый полив добавлять удобрение в слабой дозе: своего питания в смеси нет.',
@@ -62,9 +63,9 @@ const MEDIA = {
     hint: 'Напомню сменить воду.',
     water: 'Доливать до уровня, воду комнатной температуры менять раз в 1–2 недели. Раз в месяц можно удобрение в четверть дозы. Черенкам, пока нет корней, не нужно.',
     soil: 'Банка или ваза с водой, в воде только корни и низ стебля. Если появилась слизь или запах, промыть банку и корни.' },
-  mount: { name: 'На блоке, корни на воздухе', feed: 'none', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
+  mount: { name: 'На блоке', feed: 'none', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
     task: 'Замочите или сбрызните корни, если они посеребрели', verb: 'Замочите или сбрызните', start: () => 3, max: 14,
-    hint: 'На блоке всё сохнет быстро, поэтому позову проверять часто.',
+    hint: 'Корни на воздухе: всё сохнет быстро, поэтому позову проверять часто.',
     water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели. Летом бывает и каждый день. Раз в месяц добавлять в воду удобрение в четверть дозы.',
     soil: 'Блок из коры, коряги или пробки, корни открыты воздуху. Нужна высокая влажность воздуха рядом с растением.' },
   terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, badge: ['flask-round', 'в террариуме'], labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
@@ -79,7 +80,8 @@ const MEDIA = {
 };
 const WATERING = {
   top: { name: 'Сверху' },
-  bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон',
+  bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон', badge: ['arrow-up-from-line', 'полив снизу'],
+    tagHint: 'Горшок в поддон с водой на полчаса, остаток слить.',
     water: 'Поставить горшок в поддон или миску с водой на полчаса, остаток воды слить. Раз в несколько месяцев полить сверху обильно, чтобы вымыть соли.' },
   wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: () => 7, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
@@ -468,9 +470,9 @@ function lightStatus(p) {
 
 // Light status words, the same in the plant card, the cards grid and the Light tab.
 const LIGHT_WORDS = { low: 'темновато', high: 'ярковато', ok: 'отлично' };
-// Face and word per state, from most to least urgent (also the order of the filter chips).
-// Each has its own color: check orange, too dark plum, too bright sun, watered blue, fine green.
-const STATES = { need: ['frown', 'суховато'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], watered: ['laugh', 'напоено'], fine: ['smile', 'хорошо'] };
+// Face and word per state, in the order of the plant card's tags and the filter chips (water, then light, then fine).
+// Each has its own color: check orange, watered blue, too dark plum, too bright sun, fine green.
+const STATES = { need: ['frown', 'суховато'], watered: ['laugh', 'напоено'], dim: ['meh', LIGHT_WORDS.low], hot: ['annoyed', LIGHT_WORDS.high], fine: ['smile', 'хорошо'] };
 // Every state a plant is in now: watering (need / watered) plus light (dim / hot); «fine» when none.
 // A plant nobody has answered about yet isn't called dry on its first check day: we don't know yet.
 function states(p) {
@@ -490,8 +492,6 @@ function mood(p, st = states(p)) {
 }
 // The word for a state on one plant: a reservoir is «пустовато», a plant in water «мутновато».
 const stateWord = (k, p) => (k === 'need' && wayOf(p).need) || STATES[k][1];
-// Status badges (faces) on grid cards, the word for screen readers; the plant card has them as tags with words (tagsOf).
-const stateBadges = (p, st = states(p)) => st.map((k) => `<span class="badge ${k}">${I(STATES[k][0])}<span class="sr-only">${stateWord(k, p)}</span></span>`).join('');
 
 // The first «20–25 °C» in the card's conditions, plus its floor: «не ниже 16 °C» if given, else the range's low end.
 function tempRange(p) {

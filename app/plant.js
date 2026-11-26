@@ -324,8 +324,7 @@ function heroPhotoChanged(id) {
   btn.parentElement.innerHTML = heroActs(id);
 }
 
-// Tags under the quote: danger first (sap, toxic to pets, quarantine), then the status, safe for pets, greenhouse, rest
-// and how it grows. Each is a button: a tap opens a bubble with what it means (toggleTag). Keys are the `tag` values
+// Tags under the quote, every one listed in TAGS.md. Each is a button: a tap opens a bubble with what it means (toggleTag). Keys are the `tag` values
 // of `plant_tag_opened`, the same as `plants_filtered`'s `status` where both have it. Facts that were here before
 // (interval, light, temperature, medium) are in the settings rows and in «Заметки».
 const fullStop = (t) => (/[.!?]$/.test(t) ? t : `${t}.`);
@@ -335,19 +334,21 @@ function tagsOf(p) {
   const tag = (key, cls, icon, word, title, text, sr = '') => out.push({ key, cls, icon, word, title, text, sr });
   const next = g.noChecks ? '' : ` Следующая проверка ${esc(rel(p.nextCheck))}.`;
   const lux = p.lux ? `Здесь ${kLux(p.lux)} ${LK}, а нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}.` : '';
-  if (p.toxic) tag('sap', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
-  if (pets === 'toxic') tag('pets', 'danger', 'paw-toxic', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
-  if (isNew(p)) tag('new', 'danger', 'biohazard', 'на карантине', `На карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}`,
-    `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
+  // The plant (how it is now, rest, how it grows, greenhouse), then safety (the pet paw, sap, quarantine): the grid's left
+  // and right badge columns, bottom up. See TAGS.md.
   states(p).forEach((k) => {
     const word = stateWord(k, p);
     const text = { need: fullStop(esc(waterTask(p))), watered: next.trim(), dim: lux, hot: lux, fine: fineText(p) }[k];
     tag(k, k, STATES[k][0], word, upFirst(word), text);
   });
-  if (pets === 'safe') tag('pets_safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
-  if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
   if (resting(p)) tag('rest', 'rest', 'moon', 'отдыхает', `Покой с ${dayMonth(p.resting.since)}`, upFirst(`${restDoes(p)}без подкормки.`));
-  growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k); tag(k, 'way', icon, word, upFirst(word), (MEDIA[k] || WATERING[k]).hint || ''); });
+  growTags(p, 2).forEach((k) => { const [icon, word] = growBadge(k), w = MEDIA[k] || WATERING[k]; tag(k, 'way', icon, word, upFirst(word), w.tagHint || w.hint || ''); });
+  if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
+  if (pets === 'toxic') tag('pets', 'danger', 'paw-toxic', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
+  if (pets === 'safe') tag('pets_safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
+  if (p.toxic) tag('sap', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
+  if (isNew(p)) tag('new', 'danger', 'biohazard', 'на карантине', `На карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}`,
+    `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
   return out;
 }
 // «хорошо»: no watering due and the light is fine. On a first check day before any answer the plant isn't called dry
