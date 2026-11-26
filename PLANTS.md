@@ -53,6 +53,8 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 |---|---|---|---|
 | `soil` грунт | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
 | `dry` грунт для суккулентов | dry almost to the bottom? | «Полито» / «Ещё влажно» | «День подкормки», monthly by default, cactus fertilizer (`feedNote`, HOUSE-MEDIA-19) |
+| `bark_mix` рыхлая смесь с корой | almost dry? | «Полито» / «Ещё влажно» | «День подкормки» (HOUSE-MEDIA-39); monstera, epipremnum and philodendron cards |
+| `peat` торф без удобрений | starting to dry on top? | «Полито» / «Ещё влажно» | none (HOUSE-MEDIA-43); flytrap and sundew cards |
 | `sphagnum` сфагнум | dried inside? (phalaenopsis: on top) | «Полито» / «Ещё влажно» | «День подкормки» |
 | `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | «День подкормки»; orchid cards add «половинная доза» (`feedNote`, ORC-COND-49) |
 | `coco` кокос | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
@@ -63,11 +65,12 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | `terrarium` закрытый террариум | moss dry, no drops on the glass? (from 60 days, up to 180; HOUSE-HYDRO-31) | «Сбрызнуто» / «Ещё влажно» | none (none in the first year, HYDRO-33) |
 | `aquarium` аквариум | none: never due | — | none; «Осмотрите корни в аквариуме» every 30 days |
 
-`soil`, `dry`, `sphagnum`, `bark`, `coco`, `mineral` and `leca` are in a pot, so they also have a watering:
+`soil`, `dry`, `bark_mix`, `peat`, `sphagnum`, `bark`, `coco`, `mineral` and `leca` are in a pot, so they also have a watering:
 
 | Watering | Check | Buttons |
 |---|---|---|
 | `top` сверху | the medium's | the medium's |
+| `soak` погружением | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Погрузите горшок в воду», no minutes: until air bubbles stop (HOUSE-WATER-19, 20) |
 | `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон», and after 3 waterings since the last one from above «Полейте сверху до стока» to wash out salts (`flushFromAbove`; that watering gets `top: 1` in `hist`; HOUSE-WATER-16) |
 | `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато»; on a card without `wickTested` (all but the violet) a quiet line says only violets are tested on a wick (HOUSE-SELFW-08) |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
@@ -86,6 +89,7 @@ Picking another way than the card's:
 - The card's `check` is dropped, except between watering from above and from below (both check the soil). Its «Как поливаю» tip gives way to the new way's. With another medium, «Субстрат» does too. The rest of the card stays.
 - The card's interval is kept in `soilInterval` and comes back with the card's way. A wick or a reservoir starts by the plant's light (`tankStart`): 7 days from 2000 lx, 14 at 600 lx and less, in between by a line, from its reading, else the card's lowest lux; a reading before any answer moves the first check. That's from one trial (HOUSE-SELFW-19), so an estimate. Water starts at 7 days, a block at 3, a terrarium at 60, drip irrigation at 14 and a mineral medium at 0.7 of the card's interval (both estimates: no source gives them, HOUSE-SELFW-29, HYDRO-09).
 - Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 2 weeks (in inert media the plant is fed with the water from the start, HOUSE-HYDRO-13).
+- Since v180 the monstera, epipremnum and philodendron cards are on `bark_mix` and the flytrap and sundew on `peat`. Plants of those cards whose «В чём растёт» was picked as «Обычный грунт» (the card's old medium) moved with the card once (`migrateNewMedia`, `S.newMedia`).
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
 - Own edits of the tips that no longer fit («Как поливать», and «Грунт» with another medium) become notes, so nothing typed is lost.
 - The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.

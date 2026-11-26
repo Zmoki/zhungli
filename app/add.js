@@ -349,8 +349,8 @@ const IMPORT_PROMPT = `Составьте список моих растений
 - name: имя, если оно есть у растения, иначе ""
 - room: комната, где стоит, если она упоминалась (например "Кухня"), иначе ""
 - spot: место в комнате: подоконник, полка, стол и т. п., если оно упоминалось, иначе ""
-- type: в чём растёт, только если это сказано в чате, иначе "". Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов), "sphagnum" (сфагнум), "bark" (кора), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
-- watering: как поливают, только если это сказано в чате, иначе "". Варианты: "top" (сверху), "bottom" (снизу, через поддон), "wick" (фитиль), "reservoir" (резервуар в горшке, кашпо с автополивом), "drip" (капельный автополив)
+- type: в чём растёт, только если это сказано в чате, иначе "". Варианты: "soil" (грунт), "dry" (грунт для суккулентов и кактусов), "bark_mix" (рыхлая смесь грунта с корой и перлитом, «aroid mix»), "peat" (торф без удобрений, для хищных растений), "sphagnum" (сфагнум), "bark" (кора), "coco" (кокос), "mineral" (пон, пемза, цеолит), "leca" (керамзит), "water" (в воде), "mount" (на блоке, корни на воздухе), "terrarium" (закрытый террариум), "aquarium" (корни в аквариуме)
+- watering: как поливают, только если это сказано в чате, иначе "". Варианты: "top" (сверху), "soak" (погружением, горшок в воду), "bottom" (снизу, через поддон), "wick" (фитиль), "reservoir" (резервуар в горшке, кашпо с автополивом), "drip" (капельный автополив)
 - like: на что похоже по уходу. Варианты: "easy" (неприхотливое лиственное), "humid" (тропическое влаголюбивое), "succulent" (суккулент), "cactus" (кактус), "flowering" (цветущее), "orchid" (орхидея), "herbs" (травы и рассада)
 - guess: true, если вид определён по фото и вы не уверены, иначе false
 
@@ -429,6 +429,12 @@ function importType(x) {
   // Specific substrates first: «пон, полугидропоника» is pon on a reservoir, not clay pebbles.
   if (/mineral|pumice|zeolit|\bpon\b|минерал|пемз|цеолит|(^|[^а-я])пон([^а-я]|$)/.test(t)) return 'mineral';
   if (/coco|кокос/.test(t)) return 'coco';
+  // Before bark: soil mixed with bark («смесь с корой», «aroid mix») is the mix; an orchid's bark mix stays bark, and
+  // soil with perlite only stays soil. Peat alone («торф», «верховой торф», «peat moss») is the
+  // carnivores' unfed peat; peat-based soil («торфяной грунт», «peat-based potting mix») is ordinary soil.
+  if (/aroid|chunky|mix|смес|ароид/.test(t) && /bark|(^|[^а-я])кор(а|ы|е|у|ой)([^а-я]|$)/.test(t) && !/orchid|орхид/.test(t)) return 'bark_mix';
+  if (/aroid|chunky|ароид/.test(t)) return 'bark_mix';
+  if (/peat|торф/.test(t)) return /грунт|земл|soil|compost|potting|based|mix|смес|универс/.test(t) ? 'soil' : 'peat';
   if (/leca|clay|hydro|semi|керамз|гидро/.test(t)) return 'leca';
   if (/succ|cact|dry|сух|сукк|какт/.test(t)) return 'dry';
   if (/bark|orchid|кор|орхид/.test(t)) return 'bark';
@@ -444,6 +450,7 @@ function importWatering(x, type) {
   if (/drip|irrigat|капел|таймер|timer/.test(t)) return 'drip';
   if (/reserv|резерв|автопол|self.?water|semi|hydro|гидро/.test(t)) return 'reservoir';
   if (/bottom|снизу|через поддон/.test(t)) return 'bottom';
+  if (/soak|immers|dunk|погруж|окуна|замач/.test(t)) return 'soak';
   return String(x || '').trim() ? 'top' : '';
 }
 // The generic type a plant is like, for plants the catalog doesn't have.

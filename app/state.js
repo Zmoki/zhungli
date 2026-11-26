@@ -39,6 +39,18 @@ const MEDIA = {
     hint: 'Позову, когда грунт должен почти совсем просохнуть.',
     water: 'Только когда грунт просох почти до дна, затем обильно. Зимой совсем редко.',
     soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
+  // Aroids and other epiphytes in a loose mix of soil, orchid bark and perlite or grit (RHS for monstera and epipremnum,
+  // NParks, the Cornell mix; content facts HOUSE-MEDIA-39): between soil and bark in water, let almost dry, fed as soil.
+  bark_mix: { name: 'Рыхлая смесь с корой', pot: true, badge: ['blend', 'в смеси с корой'], feed: 'day', organic: true,
+    hint: 'Позову проверить, почти ли просохла смесь.',
+    water: 'Когда смесь почти просохла, обильно, до стока. Воду из поддона слить.',
+    soil: 'Грунт, кора для орхидей и перлит или гравий, например 3 части грунта, по 1 части коры и перлита.' },
+  // Bog carnivores (flytrap, sundew, sarracenia): sphagnum peat without lime or fertilizer, often with quartz sand or
+  // perlite, never fed through it, the opposite of ordinary soil (HOUSE-MEDIA-43).
+  peat: { name: 'Торф без удобрений', pot: true, badge: ['brick-wall', 'в торфе'], feed: 'none', organic: true,
+    hint: 'Позову проверить, не подсыхает ли торф: пересыхать ему нельзя.',
+    water: 'Держать торф всё время влажным. Удобрение в торф не вносить.',
+    soil: 'Верховой торф без извести и удобрений, часто с кварцевым песком или перлитом.' },
   sphagnum: { name: 'Мох сфагнум', pot: true, badge: ['leaf', 'в сфагнуме'], feed: 'day', first: true, organic: true,
     hint: 'Позову проверить, подсох ли сфагнум.',
     water: 'Когда сфагнум внутри подсох. Совсем не пересушивать.',
@@ -98,6 +110,12 @@ const MEDIA = {
 const tankStart = (b, lux) => (Number.isFinite(lux) ? Math.round(clamp(14 - ((lux - 600) / 1400) * 7, 7, 14)) : 7);
 const WATERING = {
   top: { name: 'Сверху' },
+  // Soaking the pot, then letting it drain: for orchids in bark on par with watering from above, and how a dried-out
+  // root ball is rescued; held until air bubbles stop or the top is damp, no source gives minutes (HOUSE-WATER-19, 20).
+  soak: { name: 'Погружением', soilCheck: true, verb: 'Погрузите горшок в воду', badge: ['waves', 'полив погружением'],
+    hint: 'Позову, когда пора проверить. Поливать, опуская горшок в воду.',
+    tagHint: 'Горшок в воду, пока не перестанут подниматься пузырьки, потом дать стечь.',
+    water: 'Опустить горшок в таз или ведро с водой и держать, пока не перестанут подниматься пузырьки воздуха. Потом дать воде стечь, воду из кашпо слить.' },
   // Salts build up in the top layer when watered from below: about every 4th watering goes from above until water
   // drains out (Purdue for African violets, content facts HOUSE-WATER-16); the task says so then (flushFromAbove).
   bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон', badge: ['arrow-up-from-line', 'полив снизу'],
@@ -313,7 +331,8 @@ function prepare(raw) {
   if (raw && !raw.v) migrateV1(s);
   if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
   if (raw && (raw.v || 1) < 4) migrateV3(s);
-  if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; } // new users have nothing to catch up on
+  if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; s.newMedia = true; } // new users have nothing to catch up on
+  migrateNewMedia(s);
   s.v = 4;
   // A personal «don't feed» from the first collection's notes (own.noFeed) had no setting to undo it: it becomes
   // «Не кормлю» in «Подкормка», where it shows and can be changed.
@@ -335,6 +354,15 @@ function prepare(raw) {
   return s;
 }
 
+// v180: some cards moved off «Обычный грунт» to the new media. A plant whose «В чём растёт» was picked as the card's
+// old one (`medium: 'soil'`) follows the card, as it did, so the card's own tips still apply. Once: `newMedia`.
+// Runs from `let S = load()` while this file still loads: the map is inside, a const below wouldn't exist yet.
+function migrateNewMedia(s) {
+  if (s.newMedia) return;
+  const cards = { 'mon-del': 'bark_mix', 'mon-adan': 'bark_mix', pothos: 'bark_mix', 'phi-eru': 'bark_mix', 'phi-birkin': 'bark_mix', 'phi-congo': 'bark_mix', dionaea: 'peat', drosera: 'peat' };
+  Object.values(s.plants).forEach((r) => { if (r.medium === 'soil' && cards[r.def]) r.medium = cards[r.def]; });
+  s.newMedia = true;
+}
 // v1: the collection was created automatically from the personal catalog.
 // Personal notes move into plant data so the catalog can be generic.
 function migrateV1(s) {

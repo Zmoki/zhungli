@@ -46,6 +46,8 @@ Every way of growing but «Сверху» has a tag. The data is `badge: [icon, 
 |---|---|---|---|
 | `soil` | «В чём растёт» (`MEDIA`) | в грунте | shovel |
 | `dry` | «В чём растёт» (`MEDIA`) | в грунте для суккулентов | droplet-off |
+| `bark_mix` | «В чём растёт» (`MEDIA`) | в смеси с корой | blend |
+| `peat` | «В чём растёт» (`MEDIA`) | в торфе | brick-wall |
 | `sphagnum` | «В чём растёт» (`MEDIA`) | в сфагнуме | leaf |
 | `bark` | «В чём растёт» (`MEDIA`) | в коре | layers |
 | `coco` | «В чём растёт» (`MEDIA`) | в кокосе | tree-palm |
@@ -55,6 +57,7 @@ Every way of growing but «Сверху» has a tag. The data is `badge: [icon, 
 | `mount` | «В чём растёт» (`MEDIA`) | на блоке | tree-deciduous |
 | `terrarium` | «В чём растёт» (`MEDIA`) | в террариуме | flask-round |
 | `aquarium` | «В чём растёт» (`MEDIA`) | в аквариуме | fish |
+| `soak` | «Как поливаю» (`WATERING`) | полив погружением | waves |
 | `bottom` | «Как поливаю» (`WATERING`) | полив снизу | arrow-up-from-line |
 | `wick` | «Как поливаю» (`WATERING`) | на фитиле | cable |
 | `reservoir` | «Как поливаю» (`WATERING`) | с резервуаром | cylinder |
