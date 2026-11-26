@@ -223,8 +223,13 @@ function careOf(d, r) {
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
 // A check written as an instruction (imported from an AI chat) is shown as is.
-// Watered from below, about every 4th watering goes from above (see `bottom`): counted by the waterings in the history.
-const flushFromAbove = (p) => p.watering === 'bottom' && (p.hist || []).filter((h) => h.a === 'water').length % 4 === 3;
+// Watered from below, about every 4th watering goes from above (see `bottom`): after 3 waterings since the last one
+// from above (marked `top` in the history when it was answered), or 3 in all if there's none yet.
+function flushFromAbove(p) {
+  if (p.watering !== 'bottom') return false;
+  const h = p.hist || [], last = h.findIndex((x) => x.top);
+  return (last < 0 ? h : h.slice(0, last)).filter((x) => x.a === 'water').length >= 3;
+}
 function waterTask(p) {
   const g = wayOf(p);
   const own = p.check && p.check !== CHECK_TEXT[p.type] ? p.check : '';
@@ -679,7 +684,7 @@ function snapshot() {
 function actWater(id, silent) {
   const r = S.plants[id], d = def(id), t = today();
   if (wayOf(plant(id)).fixed) { actSystem(id, false, silent); return; }
-  const was = checkState(r);
+  const was = checkState(r), top = flushFromAbove(plant(id));
   if (r.lastWater && r.lastWater !== t) {
     const measured = diff(r.lastWater, t);
     // After "still wet" answers, the real interval is about the measured one.
@@ -692,7 +697,7 @@ function actWater(id, silent) {
   r.lastWater = t;
   r.wet = 0;
   r.nextCheck = addDays(t, Math.max(1, Math.round(r.interval)));
-  hist(r, 'water', answerSet(r, was));
+  hist(r, 'water', { ...answerSet(r, was), ...(top ? { top: 1 } : {}) });
   if (!silent) logToday({ id, a: 'water' });
 }
 
