@@ -309,6 +309,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
+/* In «В каталоге»: some air under the band, the row centered in its column */
+.prev .pick { margin: 16px auto 4px; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
