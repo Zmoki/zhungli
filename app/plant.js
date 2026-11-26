@@ -378,7 +378,7 @@ function tagsOf(p) {
   if (p.greenhouse) tag('greenhouse', 'greenhouse', 'house-heart', 'в теплице', 'В теплице', 'Каждый день позову проветрить.');
   if (pets === 'toxic') tag('pets', 'danger', 'paw-toxic', 'опасно', 'Ядовито для кошек и собак', `${p.petsNote ? esc(p.petsNote) + ' ' : ''}Если питомец погрыз растение, сразу позвоните в ветеринарную клинику.`, ' для питомцев');
   if (pets === 'safe') tag('pets_safe', 'safe', 'paw-print', 'безопасно', 'Безопасно для кошек и собак', 'По базе ASPCA.', ' для питомцев');
-  if (p.toxic) tag('sap', 'danger', 'hand', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
+  if (p.toxic) tag('sap', 'danger', 'triangle-alert', 'едкий сок', 'Едкий сок', `Сок раздражает кожу${p.toxic === 'skin' ? '' : ' и слизистые'}. Работайте в перчатках.`);
   if (isNew(p)) tag('new', 'danger', 'biohazard', 'на карантине', `На карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}`,
     `Держите отдельно, раз в неделю позову осмотреть.${settling(p) ? ` До ${dayMonth(addDays(p.bought, SETTLE_DAYS))} привыкает: не переставлять, не обрезать, не пересаживать.` : ''}`);
   return out;

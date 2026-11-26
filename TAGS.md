@@ -33,7 +33,7 @@ Two groups, the same order in the plant card, the Plants filter and the grid's b
 | 8 | plant | `greenhouse` | в теплице | house-heart | fuchsia `--st-gh` | greenhouse on | «В теплице»: daily airing |
 | 9 | safety | `pets` | опасно (screen readers: «опасно для питомцев») | paw-toxic | red `--st-danger` | pets on, toxic for cats and dogs per ASPCA | «Ядовито для кошек и собак»: the card's pets note, then call a vet |
 | 10 | safety | `pets_safe` | безопасно (screen readers: «безопасно для питомцев») | paw-print | green | pets on, safe per ASPCA | «Безопасно для кошек и собак»: «По базе ASPCA.» |
-| 11 | safety | `sap` | едкий сок | hand | red | the catalog card has `toxic` | «Едкий сок»: sap hurts skin (and mucous membranes), work in gloves |
+| 11 | safety | `sap` | едкий сок | triangle-alert | red | the catalog card has `toxic` | «Едкий сок»: sap hurts skin (and mucous membranes), work in gloves |
 | 12 | safety | `new` | на карантине | biohazard | red | bought less than `NEW_DAYS` ago | «На карантине до …»: keep apart; while settling, also don't move, prune or repot |
 
 `need` and `watered` never show together, nor `dim` and `hot`. The pot's face on a grid card is one of 1–5: a due check first, then wrong light, then the rest (`mood()`).
