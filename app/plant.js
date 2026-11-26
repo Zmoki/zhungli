@@ -631,6 +631,8 @@ function openPlant(id, tabKey, rows) {
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
 }
+// The light word next to a reading, as on the Light tab.
+const luxState = (ls) => (ls ? `<span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '');
 // «Карточка ухода» open: the card itself, as a catalog row shows it (picture, name, light), plus how often it's checked
 // and what it grows in. Not a control: a quiet border.
 function cardNow(d) {
@@ -662,10 +664,11 @@ function settingsHtml(id, p, ls, spots) {
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
           <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div>`)
+    // As a row on the Light tab (lightRow): «?» while empty, «лк» by the field, the light word beside it, then what's needed.
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
-          <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-hint">
-          ${ls ? `<p class="mt-6 small"><span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}
-          <p class="mt-6 small muted" id="lux-hint">Нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}. Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
+          <div class="lux-read"><input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="?" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-need lux-hint"><span class="unit" aria-hidden="true">лк</span><span class="lux-state" id="card-lux-state">${luxState(ls)}</span></div>
+          <p class="mt-8 small" id="lux-need">Нужно ${kNum(p.luxRange[0])}–\u2060${kNum(p.luxRange[1])}\u00a0тыс люксов</p>
+          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
     + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse, false, '', 'gh-hint')}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
@@ -934,6 +937,7 @@ document.addEventListener('change', (e) => {
   }
   save();
   if (sheet.open && ['lux', 'name', 'species'].includes(f)) heroChanged(id);
+  if (f === 'lux' && $('#card-lux-state')) $('#card-lux-state').innerHTML = luxState(lightStatus(plant(id)));
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
