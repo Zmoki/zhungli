@@ -67,20 +67,19 @@ function setNote(id, key, text) {
 }
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
-// Watering block in the plant card: last watering, next check and the button; for a reservoir, the top-ups.
-// «Полив», on top of «Уход» in «Настройки»: not a folding row but always open, since «Полито сегодня» is used after
-// about 1 in 5 card opens. Two marks (the last watering and the next check), then the button.
+// «Полив» in «Уход»: a folding row that opens by default (OPEN_ROWS), since «Полито сегодня» is used after about 1 in 5
+// card opens; closed, it says when the next check is.
+// Its white card holds «Как поливаю» first (wateringBox, redrawn alone so a tapped chip keeps focus), then the button
+// and under it, centered as under «Подкормка»'s, the next check as on the plant's grid card (waterBox, redrawn on a
+// watering; the last one is in «История»). For a reservoir: the top-ups.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
-  const head = '<div class="water-head"><span class="srow-t">Полив</span></div>';
-  if (g.noChecks) return `${head}<div class="srow-body">${whyNot('Поливать не нужно, корни в воде аквариума.')}</div>`;
-  const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
-  const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
+  if (g.noChecks) return whyNot('Поливать не нужно, корни в воде аквариума.');
   // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
   const done = p.lastWater === today();
-  // The marks take focus after «Полито сегодня», which greys out (the card stays open).
-  return `${head}<div class="srow-body"><p class="wmarks" id="wmarks" tabindex="-1"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>
-    <button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button></div>`;
+  // The line takes focus after «Полито сегодня», which greys out (the card stays open).
+  return `<button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>
+    <p class="wnext" id="wnext" tabindex="-1">${nextCheckHtml(p)}</p>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
@@ -98,21 +97,23 @@ function feedWhyNot(p) {
   return `Для растений ${WHERE[p.type] || 'с таким грунтом'} день подкормки не назначаю.`;
 }
 const waterWhyNot = (p) => `Растение ${WHERE[p.type]}, не в горшке: способ полива не выбирается.`;
-// «Как растёт» in the plant card: the medium with the repotting switch under it, for a pot how it's
-// watered, and what that means. All options are chips, nothing hidden in a dropdown.
-function wayBox(p, d) {
+// «В чём растёт» (its own row in «Уход») and «Как поливаю» (in «Полив», for a pot): every option is a chip, nothing hidden
+// in a dropdown. Each has its own note under it, redrawn alone on a change, so the tapped chip keeps focus.
+const wayChips = (p, field, list, value, off = false) => Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}"${off ? ' disabled' : ''}>${x.name}</button>`).join('');
+// The row's title says «В чём растёт», so the chips' label is for screen readers only.
+const mediumBox = (p, d) => `<div class="field" role="group" aria-labelledby="lbl-medium" aria-describedby="medium-hint"><span class="sr-only" id="lbl-medium">В чём растёт</span>
+    <div class="chips">${wayChips(p, 'medium', MEDIA, p.type)}</div></div>
+    <div class="field" id="medium-note">${mediumNote(p, d)}</div>`;
+function wateringBox(p, d) {
   // A bog way (a tray of standing water) only where the card or the plant uses it: it rots ordinary roots.
   const ways = Object.fromEntries(Object.entries(WATERING).filter(([k, w]) => !w.bog || k === p.watering || k === cardWatering(d)));
-  const chips = (field, label, list, value, attrs = '', off = false, after = '') => `<div class="field" role="group" aria-labelledby="lbl-${field}" aria-describedby="way-hint"${attrs}>
-    <label id="lbl-${field}">${label}</label><div class="chips">
-    ${Object.entries(list).map(([k, x]) => `<button class="chip ${value === k ? 'on' : ''}" data-act="way-${field}" data-id="${esc(p.id)}" data-way="${k}" aria-pressed="${value === k}"${off ? ' disabled' : ''}>${x.name}</button>`).join('')}</div>${after}</div>`;
   const pot = MEDIA[p.type].pot;
-  return `${chips('medium', 'В чём растёт', MEDIA, p.type)}
-    ${chips('watering', 'Как поливаю', ways, pot ? p.watering || 'top' : '', ' id="watering-field"', !pot, whyNot(pot ? '' : waterWhyNot(p), 'watering-why'))}
-    <div class="field" id="way-note">${wayNote(p, d)}</div>`;
+  return `<div class="field" role="group" aria-labelledby="lbl-watering" aria-describedby="watering-hint" id="watering-field"><span class="sr-only" id="lbl-watering">Как поливаю</span>
+    <div class="chips">${wayChips(p, 'watering', ways, pot ? p.watering || 'top' : '', !pot)}</div>${whyNot(pot ? '' : waterWhyNot(p), 'watering-why')}</div>
+    <div class="field" id="watering-note">${wateringNote(p, d)}</div>`;
 }
-// «Недавно пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
-// «Да» / «Нет» for a row whose title is the question («Недавно купили»): chips, like every other choice.
+// «Пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
+// «Да» / «Нет»: chips, like every other choice, always under their question (askYesNo).
 const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
   const sel = (v === '1') === on;
   return `<button class="chip ${sel ? 'on' : ''}" data-act="yes-no" data-field="${field}" data-id="${esc(id)}"${kind ? ` data-kind="${kind}"` : ''} data-v="${v}" aria-pressed="${sel}"${dis ? ' disabled' : ''}>${v === '1' ? 'Да' : 'Нет'}</button>`;
@@ -121,23 +122,35 @@ const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
 // `hint`: the id of the line under it that says what the current answer does.
 const askYesNo = (q, field, id, on, dis = false, kind = '', hint = '') => `<div class="yn" role="group" aria-labelledby="q-${field}${kind}"${hint ? ` aria-describedby="${hint}"` : ''}><p class="yn-q" id="q-${field}${kind}">${q}</p>
   <div class="chips">${yesNo(field, id, on, dis, kind)}</div></div>`;
-const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Недавно пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
+const repotBox = (p) => `<div class="field" id="repot-field">${askYesNo('Недавно пересадили?', 'repotted', p.id, !!repotted(p), !feedsOnDay(p), '', 'repot-hint')}
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and warnings by the content facts: succulents and cacti rot in steady moisture; standing
 // in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25: the tray reaches other plants only by import); a wick
 // is a tested permanent watering only for African violets (SELFW-08). Redrawn alone on a change, so the tapped chip keeps focus.
 const warnBox = (text) => `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>${text}</div>`;
-const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
+const SUCC_WET = 'Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.';
+// Under «В чём растёт»: the medium's hint (unless a watering way has its own, which says what's checked), its care
+// reminder and how it's fed; the succulent warning when the medium itself is wet.
+function mediumNote(p, d) {
+  const M = MEDIA[p.type], W = MEDIA[p.type].pot && p.watering !== 'top' ? WATERING[p.watering] : null;
+  const hint = [W && W.hint ? '' : M.hint, M.careHint, FEED_WITH[M.feed] ? `Удобрение добавляйте ${FEED_WITH[M.feed]}, на день подкормки звать не буду.` : ''].filter(Boolean).join(' ');
+  return `<p class="small muted m-0" id="medium-hint">${esc(hint)}</p>${d.type === 'dry' && M.wet ? warnBox(SUCC_WET) : ''}`;
+}
+// Under «Как поливаю»: the watering's hint, the wick line, and the warnings that come from the watering.
+function wateringNote(p, d) {
+  const M = MEDIA[p.type], W = M.pot && p.watering !== 'top' ? WATERING[p.watering] : null;
+  return `${W && W.hint ? `<p class="small muted m-0" id="watering-hint">${esc(W.hint)}</p>` : ''}
   ${p.watering === 'wick' && !d.wickTested ? '<p class="small muted way-more">Постоянно на фитиле проверены только фиалки. Для других растений данных нет: первые недели следите за листьями.</p>' : ''}
-  ${d.type === 'dry' && wayOf(p).wet ? warnBox('Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.') : ''}
+  ${d.type === 'dry' && W && W.wet && !M.wet ? warnBox(SUCC_WET) : ''}
   ${p.watering === 'tray' && cardWatering(d) !== 'tray' ? warnBox('Постоянно стоять в воде могут только хищные растения и циперус. У остальных корни задыхаются и гниют.') : ''}`;
+}
 // Under each yes-no question: what the current answer does, so trying «Да» and «Нет» shows how each works.
 // Repotting only matters for plants called on «День подкормки»; for the rest it's greyed out, with why.
 const hintLines = (...lines) => lines.filter(Boolean).map((l) => `<p>${l}</p>`).join('');
 function repotHint(p) {
   if (!feedsOnDay(p)) return hintLines('Влияет только на подкормку, а у этого растения дня подкормки нет.');
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом станет «Нет» само.`);
-  return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно купили.' : 'Подкормка как обычно.');
+  return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно приобрели.' : 'Подкормка как обычно.');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
 // Redrawn alone; the tapped chip or answer gets focus back.
@@ -146,7 +159,7 @@ function feedBox(p) {
   const chip = ([d, label]) => `<button class="chip ${!off && n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${!off && n === d}"${dis}>${label}</button>`;
   const when = off ? '' : !n ? 'Не позову на «День подкормки».'
     : feedDue(p) ? 'Позову в «Если есть силы» сегодня.'
-      : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
+      : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, приобрели или оно отдыхает.'
         : winterNow() && !p.lamp ? 'Позову в марте.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
   // «Weakly and regularly» is the orchid facts' advice; a card fed rarely by default (zamioculcas) doesn't get it.
@@ -155,10 +168,24 @@ function feedBox(p) {
   const help = !off && p.feedNote ? `<p class="mt-12 small muted">${esc(p.feedNote)}${regular}</p>` : '';
   return `${off ? whyNot(feedWhyNot(p)) : ''}<div class="field" role="group" aria-labelledby="lbl-feed" aria-describedby="feed-when"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p>${help}</div>
-    <div class="field">${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && n && !off), !(n && !off), '', 'lamp-hint')}
-      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : !n ? 'Сначала выберите, как часто кормить.' : p.lamp ? `Зимой позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой не зову: без лампы растение почти не растёт.'}</p></div>
     <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
     ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
+}
+// «Лампа», under «Свет»: «Зимой стоит под лампой?». It's about where the plant stands; what it changes is winter feeding.
+// Greyed out, with why, when the plant isn't called on «День подкормки» (as «Пересажено»).
+function lampBox(p) {
+  const n = feedEvery(p), off = !feedsOnDay(p) || !n;
+  const hint = !feedsOnDay(p) ? 'Влияет только на подкормку, а у этого растения дня подкормки нет.'
+    : !n ? 'Влияет только на подкормку, а она выключена в «Подкормке».'
+      : p.lamp ? `Зимой позову на подкормку ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой на подкормку не зову: без лампы растение почти не растёт.';
+  return `${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && !off), off, '', 'lamp-hint')}
+    <p class="mt-6 small muted" id="lamp-hint">${hint}</p>`;
+}
+// Feeding changed: its box, and «Лампа», which depends on it.
+function feedChanged(p) {
+  $('#feed-box').innerHTML = feedBox(p);
+  const lamp = $('#lamp-field');
+  if (lamp) lamp.innerHTML = lampBox(p);
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -195,7 +222,7 @@ function endRest(id) {
 }
 const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${parse(p.resting.since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</b>${p.rest ? esc(p.rest.tip) : ''}
   <button class="mt-12 btn ok wide" data-act="rest-end" data-id="${esc(p.id)}">${I('sprout')}${esc(p.rest ? p.rest.end : 'Снова растёт')}</button></div>`;
-// «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
+// «Новое»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   if (!isNew(p)) return hintLines('Обычный уход, без карантина.');
@@ -210,7 +237,7 @@ const ghHint = (on) => hintLines(on ? 'Каждый день позову про
 const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 // Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
 // A run may cross the new year («ноябрь–февраль»): the list starts after a month that's off.
-function monthsText(ms) {
+function monthsText(ms, names = MONTHS) {
   const on = new Set(ms), runs = [];
   if (on.size === 12) return 'весь год';
   const start = [...Array(12).keys()].map((i) => i + 1).find((m) => !on.has(m));
@@ -219,7 +246,7 @@ function monthsText(ms) {
     if (!on.has(m)) continue;
     if (last && last[last.length - 1] % 12 === m - 1) last.push(m); else runs.push([m]);
   }
-  return runs.flatMap((r) => (r.length >= 3 ? [`${MONTHS[r[0] - 1]}–${MONTHS[r[r.length - 1] - 1]}`] : r.map((m) => MONTHS[m - 1]))).join(', ');
+  return runs.flatMap((r) => (r.length >= 3 ? [`${names[r[0] - 1]}–${names[r[r.length - 1] - 1]}`] : r.map((m) => names[m - 1]))).join(', ');
 }
 // The same months inside a sentence: «в марте или апреле» (once a year: any one of them), «с мая по сентябрь».
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -524,50 +551,64 @@ function pickCardTab(k, focus) {
 
 // The plant's «Настройки»: four groups of folding rows. Each row shows its current value (rowValues) and opens on
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
-let openRows = new Set(), openRowsFor = null;
+// Rows open when a plant's card opens: «Полив», whose button is used most. Closing it lasts until the card closes.
+const OPEN_ROWS = ['water'];
+let openRows = new Set(OPEN_ROWS), openRowsFor = null;
 // How feeding goes now, as feedDue decides: the schedule (monthly in winter under a lamp), then why it waits: rest,
 // a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
 // waits until March.
 const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 || m > 9; };
+// Closed row values use three-letter months without a dot («24 дек», «апр–авг»), so they stay short; screen readers
+// hear the full ones. A date takes the genitive («10 мая»), a range the nominative («май»).
+const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const MONTHS_SHORT_GEN = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const shortened = (short, full) => `<span aria-hidden="true">${short}</span><span class="sr-only">${full}</span>`;
+const shortDay = (iso) => { const d = parse(iso); return shortened(`${d.getDate()}\u00a0${MONTHS_SHORT_GEN[d.getMonth()]}`, dayMonth(iso)); };
+// A row value of several parts: each kept whole, so a long one wraps only after a comma («раз в 2 недели, / зимой пауза»).
+const vParts = (parts) => parts.filter(Boolean).map((x) => `<span class="vp">${x}</span>`).join(', ');
 function feedValue(p) {
   const n = feedEvery(p);
   if (!n) return 'не кормлю';
   const every = winterNow() && p.lamp && n < 30 ? 'зимой раз в месяц' : FEED_WORDS[n];
   const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
   const pause = resting(p) ? 'пауза, пока в покое'
-    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${dayMonth(until)}`)
+    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до\u00a0${shortDay(until)}`)
       : winterNow() && !p.lamp ? 'зимой пауза' : '';
-  return [every, p.lamp ? 'под лампой' : '', pause].filter(Boolean).join(', ');
+  return vParts([every, pause]);
 }
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
-  const prune = remindOf(r, 'prune'), n = bathEvery(), g = wayOf(p), iv = Math.round(p.interval), place = [S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean);
+  const prune = remindOf(r, 'prune'), n = bathEvery(), g = wayOf(p), iv = Math.round(p.interval), place = [roomOf(p).name, p.spot].filter(Boolean);
   const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : FEED_WITH[MEDIA[p.type].feed] || 'нет дня подкормки';
   const rinseOff = p.type === 'water' ? 'соли уходят с водой' : MEDIA[p.type].care ? 'своя промывка' : p.distilled ? 'не нужна' : 'нельзя';
   return {
     name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
     card: isCustom(p.id) ? ['своё растение', true] : [esc(def(p.id).species), false],
-    place: place.length ? [place.map(typedHtml).join(', '), false] : ['не выбрано', true],
+    // The room always; a spot not picked yet stays a grey «место не выбрано» after it.
+    place: [vParts(p.spot ? place.map(typedHtml) : [typedHtml(roomOf(p).name), '<i class="off-part">место не выбрано</i>']), false],
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
+    // Only feeding notices the lamp: without a feeding day it's grey, as «Пересажено».
+    lamp: !fed || !feedEvery(p) ? ['не влияет', true] : [p.lamp ? 'под лампой' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
-    way: [`${MEDIA[p.type].name.toLowerCase()}${pot ? ', ' + (WATERING[p.watering] || WATERING.top).name.toLowerCase() : ''}`, false],
+    way: [MEDIA[p.type].name.toLowerCase(), false],
+    // Closed «Полив»: when the next check is, «через 7 дней» (a drip system's too); an aquarium is never watered.
+    water: g.noChecks ? ['не нужен', true] : [esc(rel(p.nextCheck)).replace(/(\d) /g, '$1\u00a0'), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
-    prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
+    prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
-    repot: !fed ? ['не влияет', true] : [repotted(p) ? `без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
-    rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
+    // «да, на карантине до 7 янв»: one phrase, wrapping as text; «до 7 янв» stays together.
+    bought: [isNew(p) ? `да, на карантине до\u00a0${shortDay(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до\u00a0${shortDay(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    rest: resting(p) ? [`с ${shortDay(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
-const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'Как растёт',
-  feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
-// Rows whose open body doesn't show their value keep it in the head: the card's name (it doesn't change while open).
-const KEEP_VALUE = new Set(['card']);
+const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт', water: 'Полив',
+  lamp: 'Лампа', feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Новое', repot: 'Пересажено', rest: 'Покой' };
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
-  return `<div class="srow" id="sr-${key}"><button class="srow-head${KEEP_VALUE.has(key) ? ' keep-v' : ''}" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
+  return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
     <span class="srow-t">${ROW_TITLES[key]}</span><span class="srow-v${off ? ' off' : ''}" id="srv-${key}">${v}</span>${I('chevron-right')}</button>
     <div class="srow-body" id="srb-${key}" role="region" aria-labelledby="srh-${key}"${open ? '' : ' hidden'}>${body}</div></div>`;
 }
@@ -581,7 +622,7 @@ function refreshRows() {
   keepTapped();
 }
 // A tap can change rows above it: another row's value gets longer and wraps («пауза до 21 декабря» in a closed
-// «Подкормка» after «Недавно купили: Да»). The sheet scrolls by as much, so the tapped control stays under the finger.
+// «Подкормка» after «Новое: Да»). The sheet scrolls by as much, so the tapped control stays under the finger.
 // A handler may draw the control anew, so it's found again by its data attributes.
 let tapped = null;
 const TAP_KEYS = ['act', 'field', 'kind', 'v', 'n', 'm', 'way', 'row', 'spot', 'room'];
@@ -615,48 +656,62 @@ function openPlant(id, tabKey, rows) {
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
-  if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
+  // A card opened anew starts with the default rows; a redraw of the open card (a photo, a change of card) keeps them.
+  if (openRowsFor !== id || rows || !sheet.open) { openRows = new Set([...OPEN_ROWS, ...(rows || [])]); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
 }
+// The light word next to a reading, as on the Light tab.
+const luxState = (ls) => (ls ? `<span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '');
+// «Карточка ухода» open: the card itself, as a catalog row shows it (picture, name, light), plus how often it's checked
+// and what it grows in. Not a control: a quiet border.
+function cardNow(d) {
+  const way = [MEDIA[d.type] ? MEDIA[d.type].name.toLowerCase() : '', cardWatering(d) && cardWatering(d) !== 'top' ? WATERING[cardWatering(d)].name.toLowerCase() : ''].filter(Boolean).join(', ');
+  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`, `проверка раз в ~${days(d.every)}`, way].filter(Boolean).join(' · ');
+  return `<div class="pick card-now"><span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div>`;
+}
 // The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their
-// ids, so each handler still redraws its own part (feedBox, rinseBox, wayBox…).
+// ids, so each handler still redraws its own part (feedBox, rinseBox, mediumBox…). «Уход» goes in the order care is
+// thought about: what it grows in, watering (how it's watered, «Полито сегодня», the next check), checks, rinse, feeding, pruning.
 function settingsHtml(id, p, ls, spots) {
   const v = rowValues(p);
   // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
-  const opened = openRowsFor === id ? openRows : new Set();
+  const opened = openRowsFor === id ? openRows : new Set(OPEN_ROWS);
   const row = (key, body) => setRow(key, body, v, opened);
   return `${setGroup('plant', 'Растение',
     row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
         <div class="field"><label for="f-species">Вид, сорт</label><input class="input" id="f-species" data-field="species" data-id="${esc(id)}" value="${esc(p.species)}" placeholder="${esc(def(id).species)}" maxlength="80">
           ${S.plants[id].species ? `<p class="mt-6 small muted">В каталоге: ${esc(def(id).species)}. Сотрите поле, чтобы вернуть.</p>` : ''}</div>`)
-    + row('card', isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="btn primary wide" disabled>${I('arrow-left-right')}Сменить карточку</button>`
+    + row('card', cardNow(def(id)) + (isCustom(id) ? `${whyNot('Своё растение: уход подобран под него, карточки из каталога у него нет.')}<button class="btn primary wide" disabled>${I('arrow-left-right')}Сменить карточку</button>`
       : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и полив. При смене карточки имя, фото, заметки и история останутся.</p>
-          <button class="btn primary wide" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`))}
+          <button class="btn primary wide" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`)))}
     ${setGroup('where', 'Где живёт',
-    row('place', `${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
-          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}" aria-pressed="${roomOf(p) === rm}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
-        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot"${S.rooms.length > 1 ? '' : ' class="sr-only"'}>${S.rooms.length > 1 ? 'Где стоит' : 'Место'}</label><div class="chips" id="spot-chips">
+    // The room shows even when there's only one, so people see rooms exist (they're added in «Комната»).
+    row('place', `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
+          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}" aria-pressed="${roomOf(p) === rm}">${typedHtml(rm.name)}</button>`).join('')}</div></div>
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips" id="spot-chips">
           ${spots.map((sp) => spotChip(id, sp, p.spot === sp)).join('')}
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
           <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div>`)
+    // As a row on the Light tab (lightRow): a question mark while empty, «лк» by the field, the light word beside it, then the need.
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
-          <input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="Люкс" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-hint">
-          ${ls ? `<p class="mt-6 small"><span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span></p>` : ''}
-          <p class="mt-6 small muted" id="lux-hint">Нужно ${kLux(p.luxRange[0])}–${kLux(p.luxRange[1])} ${LK}. Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
+          <div class="lux-read"><input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="?" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-need lux-hint"><span class="unit" aria-hidden="true">лк</span><span class="lux-state" id="card-lux-state">${luxState(ls)}</span></div>
+          <p class="mt-8 small" id="lux-need">Нужно ${kNum(p.luxRange[0])}–\u2060${kNum(p.luxRange[1])}\u00a0тыс люксов</p>
+          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
+    + row('lamp', `<div class="field" id="lamp-field">${lampBox(p)}</div>`)
     + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse, false, '', 'gh-hint')}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
-    `<div class="srow water-row" id="water-box">${waterBox(p)}</div>`
+    row('way', `<div id="way-box">${mediumBox(p, def(id))}</div>`)
+    + row('water', `<div class="watering-in" id="watering-box">${wateringBox(p, def(id))}</div><div id="water-box">${waterBox(p)}</div>`)
     + row('every', `<div class="field" role="group" aria-labelledby="lbl-int" aria-describedby="int-hint" id="int-field">${intBox(p)}</div>`)
-    + row('way', `<div id="way-box">${wayBox(p, def(id))}</div>`)
+    + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
-    + row('prune', remindBody(id, 'prune'))
-    + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`))}
+    + row('prune', remindBody(id, 'prune')))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Недавно купили" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
+    row('bought', `<div class="field" id="bought-field">${askYesNo('Недавно приобрели?', 'bought', id, isNew(p), false, '', 'new-hint')}
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', restRowBody(p)))}
@@ -861,13 +916,14 @@ function changeWay(id, f, value) {
   const pot = MEDIA[p.type].pot;
   document.querySelectorAll('[data-act="way-watering"]').forEach((c) => { c.disabled = !pot; });
   $('#watering-why').outerHTML = whyNot(pot ? '' : waterWhyNot(p), 'watering-why');
-  $('#way-note').innerHTML = wayNote(p, d);
+  $('#medium-note').innerHTML = mediumNote(p, d);
+  $('#watering-note').innerHTML = wateringNote(p, d);
   $('#water-box').innerHTML = waterBox(p);
   $('#int-field').innerHTML = intBox(p);
   $('#rinse-wrap').innerHTML = rinseBox(p);
-  $('#feed-box').innerHTML = feedBox(p);
+  feedChanged(p);
   refreshTags(p);
-  // «Недавно пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
+  // «Пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
   const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
   if (res.settle) {
     // Only plants called on «День подкормки» notice it.
@@ -912,6 +968,7 @@ document.addEventListener('change', (e) => {
   }
   save();
   if (sheet.open && ['lux', 'name', 'species'].includes(f)) heroChanged(id);
+  if (f === 'lux' && $('#card-lux-state')) $('#card-lux-state').innerHTML = luxState(lightStatus(plant(id)));
   if (f === 'lux' && tab === 'light' && !sheet.open) {
     // Update only the row and tips so focus isn't lost while typing.
     const row = document.getElementById('lux-' + id);
@@ -953,19 +1010,19 @@ Object.assign(ACTS, {
   'feed-every'(el, id) {
     const n = Number(el.dataset.n);
     S.plants[id].feedEvery = n; save();
-    $('#feed-box').innerHTML = feedBox(plant(id));
+    feedChanged(plant(id));
     $(`[data-act="feed-every"][data-n="${n}"]`).focus();
     track('plant_setting_feed_schedule_changed', { every: n });
   },
   'feed-done'(el, id) {
     const undo = snapshot();
     feedDone(id); save();
-    $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
+    feedChanged(plant(id)); refreshHistory(id);
     $('#feed-box .last-done')?.focus();
     track('care_feed_logged');
     toast('Подкормка записана 🍽️', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
+      if (sheet.open && cardFor === id && $('#feed-box')) { feedChanged(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
     });
   },
   // The way out of rest in the box above the tabs (the row in «Сейчас» answers «Нет» too).
@@ -993,7 +1050,7 @@ Object.assign(ACTS, {
     // Boxes redrawn with the chips inside get the focus back on the same answer.
     const refocus = () => $(`[data-act="yes-no"][data-field="${f}"]${k ? `[data-kind="${k}"]` : ''}[data-v="${el.dataset.v}"]`)?.focus();
     if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); } // saves
-    else if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('plant_setting_feed_lamp_toggled', { on }); }
+    else if (f === 'lamp') { r.lamp = on; save(); feedChanged(plant(id)); refocus(); track('plant_setting_feed_lamp_toggled', { on }); }
     else if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('plant_setting_bath_toggled', { on }); }
     else if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('plant_setting_greenhouse_toggled', { on, from: 'card' }); }
     else if (f === 'rest') {
@@ -1001,14 +1058,14 @@ Object.assign(ACTS, {
       // Only what rest changes is redrawn, so the tapped answer stays under the finger (keepTapped scrolls by the box above the tabs).
       const p = plant(id);
       $('#rest-box').innerHTML = resting(p) ? restBox(p) : ''; $('#rest-hint').innerHTML = restHint(p);
-      $('#water-box').innerHTML = waterBox(p); $('#int-field').innerHTML = intBox(p); $('#feed-box').innerHTML = feedBox(p);
+      $('#water-box').innerHTML = waterBox(p); $('#int-field').innerHTML = intBox(p); feedChanged(p);
       heroChanged(id);
     } else {
       if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('plant_setting_quarantine_toggled', { on, from: 'card' }); }
       if (f === 'repotted') { r.repotted = on ? today() : false; track('plant_setting_repot_toggled', { on }); }
       save();
       const p = plant(id);
-      $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
+      $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); feedChanged(p);
       if (f === 'bought') heroChanged(id);
     }
     // Screen readers hear what the new answer does: the first line of the hint under it.
@@ -1031,7 +1088,7 @@ Object.assign(ACTS, {
   // The card stays open, as for «Подкормлено сегодня»: the button greys out and the marks say «полив сегодня».
   'water-now'(el, id) {
     const undo = snapshot(); actWater(id); track('care_watering_logged', kindOf(id)); save();
-    waterChanged(id); $('#wmarks')?.focus(); render();
+    waterChanged(id); $('#wnext')?.focus(); render();
     toast(actWords(plant(id)).done, () => { undo(); waterChanged(id); $('[data-act="water-now"]')?.focus(); });
   },
   spot(el, id) {

@@ -418,7 +418,7 @@
       "area": "plant", "since": 166, "was": ["settings_row_opened"],
       "when": "a row of the plant card's «Настройки» opened",
       "props": {
-        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "every": "«Проверка», since v175 (before: inside `way`)", "way": "", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
+        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "lamp": "«Лампа», since v181 (before: inside `feed`)", "every": "«Проверка», since v175 (before: inside `way`)", "water": "«Полив», since v181 (before: always open, not a row)", "way": "«В чём растёт»; before v181 «Как растёт», with «Как поливаю» (now inside «Полив», not a row)", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
       }
     },
     "plant_setting_name_changed": {
@@ -503,7 +503,7 @@
     },
     "plant_setting_quarantine_toggled": {
       "area": "plant", "since": 166, "was": ["quarantine_toggled"],
-      "when": "«Недавно купили» in the plant card, or «Уже не новое» on the task",
+      "when": "«Новое» in the plant card (before v181 «Недавно купили»), or «Уже не новое» on the task",
       "props": {
         "on": { "type": "bool" },
         "from": { "type": "enum", "values": { "card": "", "task": "" } }
@@ -511,7 +511,7 @@
     },
     "plant_setting_repot_toggled": {
       "area": "plant", "since": 166, "was": ["repot_toggled"],
-      "when": "«Недавно пересажено» in the plant card",
+      "when": "«Пересажено» in the plant card (before v181 «Недавно пересажено»)",
       "props": { "on": { "type": "bool" } }
     },
     "plant_setting_rest_started": {
@@ -532,7 +532,7 @@
     },
     "plant_setting_feed_lamp_toggled": {
       "area": "plant", "since": 166, "was": ["feed_lamp_toggled"],
-      "when": "«Зимой стоит под лампой?» in the plant card",
+      "when": "«Зимой стоит под лампой?» in the plant card («Свет» since v181, «Подкормка» before)",
       "props": { "on": { "type": "bool" } }
     },
     "care_feed_logged": {

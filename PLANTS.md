@@ -23,7 +23,7 @@ Record fields:
 | `hist` | Last 60 entries (`HIST_MAX`): answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). Since v152 an answer also has `was`, the state before it (`iv`, `lw`, `nc`, `wet`), and `iv` / `nc`, the interval and next check it set: `undoAnswer` uses them for «×» in «История». Only the newest answer keeps `was` and `nc`; older ones keep `iv` in whole days, and only where it changed, so the state stays small for Telegram's cloud. Since v179 a watering from above of a plant watered from below has `top: 1`. |
 | `repotted` | Date of repotting, or `false`. Counts for 2 weeks (`REPOT_DAYS`, HOUSE-FEED-15): no feeding meanwhile. |
 | `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14, 30, 90, 0 = not fed; if missing, the card's `feedEvery`, else the medium's, else 14); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
-| `bought`, `inspected` | «Недавно купили» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
+| `bought`, `inspected` | «Новое» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
 | `resting` | `{ since, iv }` while at rest: the date and the interval to come back to. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
 | `medium` | What the roots are in. Catalog plants keep it from the day they're added, so a card's new `type` doesn't move them. |

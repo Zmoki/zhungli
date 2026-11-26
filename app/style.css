@@ -511,11 +511,15 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 @media (forced-colors: active) { .toggle input { appearance: auto; -webkit-appearance: auto; box-shadow: none; } }
 /* «История» list: grouped by month, an icon in the action's color, the date under the word, «×» on the newest answer */
 /* «Полив» on top of «Уход»: a plain block (title, two marks, the button), not a folding row */
-.water-row { padding: 0; }
-.water-head { display: flex; align-items: center; min-height: 60px; padding: 14px 20px; }
-.wmarks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 0.882rem; color: var(--muted); }
-.wmarks span { display: inline-flex; align-items: center; gap: 6px; }
-.wmarks .ic { width: 18px; height: 18px; flex: none; }
+.srow .watering-in { margin-bottom: 20px; }
+#sr-water .water-now { margin: 0; }
+/* «Как поливаю» opens the white card (no label: the block is «Полив»): its note only when there is one («Сверху» has none) */
+#sr-water #watering-field { margin-bottom: 0; }
+#sr-water #watering-note { margin: 12px 0 0; }
+#sr-water #watering-note:empty, #sr-water #watering-note:not(:has(*)) { display: none; }
+/* Under «Полито сегодня»: the next check as on the grid card (a drop and the day, watering blue), centered like «Последний раз» under «Подкормка» */
+.wnext { display: flex; justify-content: center; align-items: center; gap: .25em; margin: 10px 0 0; color: var(--blue); font-size: 0.882rem; font-weight: 700; }
+.wnext .ic { width: 1.05em; height: 1.05em; stroke-width: 2.4; flex: none; }
 .hl-month { font-size: 0.882rem; color: var(--muted); font-weight: 900; margin: 20px 0 8px; }
 .hl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .hl { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 18px; padding: 8px 8px 8px 10px; min-height: 56px; }
@@ -572,17 +576,19 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srows-title { margin: 0; padding: 12px 20px; border-bottom: 1px solid transparent; background: var(--band); color: var(--ink); text-align: center; font-size: 1.059rem; font-weight: 900; }
 /* Transparent borders turn visible in forced colors, where the band and card backgrounds are gone. */
 .srow + .srow { border-top: 1px solid var(--line); }
-.srow-head { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 14px 20px; border: 0; background: none; color: var(--ink); text-align: left; font: inherit; }
+/* A closed row reads from the top: title, value and chevron on the first line, the rest of a long value wraps below */
+.srow-head { display: flex; align-items: baseline; gap: 12px; width: 100%; min-height: 60px; padding: 14px 20px; border: 0; background: none; color: var(--ink); text-align: left; font: inherit; }
 .srow-t { flex: 1 1 auto; font-weight: 700; }
 /* The card clips (overflow: hidden), so the focus ring goes inside the row, rounded like the card's bottom on the last one. */
 .srow-head:focus-visible { outline-offset: -3px; }
 .srow:last-child .srow-head[aria-expanded="false"] { border-radius: 0 0 19px 19px; }
 .srow-v { max-width: 55%; color: var(--muted); text-align: right; font-size: 0.941rem; overflow-wrap: anywhere; }
 .srow-v.off { font-style: italic; }
-/* An open row's controls show its value: hidden there, so the head stays one line while answering and nothing under the finger moves.
-   `.keep-v`: a row whose body doesn't show it («Карточка») */
-.srow-head[aria-expanded="true"]:not(.keep-v) .srow-v { display: none; }
-.srow-head .ic { flex: none; width: 1.1em; height: 1.1em; color: var(--muted); transition: transform .15s; }
+.srow-v .off-part { font-style: italic; }
+.srow-v .vp { display: inline-block; } /* a part stays whole: lines break after commas */
+/* An open row's controls show its value: hidden there, so the head stays one line while answering and nothing under the finger moves */
+.srow-head[aria-expanded="true"] .srow-v { display: none; }
+.srow-head .ic { flex: none; align-self: flex-start; margin-top: .2em; width: 1.1em; height: 1.1em; color: var(--muted); transition: transform .15s; }
 .srow-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
 /* An open row's inner part: a white card (--surface) set inside the row with a margin all round, like the picture
    in a plant tile, so it clearly belongs to the row above it */
@@ -696,6 +702,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
+/* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
+.pick.card-now { border-color: var(--line); background: var(--card); }
 /* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */
 .who-pick { margin: 0 0 14px; }
 .bath-pics { display: flex; justify-content: center; gap: 8px; margin: 0 0 14px; }
