@@ -1,6 +1,6 @@
 # Plants
 
-How a plant works: what it stores, how its watering interval learns, and which statuses it shows. The catalog itself (species, ranges, tips, check questions, spots) is in `plants.js`.
+How a plant works: what it stores, how its watering interval learns, and which statuses it shows. The catalog itself (species, ranges, tips, check questions, spots) is in `plants.js`. `node tools/catalog.js FILE` writes a page with every card, its silhouette and missing facts, to review the catalog.
 
 ## Card and record
 
