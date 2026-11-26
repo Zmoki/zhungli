@@ -100,7 +100,7 @@ let searchTimer;
 function catalogHtml(changeFor) {
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
-  // A generic type closes its group («Орхидея на коре» after «Фаленопсис»), as «Общие типы» close the list.
+  // A generic type closes its group («Орхидея» after «Фаленопсис»), as «Общие типы» close the list.
   Object.values(groups).forEach((ds) => ds.sort((a, b) => !!a.generic - !!b.generic));
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
@@ -194,7 +194,7 @@ function catalogSearch(changeFor) {
       score.set(g, best);
     });
     // Best-matching groups first: «рассада» and «черенок» show their generic type on top,
-    // «орхидея» shows «Фаленопсис» before «Орхидея на коре». Without a search, the usual order.
+    // «орхидея» shows «Фаленопсис» before the generic «Орхидея». Without a search, the usual order.
     const order = words.length ? [...pickGroups].sort((a, b) => score.get(b) - score.get(a) || pickGroups.indexOf(a) - pickGroups.indexOf(b)) : pickGroups;
     if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
     // «(если нет в списке)» only reads right at the end of the full list.

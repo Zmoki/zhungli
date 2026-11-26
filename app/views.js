@@ -24,7 +24,7 @@ function plantBadges(p, tags = tagsOf(p)) {
 // How it grows: up to two tags in the plant card and badges on grid cards (the medium, then the watering; every way but
 // «Сверху»), and keys for the Plants filter, so every plant in water can be found there. Left out: a watering that is the
 // medium's usual one (clay pebbles on a reservoir), a card's own medium on a `noBadge` card (tillandsia), and, for the
-// tag only, a way the plant's name or species already says, with «в» or «на» («Черенки в воде», «Орхидея на коре»).
+// tag only, a way the plant's name or species already says, with «в» or «на» («Черенки в воде», «Эпифит на блоке»).
 const growBadge = (k) => (MEDIA[k] || WATERING[k] || {}).badge;
 function growKeys(p) {
   const keys = [];
