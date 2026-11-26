@@ -481,7 +481,7 @@ function filterKinds(ps, tags) {
     ['Как растёт', [...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way']),
       ['greenhouse', `${I('house-heart')}в теплице`, 'greenhouse']]],
     ['Безопасность', [['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
-      ['sap', `${I('hand')}едкий сок`, 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger']]],
+      ['sap', `${I('triangle-alert')}едкий сок`, 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger']]],
   ].map(([title, kinds]) => [title, kinds.filter(([k]) => n[k])]).filter(([, kinds]) => kinds.length);
   return { n, sections };
 }
