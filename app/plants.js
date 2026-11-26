@@ -11,8 +11,8 @@
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 // toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
-// pets: 'toxic' or 'safe' for cats and dogs (ASPCA); 'unlisted': checked, but not in ASPCA and no other reliable source
-//   (content facts HOUSE-PETS, CARN-TOX); none: not checked yet.
+// pets: 'toxic' or 'safe' for cats and dogs (ASPCA); 'unlisted': checked, not in ASPCA, and other sources aren't enough
+//   to say (content facts HOUSE-PETS, CARN-TOX; its petsNote, if any, replaces the line in «Заметки»); none: not checked yet.
 
 const CHECK_TEXT = {
   soil: 'Верхние 2–3 см сухие?',
@@ -630,7 +630,8 @@ const PLANTS = [
   },
   {
     id: 'pilea', species: 'Пилея', cat: 'Декоративно-лиственные', emoji: '🪙', rotate: true,
-    pets: 'unlisted',
+    // HOUSE-PETS: P. peperomioides isn't in ASPCA; P. cadierei (in aka) is, as non-toxic.
+    pets: 'unlisted', petsNote: 'Пилеи пеперомиевидной нет в базе ASPCA, других сведений мало. Пилея Кадье в базе есть: она неядовита.',
     aka: 'пилея, pilea, peperomioides, китайское денежное дерево, монетка, пилея кадье',
     lux: [5000, 15000], every: 6, type: 'soil',
     water: 'Когда подсохли верхние 2–3 см. Опускаются листья-монетки: пора.',

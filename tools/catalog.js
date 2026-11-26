@@ -178,7 +178,7 @@ function card(d) {
   ].join('');
   // Tags under the name and tasks.
   const tags = [
-    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : d.pets === 'unlisted' ? 'нет в базе ASPCA (проверено)' : 'нет данных', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic || d.pets === 'unlisted' ? '' : 'gap'),
+    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : d.pets === 'unlisted' ? 'нет в базе ASPCA (проверено)' : 'нет данных', pets === 'toxic' || d.pets === 'unlisted' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic || d.pets === 'unlisted' ? '' : 'gap'),
     row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
     row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
