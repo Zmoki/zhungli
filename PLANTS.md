@@ -20,7 +20,7 @@ Record fields:
 | `interval` | Learned days between checks. |
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
-| `hist` | Last 60 entries (`HIST_MAX`): answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). Since v152 an answer also has `was`, the state before it (`iv`, `lw`, `nc`, `wet`), and `iv` / `nc`, the interval and next check it set: `undoAnswer` uses them for «×» in «История». Only the newest answer keeps `was` and `nc`; older ones keep `iv` in whole days, and only where it changed, so the state stays small for Telegram's cloud. |
+| `hist` | Last 60 entries (`HIST_MAX`): answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). Since v152 an answer also has `was`, the state before it (`iv`, `lw`, `nc`, `wet`), and `iv` / `nc`, the interval and next check it set: `undoAnswer` uses them for «×» in «История». Only the newest answer keeps `was` and `nc`; older ones keep `iv` in whole days, and only where it changed, so the state stays small for Telegram's cloud. Since v179 a watering from above of a plant watered from below has `top: 1`. |
 | `repotted` | Date of repotting, or `false`. Counts for 2 weeks (`REPOT_DAYS`, HOUSE-FEED-15): no feeding meanwhile. |
 | `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14, 30, 90, 0 = not fed; if missing, the card's `feedEvery`, else the medium's, else 14); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
 | `bought`, `inspected` | «Недавно купили» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
@@ -68,10 +68,10 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | Watering | Check | Buttons |
 |---|---|---|
 | `top` сверху | the medium's | the medium's |
-| `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон» |
-| `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато» |
+| `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон», and after 3 waterings since the last one from above «Полейте сверху до стока» to wash out salts (`flushFromAbove`; that watering gets `top: 1` in `hist`; HOUSE-WATER-16) |
+| `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато»; on a card without `wickTested` (all but the violet) a quiet line says only violets are tested on a wick (HOUSE-SELFW-08) |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
-| `tray` в поддоне с водой | the tray (`bog`: offered only on cards that use it, the Venus flytrap and sundew) | «Долито» / «Вода есть», due status «пустовато» |
+| `tray` в поддоне с водой | the tray (`bog`: offered only on cards that use it, the Venus flytrap and sundew) | «Долито» / «Вода есть», due status «пустовато»; on any other card (only by AI import) a warning: standing in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25) |
 | `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «неясно» |
 
 Drip irrigation (`fixed` in `WATERING`) waters by itself, so its checks look at the system and nothing is learned:

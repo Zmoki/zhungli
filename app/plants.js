@@ -6,6 +6,7 @@
 // type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
 // noBadge: no badge or filter chip for the card's own type, when it doesn't say where the plant really is
+// wickTested: sources describe a wick as this plant's permanent watering (only African violets, content facts HOUSE-SELFW-08)
 //   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
@@ -933,7 +934,7 @@ const PLANTS = [
   // Flowering
   {
     id: 'violet', species: 'Фиалка (сенполия)', cat: 'Цветущие и орхидеи', emoji: '💜',
-    pets: 'safe',
+    pets: 'safe', wickTested: true,
     prune: { tip: 'Отцветшие цветки обрывать, а когда отцвёл последний, срезать весь цветонос у основания.' },
     aka: 'фиалка, сенполия, узамбарская, saintpaulia, african violet',
     lux: [6000, 15000], every: 5, type: 'soil', check: 'Верх грунта подсох?',

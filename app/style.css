@@ -923,6 +923,8 @@ svg.pl.v5 { --pot: #4cc77a; --pot-2: #34ad62; }
 
 /* Spacing helpers (no inline style attributes: the CSP forbids them) */
 .m-0 { margin: 0; } .mt-0 { margin-top: 0; }
+/* A second quiet line under a choice's hint («Как поливаю»: a wick on a plant it isn't tested for) */
+.way-more { margin: 6px 0 0; }
 .mt-6 { margin-top: 6px; } .mt-8 { margin-top: 8px; } .mt-10 { margin-top: 10px; } .mt-12 { margin-top: 12px; }
 .mt-14 { margin-top: 14px; } .mt-20 { margin-top: 20px; } .mt-24 { margin-top: 24px; }
 .grow { flex: 1; }

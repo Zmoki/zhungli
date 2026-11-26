@@ -123,10 +123,14 @@ const askYesNo = (q, field, id, on, dis = false, kind = '', hint = '') => `<div 
   <div class="chips">${yesNo(field, id, on, dis, kind)}</div></div>`;
 const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Недавно пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
-// What the chosen way means, and a warning for succulents and cacti, which rot in steady moisture.
-// Redrawn alone on a change, so the tapped chip keeps focus.
+// What the chosen way means, and warnings by the content facts: succulents and cacti rot in steady moisture; standing
+// in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25: the tray reaches other plants only by import); a wick
+// is a tested permanent watering only for African violets (SELFW-08). Redrawn alone on a change, so the tapped chip keeps focus.
+const warnBox = (text) => `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>${text}</div>`;
 const wayNote = (p, d) => `<p class="small muted m-0" id="way-hint">${esc(wayOf(p).hint)}</p>
-  ${d.type === 'dry' && wayOf(p).wet ? `<div class="info warn mt-8"><b>${I('triangle-alert')}Осторожно</b>Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.</div>` : ''}`;
+  ${p.watering === 'wick' && !d.wickTested ? '<p class="small muted way-more">Постоянно на фитиле проверены только фиалки. Для других растений данных нет: первые недели следите за листьями.</p>' : ''}
+  ${d.type === 'dry' && wayOf(p).wet ? warnBox('Суккуленты и кактусы не любят постоянную влагу: следите, чтобы корни не загнили.') : ''}
+  ${p.watering === 'tray' && cardWatering(d) !== 'tray' ? warnBox('Постоянно стоять в воде могут только хищные растения и циперус. У остальных корни задыхаются и гниют.') : ''}`;
 // Under each yes-no question: what the current answer does, so trying «Да» and «Нет» shows how each works.
 // Repotting only matters for plants called on «День подкормки»; for the rest it's greyed out, with why.
 const hintLines = (...lines) => lines.filter(Boolean).map((l) => `<p>${l}</p>`).join('');
