@@ -42,7 +42,7 @@ On every event:
 | `plants_total` | number of plants on the device |
 | `standalone` | `true` when opened from the home screen |
 | `in_telegram` | `true` when opened inside Telegram's own browser (detectable on Android, often not on iOS) |
-| `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @WeAreJunglyBot) |
+| `mini_app` | `true` when opened as the Telegram mini app (`/tg`, @JunglyApp) |
 | `tg_version` | mini app: Telegram's Bot API version |
 | `tg_platform` | mini app: Telegram's client (ios, macos, tdesktop…) |
 | `$os` | parsed from the user agent |
