@@ -149,7 +149,7 @@ By area (the area is also the event's tag in PostHog). «Since»: the first app 
 | `plant_setting_rest_started`<br>was `rest_started` | «Да» on «Сейчас в покое?» in the plant card (before v175: the «Сбросила листья» / «Ушла в зимний покой» button) | the [plant props](#plant-props) | v166 |
 | `plant_setting_rest_ended`<br>was `rest_ended` | «Нет» on «Сейчас в покое?» in the plant card (since v175), or the button in the rest box above the tabs («Появился новый лист» / «Пошли новые ловушки») | `days`: days at rest<br>the [plant props](#plant-props) | v166 |
 | `plant_setting_feed_schedule_changed`<br>was `feed_schedule_changed` | «Как часто» in the plant card's «Подкормка» | `every`: `0` (off) / `14` / `30` / `90` | v166 |
-| `plant_setting_feed_lamp_toggled`<br>was `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card | `on` | v166 |
+| `plant_setting_feed_lamp_toggled`<br>was `feed_lamp_toggled` | «Зимой стоит под лампой?» in the plant card («Свет» since v181, «Подкормка» before) | `on` | v166 |
 | `plant_setting_prune_toggled`<br>was `prune_toggled` | «Звать на обрезку?» in the plant card's «Обрезка» | `on`: `true`: switched on, with the card's start interval and months | v166 |
 | `plant_setting_prune_schedule_changed`<br>was `prune_schedule_changed` | how often chip under «Звать на обрезку?» in the plant card | `every`: `14` / `30` / `60` / `300` (once a year); days | v166 |
 | `plant_setting_prune_months_changed`<br>was `prune_months_changed` | a month chip under «Звать на обрезку?» in the plant card | `months`: how many months are on now | v166 |

@@ -532,7 +532,7 @@
     },
     "plant_setting_feed_lamp_toggled": {
       "area": "plant", "since": 166, "was": ["feed_lamp_toggled"],
-      "when": "«Зимой стоит под лампой?» in the plant card",
+      "when": "«Зимой стоит под лампой?» in the plant card («Свет» since v181, «Подкормка» before)",
       "props": { "on": { "type": "bool" } }
     },
     "care_feed_logged": {

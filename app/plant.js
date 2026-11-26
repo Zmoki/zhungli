@@ -167,10 +167,24 @@ function feedBox(p) {
   const help = !off && p.feedNote ? `<p class="mt-12 small muted">${esc(p.feedNote)}${regular}</p>` : '';
   return `${off ? whyNot(feedWhyNot(p)) : ''}<div class="field" role="group" aria-labelledby="lbl-feed" aria-describedby="feed-when"><label id="lbl-feed">Как часто с марта по сентябрь</label><div class="chips">${FEED_EVERY.map(chip).join('')}</div>
     <p class="mt-6 small muted" id="feed-when">${when}</p>${help}</div>
-    <div class="field">${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && n && !off), !(n && !off), '', 'lamp-hint')}
-      <p class="mt-6 small muted" id="lamp-hint">${off ? 'Нужен день подкормки.' : !n ? 'Сначала выберите, как часто кормить.' : p.lamp ? `Зимой позову ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой не зову: без лампы растение почти не растёт.'}</p></div>
     <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
     ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
+}
+// «Зимой стоит под лампой?» in «Свет»: it's about where the plant stands, and what it changes is winter feeding.
+// Greyed out, with why, when the plant isn't called on «День подкормки» (as «Пересажено»).
+function lampBox(p) {
+  const n = feedEvery(p), off = !feedsOnDay(p) || !n;
+  const hint = !feedsOnDay(p) ? 'Влияет только на подкормку, а у этого растения дня подкормки нет.'
+    : !n ? 'Влияет только на подкормку, а она выключена в «Подкормке».'
+      : p.lamp ? `Зимой позову на подкормку ${FEED_WORDS[Math.max(n, 30)]}, удобрение слабее, чем летом.` : 'Зимой на подкормку не зову: без лампы растение почти не растёт.';
+  return `${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && !off), off, '', 'lamp-hint')}
+    <p class="mt-6 small muted" id="lamp-hint">${hint}</p>`;
+}
+// Feeding changed: its box, and the lamp question in «Свет» that depends on it.
+function feedChanged(p) {
+  $('#feed-box').innerHTML = feedBox(p);
+  const lamp = $('#lamp-field');
+  if (lamp) lamp.innerHTML = lampBox(p);
 }
 // A plant at rest (cards with `rest`): since when, what to do, and the way back.
 // A plant moved to a card without `rest` while resting still gets the way back.
@@ -222,7 +236,7 @@ const ghHint = (on) => hintLines(on ? 'Каждый день позову про
 const MONTH_CHIPS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 // Months as words: runs of 3 and more as «май–сентябрь», the rest one by one: «март, апрель».
 // A run may cross the new year («ноябрь–февраль»): the list starts after a month that's off.
-function monthsText(ms) {
+function monthsText(ms, names = MONTHS) {
   const on = new Set(ms), runs = [];
   if (on.size === 12) return 'весь год';
   const start = [...Array(12).keys()].map((i) => i + 1).find((m) => !on.has(m));
@@ -231,7 +245,7 @@ function monthsText(ms) {
     if (!on.has(m)) continue;
     if (last && last[last.length - 1] % 12 === m - 1) last.push(m); else runs.push([m]);
   }
-  return runs.flatMap((r) => (r.length >= 3 ? [`${MONTHS[r[0] - 1]}–${MONTHS[r[r.length - 1] - 1]}`] : r.map((m) => MONTHS[m - 1]))).join(', ');
+  return runs.flatMap((r) => (r.length >= 3 ? [`${names[r[0] - 1]}–${names[r[r.length - 1] - 1]}`] : r.map((m) => names[m - 1]))).join(', ');
 }
 // The same months inside a sentence: «в марте или апреле» (once a year: any one of them), «с мая по сентябрь».
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -541,6 +555,10 @@ let openRows = new Set(), openRowsFor = null;
 // a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
 // waits until March.
 const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 || m > 9; };
+// Closed row values use short month names («24 дек.», «апр.–авг.»), so they stay short; screen readers hear the full ones.
+const MONTHS_SHORT = ['янв.', 'февр.', 'март', 'апр.', 'май', 'июнь', 'июль', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+const shortened = (short, full) => `<span aria-hidden="true">${short}</span><span class="sr-only">${full}</span>`;
+const shortDay = (iso) => shortened(parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace(' ', '\u00a0'), dayMonth(iso));
 // A row value of several parts: each kept whole, so a long one wraps only after a comma («раз в 2 недели, / зимой пауза»).
 const vParts = (parts) => parts.filter(Boolean).map((x) => `<span class="vp">${x}</span>`).join(', ');
 function feedValue(p) {
@@ -549,7 +567,7 @@ function feedValue(p) {
   const every = winterNow() && p.lamp && n < 30 ? 'зимой раз в месяц' : FEED_WORDS[n];
   const until = [repotted(p) ? addDays(p.repotted, REPOT_DAYS) : '', settling(p) ? addDays(p.bought, SETTLE_DAYS) : ''].filter(Boolean).sort().pop();
   const pause = resting(p) ? 'пауза, пока в покое'
-    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${dayMonth(until)}`)
+    : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${shortDay(until)}`)
       : winterNow() && !p.lamp ? 'зимой пауза' : '';
   return vParts([every, p.lamp ? 'под лампой' : '', pause]);
 }
@@ -569,12 +587,12 @@ function rowValues(p) {
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
-    prune: prune ? [vParts(monthsText(prune.months).split(', ')), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
+    prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    // «да, на карантине до 7 января»: one phrase, wrapping as text, with the day and month kept together.
-    bought: [isNew(p) ? `да, на карантине до ${dayMonth(addDays(p.bought, NEW_DAYS)).replace(' ', '\u00a0')}` : 'нет', false],
-    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS)).replace(' ', '\u00a0')}` : 'нет', false],
-    rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
+    // «да, на карантине до 7 янв.»: one phrase, wrapping as text, with the day and month kept together.
+    bought: [isNew(p) ? `да, на карантине до ${shortDay(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${shortDay(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    rest: resting(p) ? [`с ${shortDay(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
 const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт',
@@ -671,7 +689,8 @@ function settingsHtml(id, p, ls, spots) {
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
           <div class="lux-read"><input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="?" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-need lux-hint"><span class="unit" aria-hidden="true">лк</span><span class="lux-state" id="card-lux-state">${luxState(ls)}</span></div>
           <p class="mt-8 small" id="lux-need">Нужно ${kNum(p.luxRange[0])}–\u2060${kNum(p.luxRange[1])}\u00a0тыс люксов</p>
-          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
+          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>
+        <div class="field" id="lamp-field">${lampBox(p)}</div>`)
     + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse, false, '', 'gh-hint')}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
@@ -893,7 +912,7 @@ function changeWay(id, f, value) {
   $('#water-box').innerHTML = waterBox(p);
   $('#int-field').innerHTML = intBox(p);
   $('#rinse-wrap').innerHTML = rinseBox(p);
-  $('#feed-box').innerHTML = feedBox(p);
+  feedChanged(p);
   refreshTags(p);
   // «Пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
   const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
@@ -982,19 +1001,19 @@ Object.assign(ACTS, {
   'feed-every'(el, id) {
     const n = Number(el.dataset.n);
     S.plants[id].feedEvery = n; save();
-    $('#feed-box').innerHTML = feedBox(plant(id));
+    feedChanged(plant(id));
     $(`[data-act="feed-every"][data-n="${n}"]`).focus();
     track('plant_setting_feed_schedule_changed', { every: n });
   },
   'feed-done'(el, id) {
     const undo = snapshot();
     feedDone(id); save();
-    $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id);
+    feedChanged(plant(id)); refreshHistory(id);
     $('#feed-box .last-done')?.focus();
     track('care_feed_logged');
     toast('Подкормка записана 🍽️', () => {
       undo();
-      if (sheet.open && cardFor === id && $('#feed-box')) { $('#feed-box').innerHTML = feedBox(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
+      if (sheet.open && cardFor === id && $('#feed-box')) { feedChanged(plant(id)); refreshHistory(id); $('[data-act="feed-done"]')?.focus(); }
     });
   },
   // The way out of rest in the box above the tabs (the row in «Сейчас» answers «Нет» too).
@@ -1022,7 +1041,7 @@ Object.assign(ACTS, {
     // Boxes redrawn with the chips inside get the focus back on the same answer.
     const refocus = () => $(`[data-act="yes-no"][data-field="${f}"]${k ? `[data-kind="${k}"]` : ''}[data-v="${el.dataset.v}"]`)?.focus();
     if (f === 'remind') { const start = remindStart(p0, k); setRemind(id, k, on ? { every: start.every, months: [...start.months] } : null, on ? 'on' : 'off'); } // saves
-    else if (f === 'lamp') { r.lamp = on; save(); $('#feed-box').innerHTML = feedBox(plant(id)); refocus(); track('plant_setting_feed_lamp_toggled', { on }); }
+    else if (f === 'lamp') { r.lamp = on; save(); feedChanged(plant(id)); refocus(); track('plant_setting_feed_lamp_toggled', { on }); }
     else if (f === 'bath') { r.noBath = on ? undefined : true; save(); $('#rinse-wrap').innerHTML = rinseBox(plant(id)); refocus(); track('plant_setting_bath_toggled', { on }); }
     else if (f === 'greenhouse') { r.greenhouse = on; save(); $('#gh-hint').innerHTML = ghHint(on); heroChanged(id); track('plant_setting_greenhouse_toggled', { on, from: 'card' }); }
     else if (f === 'rest') {
@@ -1030,14 +1049,14 @@ Object.assign(ACTS, {
       // Only what rest changes is redrawn, so the tapped answer stays under the finger (keepTapped scrolls by the box above the tabs).
       const p = plant(id);
       $('#rest-box').innerHTML = resting(p) ? restBox(p) : ''; $('#rest-hint').innerHTML = restHint(p);
-      $('#water-box').innerHTML = waterBox(p); $('#int-field').innerHTML = intBox(p); $('#feed-box').innerHTML = feedBox(p);
+      $('#water-box').innerHTML = waterBox(p); $('#int-field').innerHTML = intBox(p); feedChanged(p);
       heroChanged(id);
     } else {
       if (f === 'bought') { r.bought = on ? today() : false; delete r.inspected; track('plant_setting_quarantine_toggled', { on, from: 'card' }); }
       if (f === 'repotted') { r.repotted = on ? today() : false; track('plant_setting_repot_toggled', { on }); }
       save();
       const p = plant(id);
-      $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); $('#feed-box').innerHTML = feedBox(p);
+      $('#new-hint').innerHTML = newHint(p); $('#repot-hint').innerHTML = repotHint(p); feedChanged(p);
       if (f === 'bought') heroChanged(id);
     }
     // Screen readers hear what the new answer does: the first line of the hint under it.
