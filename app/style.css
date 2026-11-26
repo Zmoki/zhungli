@@ -700,10 +700,9 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
-/* Catalog rows (pickRow): a square tile with the whole drawing in it, standing on the tile's bottom like on a Plants
-   grid card, so pots line up from row to row */
-.pick .pe.fit { width: 56px; height: 56px; place-items: end center; }
-.pick .pe.fit svg.pl { width: 50px; height: 50px; margin-bottom: 2px; }
+/* Catalog rows (pickRow): a square tile with the whole drawing in its middle */
+.pick .pe.fit { width: 56px; height: 56px; }
+.pick .pe.fit svg.pl { width: 50px; height: 50px; }
 /* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
 .pick.card-now { border-color: var(--line); background: var(--card); }
 /* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */

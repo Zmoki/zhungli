@@ -70,7 +70,7 @@ function typoMatcher(readings) {
   };
 }
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
-// The picture is a square tile, the drawing standing on its bottom; under the name one line: another name people know it by
+// The picture is a square tile, the drawing in its middle; under the name one line: another name people know it by
 // (`alt`) and the hint (generic types). Pet safety isn't here: it shows on the plant, with pets on.
 function pickRow(d, changeFor, nowId) {
   const now = !!changeFor && nowId === d.id;
