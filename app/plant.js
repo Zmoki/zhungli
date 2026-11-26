@@ -69,17 +69,16 @@ const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
 // «Полив» in «Уход»: not a folding row but always open, since «Полито сегодня» is used after about 1 in 5 card opens.
 // Its white card holds «Как поливаю» first (wateringBox, redrawn alone so a tapped chip keeps focus), then the button
-// and under it two marks, the last watering and the next check (waterBox, redrawn on a watering). For a reservoir: the top-ups.
+// and under it, centered as under «Подкормка»'s, the next check as on the plant's grid card (waterBox, redrawn on a
+// watering; the last one is in «История»). For a reservoir: the top-ups.
 function waterBox(p) {
   const g = wayOf(p), w = actWords(p);
   if (g.noChecks) return whyNot('Поливать не нужно, корни в воде аквариума.');
-  const last = p.lastWater ? `${w.sub} ${esc(rel(p.lastWater))}` : w.none.toLowerCase();
-  const next = p.nextCheck <= today() ? (g.fixed ? 'пора проверить' : 'проверка сегодня') : `${g.fixed ? 'следующая' : 'проверка'} ${esc(rel(p.nextCheck))}`;
   // Watered (or checked) today already: the button stays, greyed out, so the same watering isn't noted twice.
   const done = p.lastWater === today();
-  // The marks take focus after «Полито сегодня», which greys out (the card stays open).
+  // The line takes focus after «Полито сегодня», which greys out (the card stays open).
   return `<button class="water-now btn ${g.fixed ? 'ok' : 'water'} wide" data-act="water-now" data-id="${esc(p.id)}"${done ? ' disabled' : ''}>${I(g.fixed ? 'check' : 'droplet')}${w.btn}</button>
-    <p class="wmarks" id="wmarks" tabindex="-1"><span>${I(g.fixed ? 'check' : 'droplet')}${last}</span><span>${I('calendar-check')}${next}</span></p>`;
+    <p class="wnext" id="wnext" tabindex="-1">${nextCheckHtml(p)}</p>`;
 }
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
@@ -1058,7 +1057,7 @@ Object.assign(ACTS, {
   // The card stays open, as for «Подкормлено сегодня»: the button greys out and the marks say «полив сегодня».
   'water-now'(el, id) {
     const undo = snapshot(); actWater(id); track('care_watering_logged', kindOf(id)); save();
-    waterChanged(id); $('#wmarks')?.focus(); render();
+    waterChanged(id); $('#wnext')?.focus(); render();
     toast(actWords(plant(id)).done, () => { undo(); waterChanged(id); $('[data-act="water-now"]')?.focus(); });
   },
   spot(el, id) {

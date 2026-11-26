@@ -265,10 +265,10 @@ function waterTask(p) {
 const TYPE_NAMES = Object.fromEntries(Object.entries(MEDIA).map(([k, g]) => [k, g.name]));
 // Words for what a check records: a watering, a top-up of a reservoir, or fresh water.
 const ACT_WORDS = {
-  pour: { title: 'Полив', last: 'Последний полив', none: 'Поливов ещё не было', due: 'Пора проверить сегодня', next: 'Следующая проверка', btn: 'Полито сегодня', done: 'Полив записан 💧', sub: 'полив' },
-  top: { title: 'Долив', last: 'Последний долив', none: 'Доливов ещё не было', due: 'Пора проверить уровень сегодня', next: 'Проверить уровень', btn: 'Долито сегодня', done: 'Долив записан 💧', sub: 'долив' },
-  system: { title: 'Автополив', last: 'Последняя проверка', none: 'Проверок ещё не было', due: 'Пора проверить систему сегодня', next: 'Следующая проверка', btn: 'Проверено сегодня', done: 'Проверка записана ✅', sub: 'проверка' },
-  change: { title: 'Вода', last: 'Последняя смена воды', none: 'Воду ещё не меняли', due: 'Пора проверить воду сегодня', next: 'Следующая проверка', btn: 'Вода сменена сегодня', done: 'Смена воды записана 💧', sub: 'смена воды' },
+  pour: { btn: 'Полито сегодня', done: 'Полив записан 💧', sub: 'полив' },
+  top: { btn: 'Долито сегодня', done: 'Долив записан 💧', sub: 'долив' },
+  system: { btn: 'Проверено сегодня', done: 'Проверка записана ✅', sub: 'проверка' },
+  change: { btn: 'Вода сменена сегодня', done: 'Смена воды записана 💧', sub: 'смена воды' },
 };
 const actWords = (p) => ACT_WORDS[wayOf(p).act || 'pour'];
 // How often a fixed way is checked: «раз в 2 недели», «раз в 10 дней».
