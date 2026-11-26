@@ -17,8 +17,18 @@ vm.createContext(ctx);
 vm.runInContext(`${read('plants.js')}\n${read('shapes.js')}\nthis.out = { PLANTS, CHECK_TEXT, plantSvg };`, ctx);
 const { PLANTS, CHECK_TEXT, plantSvg } = ctx.out;
 
-// Names of growing media and watering ways (MEDIA and WATERING in state.js), read without running state.js.
-const NAMES = Object.fromEntries([...read('state.js').matchAll(/^ {2}(\w+): \{ name: '([^']+)'/gm)].map((m) => [m[1], m[2]]));
+// Growing media and watering ways (MEDIA and WATERING in state.js), read without running state.js: each entry's
+// text runs from its key to the next key or the end of its object.
+const stateJs = read('state.js');
+const heads = [...stateJs.matchAll(/^ {2}(\w+): \{ name: '([^']+)'/gm)];
+const ENTRIES = heads.map((m, i) => {
+  const text = stateJs.slice(m.index, i + 1 < heads.length ? heads[i + 1].index : undefined);
+  const end = text.search(/\n\S/);
+  return [m[1], m[2], end < 0 ? text : text.slice(0, end)];
+});
+const NAMES = Object.fromEntries(ENTRIES.map(([k, name]) => [k, name]));
+// Ways whose first check doesn't follow the card's interval (`start` in the entry: wayStart in state.js).
+const OWN_START = new Set(ENTRIES.filter(([, , t]) => /\bstart:/.test(t)).map(([k]) => k));
 // Group order, as in the add-plants picker.
 const CAT_ORDER = JSON.parse(read('add.js').match(/const CAT_ORDER = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
 const VERSION = read('version.txt').trim();
@@ -42,12 +52,15 @@ const DRAW = {
 const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|st|rt|vein|cut|co|trap|trunk)(?![-\w])|svg\.pl\b)/.test(l)).join('\n');
 
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
-const petsOf = (v) => (!v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : 'safe');
+// As petsOf in state.js: safe only when both cats and dogs are.
+const petsOf = (v) => (!v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
+// As norm in views.js: search ignores case and «ё».
+const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
 const CATS = [...new Set(PLANTS.map((d) => d.cat))].sort((a, b) => (CAT_ORDER.indexOf(a) + 1 || 99) - (CAT_ORDER.indexOf(b) + 1 || 99));
 
 // Tag icons and words of growing media and watering ways (`badge` in state.js), as on the app's filter chips.
-const BADGES = Object.fromEntries([...read('state.js').matchAll(/^ {2}(\w+): \{ name: '[^']+'.*?badge: \['([a-z-]+)', '([^']+)'\]/gm)].map((m) => [m[1], [m[2], m[3]]]));
+const BADGES = Object.fromEntries(ENTRIES.map(([k, , t]) => [k, t.match(/badge: \['([a-z-]+)', '([^']+)'\]/)]).filter(([, m]) => m).map(([k, m]) => [k, [m[1], m[2]]]));
 // The app's icons (the sprite in index.html), only the ones this page uses.
 const indexHtml = read('index.html');
 const used = new Set(['funnel', 'search', 'x', 'chevron-right', 'paw-print', 'paw-toxic', 'triangle-alert', ...Object.values(BADGES).map((b) => b[0])]);
@@ -128,13 +141,13 @@ function card(d) {
     d.aka && `<h4>Слова для поиска</h4><p class="muted">${esc(d.aka)}</p>`,
     d.hint && `<h4>Подсказка в списке</h4><p>${esc(d.hint)}</p>`,
   ].filter(Boolean).join('');
-  const search = [d.species, d.id, d.aka || '', d.cat].join(' ').toLowerCase();
+  const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}
 <dl>
 ${row('Свет', lux(d.lux))}
-${row('Растёт в', `${esc(NAMES[d.type] || d.type)}${d.watering ? `, полив «${esc(NAMES[d.watering] || d.watering)}»` : ''}. Первая проверка через ${d.every} дн.`)}
+${row('Растёт в', `${esc(NAMES[d.type] || d.type)}${d.watering ? `, полив «${esc(NAMES[d.watering] || d.watering)}»` : ''}. Интервал карточки: ${d.every} дн.${[d.type, d.watering].filter((k) => OWN_START.has(k)).map((k) => ` Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join('')}`)}
 ${row('Проверка', check)}
 ${row('Полив', esc(d.water))}
 ${row('Грунт', esc(d.soil))}
@@ -155,7 +168,8 @@ ${row('Место', esc(d.spot || ''))}
 function page() {
   const n = (f) => PLANTS.filter(f).length;
   const real = n((d) => !d.generic);
-  const date = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const now = new Date();
+  const date = [now.getDate(), now.getMonth() + 1].map((x) => String(x).padStart(2, '0')).concat(now.getFullYear()).join('.');
   // Filter chips, as in the app's «Фильтр» sheet: icon and word in the kind's color, a quiet count; only kinds that have cards.
   const counts = {};
   PLANTS.forEach((d) => keysOf(d).forEach((k) => { counts[k] = (counts[k] || 0) + 1; }));
@@ -196,7 +210,10 @@ function page() {
   ${DRAW.darkAttr} color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+[hidden] { display: none !important; }
+/* The app's 1rem is 17px, so its sizes (0.824rem counts) stay at 14px or more */
+html { font-size: 17px; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 1rem; line-height: 1.5; }
 button { font: inherit; color: inherit; cursor: pointer; }
 main { max-width: 1180px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 2rem; font-weight: 900; margin: 0 0 4px; text-wrap: balance; }
@@ -257,9 +274,9 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }
 .name { min-width: 0; padding-top: 6px; }
 h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
-.id { font-family: ui-monospace, Menlo, monospace; font-size: .85rem; color: var(--muted); margin: 2px 0 0; }
+.id { font-family: ui-monospace, Menlo, monospace; font-size: .824rem; color: var(--muted); margin: 2px 0 0; }
 .flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
-.flags span { font-size: .82rem; font-weight: 800; padding: 1px 10px; border-radius: 99px; background: var(--chip); }
+.flags span { font-size: .824rem; font-weight: 800; padding: 1px 10px; border-radius: 99px; background: var(--chip); }
 .gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 dl { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
@@ -279,7 +296,7 @@ ${drawRules}
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
-<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date} Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
+<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
 <div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
 <div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
@@ -301,14 +318,18 @@ ${sheet}
   const ALL = ${JSON.stringify(all)};
   let kind = '';
   function apply() {
-    const text = q.value.trim().toLowerCase();
+    const text = q.value.trim().toLowerCase().replace(/ё/g, 'е');
     let count = 0;
     for (const el of cards) {
       const ok = (!text || el.dataset.search.includes(text)) && (!kind || el.dataset.k.split(' ').includes(kind));
       el.hidden = !ok;
       if (ok) count++;
     }
-    for (const s of document.querySelectorAll('.cat')) s.hidden = !s.querySelector('.card:not([hidden])');
+    for (const s of document.querySelectorAll('.cat')) {
+      const n = s.querySelectorAll('.card:not([hidden])').length;
+      s.hidden = !n;
+      s.querySelector('.cat-head .n').textContent = n;
+    }
     $('q-x').hidden = !q.value;
     $('shown').textContent = count === cards.length ? '' : 'Показано ' + count + ' из ' + cards.length;
   }
