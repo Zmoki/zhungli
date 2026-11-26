@@ -9,6 +9,7 @@ const IN_TELEGRAM = /Telegram/i.test(navigator.userAgent) || typeof window.Teleg
 // iPhone or iPad (iPadOS Safari presents itself as a Mac, so touch points tell it apart).
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // Opened as the Telegram mini app (/tg). Remembered for the session, so pages like /privacy keep it.
+// The bot's permanent username: @JunglyApp depends on Telegram Premium (see TELEGRAM.md).
 const MINI_APP_LINK = 'https://t.me/ZhungliPlantsBot?startapp';
 // The authors' links, by their `data-out` name (app_author_link_clicked's target).
 const AUTHOR_LINKS = { telegram: 'https://t.me/zmoki', website: 'https://zmoki.xyz/', threads: 'https://www.threads.com/@pollyhill' };
