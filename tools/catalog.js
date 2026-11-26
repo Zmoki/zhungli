@@ -29,12 +29,14 @@ const ENTRIES = heads.map((m, i) => {
 const NAMES = Object.fromEntries(ENTRIES.map(([k, name]) => [k, name]));
 // Ways whose first check doesn't follow the card's interval (`start` in the entry: wayStart in state.js).
 const OWN_START = new Set(ENTRIES.filter(([, , t]) => /\bstart:/.test(t)).map(([k]) => k));
-// What a medium says about feeding and checks: `feed` ('day', 'each', 'alt', 'none'), `feedEvery`, `feedNote`, `noChecks`.
+// What a medium says about feeding and checks: `feed` ('day', 'each', 'alt', 'none'), `feedEvery`, `feedNote`, `noChecks`,
+// and `pot`: only potted media have a watering way to pick (cardWatering in state.js).
 const MEDIUM = Object.fromEntries(ENTRIES.map(([k, , t]) => [k, {
   feed: (t.match(/\bfeed: '(\w+)'/) || [])[1],
   feedEvery: +(t.match(/\bfeedEvery: (\d+)/) || [])[1] || 0,
   feedNote: (t.match(/\bfeedNote: '([^']+)'/) || [])[1] || '',
   noChecks: /\bnoChecks: true/.test(t),
+  pot: /\bpot: true/.test(t),
 }]));
 // The app's feeding words (FEED_WITH, FEED_WORDS in state.js) and the interval when nothing sets one (feedEvery).
 const objIn = (name) => JSON.parse(stateJs.match(new RegExp(`const ${name} = (\\{[^}]+\\})`))[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
@@ -143,7 +145,8 @@ function card(d) {
   // As the «Подкормка» row (rowValues in plant.js): on «День подкормки» the card's interval, else the medium's, else
   // 14 days; otherwise why there's no feeding day.
   const fe = Number.isFinite(d.feedEvery) ? d.feedEvery : m.feedEvery || FEED_DEFAULT;
-  const feed = !d.noFeed && m.feed === 'day'
+  const feedsOnDay = !d.noFeed && m.feed === 'day';
+  const feed = feedsOnDay
     ? (fe ? `${FEED_WORDS[fe] || `раз в ${fe} дн.`}${Number.isFinite(d.feedEvery) || m.feedEvery ? '' : ' (по умолчанию)'}` : 'не кормлю')
     : d.distilled ? 'не удобряют' : d.type === 'water' ? 'при смене воды' : FEED_WITH[m.feed] || 'нет дня подкормки';
   const own = [d.type, d.watering].filter((k) => OWN_START.has(k));
@@ -154,9 +157,9 @@ function card(d) {
   const settings = [
     row('Свет', `нужно ${lux(d.lux)}`),
     row('В чём растёт', esc(lc(NAMES[d.type] || d.type))),
-    row('Полив', esc(lc(NAMES[d.watering || 'top'] || d.watering))),
+    row('Полив', m.pot ? esc(lc(NAMES[d.watering || 'top'] || d.watering)) : ''),
     row('Проверка', m.noChecks ? 'не нужно' : `раз в ${d.every} дн., дальше подстраивается по ответам`, m.noChecks ? '' : own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
-    row('Подкормка', feed, esc(d.feedNote || m.feedNote)),
+    row('Подкормка', feed, feedsOnDay && fe ? esc(d.feedNote || m.feedNote) : ''),
     row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : 'нет', d.prune && d.prune.no ? esc(d.prune.no) : [`«Да» на «Звать на обрезку?»: ${months}.`, d.prune && esc(d.prune.tip || '')].filter(Boolean).join(' ')),
     row('Покой', d.rest ? `с «${esc(d.rest.start)}» до «${esc(d.rest.end)}»` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
     row('Новое', '', esc(d.settle || '')),
