@@ -432,7 +432,7 @@ function viewPlants() {
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
   if (!ps.length) html += emptyCard('Пока пусто', 'Добавьте первое растение, и джунгли начнутся 🌱');
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + filterField(ps, tags);
+  if (ps.length >= 6) html += `<div class="search mt-20"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + filterField(ps, tags);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), tags, rm.name); });
   else html += spotGroups(ps, tags);
@@ -498,7 +498,7 @@ function openFilter() {
   $('#sheet-body').innerHTML = `<div class="sheet-head"><h2 class="m-0">Фильтр</h2>
       <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
     <div class="st-filter" role="group" aria-label="Все растения">${chip('', `Все <span class="n">${ps.length}</span>`, 'all')}</div>
-    ${sections.map(([title, kinds]) => `<h3 class="group-title">${title}</h3><div class="st-filter" role="group" aria-label="${title}">
+    ${sections.map(([title, kinds]) => `<h3 class="group-title filter-sec">${title}</h3><div class="st-filter" role="group" aria-label="${title}">
       ${kinds.map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`).join('')}`;
   openSheet();
   // However it closes (a chip, ×, Esc, a tap outside), the list is redrawn: focus goes back to the new field.

@@ -326,7 +326,7 @@ button { cursor: pointer; }
 .st-filter .st-chip.on { border-color: currentColor; box-shadow: 0 0 0 1px currentColor; }
 /* In the «Фильтр» sheet: sections under small headings, chips without the glass shadow on the white sheet */
 #sheet .st-filter .st-chip:not(.on) { box-shadow: none; }
-#sheet .group-title { margin: 20px 0 10px; color: var(--muted); }
+.group-title.filter-sec { margin: 20px 0 10px; color: var(--muted); }
 /* «Фильтр» under the Plants search: looks like the search field and shows what's shown; a tap opens the sheet, × clears */
 .pfilter { position: relative; }
 .pfilter-open {
