@@ -173,7 +173,9 @@ function rinseDone(id) {
 // Cats and dogs (ASPCA, else NC State or Pet Poison Helpline; see the content repo's pets facts): a card's `pets` is
 // 'toxic' or 'safe', one value for both since they differ only for true lilies, which aren't in the catalog.
 // It may become { cats, dogs }; then the worse of the two counts. No value: no data (generic cards never say safe).
-const petsOf = (p) => { const v = p && p.pets; return !v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : ''; };
+// 'unlisted' is no data too, only checked: «Заметки» says so (petsHtml).
+const petsOf = (p) => { const v = p && p.pets; return !v ? '' : typeof v === 'string' ? (v === 'unlisted' ? '' : v) : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : ''; };
+const petsUnlisted = (p) => !!p && p.pets === 'unlisted';
 const petsOn = () => !!(S.settings && S.settings.pets);
 // A card's word on a reminder: `prune: { no }` (not pruned, and why), or `prune: { months, tip }`.
 const remindCard = (p, kind) => (kind === 'prune' && p.prune) || {};

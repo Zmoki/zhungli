@@ -11,6 +11,8 @@
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 // toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
+// pets: 'toxic' or 'safe' for cats and dogs (ASPCA); 'unlisted': checked, but not in ASPCA and no other reliable source
+//   (content facts HOUSE-PETS, CARN-TOX); none: not checked yet.
 
 const CHECK_TEXT = {
   soil: 'Верхние 2–3 см сухие?',
@@ -316,6 +318,7 @@ const PLANTS = [
   },
   {
     id: 'stro-tri', species: 'Строманта ‘Triostar’', cat: 'Влаголюбивые', emoji: '🎨', humid: true,
+    pets: 'unlisted',
     aka: 'stromanthe, triostar',
     lux: [5000, 12000], every: 4, type: 'soil', check: 'Поверхность подсохла?',
     water: 'Грунт всё время слегка влажный. Поливать, когда подсохнет сверху.',
@@ -326,6 +329,7 @@ const PLANTS = [
   },
   {
     id: 'cten', species: 'Ктенанта', cat: 'Влаголюбивые', emoji: '🪶', humid: true,
+    pets: 'unlisted',
     aka: 'ctenanthe, бурле-маркса',
     lux: [5000, 10000], every: 4, type: 'soil', check: 'Верхний слой слегка подсох?',
     water: 'Поливать, когда верхний слой слегка подсох. Совсем не пересушивать.',
@@ -398,6 +402,7 @@ const PLANTS = [
   },
   {
     id: 'raderm', species: 'Радермахера китайская', cat: 'Пальмы, драцены и деревья', emoji: '🌳',
+    pets: 'unlisted',
     aka: 'radermachera, комнатный ясень',
     lux: [8000, 15000], every: 5, type: 'soil', spot: 'Белый стол', check: 'Верхний слой подсох?',
     water: 'Поливать, когда верхний слой подсох, не допуская длительного полного пересыхания.',
@@ -625,6 +630,7 @@ const PLANTS = [
   },
   {
     id: 'pilea', species: 'Пилея', cat: 'Декоративно-лиственные', emoji: '🪙', rotate: true,
+    pets: 'unlisted',
     aka: 'пилея, pilea, peperomioides, китайское денежное дерево, монетка, пилея кадье',
     lux: [5000, 15000], every: 6, type: 'soil',
     water: 'Когда подсохли верхние 2–3 см. Опускаются листья-монетки: пора.',
@@ -899,6 +905,7 @@ const PLANTS = [
   },
   {
     id: 'drosera', species: 'Росянка', cat: 'Хищные растения', emoji: '💧', distilled: true, noFeed: true,
+    pets: 'unlisted',
     aka: 'росянка капская, капская, drosera, capensis, sundew, росянка алисия, алисия, aliciae',
     lux: [15000, 25000], every: 3, type: 'peat', watering: 'tray', check: 'Воды в поддоне мало? Зимой поддон пустой, грунт только влажный.',
     water: 'В сезон роста горшок стоит в поддоне с 1–2 см воды, грунт всё время влажный. Только дистиллированная вода, вода обратного осмоса или чистая дождевая. Кипячёная, отстоянная, из фильтра-кувшина и бутилированная не подходят. Зимой грунт просто влажный, без воды в поддоне.',
@@ -909,6 +916,7 @@ const PLANTS = [
   },
   {
     id: 'nepenthes', species: 'Непентес', cat: 'Хищные растения', emoji: '🏺', distilled: true, noFeed: true, humid: true,
+    pets: 'unlisted',
     prune: { no: 'Обрезка не нужна. Засохший кувшин срезать там, где он начинается на кончике листа.' },
     aka: 'nepenthes, кувшиночник, кровавая мэри, bloody mary, вентрата, ventrata, pitcher plant',
     lux: [8000, 15000], every: 3, type: 'sphagnum', check: 'Сфагнум сверху подсох?',
@@ -981,6 +989,7 @@ const PLANTS = [
   },
   {
     id: 'tillandsia', species: 'Тилландсия', cat: 'Цветущие и орхидеи', emoji: '🌾', noBadge: true,
+    pets: 'unlisted',
     aka: 'тилландсия, воздушное растение, атмосферная, air plant, tillandsia, ионанта, ксерографика, усния, испанский мох',
     hint: 'атмосферная, без грунта',
     lux: [8000, 20000], every: 4, type: 'mount', check: 'Листья посветлели и стали мягче?',

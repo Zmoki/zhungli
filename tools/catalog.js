@@ -70,8 +70,8 @@ const DRAW = {
 const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|st|rt|vein|cut|co|trap|trunk)(?![-\w])|svg\.pl\b)/.test(l)).join('\n');
 
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
-// As petsOf in state.js: safe only when both cats and dogs are.
-const petsOf = (v) => (!v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
+// As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
+const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
 // As norm in views.js: search ignores case and «ё».
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
@@ -95,7 +95,7 @@ const GAPS = {
 function gapsOf(d) {
   if (d.generic) return [];
   const out = [];
-  if (!petsOf(d.pets)) out.push('pets');
+  if (!petsOf(d.pets) && d.pets !== 'unlisted') out.push('pets');
   else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('petsNote');
   if (!d.prune) out.push('prune');
   if (!d.aka) out.push('aka');
@@ -108,7 +108,7 @@ function keysOf(d) {
   const pets = petsOf(d.pets);
   return [
     `cat:${CATS.indexOf(d.cat)}`, `t:${d.type}`, d.watering && `w:${d.watering}`,
-    pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.toxic && 'sap',
+    pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.pets === 'unlisted' && 'pets_unlisted', d.toxic && 'sap',
     gaps.length && 'gap', ...gaps.map((g) => `gap:${g}`),
     d.generic && 'generic', d.big && 'big', d.humid && 'humid',
   ].filter(Boolean);
@@ -123,6 +123,7 @@ const FILTERS = [
   ['Безопасность', [
     ['pets', `${I('paw-toxic')}опасно для животных`, 'danger'],
     ['pets_safe', `${I('paw-print')}безопасно для животных`, 'safe'],
+    ['pets_unlisted', `${I('paw-print')}нет в базе ASPCA`, ''],
     ['sap', `${I('triangle-alert')}едкий сок`, 'danger'],
   ]],
   ['Пробелы', [['gap', 'любой пробел', 'need'], ...Object.entries(GAPS).map(([k, t]) => [`gap:${k}`, t, 'need'])]],
@@ -177,7 +178,7 @@ function card(d) {
   ].join('');
   // Tags under the name and tasks.
   const tags = [
-    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'нет данных', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
+    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : d.pets === 'unlisted' ? 'нет в базе ASPCA (проверено)' : 'нет данных', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic || d.pets === 'unlisted' ? '' : 'gap'),
     row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
     row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),

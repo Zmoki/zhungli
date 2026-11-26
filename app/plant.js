@@ -38,7 +38,7 @@ function cheatHtml(id) {
 }
 // With «Дома есть кошка или собака» on and nothing known about the plant: says so in «Заметки».
 function petsHtml(p) {
-  return `<div class="info"><b>${I('paw-print')}Для кошек и собак: нет данных</b>${p.generic ? 'Зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : 'Надёжных сведений о том, ядовито ли растение, нет.'}</div>`;
+  return `<div class="info"><b>${I('paw-print')}Для кошек и собак: нет данных</b>${p.generic ? 'Зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : petsUnlisted(p) ? 'Этого растения нет в базе ASPCA. Надёжных сведений о том, ядовито ли оно, нет.' : 'Надёжных сведений о том, ядовито ли растение, нет.'}</div>`;
 }
 function refreshCheat(id) {
   const box = $('#cheat');
