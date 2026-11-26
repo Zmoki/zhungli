@@ -96,12 +96,14 @@ function endAddFlow(leftApp = false) {
   addFlow = null;
 }
 let searchTimer;
+const byCatalogName = (a, b) => !!a.generic - !!b.generic || (!a.generic && a.species.localeCompare(b.species, 'ru'));
 // The catalog by groups under a search box: in the add sheet and when changing a plant's card (`changeFor`).
 function catalogHtml(changeFor) {
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
-  // A generic type closes its group («Орхидея» after «Фаленопсис»), as «Общие типы» close the list.
-  Object.values(groups).forEach((ds) => ds.sort((a, b) => !!a.generic - !!b.generic));
+  // Plants by name, A to Я («Алоказия» comes before its varieties); a generic type closes its group («Орхидея» after
+  // «Фаленопсис»), as «Общие типы» close the list, in the order they're written.
+  Object.values(groups).forEach((ds) => ds.sort(byCatalogName));
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}${searchX('')}</div>

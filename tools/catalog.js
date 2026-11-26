@@ -232,7 +232,7 @@ function page() {
   const sheet = FILTERS.map(([title, kinds]) => [title, kinds.filter(([k]) => counts[k])]).filter(([, kinds]) => kinds.length)
     .map(([title, kinds]) => `<h3 class="filter-sec">${title}</h3><div class="st-filter" role="group" aria-label="${title}">${kinds.map(([k, label, cls]) => chip(k, label, cls)).join('')}</div>`).join('');
   const sections = CATS.map((c, i) => {
-    const list = PLANTS.filter((d) => d.cat === c).sort((a, b) => !!a.generic - !!b.generic);
+    const list = PLANTS.filter((d) => d.cat === c).sort((a, b) => !!a.generic - !!b.generic || (!a.generic && a.species.localeCompare(b.species, 'ru'))); // as catalogHtml in add.js
     return `<section class="cat"><h2><button type="button" class="cat-head" aria-expanded="true" aria-controls="cat-${i}"><span>${esc(c)} <span class="n">${list.length}</span></span>${I('chevron-right')}</button></h2><div class="grid" id="cat-${i}">${list.map(card).join('\n')}</div></section>`;
   }).join('\n');
   const all = `все ${PLANTS.length} ${plural(PLANTS.length, 'карточка', 'карточки', 'карточек')}`;
