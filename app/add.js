@@ -519,7 +519,8 @@ function catalogCard(it) {
   return best;
 }
 // A plant the catalog doesn't have becomes an own plant like a generic type: the one for its medium
-// (water, a block, a terrarium, an aquarium), else the one the AI said it's like.
+// (water, a block, a terrarium, an aquarium), else the one the AI said it's like. «Эпифит на блоке» is hidden from the
+// catalog (a known plant on a block is that plant with «На блоке»), but still the base for an unknown one.
 const MEDIUM_LIKE = { water: 'cuttings', mount: 'g-mount', terrarium: 'g-terrarium', aquarium: 'g-aquarium' };
 const importBase = (it) => {
   const id = MEDIUM_LIKE[it.type] || it.like || { dry: 'g-succ', bark: 'g-orchid' }[it.type] || 'g-easy';
