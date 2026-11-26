@@ -432,11 +432,11 @@ function viewPlants() {
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
   if (!ps.length) html += emptyCard('Пока пусто', 'Добавьте первое растение, и джунгли начнутся 🌱');
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + stateFilter(ps, tags);
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + filterField(ps, tags);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
   if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), tags, rm.name); });
   else html += spotGroups(ps, tags);
-  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово или «Все».</p>`;
+  if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово или другой фильтр.</p>`;
   return html;
 }
 
@@ -459,29 +459,51 @@ function spotGroups(ps, tags, room) {
   return html;
 }
 
-// Filter under the search: «Все» and one chip per tag kind that has plants, with icon, word and count.
-// The chips also teach which icon means what.
+// The Plants filter: one chosen tag kind (`plantSt`, '' for all), picked in the «Фильтр» sheet. Under the search,
+// a field like the search shows what's shown («все 33 растения» or the kind with its count); a tap opens the sheet,
+// × shows all again. The chips also teach which icon means what.
 let plantSt = '';
 // Filter keys: every tag kind of the plant card, plus the growing ways its name says (those have no tag).
 const filterKeys = (p, tags = tagsOf(p)) => [...new Set([...tags.map((t) => t.key), ...growKeys(p)])];
-function stateFilter(ps, tags) {
-  const n = {};
-  const due = [];
+// Every kind that has plants, with its count, by section of the sheet, in the tags' order (TAGS.md).
+function filterKinds(ps, tags) {
+  const n = {}, due = [];
   ps.forEach((p) => filterKeys(p, tags.get(p)).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
-  // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
-  const sel = n[plantSt] ? plantSt : '';
-  // The same words and colors as the plant card's tags; the chosen chip gets a ring in its own color.
-  const chip = (k, label, cls = k || 'all') => `<button class="st-chip ${cls} ${sel === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${sel === k}">${label}</button>`;
   // The plants' own word when every plant due shares it («мутновато», «пустовато»), else «суховато».
   const word = (k) => (k === 'need' && new Set(due.map((p) => stateWord(k, p))).size === 1 ? stateWord(k, due[0]) : STATES[k][1]);
-  // In the plant card's tag order (TAGS.md): the plant (now, rest, how it grows, greenhouse), then safety.
   const pet = (icon, w) => `${I(icon)}<span>${w}<span class="sr-only"> для питомцев</span></span>`;
-  const kinds = [...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`]), ['rest', `${I('moon')}отдыхают`],
-    ...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way']),
-    ['greenhouse', `${I('house-heart')}в теплице`], ['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
-    ['sap', `${I('hand')}едкий сок`, 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger']];
-  return `<div class="st-filter mt-10" role="group" aria-label="Показать растения">${chip('', `Все <span class="n">${ps.length}</span>`)}
-    ${kinds.filter(([k]) => n[k]).map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`;
+  // [key, icon and word, color class]: the same words and colors as the plant card's tags.
+  const sections = [
+    ['Как сейчас', [...Object.keys(STATES).map((k) => [k, `${I(STATES[k][0])}${word(k)}`, k]), ['rest', `${I('moon')}отдыхают`, 'rest']]],
+    ['Как растёт', [...[...Object.keys(MEDIA), ...Object.keys(WATERING)].filter((k) => growBadge(k)).map((k) => [k, `${I(growBadge(k)[0])}${growBadge(k)[1]}`, 'way']),
+      ['greenhouse', `${I('house-heart')}в теплице`, 'greenhouse']]],
+    ['Безопасность', [['pets', pet('paw-toxic', 'опасно'), 'danger'], ['pets_safe', pet('paw-print', 'безопасно'), 'safe'],
+      ['sap', `${I('hand')}едкий сок`, 'danger'], ['new', `${I('biohazard')}на карантине`, 'danger']]],
+  ].map(([title, kinds]) => [title, kinds.filter(([k]) => n[k])]).filter(([, kinds]) => kinds.length);
+  return { n, sections };
+}
+function filterField(ps, tags) {
+  const { n, sections } = filterKinds(ps, tags);
+  if (!n[plantSt]) plantSt = ''; // no plants left of that kind: all are shown
+  const kind = plantSt && sections.flatMap(([, kinds]) => kinds).find(([k]) => k === plantSt);
+  const value = kind ? `<span class="v ${kind[2]}">${kind[1]} <span class="n">${n[plantSt]}</span></span>` : `<span class="v">все ${plantsN(ps.length)}</span>`;
+  return `<div class="pfilter mt-10 ${kind ? 'on' : ''}"><button class="pfilter-open" data-act="filter-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> ${value}</span></button>
+    ${kind ? `<button class="pfilter-x" data-act="st-filter" data-st="" aria-label="Сбросить фильтр">${I('x')}</button>` : `<span class="pfilter-end" aria-hidden="true">${I('chevron-right')}</span>`}</div>`;
+}
+// The «Фильтр» sheet: «Все», then the kinds by section. A tap picks one and closes the sheet.
+function openFilter() {
+  const ps = allPlants(), tags = new Map(ps.map((p) => [p, tagsOf(p)]));
+  const { n, sections } = filterKinds(ps, tags);
+  const chip = (k, label, cls) => `<button class="st-chip ${cls} ${plantSt === k ? 'on' : ''}" data-act="st-filter" data-st="${k}" aria-pressed="${plantSt === k}">${label}</button>`;
+  $('#sheet-body').innerHTML = `<div class="sheet-head"><h2 class="m-0">Фильтр</h2>
+      <button class="icon-btn close" data-act="close" aria-label="Закрыть">${I('x')}</button></div>
+    <div class="st-filter" role="group" aria-label="Все растения">${chip('', `Все <span class="n">${ps.length}</span>`, 'all')}</div>
+    ${sections.map(([title, kinds]) => `<h3 class="group-title">${title}</h3><div class="st-filter" role="group" aria-label="${title}">
+      ${kinds.map(([k, label, cls]) => chip(k, `${label} <span class="n">${n[k]}</span>`, cls)).join('')}</div>`).join('')}`;
+  openSheet();
+  // However it closes (a chip, ×, Esc, a tap outside), the list is redrawn: focus goes back to the new field.
+  sheet.addEventListener('close', () => $('.pfilter-open')?.focus(), { once: true });
+  track('plants_filter_opened', { status: plantSt || 'all' });
 }
 
 // Search on the Plants tab: filters the cards in place, so the field keeps focus.
@@ -489,7 +511,6 @@ let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {
   if (!$('#plants-q')) { plantQ = ''; plantSt = ''; } // no search or filter (fewer than 6 plants): show everything
-  if (plantSt && !document.querySelector(`.st-chip.on[data-st="${plantSt}"]`)) plantSt = ''; // no plants left in that state
   const q = norm(plantQ.trim());
   let any = false;
   document.querySelectorAll('.pgroup').forEach((g) => {
@@ -824,11 +845,13 @@ Object.assign(ACTS, {
     qsPicked = new Set();
     addFromCatalog(keys, 'quick', tab);
   },
+  'filter-open'() { openFilter(); },
+  // A chip in the «Фильтр» sheet, or × on the field: the list redraws with the field saying what's shown, and focus
+  // lands on the field, so screen readers hear it («Фильтр: суховато 27»).
   'st-filter'(el) {
     plantSt = el.dataset.st;
-    el.parentElement.querySelectorAll('.st-chip').forEach((c) => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el); });
-    filterPlants();
-    track('plants_filtered', { status: plantSt || 'all' });
+    track('plants_filtered', { status: plantSt || 'all', from: sheet.open ? 'sheet' : 'clear' });
+    if (sheet.open) closeSheet(); else { render(); $('.pfilter-open')?.focus(); }
   },
   'room-save'(el) {
     const rm = S.rooms.find((x) => x.id === el.dataset.room);

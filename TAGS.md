@@ -2,7 +2,7 @@
 
 Every tag the app shows about a plant: when it shows, how it looks and what its bubble says. The words tag, badge and chip are in [DESIGN.md](DESIGN.md#tags-badges-chips).
 
-`tagsOf()` in `plant.js` builds a plant's tags. Grid badges (`plantBadges` in `views.js`) and the Plants filter (`stateFilter`) use the same list, so they show the same tags in the same order.
+`tagsOf()` in `plant.js` builds a plant's tags. Grid badges (`plantBadges` in `views.js`) and the Plants filter (`filterKinds`) use the same list, so they show the same tags in the same order.
 
 A tag's key is the same everywhere: the `data-tag` attribute, `plant_tag_opened` `tag` and `plants_filtered` `status` in [analytics/events.json](analytics/events.json).
 
@@ -12,7 +12,7 @@ A tag's key is the same everywhere: the `data-tag` attribute, `plant_tag_opened`
 |---|---|---|
 | Plant card, the row under the quote | tag: icon and word; a tap opens a bubble | all of the plant's tags, at most 2 ways |
 | Grid card, over the picture | badge: icon in a white circle; the word is its `title` and for screen readers | the same as the plant card, in two columns up from the bottom corners: the plant group on the left (a second column beside it when the picture is full, 5 badges on a phone), safety on the right, so the pet paw is always in the bottom right corner |
-| Plants tab filter (6 or more plants) | chip: icon and word | one chip per key that any plant has; ways also when the name says them |
+| Plants tab «Фильтр» sheet (6 or more plants) | chip: icon, word and count, in sections «Как сейчас», «Как растёт», «Безопасность» | one chip per key that any plant has; ways also when the name says them. The chosen one shows in the «Фильтр» field under the search |
 | Catalog row in «Добавить» | pet tag (`.pet-tag`): only «опасно» or «безопасно» | when pets are on in «Настройки» |
 
 The Light tab and the plant card's light row show a colored word (`.light-tag`: темновато, ярковато, отлично). It's not a tag: no icon, no bubble.

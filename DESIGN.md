@@ -42,7 +42,7 @@ Three words, used the same in the UI, code and docs:
 |---|---|---|---|---|
 | **tag** | метка | an icon and a word about the plant | the plant card's row under the quote (tap for a bubble), the pet label in the catalog | `.tag`, `.pet-tag`; the Light tab's colored word is `.light-tag` |
 | **badge** | значок | an icon only, in a white circle | grid cards, over the picture | `.badge` |
-| **chip** | — | a choice you press | «Да» / «Нет», places, filters | `.chip`, `.st-chip` (the Plants tab filter) |
+| **chip** | — | a choice you press | «Да» / «Нет», places, filters | `.chip`, `.st-chip` (the Plants «Фильтр» sheet) |
 
 Each kind of tag has its own hue, the same on tags, badges and filter chips (the kind is a class: `.need`, `.danger`, `.greenhouse`…). Every tag with its word, icon, color and bubble is in [TAGS.md](TAGS.md). Toxic and safe for pets differ by shape too: the paw on «опасно» is turned the other way.
 
@@ -73,6 +73,9 @@ The same action has the same word everywhere, so people don't have to wonder whe
 
 Search fields have a magnifier on the left and, once something is typed, an ✕ on the right that empties the field (`searchX()` in `core.js`). Safari on iPhone draws no clear button of its own, and the browser's own one is hidden where it exists.
 
+## Filter
+
+The Plants tab filter is a field under the search, the same size and border, with a funnel on the left. It says what the list shows, «Фильтр: все 33 растения» or the chosen kind in its tag colors with its count («Фильтр: ☹ суховато 27»), so a shorter list always says why (W3C COGA: no hidden state). A tap opens the «Фильтр» sheet (the same word on the field and the sheet): «Все», then chips in three sections, «Как сейчас», «Как растёт», «Безопасность», only kinds that have plants. One tap picks a chip and closes the sheet, no «Применить». With a filter on, the field's border turns dark and ✕ on the right shows all again, like the search's ✕; without one, a › says it opens something.
 ## Nothing disappears
 
 A plant's «Настройки» never hide a section or a switch that doesn't apply to it: it stays in place, disabled and greyed out, with a short line saying why (`.why-not`, `whyNot()` in `plant.js`). Examples: «Подкормка» for a plant in pon («удобрение добавляют в каждый полив»), «Как поливаю» for a plant in water, «Покой» for a plant that doesn't rest. A section that silently disappears reads as a bug («у меня нет кнопки…»).

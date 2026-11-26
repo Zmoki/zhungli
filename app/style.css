@@ -323,7 +323,27 @@ button { cursor: pointer; }
 .st-filter { display: flex; flex-wrap: wrap; gap: 8px; }
 .st-filter .st-chip { min-height: 44px; border-color: var(--edge); white-space: nowrap; } /* controls keep a 3:1 edge */
 .st-filter .st-chip.all { color: var(--ink); padding-left: 14px; }
-.st-filter .st-chip.on { border-color: currentColor; }
+.st-filter .st-chip.on { border-color: currentColor; box-shadow: 0 0 0 1px currentColor; }
+/* In the «Фильтр» sheet: sections under small headings, chips without the glass shadow on the white sheet */
+#sheet .st-filter .st-chip:not(.on) { box-shadow: none; }
+#sheet .group-title { margin: 20px 0 10px; color: var(--muted); }
+/* «Фильтр» under the Plants search: looks like the search field and shows what's shown; a tap opens the sheet, × clears */
+.pfilter { position: relative; }
+.pfilter-open {
+  width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 8px 50px 8px 14px; text-align: left;
+  border: 2px solid var(--edge); border-radius: 16px; background: var(--field); color: var(--ink); font-size: 1rem;
+}
+.pfilter-open > .ic { width: 22px; height: 22px; flex: none; color: var(--muted); stroke-width: 2.2; margin-left: 1px; }
+/* The value flows like text, so a long one («в грунте для суккулентов 3») wraps word by word on a narrow phone */
+.pfilter-t { line-height: 1.35; }
+.pfilter-t .k { color: var(--muted); font-weight: 700; }
+.pfilter-t .v { font-weight: 900; }
+.pfilter-t .v .ic { width: 18px; height: 18px; stroke-width: 2.4; vertical-align: -3px; margin-right: .25em; }
+.pfilter-t .v .n { font-size: 0.824rem; font-weight: 600; color: var(--muted); }
+.pfilter.on .pfilter-open { border-color: var(--ink); }
+.pfilter-x, .pfilter-end { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); }
+.pfilter-end { pointer-events: none; }
+.pfilter-x .ic, .pfilter-end .ic { width: 22px; height: 22px; stroke-width: 2.5; }
 /* Counts stay quiet: regular weight, smaller, grey */
 .st-filter .st-chip .n { font-size: 0.824rem; font-weight: 600; color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(7rem, 135px)), 1fr)); gap: 16px; }
@@ -425,23 +445,23 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
   flex: none; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--chip-ring);
   background: var(--glass-photo); box-shadow: 0 1px 6px rgba(0, 0, 0, .16);
 }
-/* Filter chips on the Plants tab: the same white glass, with the icon and the word in the status color */
+/* Filter chips in the Plants «Фильтр» sheet: white glass, with the icon and the word in the status color */
 .st-chip {
   display: inline-flex; align-items: center; gap: .3em; background: var(--glass-photo); box-shadow: 0 1px 6px rgba(0, 0, 0, .16);
   font-size: 0.941rem; font-weight: 900; padding: 5px 14px 5px 8px; border-radius: 99px; border: 2px solid var(--chip-ring);
 }
 .st-chip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-/* Status colors, the same on badges, tags and filter chips. Danger (sap, toxic to pets, quarantine) is red */
-:is(.badge, .tag, .st-chip, .pet-tag).need { color: var(--st-need); }
-:is(.badge, .tag, .st-chip, .pet-tag).watered { color: var(--st-watered); }
-:is(.badge, .tag, .st-chip, .pet-tag).dim { color: var(--st-dim); }
-:is(.badge, .tag, .st-chip, .pet-tag).hot { color: var(--st-hot); }
-:is(.badge, .tag, .st-chip, .pet-tag):is(.fine, .safe) { color: var(--st-fine); }
-:is(.badge, .tag, .st-chip, .pet-tag).danger { color: var(--st-danger); }
-:is(.badge, .tag, .st-chip, .pet-tag).greenhouse { color: var(--st-gh); }
-:is(.badge, .tag, .st-chip, .pet-tag).rest { color: var(--st-rest); }
+/* Status colors, the same on badges, tags, filter chips and the «Фильтр» field's value. Danger (sap, toxic to pets, quarantine) is red */
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).need { color: var(--st-need); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).watered { color: var(--st-watered); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).dim { color: var(--st-dim); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).hot { color: var(--st-hot); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v):is(.fine, .safe) { color: var(--st-fine); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).danger { color: var(--st-danger); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).greenhouse { color: var(--st-gh); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).rest { color: var(--st-rest); }
 /* How it grows when it's not an ordinary pot («в воде», «на фитиле»): teal */
-:is(.badge, .tag, .st-chip, .pet-tag).way { color: var(--st-grow); }
+:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).way { color: var(--st-grow); }
 .sheet-main {
   position: relative; z-index: 1; margin: -28px -16px 0; padding: 22px 16px 0;
   background: var(--sheet-solid); border-radius: 28px 28px 0 0; box-shadow: 0 -8px 24px rgba(42, 33, 24, .12);

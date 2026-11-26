@@ -244,19 +244,20 @@ function todayStory(slide) {
   ];
   return [...answer('water'), ...answer('wet'), ...answer('water')];
 }
-// 2. «Растения»: the grid, then the «суховато» chip filters it.
+// 2. «Растения»: the grid, then the «Фильтр» field picks «суховато», «темновато», «в теплице» in turn.
 function plantsStory(slide) {
-  // Without the user's own search text, which viewPlants reads from plantQ.
-  const empty = () => { const q = plantQ; plantQ = ''; try { return viewPlants(); } finally { plantQ = q; } };
-  const f = phone(tame(onSample(sampleGarden(SAMPLE_RICH), empty)), 'plants');
+  const garden = sampleGarden(SAMPLE_RICH);
+  // Without the user's own search text and filter, which viewPlants reads from plantQ and plantSt.
+  const view = (key) => tame(onSample(garden, () => {
+    const q = plantQ, st = plantSt; plantQ = ''; plantSt = key;
+    try { return viewPlants(); } finally { plantQ = q; plantSt = st; }
+  }));
+  const f = phone(view(''), 'plants');
   slide.append(f);
-  // A chip tapped: only its plants stay, as the app's own filter does («Все» is key '').
-  const chipOf = (key) => f.querySelector(`.st-chip[data-st="${key}"]`);
-  const filter = (key) => [[1300, (now) => { if (!now) tapAt(f, chipOf(key)); }], [LAND, () => {
-    const chip = chipOf(key);
-    f.querySelectorAll('.st-chip.on').forEach((c) => c.classList.remove('on'));
-    chip?.classList.add('on');
-    f.querySelectorAll('.pcard').forEach((c) => { c.hidden = !!key && !c.dataset.st.split(' ').includes(key); });
+  // The field tapped, then the list as the app's filter leaves it: only that kind's plants, the field saying so.
+  const filter = (key) => [[1300, (now) => { if (!now) tapAt(f, f.querySelector('.pfilter-open')); }], [LAND, () => {
+    setScreen(f, view(key));
+    f.querySelectorAll('.pcard').forEach((c) => { c.hidden = !c.dataset.st.split(' ').includes(key); });
     f.querySelectorAll('.pgroup').forEach((g) => { g.hidden = ![...g.querySelectorAll('.pcard')].some((c) => !c.hidden); });
   }]];
   return [...filter('need'), ...filter('dim'), ...filter('greenhouse')];
