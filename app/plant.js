@@ -112,8 +112,8 @@ function wateringBox(p, d) {
     <div class="chips">${wayChips(p, 'watering', ways, pot ? p.watering || 'top' : '', !pot)}</div>${whyNot(pot ? '' : waterWhyNot(p), 'watering-why')}</div>
     <div class="field" id="watering-note">${wateringNote(p, d)}</div>`;
 }
-// «Недавно пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
-// «Да» / «Нет» for a row whose title is the question («Недавно купили»): chips, like every other choice.
+// «Пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
+// «Да» / «Нет» for a row whose title is the question («Новое»): chips, like every other choice.
 const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
   const sel = (v === '1') === on;
   return `<button class="chip ${sel ? 'on' : ''}" data-act="yes-no" data-field="${field}" data-id="${esc(id)}"${kind ? ` data-kind="${kind}"` : ''} data-v="${v}" aria-pressed="${sel}"${dis ? ' disabled' : ''}>${v === '1' ? 'Да' : 'Нет'}</button>`;
@@ -122,7 +122,7 @@ const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
 // `hint`: the id of the line under it that says what the current answer does.
 const askYesNo = (q, field, id, on, dis = false, kind = '', hint = '') => `<div class="yn" role="group" aria-labelledby="q-${field}${kind}"${hint ? ` aria-describedby="${hint}"` : ''}><p class="yn-q" id="q-${field}${kind}">${q}</p>
   <div class="chips">${yesNo(field, id, on, dis, kind)}</div></div>`;
-const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Недавно пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
+const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and warnings by the content facts: succulents and cacti rot in steady moisture; standing
 // in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25: the tray reaches other plants only by import); a wick
@@ -208,7 +208,7 @@ function endRest(id) {
 }
 const restBox = (p) => `<div class="info rest"><b>${I('moon')}Покой с ${parse(p.resting.since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</b>${p.rest ? esc(p.rest.tip) : ''}
   <button class="mt-12 btn ok wide" data-act="rest-end" data-id="${esc(p.id)}">${I('sprout')}${esc(p.rest ? p.rest.end : 'Снова растёт')}</button></div>`;
-// «Недавно купили»: quarantine and settling in, with dates; a card may add its own word (`settle`).
+// «Новое»: quarantine and settling in, with dates; a card may add its own word (`settle`).
 function newHint(p) {
   const day = (n) => parse(addDays(p.bought, n)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   if (!isNew(p)) return hintLines('Обычный уход, без карантина.');
@@ -569,13 +569,13 @@ function rowValues(p) {
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['не зову', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    bought: [isNew(p) ? `карантин до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
-    repot: !fed ? ['не влияет', true] : [repotted(p) ? `без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    bought: [isNew(p) ? `да, на карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
     rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
 const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт',
-  feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Недавно купили', repot: 'Недавно пересажено', rest: 'Покой' };
+  feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Новое', repot: 'Пересажено', rest: 'Покой' };
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
   return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
@@ -592,7 +592,7 @@ function refreshRows() {
   keepTapped();
 }
 // A tap can change rows above it: another row's value gets longer and wraps («пауза до 21 декабря» in a closed
-// «Подкормка» after «Недавно купили: Да»). The sheet scrolls by as much, so the tapped control stays under the finger.
+// «Подкормка» after «Новое: Да»). The sheet scrolls by as much, so the tapped control stays under the finger.
 // A handler may draw the control anew, so it's found again by its data attributes.
 let tapped = null;
 const TAP_KEYS = ['act', 'field', 'kind', 'v', 'n', 'm', 'way', 'row', 'spot', 'room'];
@@ -680,7 +680,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
     + row('prune', remindBody(id, 'prune')))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Недавно купили" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
+    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Новое" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', restRowBody(p)))}
@@ -892,7 +892,7 @@ function changeWay(id, f, value) {
   $('#rinse-wrap').innerHTML = rinseBox(p);
   $('#feed-box').innerHTML = feedBox(p);
   refreshTags(p);
-  // «Недавно пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
+  // «Пересажено» follows a settle (it sets `repotted`) and whether the plant is fed on the day at all.
   const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
   if (res.settle) {
     // Only plants called on «День подкормки» notice it.
