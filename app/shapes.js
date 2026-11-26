@@ -142,10 +142,34 @@ const FACES = {
   hot: '<path class="fs" d="M26.4 48.8l2.8 1.5-2.8 1.5M37.6 48.8l-2.8 1.5 2.8 1.5M29 54.6q.8-1.2 1.7 0t1.7 0 1.7 0"/>',
 };
 const CHEEKS = '<ellipse class="ck" cx="24.6" cy="53" rx="1.9" ry="1.1"/><ellipse class="ck" cx="39.4" cy="53" rx="1.9" ry="1.1"/>';
-// m: mood class (fine, need, watered, dim, hot) to draw a face; none for tiny icons.
-const plantSvg = (d, m) => {
+// A square viewBox around each drawing (with its face), so a small tile shows the whole plant in its middle: measured
+// from the drawn shapes with getBBox in Chrome, 2 units of air around the larger side. Re-measure after editing a shape.
+const SHAPE_FIT = {
+  leafy: '1.1 0 62.3 62.3',
+  trailing: '4.5 13.1 54 54',
+  succulent: '9 17.8 46 46',
+  cactus: '2.9 4 58.3 58.3',
+  orchid: '2.2 2.8 59.5 59.5',
+  palm: '0.9 0 62.3 62.3',
+  flowering: '4.6 7.5 54.8 54.8',
+  herbs: '3.4 5 57.3 57.3',
+  arrow: '-2.1 -6 68.3 68.3',
+  split: '2.5 2 60.3 60.3',
+  heart: '2.6 3.5 58.8 58.8',
+  upright: '0.9 0 62.3 62.3',
+  tree: '1.4 0 62.3 62.3',
+  prayer: '1.4 1 61.3 61.3',
+  coleus: '-0.3 -2.3 64.6 64.6',
+  flytrap: '4.4 7 55.3 55.3',
+  sundew: '6.1 11.2 51.8 51.8',
+  pitcher: '5.4 9 53.3 53.3',
+  cutting: '1.3 1.4 61.4 61.4',
+};
+// m: mood class (fine, need, watered, dim, hot) to draw a face; none for tiny icons. fit: the square viewBox (SHAPE_FIT)
+// for small square tiles (catalog rows) instead of the 64×64 one the grid's tall tiles use.
+const plantSvg = (d, m, fit = false) => {
   const shape = shapeOf(d);
   let face = m && FACES[m] ? CHEEKS + FACES[m] : '';
   if (face && shape === 'cutting') face = `<g transform="translate(0 -12)">${face}</g>`;
-  return `<svg class="pl v${toneOf(d)}" viewBox="0 0 64 64" aria-hidden="true">${SHAPES[shape]}${face}</svg>`;
+  return `<svg class="pl v${toneOf(d)}" viewBox="${fit ? SHAPE_FIT[shape] : '0 0 64 64'}" aria-hidden="true">${SHAPES[shape]}${face}</svg>`;
 };

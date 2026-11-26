@@ -76,7 +76,7 @@ const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigit
 // `alt`, then the hint.
 function pickPreview(d) {
   const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe fit">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
@@ -330,7 +330,7 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick .pc { color: var(--muted); flex: none; display: inline-flex; }
 .pick .pc .ic { width: 22px; height: 22px; stroke-width: 2.5; }
 .pick .pe.fit { width: 56px; height: 56px; }
-.pick .pe.fit svg.pl { width: 50px; height: 50px; }
+.pick .pe.fit svg.pl { width: 46px; height: 46px; }
 :is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
 :is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }
