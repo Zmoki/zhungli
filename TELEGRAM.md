@@ -1,9 +1,10 @@
 # Telegram
 
-Жунгли run in Telegram as a mini app of the bot [@ZhungliPlantsBot](https://t.me/ZhungliPlantsBot). It's the same app as the website, with plants stored in Telegram's cloud.
+Жунгли run in Telegram as a mini app of the bot [@JunglyApp](https://t.me/JunglyApp). It's the same app as the website, with plants stored in Telegram's cloud.
 
 - **Mini app:** `https://zhungli.zmoki.xyz/tg`
-- **Link to share:** `https://t.me/ZhungliPlantsBot?startapp`, which opens the app straight away.
+- **Link to share:** `https://t.me/JunglyApp?startapp`, which opens the app straight away.
+- **Usernames:** @JunglyApp is an extra premium username; it works only while the author's Telegram Premium is active. The bot's own username [@ZhungliPlantsBot](https://t.me/ZhungliPlantsBot) is permanent (bot usernames can't be changed). The app's buttons (`MINI_APP_LINK` in `app/core.js`) use the permanent one, so they never break; @JunglyApp is only for what people read. If Premium lapses, switch every @JunglyApp in the repo (grep) back to @ZhungliPlantsBot, and the sticker pack title in @Stickers too.
 - **Author contact in the app:** [@zmoki](https://t.me/zmoki), for ideas and bugs.
 
 ## Bot
