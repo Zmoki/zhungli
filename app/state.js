@@ -95,7 +95,7 @@ const MEDIA = {
 // A wick's or reservoir's water lasts longer in less light. One UF trial (HOUSE-SELFW-19, an estimate): a reservoir
 // emptied in 6–8 days at about 2150 lx and in 16–22 at about 540 lx. The first check: 7 days from 2000 lx, 14 at 600 lx
 // and less (earlier than the trial, so the tank isn't found empty), in between by a line. Answers tune it after.
-const tankStart = (b, lux) => Math.round(clamp(14 - ((lux - 600) / 1400) * 7, 7, 14));
+const tankStart = (b, lux) => (Number.isFinite(lux) ? Math.round(clamp(14 - ((lux - 600) / 1400) * 7, 7, 14)) : 7);
 const WATERING = {
   top: { name: 'Сверху' },
   bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон', badge: ['arrow-up-from-line', 'полив снизу'],

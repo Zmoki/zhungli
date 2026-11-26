@@ -894,13 +894,15 @@ document.addEventListener('change', (e) => {
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
   if (f === 'lux') {
-    const v = parseInt(el.value, 10);
+    const v = parseInt(el.value, 10), was = r.lux;
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
     if (r.lux) track('plant_setting_lux_changed', { from: tab === 'light' ? 'light_tab' : 'card' });
-    // A wick's or reservoir's first check follows the light (tankStart): a reading before any answer moves it.
-    const d = def(id), p = plant(id), g = wayOf(p);
-    if (g.start === tankStart && !isCardWay(r, d) && !r.lastWater && !checksOf(p).length) {
-      const iv = wayStart(g, r.soilInterval || d.every, r.lux || d.lux[0]), shift = iv - Math.round(r.interval);
+    // A wick's or reservoir's first check follows the light (tankStart): a reading before any answer moves it, while
+    // the interval is still the one the last reading gave (not one picked with «Проверка»).
+    const d = def(id), p = plant(id), g = wayOf(p), base = r.soilInterval || d.every;
+    if (g.start === tankStart && !isCardWay(r, d) && !r.lastWater && !checksOf(p).length
+      && Math.round(r.interval) === wayStart(g, base, was || d.lux[0])) {
+      const iv = wayStart(g, base, r.lux || d.lux[0]), shift = iv - Math.round(r.interval);
       if (shift) { r.interval = iv; r.nextCheck = addDays(r.nextCheck, shift); }
     }
   }
