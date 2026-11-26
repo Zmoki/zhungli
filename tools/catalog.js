@@ -10,8 +10,8 @@ const vm = require('vm');
 const ROOT = path.join(__dirname, '..', 'app');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-// As altHtml in core.js: an English second name is marked lang="en".
-const altHtml = (s) => (/\p{Script=Latin}/u.test(s) ? `<span lang="en">${esc(s)}</span>` : esc(s));
+// As altHtml in core.js: each English name on the second line is marked lang="en".
+const altHtml = (s) => String(s).split(', ').map((n) => (/\p{Script=Latin}/u.test(n) ? `<span lang="en">${esc(n)}</span>` : esc(n))).join(', ');
 
 // The catalog and the drawings run as they are; shapes.js only needs the cards.
 const ctx = {};
@@ -125,7 +125,7 @@ function gapsOf(d) {
   else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('petsNote');
   if (!d.prune) out.push('prune');
   if (!d.aka) out.push('aka');
-  if (!d.alt) out.push('alt');
+  if (d.alt === undefined) out.push('alt'); // '' is checked: no second name
   return out;
 }
 

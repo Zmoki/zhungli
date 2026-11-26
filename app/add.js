@@ -867,7 +867,7 @@ function renderImportList() {
 // The add button stays in place: disabled with nothing ticked.
 const updateImportBar = () => setAddButton($('#imp-add'), imp.picked.size, 'Ничего не выбрано');
 // A plant with a catalog card: added like one from the catalog, keeping the AI's name for it as the species
-// («Монстера Тай Констеллейшн» on «Монстера deliciosa»). A medium or watering the chat mentioned is set as if
+// («Монстера Тай Констеллейшн» on «Монстера деликатесная»). A medium or watering the chat mentioned is set as if
 // picked in the plant card, without the «just repotted» pause: the plant already grows that way.
 function importCard(it, i, place) {
   const d = it.card, id = newId('p', i);
