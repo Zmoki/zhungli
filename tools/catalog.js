@@ -15,7 +15,9 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(`${read('plants.js')}\n${read('shapes.js')}\nthis.out = { PLANTS, CHECK_TEXT, plantSvg };`, ctx);
-const { PLANTS, CHECK_TEXT, plantSvg } = ctx.out;
+// Hidden cards (`hidden: true`) are leftovers nobody can add any more: they stay in plants.js for old saved plants only.
+const PLANTS = ctx.out.PLANTS.filter((d) => !d.hidden);
+const { CHECK_TEXT, plantSvg } = ctx.out;
 
 // Growing media and watering ways (MEDIA and WATERING in state.js), read without running state.js: each entry's
 // text runs from its key to the next key or the end of its object.
@@ -108,7 +110,7 @@ function keysOf(d) {
     `cat:${CATS.indexOf(d.cat)}`, `t:${d.type}`, d.watering && `w:${d.watering}`,
     pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.toxic && 'sap',
     gaps.length && 'gap', ...gaps.map((g) => `gap:${g}`),
-    d.hidden && 'hidden', d.generic && 'generic', d.big && 'big', d.humid && 'humid',
+    d.generic && 'generic', d.big && 'big', d.humid && 'humid',
   ].filter(Boolean);
 }
 const badge = (k) => (BADGES[k] ? `${I(BADGES[k][0])}${BADGES[k][1]}` : esc(NAMES[k] || k));
@@ -124,7 +126,7 @@ const FILTERS = [
     ['sap', `${I('triangle-alert')}едкий сок`, 'danger'],
   ]],
   ['Пробелы', [['gap', 'любой пробел', 'need'], ...Object.entries(GAPS).map(([k, t]) => [`gap:${k}`, t, 'need'])]],
-  ['Карточка', [['hidden', 'скрытые', ''], ['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
+  ['Карточка', [['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
 ];
 
 // A row: what the app shows, and an optional hint line under it (as in a settings row).
@@ -137,7 +139,7 @@ const block = (title, rows, cls) => (rows.trim() ? `<section class="blk ${cls}">
 function card(d) {
   const pets = petsOf(d.pets);
   const gaps = gapsOf(d);
-  const flags = [d.hidden && 'Скрыта', d.generic && 'Общий тип'].filter(Boolean);
+  const flags = [d.generic && 'Общий тип'].filter(Boolean);
   const m = MEDIUM[d.type] || {};
   // The pruning reminder is off for a new plant («нет»); «Да» to «Звать на обрезку?» calls in these months.
   const months = d.prune && d.prune.months ? d.prune.months.map((x) => MONTHS[x - 1]).join(', ')
@@ -341,7 +343,7 @@ ${drawRules}
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
-<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, реплики. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
+<p class="lead">${real} ${plural(real, 'карточка', 'карточки', 'карточек')} растений и ${PLANTS.length - real} ${plural(PLANTS.length - real, 'общий тип', 'общих типа', 'общих типов')}. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, реплики. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
 <div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
 <div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
