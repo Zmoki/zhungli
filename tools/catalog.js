@@ -111,56 +111,57 @@ const FILTERS = [
   ['Карточка', [['hidden', 'скрытые', ''], ['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
 ];
 
-const row = (k, v, cls = '') => (v ? `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}</dd>` : '');
+// A row: what the app shows, and an optional hint line under it (as in a settings row).
+const row = (k, v, hint = '', cls = '') => (v || hint ? `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}${hint ? `<span class="hint">${hint}</span>` : ''}</dd>` : '');
+// A block of rows under a band, named as in the app; empty blocks are left out.
+const block = (title, rows) => (rows.trim() ? `<section class="blk"><h4>${title}</h4><dl>${rows}</dl></section>` : '');
 function card(d) {
   const pets = petsOf(d.pets);
   const gaps = gapsOf(d);
-  const flags = [
-    d.hidden && 'Скрыта',
-    d.generic && 'Общий тип',
-    d.big && 'Крупное',
-    d.humid && 'Влаголюбивое',
-    d.rotate && 'Поворачивать к свету',
-    d.wickTested && 'Фитиль проверен',
-  ].filter(Boolean);
-  const prune = d.prune && (d.prune.no
-    ? `Не обрезают. ${esc(d.prune.no)}`
-    : `${d.prune.months ? `<b>${d.prune.months.map((m) => MONTHS[m - 1]).join(', ')}.</b> ` : ''}${esc(d.prune.tip || '')}`);
-  const feed = [
-    d.noFeed && 'Не подкармливать.',
-    d.feedEvery && `Раз в ${d.feedEvery} дней.`,
-    d.feedNote && esc(d.feedNote),
-  ].filter(Boolean).join(' ');
+  const flags = [d.hidden && 'Скрыта', d.generic && 'Общий тип'].filter(Boolean);
+  const months = d.prune && d.prune.months ? d.prune.months.map((m) => MONTHS[m - 1]).join(', ') : '';
+  const own = [d.type, d.watering].filter((k) => OWN_START.has(k));
   const check = d.check
     ? esc(d.check)
     : CHECK_TEXT[d.type] ? `${esc(CHECK_TEXT[d.type])} <span class="muted">(общий для «${esc(NAMES[d.type] || d.type)}»)</span>` : '';
-  const more = [
-    d.rest && `<h4>Покой</h4><p><b>Начало:</b> ${esc(d.rest.start)}. <b>Конец:</b> ${esc(d.rest.end)}.</p><p>${esc(d.rest.tip)}</p>${d.rest.water ? `<p><b>Полив:</b> ${esc(d.rest.water)}</p>` : ''}`,
-    d.ways && Object.entries(d.ways).map(([k, w]) => `<h4>Если растёт в «${esc(NAMES[k] || k)}»</h4>${w.water ? `<p><b>Полив:</b> ${esc(w.water)}</p>` : ''}${w.soil ? `<p><b>Грунт:</b> ${esc(w.soil)}</p>` : ''}`).join(''),
-    `<h4>Реплики</h4><ul>${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul>`,
-    d.hint && `<h4>Подсказка в списке</h4><p>${esc(d.hint)}</p>`,
-  ].filter(Boolean).join('');
+  // «Настройки»: values the person can change, each with its hint as in the app.
+  const settings = [
+    row('Свет', `Нужно ${lux(d.lux)}`),
+    row('В чём растёт', esc(NAMES[d.type] || d.type)),
+    row('Полив', esc(NAMES[d.watering || 'top'] || d.watering)),
+    row('Проверка', `раз в ${d.every} дн., дальше подстраивается по ответам`, own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
+    row('Подкормка', d.noFeed ? 'не подкармливать' : d.feedEvery ? `раз в ${d.feedEvery} дн.` : '', d.feedNote ? esc(d.feedNote) : ''),
+    row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : months, d.prune && esc(d.prune.no || d.prune.tip || '')),
+    row('Покой', d.rest ? `Начало: ${esc(d.rest.start.toLowerCase())}. Конец: ${esc(d.rest.end.toLowerCase())}.` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
+    row('Новое', '', esc(d.settle || '')),
+    row('Место', esc(d.spot || '')),
+  ].join('');
+  // «Заметки»: the four catalog tips, editable per plant; `ways` replace water and soil for another medium.
+  const notes = [
+    row('Как поливать', esc(d.water)),
+    row('Грунт', esc(d.soil)),
+    row('Условия', esc(d.cond)),
+    row('Важно', esc(d.tip)),
+    ...(d.ways ? Object.entries(d.ways).map(([k, w]) => row(`Если в «${esc(NAMES[k] || k)}»`, [w.water && `Как поливать: ${esc(w.water)}`, w.soil && `Грунт: ${esc(w.soil)}`].filter(Boolean).join(' '))) : []),
+  ].join('');
+  // Tags under the name, tasks and the plant's own words.
+  const tags = [
+    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'Нет данных.', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
+    row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
+    row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
+    row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
+    row('Комната', d.humid ? 'в подсказке о влажном воздухе' : ''),
+    row('Реплики', `<ul>${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul>`),
+  ].join('');
+  const catalog = [
+    row('Группа', esc(d.cat)),
+    row('Подсказка в списке', esc(d.hint || '')),
+  ].join('');
   const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}
-<dl>
-${row('Свет', lux(d.lux))}
-${row('Растёт в', `${esc(NAMES[d.type] || d.type)}${d.watering ? `, полив «${esc(NAMES[d.watering] || d.watering)}»` : ''}. Интервал карточки: ${d.every} дн.${[d.type, d.watering].filter((k) => OWN_START.has(k)).map((k) => ` Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join('')}`)}
-${row('Проверка', check)}
-${row('Полив', esc(d.water))}
-${row('Грунт', esc(d.soil))}
-${row('Условия', esc(d.cond))}
-${row('Совет', esc(d.tip))}
-${row('Животные', pets === 'safe' ? 'Безопасно для кошек и собак.' : pets === 'toxic' ? `<b>Ядовито для кошек и собак.</b> ${esc(d.petsNote || '')}` : d.generic ? '' : 'Нет данных.', pets === 'toxic' ? 'warn' : pets ? '' : d.generic ? '' : 'gap')}
-${row('Сок', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn')}
-${row('Обрезка', prune)}
-${row('Подкормка', feed)}
-${row('Вода', d.distilled ? 'Только дистиллированная, обратного осмоса или чистая дождевая.' : '')}
-${row('После покупки', esc(d.settle || ''))}
-${row('Место', esc(d.spot || ''))}
-</dl>
-<details><summary>Реплики${d.hint ? ', подсказка в списке' : ''}${d.rest ? ', покой' : ''}${d.ways ? ', другие способы' : ''}</summary>${more}</details>
+${block('Настройки', settings)}${block('Заметки', notes)}${block('Метки, задачи, реплики', tags)}${block('Только в каталоге', catalog)}
 </article>`;
 }
 
@@ -255,7 +256,7 @@ dialog::backdrop { background: rgba(26, 21, 36, .35); }
 :is(.st-chip, .pfilter-t .v).safe { color: var(--st-fine); }
 :is(.st-chip, .pfilter-t .v).danger { color: var(--st-danger); }
 :is(.st-chip, .pfilter-t .v).way { color: var(--st-grow); }
-button:focus-visible, .search input:focus-visible, summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+button:focus-visible, .search input:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 /* Groups fold on their heading, with the app's chevron (as on folding settings rows) */
 .cat { margin-bottom: 28px; }
 h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
@@ -280,24 +281,24 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .flags span { font-size: .824rem; font-weight: 800; padding: 1px 10px; border-radius: 99px; background: var(--chip); }
 .gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
-dl { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
-dt { font-weight: 800; color: var(--muted); font-size: .9rem; padding-top: 2px; }
+/* Blocks of a card, named as in the app, each under a beige band like a settings group */
+.blk { margin-top: 14px; }
+.blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
+dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
+dt { font-weight: 800; color: var(--muted); font-size: .882rem; padding-top: 2px; }
 dd { margin: 0; min-width: 0; }
+dd .hint { display: block; color: var(--muted); font-size: .882rem; margin-top: 2px; }
+dd ul { margin: 0; padding-left: 1.1em; }
 dd.warn b { color: var(--warn); }
 dd.gap { color: var(--gap-ink); font-weight: 800; }
 .muted { color: var(--muted); }
-details { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; padding-left: 4px; }
-summary { cursor: pointer; font-weight: 800; color: var(--muted); min-height: 32px; display: flex; align-items: center; }
-details h4 { font-size: .95rem; margin: 12px 0 4px; }
-details p, details ul { margin: 0 0 6px; }
-details ul { padding-left: 1.2em; }
 @media (max-width: 480px) { .tile { width: 96px; } dl { grid-template-columns: 1fr; gap: 0; } dd { margin-bottom: 8px; } }
 ${drawRules}
 </style>
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
-<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
+<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, и то, что видно только в каталоге. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
 <div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
 <div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
