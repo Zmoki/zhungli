@@ -85,7 +85,7 @@ function waterBox(p) {
 // Settings that don't apply to a plant stay in place, greyed out (disabled), with a line saying why:
 // a section that silently disappears reads as a bug («у меня нет кнопки…»).
 const whyNot = (text, id = '') => `<p class="small muted why-not"${id ? ` id="${id}"` : ''}>${text}</p>`;
-const WHERE = { dry: 'в грунте для суккулентов', mineral: 'в минеральной смеси', leca: 'в керамзите', water: 'в воде',
+const WHERE = { dry: 'в грунте для суккулентов', bark_mix: 'в смеси с корой', peat: 'в торфе без удобрений', mineral: 'в минеральной смеси', leca: 'в керамзите', water: 'в воде',
   mount: 'на блоке', terrarium: 'в закрытом террариуме', aquarium: 'в аквариуме' };
 const upFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 // Why a plant isn't on «День подкормки».

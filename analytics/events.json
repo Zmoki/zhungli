@@ -23,13 +23,16 @@
       "sap": "sap irritates skin, since v176", "pets_safe": "safe for pets, since v176",
       "soil": "since v176", "dry": "since v176", "sphagnum": "since v176", "bark": "since v176", "coco": "since v176",
       "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
-      "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": ""
+      "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": "",
+      "bark_mix": "since v180", "peat": "since v180", "soak": "since v180"
     },
     "medium": {
-      "soil": "", "dry": "", "sphagnum": "", "bark": "", "coco": "", "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": ""
+      "soil": "", "dry": "", "sphagnum": "", "bark": "", "coco": "", "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
+      "bark_mix": "«Рыхлая смесь с корой», since v180", "peat": "«Торф без удобрений», since v180"
     },
     "watering": {
-      "top": "", "bottom": "", "wick": "", "reservoir": "", "tray": "", "drip": "", "none": "not in a pot"
+      "top": "", "bottom": "", "wick": "", "reservoir": "", "tray": "", "drip": "", "none": "not in a pot",
+      "soak": "«Погружением», since v180"
     },
     "tab": {
       "today": "", "plants": "", "light": "", "room": ""
@@ -405,7 +408,8 @@
           "pets_safe": "«безопасно»: safe for pets", "greenhouse": "«в теплице»", "rest": "«отдыхает»",
           "soil": "since v176", "dry": "since v176", "sphagnum": "since v176", "bark": "since v176", "coco": "since v176",
           "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
-          "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": "" } },
+          "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": "",
+          "bark_mix": "since v180", "peat": "since v180", "soak": "since v180" } },
         "position": { "type": "int", "desc": "the tag's place in the row, from 1" },
         "count": { "type": "int", "desc": "how many tags the row has" }
       }
