@@ -856,7 +856,7 @@ const PLANTS = [
   },
   {
     id: 'bokarnea', species: 'Бокарнея', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
-    alt: 'нолина',
+    alt: 'нолина, бутылочное дерево',
     pets: 'safe',
     aka: 'бокарнея, нолина, бутылочное дерево, слоновая нога, beaucarnea, nolina',
     lux: [15000, 40000], every: 18, type: 'dry',
