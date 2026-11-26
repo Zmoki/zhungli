@@ -506,7 +506,9 @@ function catalogCard(it) {
       const at = ws.map((w) => words.findIndex((t) => wordFits(w, t)));
       if (at.some((i) => i < 0)) return;
       at.forEach((i) => covered.add(i));
-      if (!k) own = 1;
+      // A generic type's own name is a group word («Орхидея», «Кактус»): it ranks like a folk name, so a plain
+      // «Орхидея» stays with «Фаленопсис», the orchid people mean by it.
+      if (!k && !d.generic) own = 1;
     });
     const score = [covered.size, own, d.generic ? 0 : 1];
     const better = score.map((x, i) => x - top[i]).find((x) => x) > 0;
