@@ -35,7 +35,8 @@ const ALO_SPHAGNUM = { sphagnum: {
 } };
 
 const PLANTS = [
-  // Generic types for plants not in the list. The interval adjusts from the answers anyway.
+  // Generic types for plants not in the list. The interval adjusts from the answers anyway. A generic type with a
+  // group of its own (succulent, cactus, flowering, orchid) closes that group; the rest are «Общие типы».
   {
     id: 'g-easy', species: 'Неприхотливое лиственное', cat: 'Общие типы', emoji: '🍀', generic: true,
     aka: 'кордилина, циссус, полисциас, гинура, кофе, кофейное дерево, мирт, фатсия, каллизия, cordyline, cissus, callisia',
@@ -59,7 +60,7 @@ const PLANTS = [
     quips: ['Мне бы тропический дождик.', 'Сухими кончиками я жалуюсь на воздух.', 'Чуть влажно? Идеально.'],
   },
   {
-    id: 'g-succ', species: 'Суккулент', cat: 'Общие типы', emoji: '💠', generic: true,
+    id: 'g-succ', species: 'Суккулент', cat: 'Суккуленты и кактусы', emoji: '💠', generic: true,
     prune: { no: 'Большинству суккулентов и кактусов обрезка не нужна. Вытягиваются они от нехватки света, и помогает тут свет.' },
     aka: 'гастерия, седум, очиток, агава, литопсы, портулакария, succulent',
     hint: 'гастерия, седум, агава, литопсы',
@@ -71,7 +72,7 @@ const PLANTS = [
     quips: ['Я запасливый, воды пока хватает.', 'Забыли полить? Не страшно.', 'Солнце люблю больше, чем воду.'],
   },
   {
-    id: 'g-cactus', species: 'Кактус', cat: 'Общие типы', emoji: '🌵', generic: true,
+    id: 'g-cactus', species: 'Кактус', cat: 'Суккуленты и кактусы', emoji: '🌵', generic: true,
     prune: { no: 'Большинству суккулентов и кактусов обрезка не нужна. Вытягиваются они от нехватки света, и помогает тут свет.' },
     aka: 'опунция, маммиллярия, эхинокактус, cactus',
     lux: [20000, 60000], every: 18, type: 'dry',
@@ -82,7 +83,7 @@ const PLANTS = [
     quips: ['Колюч, но ласков.', 'Пить? Через пару недель спросите.', 'Света мне, побольше света!'],
   },
   {
-    id: 'g-flower', species: 'Цветущее', cat: 'Общие типы', emoji: '🌸', generic: true,
+    id: 'g-flower', species: 'Цветущее', cat: 'Цветущие и орхидеи', emoji: '🌸', generic: true,
     prune: { tip: 'Отцветшие цветки убирать сразу: на них начинается серая гниль. Прищипка откладывает цветение.' },
     aka: 'глоксиния, цикламен, азалия, хризантема, роза, кливия, примула',
     hint: 'глоксиния, цикламен, азалия, гербера',
@@ -94,10 +95,10 @@ const PLANTS = [
     quips: ['Цвету для вас.', 'Не лейте мне на цветочки, пожалуйста.', 'Свет и есть мой секрет красоты.'],
   },
   {
-    id: 'g-orchid', species: 'Орхидея на коре', cat: 'Общие типы', emoji: '🌺', generic: true,
+    id: 'g-orchid', species: 'Орхидея', cat: 'Цветущие и орхидеи', emoji: '🌺', generic: true,
     feedNote: 'Орхидеям: удобрение для орхидей, половина дозы.',
     prune: { no: 'Орхидею не обрезают, срезают только цветонос и сухие бурые корни. Зелёный цветонос срезать над второй спящей почкой, засохший у основания.' },
-    aka: 'орхидея, ванда, ванда на коре, orchid',
+    aka: 'орхидея, ванда, ванда на коре, orchid, дендробиум, dendrobium, онцидиум, oncidium, камбрия, cambria',
     hint: 'дендробиум, онцидиум, камбрия',
     lux: [15000, 30000], every: 7, type: 'bark',
     water: 'Когда кора почти просохла. Пролить насквозь или погрузить в воду, потом дать стечь.',

@@ -100,6 +100,8 @@ let searchTimer;
 function catalogHtml(changeFor) {
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
+  // A generic type closes its group («Орхидея» after «Фаленопсис»), as «Общие типы» close the list.
+  Object.values(groups).forEach((ds) => ds.sort((a, b) => !!a.generic - !!b.generic));
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}${searchX('')}</div>
@@ -192,7 +194,7 @@ function catalogSearch(changeFor) {
       score.set(g, best);
     });
     // Best-matching groups first: «рассада» and «черенок» show their generic type on top,
-    // «орхидея» shows «Фаленопсис» before «Орхидея на коре». Without a search, the usual order.
+    // «орхидея» shows «Фаленопсис» before the generic «Орхидея». Without a search, the usual order.
     const order = words.length ? [...pickGroups].sort((a, b) => score.get(b) - score.get(a) || pickGroups.indexOf(a) - pickGroups.indexOf(b)) : pickGroups;
     if (order.some((g, i) => g !== shownOrder[i])) { order.forEach((g) => pickEnd.before(g)); shownOrder = order; }
     // «(если нет в списке)» only reads right at the end of the full list.
@@ -209,9 +211,8 @@ function catalogSearch(changeFor) {
         ${changeFor ? '' : nameHelpLink('not_found', 'Не знаете точное название? Как узнать')}
         <p class="mt-12 small muted" data-from="catalog">Чтобы оно появилось в каталоге с советами, напишите Зареме в Телеграм ${outLink('telegram', '@zmoki', 'linkish')}.</p>
         ${changeFor ? '<p class="mt-12 small muted">А пока выберите похожий общий тип, уход у них почти одинаковый:</p>' : ''}`;
-      const g = document.querySelector('.pick-group[data-generic]');
-      g.hidden = false;
-      g.querySelectorAll('.pick').forEach((b) => { b.hidden = false; });
+      // Every generic type, also those closing their own group (orchid, succulent…), under that group's title.
+      document.querySelectorAll('.pick[data-generic="1"]').forEach((b) => { b.hidden = false; b.closest('.pick-group').hidden = false; });
     }
     if (changeFor) { if (raw) cardSearched = true; return; }
     if (e.detail === 'restore') return;
@@ -236,7 +237,7 @@ function setAddButton(b, n, emptyText) {
 // The catalog's and the import list's add bars appear only once something is ticked.
 const showAddBar = (bar, btn, n) => { setAddButton(btn, n, ''); bar.hidden = !n; };
 const updatePickBar = () => showAddBar($('#pick-bar'), $('#pick-add'), picked.size);
-// Picker groups go by care, from the most common plants; generic types close the list.
+// Picker groups go by care, from the most common plants; generic types without a group close the list.
 const CAT_ORDER = ['Лианы и ампельные', 'Декоративно-лиственные', 'Пальмы, драцены и деревья', 'Ароидные', 'Влаголюбивые',
   'Суккуленты и кактусы', 'Цветущие и орхидеи', 'Хищные растения', 'Общие типы'];
 // A category missing from CAT_ORDER (a typo in plants.js) still shows, just before the generic types, and warns.
@@ -505,7 +506,9 @@ function catalogCard(it) {
       const at = ws.map((w) => words.findIndex((t) => wordFits(w, t)));
       if (at.some((i) => i < 0)) return;
       at.forEach((i) => covered.add(i));
-      if (!k) own = 1;
+      // A generic type's own name is a group word («Орхидея», «Кактус»): it ranks like a folk name, so a plain
+      // «Орхидея» stays with «Фаленопсис», the orchid people mean by it.
+      if (!k && !d.generic) own = 1;
     });
     const score = [covered.size, own, d.generic ? 0 : 1];
     const better = score.map((x, i) => x - top[i]).find((x) => x) > 0;

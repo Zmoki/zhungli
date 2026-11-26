@@ -808,7 +808,7 @@ function setWay(id, medium, watering) {
   return { from, settle };
 }
 
-// Moves a plant to another catalog card, say from the generic «Орхидея на коре» to «Фаленопсис».
+// Moves a plant to another catalog card, say from the generic «Орхидея» to «Фаленопсис».
 // What belongs to the plant stays: name, room, spot, photo, notes, history, light reading, greenhouse.
 // The roots don't move with the card: the plant keeps its medium and watering, now told against the new
 // card. If they differ from the new card's way, that way's tips stand in, as after «В чём растёт».
