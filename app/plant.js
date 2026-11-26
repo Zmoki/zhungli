@@ -38,7 +38,7 @@ function cheatHtml(id) {
 }
 // With «Дома есть кошка или собака» on and nothing known about the plant: says so in «Заметки».
 function petsHtml(p) {
-  return `<div class="info"><b>${I('paw-print')}Для кошек и собак: нет данных</b>${p.generic ? 'Зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : 'Надёжных сведений о том, ядовито ли растение, нет.'}</div>`;
+  return `<div class="info"><b>${I('paw-print')}Для кошек и собак: нет данных</b>${p.generic ? 'Зависит от растения. Узнаете вид: «Настройки» → «Сменить карточку».' : petsUnlisted(p) ? esc(p.petsNote || 'Этого растения нет в базе ASPCA, других сведений мало.') : 'Надёжных сведений о том, ядовито ли растение, нет.'}</div>`;
 }
 function refreshCheat(id) {
   const box = $('#cheat');
@@ -833,6 +833,8 @@ function setCard(id, key) {
       if (t && t !== newCare[k]) { r.notes = [...(r.notes || []), t]; moved.push(t); }
       delete r.own[k];
     });
+    // Own quips belonged to the old card (the first collection's, or a removed card's, see migrateCardIds).
+    delete r.own.quips;
     if (!Object.keys(r.own).length) delete r.own;
   }
   r.def = d.id;

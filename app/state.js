@@ -173,7 +173,9 @@ function rinseDone(id) {
 // Cats and dogs (ASPCA, else NC State or Pet Poison Helpline; see the content repo's pets facts): a card's `pets` is
 // 'toxic' or 'safe', one value for both since they differ only for true lilies, which aren't in the catalog.
 // It may become { cats, dogs }; then the worse of the two counts. No value: no data (generic cards never say safe).
-const petsOf = (p) => { const v = p && p.pets; return !v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : ''; };
+// 'unlisted' is no data too, only checked: «Заметки» says so (petsHtml).
+const petsOf = (p) => { const v = p && p.pets; return !v ? '' : typeof v === 'string' ? (v === 'unlisted' ? '' : v) : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : ''; };
+const petsUnlisted = (p) => !!p && p.pets === 'unlisted';
 const petsOn = () => !!(S.settings && S.settings.pets);
 // A card's word on a reminder: `prune: { no }` (not pruned, and why), or `prune: { months, tip }`.
 const remindCard = (p, kind) => (kind === 'prune' && p.prune) || {};
@@ -332,7 +334,9 @@ function prepare(raw) {
   if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; s.newMedia = true; } // new users have nothing to catch up on
   migrateNewMedia(s);
-  s.v = 4;
+  migrateCardIds(s);
+  // v5: records may keep `tone` (migrateCardIds). Older apps read it fine and save it back.
+  s.v = 5;
   // A personal «don't feed» from the first collection's notes (own.noFeed) had no setting to undo it: it becomes
   // «Не кормлю» in «Подкормка», where it shows and can be changed.
   Object.values(s.plants).forEach((r) => {
@@ -362,6 +366,36 @@ function migrateNewMedia(s) {
   Object.values(s.plants).forEach((r) => { if (r.medium === 'soil' && cards[r.def]) r.medium = cards[r.def]; });
   s.newMedia = true;
 }
+// v183: catalog ids that moved. Two hidden cards of the first collection («Стрелиция Николая №2», «Колеус №2») were
+// removed, and their twins lost the «1» in their ids. Plants saved from them (the oldest records use the card id as
+// their own id) point at the new card and keep their pot color (`tone`, from the old id) and name; a removed card's
+// own texts become the plant's notes (own), under any the person edited. Runs on every load, so data synced from an
+// older app moves too.
+function migrateCardIds(s) {
+  const moves = {
+    strel1: { def: 'strel' },
+    coleus1: { def: 'coleus' },
+    kolya: { def: 'strel', species: 'Стрелиция Николая №2', own: {
+      water: 'Поливать, когда верх грунта подсох. Воду в поддоне не оставлять.',
+      soil: 'Грунт, через который проходит воздух. Раньше рос под колпаком во влажном воздухе.',
+      cond: '18–28 °C, много света.',
+      tip: 'Если теплица ещё стоит, проветривать её. Постепенно приучать к воздуху комнаты.',
+      quips: ['Я Коля. Николай только для документов.', 'Теплицу приоткройте, дайте подышать.', 'Света мне, света!'],
+    } },
+    coleus2: { def: 'coleus', species: 'Колеус №2', own: {
+      quips: ['Я второй, но не последний.', 'Пить хочу чаще остальных, извините.', 'Свет делает меня ярче.'],
+    } },
+  };
+  Object.entries(s.plants).forEach(([id, r]) => {
+    const from = r.def || id, g = moves[from];
+    if (!g) return;
+    if (!Number.isInteger(r.tone)) r.tone = toneOf({ def: from });
+    r.def = g.def;
+    if (g.species && !r.species) r.species = g.species;
+    if (g.own) r.own = { ...g.own, ...(r.own || {}) };
+  });
+}
+
 // v1: the collection was created automatically from the personal catalog.
 // Personal notes move into plant data so the catalog can be generic.
 function migrateV1(s) {

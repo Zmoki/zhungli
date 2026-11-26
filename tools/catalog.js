@@ -15,7 +15,9 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(`${read('plants.js')}\n${read('shapes.js')}\nthis.out = { PLANTS, CHECK_TEXT, plantSvg };`, ctx);
-const { PLANTS, CHECK_TEXT, plantSvg } = ctx.out;
+// Hidden cards (`hidden: true`) can't be added any more: they stay in plants.js only for saved plants, so they're left out.
+const PLANTS = ctx.out.PLANTS.filter((d) => !d.hidden);
+const { CHECK_TEXT, plantSvg } = ctx.out;
 
 // Growing media and watering ways (MEDIA and WATERING in state.js), read without running state.js: each entry's
 // text runs from its key to the next key or the end of its object.
@@ -68,8 +70,8 @@ const DRAW = {
 const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|st|rt|vein|cut|co|trap|trunk)(?![-\w])|svg\.pl\b)/.test(l)).join('\n');
 
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
-// As petsOf in state.js: safe only when both cats and dogs are.
-const petsOf = (v) => (!v ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
+// As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
+const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
 // As norm in views.js: search ignores case and «ё».
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
@@ -93,7 +95,7 @@ const GAPS = {
 function gapsOf(d) {
   if (d.generic) return [];
   const out = [];
-  if (!petsOf(d.pets)) out.push('pets');
+  if (!petsOf(d.pets) && d.pets !== 'unlisted') out.push('pets');
   else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('petsNote');
   if (!d.prune) out.push('prune');
   if (!d.aka) out.push('aka');
@@ -106,9 +108,9 @@ function keysOf(d) {
   const pets = petsOf(d.pets);
   return [
     `cat:${CATS.indexOf(d.cat)}`, `t:${d.type}`, d.watering && `w:${d.watering}`,
-    pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.toxic && 'sap',
+    pets === 'toxic' && 'pets', pets === 'safe' && 'pets_safe', d.pets === 'unlisted' && 'pets_unlisted', d.toxic && 'sap',
     gaps.length && 'gap', ...gaps.map((g) => `gap:${g}`),
-    d.hidden && 'hidden', d.generic && 'generic', d.big && 'big', d.humid && 'humid',
+    d.generic && 'generic', d.big && 'big', d.humid && 'humid',
   ].filter(Boolean);
 }
 const badge = (k) => (BADGES[k] ? `${I(BADGES[k][0])}${BADGES[k][1]}` : esc(NAMES[k] || k));
@@ -121,10 +123,11 @@ const FILTERS = [
   ['Безопасность', [
     ['pets', `${I('paw-toxic')}опасно для животных`, 'danger'],
     ['pets_safe', `${I('paw-print')}безопасно для животных`, 'safe'],
+    ['pets_unlisted', `${I('paw-print')}нет в базе ASPCA`, ''],
     ['sap', `${I('triangle-alert')}едкий сок`, 'danger'],
   ]],
   ['Пробелы', [['gap', 'любой пробел', 'need'], ...Object.entries(GAPS).map(([k, t]) => [`gap:${k}`, t, 'need'])]],
-  ['Карточка', [['hidden', 'скрытые', ''], ['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
+  ['Карточка', [['generic', 'общие типы', ''], ['big', 'крупные', ''], ['humid', 'влаголюбивые', '']]],
 ];
 
 // A row: what the app shows, and an optional hint line under it (as in a settings row).
@@ -137,7 +140,7 @@ const block = (title, rows, cls) => (rows.trim() ? `<section class="blk ${cls}">
 function card(d) {
   const pets = petsOf(d.pets);
   const gaps = gapsOf(d);
-  const flags = [d.hidden && 'Скрыта', d.generic && 'Общий тип'].filter(Boolean);
+  const flags = [d.generic && 'Общий тип'].filter(Boolean);
   const m = MEDIUM[d.type] || {};
   // The pruning reminder is off for a new plant («нет»); «Да» to «Звать на обрезку?» calls in these months.
   const months = d.prune && d.prune.months ? d.prune.months.map((x) => MONTHS[x - 1]).join(', ')
@@ -175,7 +178,7 @@ function card(d) {
   ].join('');
   // Tags under the name and tasks.
   const tags = [
-    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'нет данных', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
+    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : d.pets === 'unlisted' ? 'нет в базе ASPCA (проверено)' : 'нет данных', pets === 'toxic' || d.pets === 'unlisted' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic || d.pets === 'unlisted' ? '' : 'gap'),
     row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
     row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
@@ -341,7 +344,7 @@ ${drawRules}
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
-<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, реплики. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
+<p class="lead">${real} ${plural(real, 'карточка', 'карточки', 'карточек')} растений и ${PLANTS.length - real} ${plural(PLANTS.length - real, 'общий тип', 'общих типа', 'общих типов')}. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, реплики. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
 <div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
 <div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
