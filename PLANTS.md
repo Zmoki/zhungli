@@ -21,8 +21,8 @@ Record fields:
 | `nextCheck`, `lastWater` | Date of the next check and of the last watering. |
 | `wet` | «Ещё влажно» answers since the last watering. |
 | `hist` | Last 60 entries (`HIST_MAX`): answers `{ d, a: 'water' \| 'wet' \| 'ok' \| 'fix' }` (`ok`, `fix`: a drip system works, was fixed), or a reminder done (`prune`, `rinse`). Since v152 an answer also has `was`, the state before it (`iv`, `lw`, `nc`, `wet`), and `iv` / `nc`, the interval and next check it set: `undoAnswer` uses them for «×» in «История». Only the newest answer keeps `was` and `nc`; older ones keep `iv` in whole days, and only where it changed, so the state stays small for Telegram's cloud. |
-| `repotted` | Date of repotting, or `false`. Counts for 6 weeks: no feeding meanwhile. |
-| `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14 if missing, 30, 90, 0 = not fed; a card's `feedEvery` is its default); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
+| `repotted` | Date of repotting, or `false`. Counts for 2 weeks (`REPOT_DAYS`, HOUSE-FEED-15): no feeding meanwhile. |
+| `fed`, `feedEvery`, `lamp` | Last feeding date; days between feedings (14, 30, 90, 0 = not fed; if missing, the card's `feedEvery`, else the medium's, else 14); fed in winter under a grow light. See [TASKS.md](TASKS.md#bonus-tasks). |
 | `bought`, `inspected` | «Недавно купили» date (6 weeks of quarantine, 4 of settling in) and the last pest check. |
 | `resting` | `{ since, iv }` while at rest: the date and the interval to come back to. |
 | `greenhouse`, `ventLast` | Under a cover, and the last airing date. |
@@ -52,15 +52,15 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | Medium | Check (watered from above) | Buttons | Feeding |
 |---|---|---|---|
 | `soil` грунт | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
-| `dry` грунт для суккулентов | dry almost to the bottom? | «Полито» / «Ещё влажно» | none, unless the card has `feed` |
+| `dry` грунт для суккулентов | dry almost to the bottom? | «Полито» / «Ещё влажно» | «День подкормки», monthly by default, cactus fertilizer (`feedNote`, HOUSE-MEDIA-19) |
 | `sphagnum` сфагнум | dried inside? (phalaenopsis: on top) | «Полито» / «Ещё влажно» | «День подкормки» |
 | `bark` кора | bark almost dry, roots silvery? | «Полито» / «Ещё рано» | «День подкормки»; orchid cards add «половинная доза» (`feedNote`, ORC-COND-49) |
 | `coco` кокос | top dried? | «Полито» / «Ещё влажно» | «День подкормки» |
-| `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте смесь» every 30 days |
-| `leca` керамзит | bottom dried? | «Полито» / «Ещё влажно» | with every watering; «Промойте керамзит» every 45 days |
+| `mineral` пон, пемза, цеолит | top dried? | «Полито» / «Ещё влажно» | with every watering (an estimate: no source, HOUSE-HYDRO-10); «Промойте смесь» every 30 days |
+| `leca` керамзит | bottom dried? | «Полито» / «Ещё влажно» | with every other watering (`feed: 'alt'`: the solution gets stronger as water evaporates, HOUSE-HYDRO-16); «Промойте керамзит» every 30 days |
 | `water` вода | time to change the water? | «Вода сменена» / «Вода ещё чистая» | none |
-| `mount` на блоке | roots silvery? (from 3 days, at most 14) | «Полито» / «Ещё рано» | none |
-| `terrarium` закрытый террариум | moss dry, no drops on the glass? (from 30 days, up to 60) | «Сбрызнуто» / «Ещё влажно» | none |
+| `mount` на блоке | roots silvery? (from 3 days, at most 14) | «Полито» / «Ещё рано» | «День подкормки», monthly by default, a quarter dose (HOUSE-HYDRO-29) |
+| `terrarium` закрытый террариум | moss dry, no drops on the glass? (from 60 days, up to 180; HOUSE-HYDRO-31) | «Сбрызнуто» / «Ещё влажно» | none (none in the first year, HYDRO-33) |
 | `aquarium` аквариум | none: never due | — | none; «Осмотрите корни в аквариуме» every 30 days |
 
 `soil`, `dry`, `sphagnum`, `bark`, `coco`, `mineral` and `leca` are in a pot, so they also have a watering:
@@ -84,8 +84,8 @@ Water is «мутновато» when due. Water, sphagnum and a block come first
 
 Picking another way than the card's:
 - The card's `check` is dropped, except between watering from above and from below (both check the soil). Its «Как поливаю» tip gives way to the new way's. With another medium, «Субстрат» does too. The rest of the card stays.
-- The card's interval is kept in `soilInterval` and comes back with the card's way. A wick, a reservoir or water start at 7 days, drip irrigation at 14, a block at 3, a terrarium at 30, a mineral medium at ⅔ of the card's interval.
-- Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 6 weeks.
+- The card's interval is kept in `soilInterval` and comes back with the card's way. A wick or a reservoir starts by the plant's light (`tankStart`): 7 days from 2000 lx, 14 at 600 lx and less, in between by a line, from its reading, else the card's lowest lux; a reading before any answer moves the first check. That's from one trial (HOUSE-SELFW-19), so an estimate. Water starts at 7 days, a block at 3, a terrarium at 60, drip irrigation at 14 and a mineral medium at 0.7 of the card's interval (both estimates: no source gives them, HOUSE-SELFW-29, HYDRO-09).
+- Roots moved out of soil, sphagnum, bark or coco into anything but a terrarium count as repotted: no feeding for 2 weeks (in inert media the plant is fed with the water from the start, HOUSE-HYDRO-13).
 - Clay pebbles start on a reservoir. A succulent's card on water, clay pebbles, a terrarium, an aquarium, a wick or a reservoir shows a warning about rot.
 - Own edits of the tips that no longer fit («Как поливать», and «Грунт» with another medium) become notes, so nothing typed is lost.
 - The old medium's recurring task goes away. Recurring tasks due the same day for several plants («Осмотрите корни в аквариуме») come as one task with the list.

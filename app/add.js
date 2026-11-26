@@ -878,7 +878,7 @@ function importOwn(it, i, place) {
   const type = it.type || base.type;
   const watering = MEDIA[type].pot ? it.watering || MEDIA[type].watering || 'top' : '';
   const own = type === base.type && (!watering || watering === 'top');
-  const every = own ? base.every : (wayOf({ type, watering }).start || ((b) => b))(base.every);
+  const every = own ? base.every : wayStart(wayOf({ type, watering }), base.every, base.lux[0]);
   const care = type === base.type ? { check: base.check, water: base.water, soil: base.soil, cond: base.cond } : {};
   S.custom[id] = {
     id, species: it.species, cat: 'Мои', emoji: base.emoji || '🪴', ...care, humid: base.humid, big: base.big,

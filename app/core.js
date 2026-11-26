@@ -80,8 +80,10 @@ const today = () => iso(new Date());
 const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
 const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
 const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
-// «Недавно пересажено» holds the date it was ticked and lapses after 6 weeks.
-const REPOT_DAYS = 42;
+// «Недавно пересажено» holds the date it was ticked and lapses after 2 weeks: no feeding while the roots regrow, at
+// least 2 weeks (Montana), and a fresh soil's starter fertilizer washes out in 2–3 waterings (content facts
+// HOUSE-FEED-15, HOUSE-MEDIA-07). The 6 weeks it was had no source.
+const REPOT_DAYS = 14;
 const repotted = (p) => !!p.repotted && diff(p.repotted, today()) < REPOT_DAYS;
 // «Недавно купили» holds the date it was ticked: 6 weeks of quarantine with a look for pests once a week
 // (Clemson), the first 4 of them settling in: no feeding, pruning, moving or repotting (UF/IFAS, for ficus).
