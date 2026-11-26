@@ -17,6 +17,14 @@
     "ui": "Every tap and field"
   },
   "values": {
+    "filter_status": {
+      "all": "", "need": "", "dim": "", "hot": "", "watered": "", "fine": "", "greenhouse": "",
+      "new": "in quarantine", "rest": "at rest", "pets": "toxic to pets",
+      "sap": "sap irritates skin, since v176", "pets_safe": "safe for pets, since v176",
+      "soil": "since v176", "dry": "since v176", "sphagnum": "since v176", "bark": "since v176", "coco": "since v176",
+      "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
+      "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": ""
+    },
     "medium": {
       "soil": "", "dry": "", "sphagnum": "", "bark": "", "coco": "", "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": ""
     },
@@ -555,18 +563,19 @@
       "when": "«Звать в банный день?» in the plant card",
       "props": { "on": { "type": "bool", "desc": "`true` for «Да»: the plant joins the bath day" } }
     },
+    "plants_filter_opened": {
+      "area": "plant", "since": 177,
+      "when": "the «Фильтр» field under the Plants search tapped: the «Фильтр» sheet opens",
+      "props": {
+        "status": { "type": "enum", "values": "filter_status", "desc": "what the list shows when the sheet opens" }
+      }
+    },
     "plants_filtered": {
       "area": "plant", "since": 68,
-      "when": "a status or way-of-growing chip tapped under the Plants search",
+      "when": "a chip tapped under the Plants search; since v177, a chip in the «Фильтр» sheet or × on the «Фильтр» field",
       "props": {
-        "status": { "type": "enum", "values": {
-          "all": "", "need": "", "dim": "", "hot": "", "watered": "", "fine": "", "greenhouse": "",
-          "new": "in quarantine", "rest": "at rest", "pets": "toxic to pets",
-          "sap": "sap irritates skin, since v176", "pets_safe": "safe for pets, since v176",
-          "soil": "since v176", "dry": "since v176", "sphagnum": "since v176", "bark": "since v176", "coco": "since v176",
-          "mineral": "", "leca": "", "water": "", "mount": "", "terrarium": "", "aquarium": "",
-          "bottom": "since v176", "wick": "", "reservoir": "", "tray": "", "drip": ""
-        } }
+        "from": { "type": "enum", "desc": "since v177", "values": { "sheet": "a chip in the «Фильтр» sheet", "clear": "× on the «Фильтр» field: `status` is `all`" } },
+        "status": { "type": "enum", "values": "filter_status" }
       }
     },
     "plants_searched": {

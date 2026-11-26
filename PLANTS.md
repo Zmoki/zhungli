@@ -131,14 +131,14 @@ A new plant starts with the card's `every`. Plants added together get their firs
 | `hot` | ярковато | Lux reading over the maximum × 1.25. |
 | `fine` | хорошо | None of the above. |
 
-The greenhouse is a badge, not a status, but the filter has a chip for it.
+The greenhouse is a tag, not a status, but the filter has a chip for it.
 
 **Mood** is the one status for the face on the pot: `need` first, then wrong light, then the rest.
 
 Where statuses show:
-- **Grid cards:** faces only. The word is there for screen readers.
-- **Plant card:** face and word on the photo.
-- **Filter chips:** under the search, with counts.
+- **Grid cards:** badges, faces only. The word is there for screen readers.
+- **Plant card:** tags with face and word, under the plant's words.
+- **Filter chips:** in the «Фильтр» sheet, with counts (see [DESIGN.md](DESIGN.md#filter)).
 - **Light tab:** a tag on each measured row.
 
 ## Light
