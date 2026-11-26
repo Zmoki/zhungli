@@ -333,7 +333,8 @@ function prepare(raw) {
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; s.newMedia = true; } // new users have nothing to catch up on
   migrateNewMedia(s);
   migrateCardIds(s);
-  s.v = 4;
+  // v5: records may keep `tone` (migrateCardIds). Older apps read it fine and save it back.
+  s.v = 5;
   // A personal «don't feed» from the first collection's notes (own.noFeed) had no setting to undo it: it becomes
   // «Не кормлю» in «Подкормка», where it shows and can be changed.
   Object.values(s.plants).forEach((r) => {

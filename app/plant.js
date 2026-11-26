@@ -833,6 +833,8 @@ function setCard(id, key) {
       if (t && t !== newCare[k]) { r.notes = [...(r.notes || []), t]; moved.push(t); }
       delete r.own[k];
     });
+    // Own quips belonged to the old card (the first collection's, or a removed card's, see migrateCardIds).
+    delete r.own.quips;
     if (!Object.keys(r.own).length) delete r.own;
   }
   r.def = d.id;

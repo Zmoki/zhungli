@@ -33,14 +33,15 @@ Record fields:
 | `notes` | Own notes. |
 | `remind` | Reminders turned on in «Обрезка»: `{ prune: { every, months } }`, days and months 1–12. See [Reminders](#reminders). |
 | `noBath` | «Нет» to «Звать в банный день?»: left out of «Банный день». |
+| `tone` | Pot and tile colors, kept when the card's id changed (`migrateCardIds`, since v5) so the pot keeps its color. |
 
-Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import. A record keeps `tone` too when its card's id changed (`migrateCardIds`), so its pot keeps its color.
+Own and imported cards (`S.custom`) also keep `tone`, the pot colors they got on import.
 
 ### Changing the card
 
 «Сменить карточку» in the plant card's «Настройки» opens the catalog with its search and moves the plant to the picked card (`setCard` in `plant.js`): someone who picked «Орхидея на коре» for a phalaenopsis doesn't have to remove it and lose its history. Only `def` points elsewhere; the rest of the record stays.
 - **Medium and watering** stay: the roots don't move with the card. If they differ from the new card's way, that way's tips stand in (see [How it grows](#how-it-grows)), and the toast says the way was kept. «Отменить» in the toast puts back only what the change touched.
-- **`own`:** edits of the old card's tips become notes (unless they match the new card's tip), and hidden tips show again: they were written against the old card.
+- **`own`:** edits of the old card's tips become notes (unless they match the new card's tip), and hidden tips show again: they were written against the old card. Own quips (`own.quips`, from the first collection or a removed card) go too.
 - **Interval:** a plant never watered starts from the new card's `every` (or its way's start). A learned one is kept, within the new card's bounds on its way. `soilInterval` is dropped, so going back to the card's way starts from the new `every`. A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
 - `species` is dropped when it equals the new card's name. Dusting and turning follow the new card's `big` and `rotate`.
 - Own and imported plants (`S.custom`) have no catalog card: the button is greyed out, with why.
