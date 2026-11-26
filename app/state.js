@@ -98,13 +98,16 @@ const MEDIA = {
 const tankStart = (b, lux) => (Number.isFinite(lux) ? Math.round(clamp(14 - ((lux - 600) / 1400) * 7, 7, 14)) : 7);
 const WATERING = {
   top: { name: 'Сверху' },
+  // Salts build up in the top layer when watered from below: about every 4th watering goes from above until water
+  // drains out (Purdue for African violets, content facts HOUSE-WATER-16); the task says so then (flushFromAbove).
   bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон', badge: ['arrow-up-from-line', 'полив снизу'],
+    hint: 'Позову полить через поддон, а каждый 4-й раз сверху, чтобы смыть соли.',
     tagHint: 'Горшок в поддон с водой на полчаса, остаток слить.',
-    water: 'Поставить горшок в поддон или миску с водой на полчаса, остаток воды слить. Раз в несколько месяцев полить сверху обильно, чтобы вымыть соли.' },
+    water: 'Поставить горшок в поддон или миску с водой на полчаса, остаток воды слить. Примерно каждый 4-й раз полить сверху до стока, чтобы вымыть соли, и слить стёкшую воду.' },
   wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: tankStart, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
     hint: 'Не буду звать поливать, а напомню заглянуть в бак, есть ли вода.',
-    water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли.' },
+    water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли. Фитиль из синтетики: нейлон, акрил, полиэстер. Грунт рыхлый, с перлитом.' },
   reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cylinder', 'с резервуаром'], start: tankStart, min: 2,
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать, а напомню проверить уровень в резервуаре.',
@@ -220,6 +223,8 @@ function careOf(d, r) {
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
 // A check written as an instruction (imported from an AI chat) is shown as is.
+// Watered from below, about every 4th watering goes from above (see `bottom`): counted by the waterings in the history.
+const flushFromAbove = (p) => p.watering === 'bottom' && (p.hist || []).filter((h) => h.a === 'water').length % 4 === 3;
 function waterTask(p) {
   const g = wayOf(p);
   const own = p.check && p.check !== CHECK_TEXT[p.type] ? p.check : '';
@@ -230,7 +235,8 @@ function waterTask(p) {
   const cond = q.slice(0, i).trim();
   const rest = q.slice(i + 1).trim();
   const tail = !rest ? '' : rest.startsWith('(') ? ` ${rest}` : `. ${rest}`;
-  const task = `${g.verb || 'Полейте'}, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}${tail}`;
+  const flush = flushFromAbove(p);
+  const task = `${flush ? 'Полейте сверху до стока' : g.verb || 'Полейте'}, если ${cond.charAt(0).toLowerCase()}${cond.slice(1)}${tail}${flush ? '. Каждый 4-й раз сверху: так смываются соли' : ''}`;
   // A word joiner after the dash keeps ranges like «2–3 см» on one line.
   return task.replace(/(\d)–(\d)/g, '$1–⁠$2');
 }

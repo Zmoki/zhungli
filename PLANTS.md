@@ -68,10 +68,10 @@ Two things, kept apart: what the roots are in (`MEDIA` in `state.js`) and, for a
 | Watering | Check | Buttons |
 |---|---|---|
 | `top` сверху | the medium's | the medium's |
-| `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон» |
-| `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато» |
+| `bottom` снизу, через поддон | the card's or the medium's, as from above (`soilCheck`) | the medium's; the task says «Полейте через поддон», and every 4th watering in the history «Полейте сверху до стока» to wash out salts (`flushFromAbove`, HOUSE-WATER-16) |
+| `wick` фитиль | the wick's reservoir | «Долито» / «Вода есть», due status «пустовато»; on a card without `wickTested` (all but the violet) a quiet line says only violets are tested on a wick (HOUSE-SELFW-08) |
 | `reservoir` резервуар в горшке | the level | «Долито» / «Вода есть», due status «пустовато» |
-| `tray` в поддоне с водой | the tray (`bog`: offered only on cards that use it, the Venus flytrap and sundew) | «Долито» / «Вода есть», due status «пустовато» |
+| `tray` в поддоне с водой | the tray (`bog`: offered only on cards that use it, the Venus flytrap and sundew) | «Долито» / «Вода есть», due status «пустовато»; on any other card (only by AI import) a warning: standing in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25) |
 | `drip` капельный автополив | the system: hoses, drippers, timer, damp soil | «Работает» / «Поправлено», due status «неясно» |
 
 Drip irrigation (`fixed` in `WATERING`) waters by itself, so its checks look at the system and nothing is learned:
