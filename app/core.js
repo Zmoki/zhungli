@@ -73,6 +73,9 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const LATIN_RUN = /([(«"'„“‘]*\p{Script=Latin}(?:[\p{Script=Latin}'’. -]*\p{Script=Latin})?[)»"'”’,.]*)/u;
 const typedHtml = (s) => `<span class="pname">${String(s ?? '').split(LATIN_RUN)
   .map((t, i) => (i % 2 && /\p{Script=Latin}{10}/u.test(t) ? `<span lang="en">${esc(t)}</span>` : esc(t))).join('')}</span>`;
+// A catalog card's second name (`alt`). An English one is a whole name, not a word in a Russian name, so it's marked
+// lang="en" whatever its length: a screen reader says «snake plant» in English.
+const altHtml = (s) => (/\p{Script=Latin}/u.test(s) ? `<span lang="en">${esc(s)}</span>` : esc(s));
 
 /* ---------- Dates ---------- */
 const pad = (n) => String(n).padStart(2, '0');

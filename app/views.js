@@ -454,7 +454,7 @@ function spotGroups(ps, tags, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, tags.get(p)).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p, tags.get(p))}</div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, tags.get(p)).join(' ')}" data-q="${esc(norm([p.title, p.species, def(p.id)?.alt, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p, tags.get(p))}</div>
         <b>${typedHtml(p.title)}</b>${p.name ? `<small>${typedHtml(p.species)}</small>` : ''}<small class="next">${nextCheckHtml(p)}</small></button>`;
     });
     html += `</div></section>`;
@@ -509,7 +509,8 @@ function openFilter() {
   track('plants_filter_opened', { status: plantSt || 'all' });
 }
 
-// Search on the Plants tab: filters the cards in place, so the field keeps focus.
+// Search on the Plants tab: filters the cards in place, so the field keeps focus. A card's data-q has the name, the
+// species, the catalog card's second name (`alt`: «герань» finds a pelargonium), the place and the room.
 let plantQ = '';
 const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е');
 function filterPlants() {

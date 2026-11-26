@@ -675,7 +675,7 @@ function cardNow(d) {
     MEDIA[d.type] ? ['В чём растёт', MEDIA[d.type].name.toLowerCase()] : null,
     w && w !== 'top' ? ['Полив', WATERING[w].name.toLowerCase()] : null,
   ].filter(Boolean).map(([k, v]) => `<li><span class="k">${k}:</span> ${v}</li>`).join('');
-  const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
+  const sub = [d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   return `<div class="pick card-now"><div class="cn-head"><span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span></div><ul class="cn-facts">${facts}</ul></div>`;
 }
 // The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their

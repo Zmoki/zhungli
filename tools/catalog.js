@@ -10,6 +10,8 @@ const vm = require('vm');
 const ROOT = path.join(__dirname, '..', 'app');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// As altHtml in core.js: an English second name is marked lang="en".
+const altHtml = (s) => (/\p{Script=Latin}/u.test(s) ? `<span lang="en">${esc(s)}</span>` : esc(s));
 
 // The catalog and the drawings run as they are; shapes.js only needs the cards.
 const ctx = {};
@@ -75,7 +77,7 @@ const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigit
 // The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a square tile, the name and one line:
 // `alt`, then the hint.
 function pickPreview(d) {
-  const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
+  const sub = [d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
@@ -90,7 +92,7 @@ function cardNowPreview(d) {
     ['В чём растёт', lc(NAMES[d.type] || d.type)],
     m.pot && d.watering && d.watering !== 'top' ? ['Полив', lc(NAMES[d.watering] || d.watering)] : null,
   ].filter(Boolean).map(([k, v]) => `<li><span class="k">${k}:</span> ${esc(v)}</li>`).join('');
-  const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
+  const sub = [d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><div class="cn-head"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span></div><ul class="cn-facts">${facts}</ul></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.

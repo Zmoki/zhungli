@@ -143,7 +143,8 @@ const FACES = {
 };
 const CHEEKS = '<ellipse class="ck" cx="24.6" cy="53" rx="1.9" ry="1.1"/><ellipse class="ck" cx="39.4" cy="53" rx="1.9" ry="1.1"/>';
 // A square viewBox around each drawing (with its face), so a small tile shows the whole plant in its middle: measured
-// from the drawn shapes with getBBox in Chrome, 2 units of air around the larger side. Re-measure after editing a shape.
+// from the drawn shapes with getBBox in Chrome, 2 units of air around the larger side. Re-measure after editing a shape;
+// a shape missing here falls back to the 64×64 viewBox.
 const SHAPE_FIT = {
   leafy: '1.1 0 62.3 62.3',
   trailing: '4.5 13.1 54 54',
@@ -171,5 +172,5 @@ const plantSvg = (d, m, fit = false) => {
   const shape = shapeOf(d);
   let face = m && FACES[m] ? CHEEKS + FACES[m] : '';
   if (face && shape === 'cutting') face = `<g transform="translate(0 -12)">${face}</g>`;
-  return `<svg class="pl v${toneOf(d)}" viewBox="${fit ? SHAPE_FIT[shape] : '0 0 64 64'}" aria-hidden="true">${SHAPES[shape]}${face}</svg>`;
+  return `<svg class="pl v${toneOf(d)}" viewBox="${(fit && SHAPE_FIT[shape]) || '0 0 64 64'}" aria-hidden="true">${SHAPES[shape]}${face}</svg>`;
 };
