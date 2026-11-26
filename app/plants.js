@@ -571,8 +571,8 @@ const PLANTS = [
   // Wave 1: the most common houseplants, so people find their own plant instead of a generic type.
   // Vines and trailing plants
   {
-    id: 'pothos', species: 'Эпипремнум', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
-    alt: 'потос',
+    id: 'pothos', species: 'Сциндапсус золотистый', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
+    alt: 'эпипремнум, потос',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Длинные плети укорачивать над листом, тогда растение ветвится гуще. Если бледнеет пестрота, нужен свет, а не обрезка.' },
     aka: 'потос, эпипремнум, epipremnum, pothos, golden pothos, сциндапсус золотистый, золотистый, мраморная королева, неон, n-joy',
