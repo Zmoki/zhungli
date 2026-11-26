@@ -593,8 +593,8 @@ function rowValues(p) {
     lamp: !fed || !feedEvery(p) ? ['не влияет', true] : [p.lamp ? 'под лампой' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
-    // Closed «Полив»: when the next check is (a drip system's too); an aquarium is never watered.
-    water: g.noChecks ? ['не нужен', true] : [`проверка ${esc(rel(p.nextCheck))}`, false],
+    // Closed «Полив»: when the next check is, «через 7 дней» (a drip system's too); an aquarium is never watered.
+    water: g.noChecks ? ['не нужен', true] : [esc(rel(p.nextCheck)).replace(/(\d) /g, '$1\u00a0'), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
