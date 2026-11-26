@@ -170,7 +170,7 @@ function feedBox(p) {
     <button class="btn ok wide" data-act="feed-done" data-id="${esc(p.id)}"${dis || last === today() ? ' disabled' : ''}>${I('utensils')}Подкормлено сегодня</button>
     ${last ? `<p class="small muted last-done" tabindex="-1">Последний раз: ${esc(rel(last))}.</p>` : ''}`;
 }
-// «Зимой стоит под лампой?» in «Свет»: it's about where the plant stands, and what it changes is winter feeding.
+// «Лампа», under «Свет»: «Зимой стоит под лампой?». It's about where the plant stands; what it changes is winter feeding.
 // Greyed out, with why, when the plant isn't called on «День подкормки» (as «Пересажено»).
 function lampBox(p) {
   const n = feedEvery(p), off = !feedsOnDay(p) || !n;
@@ -180,7 +180,7 @@ function lampBox(p) {
   return `${askYesNo('Зимой стоит под лампой?', 'lamp', p.id, !!(p.lamp && !off), off, '', 'lamp-hint')}
     <p class="mt-6 small muted" id="lamp-hint">${hint}</p>`;
 }
-// Feeding changed: its box, and the lamp question in «Свет» that depends on it.
+// Feeding changed: its box, and «Лампа», which depends on it.
 function feedChanged(p) {
   $('#feed-box').innerHTML = feedBox(p);
   const lamp = $('#lamp-field');
@@ -555,10 +555,12 @@ let openRows = new Set(), openRowsFor = null;
 // a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
 // waits until March.
 const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 || m > 9; };
-// Closed row values use short month names («24 дек.», «апр.–авг.»), so they stay short; screen readers hear the full ones.
-const MONTHS_SHORT = ['янв.', 'февр.', 'март', 'апр.', 'май', 'июнь', 'июль', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+// Closed row values use three-letter months without a dot («24 дек», «апр–авг»), so they stay short; screen readers
+// hear the full ones. A date takes the genitive («10 мая»), a range the nominative («май»).
+const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const MONTHS_SHORT_GEN = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const shortened = (short, full) => `<span aria-hidden="true">${short}</span><span class="sr-only">${full}</span>`;
-const shortDay = (iso) => shortened(parse(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace(' ', '\u00a0'), dayMonth(iso));
+const shortDay = (iso) => { const d = parse(iso); return shortened(`${d.getDate()}\u00a0${MONTHS_SHORT_GEN[d.getMonth()]}`, dayMonth(iso)); };
 // A row value of several parts: each kept whole, so a long one wraps only after a comma («раз в 2 недели, / зимой пауза»).
 const vParts = (parts) => parts.filter(Boolean).map((x) => `<span class="vp">${x}</span>`).join(', ');
 function feedValue(p) {
@@ -569,7 +571,7 @@ function feedValue(p) {
   const pause = resting(p) ? 'пауза, пока в покое'
     : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${shortDay(until)}`)
       : winterNow() && !p.lamp ? 'зимой пауза' : '';
-  return vParts([every, p.lamp ? 'под лампой' : '', pause]);
+  return vParts([every, pause]);
 }
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
@@ -584,19 +586,21 @@ function rowValues(p) {
     place: [vParts(p.spot ? place.map(typedHtml) : [typedHtml(roomOf(p).name), '<i class="off-part">место не выбрано</i>']), false],
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
+    // Only feeding notices the lamp: without a feeding day it's grey, as «Пересажено».
+    lamp: !fed || !feedEvery(p) ? ['не влияет', true] : [p.lamp ? 'под лампой' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    // «да, на карантине до 7 янв.»: one phrase, wrapping as text, with the day and month kept together.
+    // «да, на карантине до 7 янв»: one phrase, wrapping as text, with the day and month kept together.
     bought: [isNew(p) ? `да, на карантине до ${shortDay(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
     repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${shortDay(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
     rest: resting(p) ? [`с ${shortDay(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
 const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт',
-  feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Новое', repot: 'Пересажено', rest: 'Покой' };
+  lamp: 'Лампа', feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Новое', repot: 'Пересажено', rest: 'Покой' };
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
   return `<div class="srow" id="sr-${key}"><button class="srow-head" id="srh-${key}" data-act="srow" data-row="${key}" aria-expanded="${open}" aria-controls="srb-${key}">
@@ -689,8 +693,8 @@ function settingsHtml(id, p, ls, spots) {
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
           <div class="lux-read"><input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="?" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-need lux-hint"><span class="unit" aria-hidden="true">лк</span><span class="lux-state" id="card-lux-state">${luxState(ls)}</span></div>
           <p class="mt-8 small" id="lux-need">Нужно ${kNum(p.luxRange[0])}–\u2060${kNum(p.luxRange[1])}\u00a0тыс люксов</p>
-          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>
-        <div class="field" id="lamp-field">${lampBox(p)}</div>`)
+          <p class="mt-6 small muted" id="lux-hint">Мерьте у листьев днём, подойдёт и приложение для телефона.</p></div>`)
+    + row('lamp', `<div class="field" id="lamp-field">${lampBox(p)}</div>`)
     + row('gh', `<div class="field">${askYesNo('Стоит в теплице или под колпаком?', 'greenhouse', id, !!p.greenhouse, false, '', 'gh-hint')}
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
