@@ -586,6 +586,7 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srow-v { max-width: 55%; color: var(--muted); text-align: right; font-size: 0.941rem; overflow-wrap: anywhere; }
 .srow-v.off { font-style: italic; }
 .srow-v .off-part { font-style: italic; }
+.srow-v .vp { display: inline-block; } /* a part stays whole: lines break after commas */
 /* An open row's controls show its value: hidden there, so the head stays one line while answering and nothing under the finger moves */
 .srow-head[aria-expanded="true"] .srow-v { display: none; }
 .srow-head .ic { flex: none; width: 1.1em; height: 1.1em; color: var(--muted); transition: transform .15s; }

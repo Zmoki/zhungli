@@ -541,6 +541,8 @@ let openRows = new Set(), openRowsFor = null;
 // a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
 // waits until March.
 const isWinter = (iso) => { const m = parse(iso).getMonth() + 1; return m < 3 || m > 9; };
+// A row value of several parts: each kept whole, so a long one wraps only after a comma («раз в 2 недели, / зимой пауза»).
+const vParts = (parts) => parts.filter(Boolean).map((x) => `<span class="vp">${x}</span>`).join(', ');
 function feedValue(p) {
   const n = feedEvery(p);
   if (!n) return 'не кормлю';
@@ -549,7 +551,7 @@ function feedValue(p) {
   const pause = resting(p) ? 'пауза, пока в покое'
     : until ? (!p.lamp && isWinter(until) ? 'пауза до марта' : `пауза до ${dayMonth(until)}`)
       : winterNow() && !p.lamp ? 'зимой пауза' : '';
-  return [every, p.lamp ? 'под лампой' : '', pause].filter(Boolean).join(', ');
+  return vParts([every, p.lamp ? 'под лампой' : '', pause]);
 }
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
@@ -561,16 +563,17 @@ function rowValues(p) {
     name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
     card: isCustom(p.id) ? ['своё растение', true] : [esc(def(p.id).species), false],
     // The room always; a spot not picked yet stays a grey «место не выбрано» after it.
-    place: [p.spot ? place.map(typedHtml).join(', ') : `${typedHtml(roomOf(p).name)}, <i class="off-part">место не выбрано</i>`, false],
+    place: [vParts(p.spot ? place.map(typedHtml) : [typedHtml(roomOf(p).name), '<i class="off-part">место не выбрано</i>']), false],
     light: p.lux ? [`${p.lux} ${LK}${ls ? ', ' + LIGHT_WORDS[ls] : ''}`, false] : ['не замеряли', true],
     gh: [p.greenhouse ? 'в теплице' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
-    prune: prune ? [monthsText(prune.months), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
+    prune: prune ? [vParts(monthsText(prune.months).split(', ')), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
-    bought: [isNew(p) ? `да, на карантине до ${dayMonth(addDays(p.bought, NEW_DAYS))}` : 'нет', false],
-    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS))}` : 'нет', false],
+    // «да, на карантине до 7 января»: one phrase, wrapping as text, with the day and month kept together.
+    bought: [isNew(p) ? `да, на карантине до ${dayMonth(addDays(p.bought, NEW_DAYS)).replace(' ', '\u00a0')}` : 'нет', false],
+    repot: !fed ? ['не влияет', true] : [repotted(p) ? `да, без подкормки до ${dayMonth(addDays(p.repotted, REPOT_DAYS)).replace(' ', '\u00a0')}` : 'нет', false],
     rest: resting(p) ? [`с ${dayMonth(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
