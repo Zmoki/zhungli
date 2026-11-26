@@ -356,10 +356,11 @@ function prepare(raw) {
 
 // v180: some cards moved off «Обычный грунт» to the new media. A plant whose «В чём растёт» was picked as the card's
 // old one (`medium: 'soil'`) follows the card, as it did, so the card's own tips still apply. Once: `newMedia`.
-const NEW_MEDIA_CARDS = { 'mon-del': 'bark_mix', 'mon-adan': 'bark_mix', pothos: 'bark_mix', 'phi-eru': 'bark_mix', 'phi-birkin': 'bark_mix', 'phi-congo': 'bark_mix', dionaea: 'peat', drosera: 'peat' };
+// Runs from `let S = load()` while this file still loads: the map is inside, a const below wouldn't exist yet.
 function migrateNewMedia(s) {
   if (s.newMedia) return;
-  Object.values(s.plants).forEach((r) => { if (r.medium === 'soil' && NEW_MEDIA_CARDS[r.def]) r.medium = NEW_MEDIA_CARDS[r.def]; });
+  const cards = { 'mon-del': 'bark_mix', 'mon-adan': 'bark_mix', pothos: 'bark_mix', 'phi-eru': 'bark_mix', 'phi-birkin': 'bark_mix', 'phi-congo': 'bark_mix', dionaea: 'peat', drosera: 'peat' };
+  Object.values(s.plants).forEach((r) => { if (r.medium === 'soil' && cards[r.def]) r.medium = cards[r.def]; });
   s.newMedia = true;
 }
 // v1: the collection was created automatically from the personal catalog.

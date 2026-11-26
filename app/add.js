@@ -429,10 +429,11 @@ function importType(x) {
   // Specific substrates first: «пон, полугидропоника» is pon on a reservoir, not clay pebbles.
   if (/mineral|pumice|zeolit|\bpon\b|минерал|пемз|цеолит|(^|[^а-я])пон([^а-я]|$)/.test(t)) return 'mineral';
   if (/coco|кокос/.test(t)) return 'coco';
-  // Before bark: «смесь с корой», «aroid mix» is the mix; before sphagnum: «торф» is peat, «сфагновый торф» too.
+  // Before bark: «смесь с корой», «aroid mix» is the mix. Peat alone («торф», «верховой торф», «peat moss») is the
+  // carnivores' unfed peat; peat-based soil («торфяной грунт», «peat-based potting mix») is ordinary soil.
   if (/aroid|chunky|mix|смес|ароид/.test(t) && /bark|кор|perlit|перлит/.test(t)) return 'bark_mix';
   if (/aroid|chunky|ароид/.test(t)) return 'bark_mix';
-  if (/peat|торф/.test(t)) return 'peat';
+  if (/peat|торф/.test(t)) return /грунт|земл|soil|compost|potting|based|mix|смес|универс/.test(t) ? 'soil' : 'peat';
   if (/leca|clay|hydro|semi|керамз|гидро/.test(t)) return 'leca';
   if (/succ|cact|dry|сух|сукк|какт/.test(t)) return 'dry';
   if (/bark|orchid|кор|орхид/.test(t)) return 'bark';
