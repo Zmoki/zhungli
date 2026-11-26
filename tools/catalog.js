@@ -152,16 +152,12 @@ function card(d) {
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
     row('Комната', d.humid ? 'в подсказке о влажном воздухе' : ''),
   ].join('');
-  const catalog = [
-    row('Группа', esc(d.cat)),
-    row('Подсказка в списке', esc(d.hint || '')),
-  ].join('');
   const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
-<div class="blks"><div class="col">${block('Настройки', settings, 'b-set')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section>${block('Только в каталоге', catalog, 'b-cat')}</div>
-<div class="col">${block('Заметки', notes, 'b-notes')}</div><div class="col">${block('Метки и задачи', tags, 'b-tags')}</div></div>
+<div class="blks"><div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
+<div class="col">${block('Заметки', notes, 'b-notes')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section></div></div>
 </article>`;
 }
 
@@ -283,10 +279,10 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .gaps li { font-size: .88rem; font-weight: 800; padding: 3px 12px; border-radius: 99px; background: var(--gap-bg); color: var(--gap-ink); }
 /* Blocks of a card, named as in the app, each under a beige band like a settings group */
 .blk { margin-top: 14px; min-width: 0; }
-/* Phone: one column in reading order; wide screens: «Настройки», «Реплики» and «Только в каталоге» share the first column */
+/* Phone: one column in reading order; wide screens: «Настройки» and «Метки и задачи» on the left, «Заметки» and «Реплики» on the right */
 .blks { display: flex; flex-direction: column; }
 .col { display: contents; }
-.b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; } .b-cat { order: 5; }
+.b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
 .quips { margin: 0; padding-left: 1.3em; }
 .quips li + li { margin-top: 4px; }
 /* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
@@ -303,7 +299,6 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .blks dl { grid-template-columns: 1fr; gap: 0; }
   .blks dd { margin-bottom: 10px; }
 }
-@media (min-width: 1300px) { .blks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
 dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
 dt { font-weight: 800; color: var(--muted); font-size: .882rem; padding-top: 2px; }
@@ -319,7 +314,7 @@ ${drawRules}
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
 <main>
 <h1>Каталог Жунгли</h1>
-<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, и то, что видно только в каталоге. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
+<p class="lead">${real} карточек растений и ${PLANTS.length - real} общих типов. Версия ${esc(VERSION)}, собрано ${date}. Карточки разбиты как в приложении: «Настройки», «Заметки», метки и задачи, реплики. Пробелы отмечены оранжевым: это факты, которых в карточке пока нет. Обсуждать можно в комментариях прямо на странице.</p>
 <div class="bar">
 <div class="search"><input id="q" type="search" aria-label="Найти растение" placeholder="Найти: название, id или другое имя" autocomplete="off">${I('search')}<button type="button" class="search-x" id="q-x" aria-label="Очистить поиск" hidden>${I('x')}</button></div>
 <div class="pfilter" id="pfilter"><button type="button" class="pfilter-open" id="f-open" aria-haspopup="dialog">${I('funnel')}<span class="pfilter-t"><span class="k">Фильтр:</span> <span id="f-value">${all}</span></span></button><button type="button" class="pfilter-x" id="f-x" aria-label="Сбросить фильтр" hidden>${I('x')}</button><span class="pfilter-end" id="f-end" aria-hidden="true">${I('chevron-right')}</span></div>
