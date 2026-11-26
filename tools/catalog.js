@@ -138,12 +138,11 @@ function card(d) {
     d.rest && `<h4>Покой</h4><p><b>Начало:</b> ${esc(d.rest.start)}. <b>Конец:</b> ${esc(d.rest.end)}.</p><p>${esc(d.rest.tip)}</p>${d.rest.water ? `<p><b>Полив:</b> ${esc(d.rest.water)}</p>` : ''}`,
     d.ways && Object.entries(d.ways).map(([k, w]) => `<h4>Если растёт в «${esc(NAMES[k] || k)}»</h4>${w.water ? `<p><b>Полив:</b> ${esc(w.water)}</p>` : ''}${w.soil ? `<p><b>Грунт:</b> ${esc(w.soil)}</p>` : ''}`).join(''),
     `<h4>Реплики</h4><ul>${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul>`,
-    d.aka && `<h4>Слова для поиска</h4><p class="muted">${esc(d.aka)}</p>`,
     d.hint && `<h4>Подсказка в списке</h4><p>${esc(d.hint)}</p>`,
   ].filter(Boolean).join('');
   const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
-<header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
+<header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}
 <dl>
 ${row('Свет', lux(d.lux))}
@@ -161,7 +160,7 @@ ${row('Вода', d.distilled ? 'Только дистиллированная, 
 ${row('После покупки', esc(d.settle || ''))}
 ${row('Место', esc(d.spot || ''))}
 </dl>
-<details><summary>Реплики, слова для поиска${d.rest ? ', покой' : ''}${d.ways ? ', другие способы' : ''}</summary>${more}</details>
+<details><summary>Реплики${d.hint ? ', подсказка в списке' : ''}${d.rest ? ', покой' : ''}${d.ways ? ', другие способы' : ''}</summary>${more}</details>
 </article>`;
 }
 
@@ -275,6 +274,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .name { min-width: 0; padding-top: 6px; }
 h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 .id { font-family: ui-monospace, Menlo, monospace; font-size: .824rem; color: var(--muted); margin: 2px 0 0; }
+.aka { font-size: .882rem; color: var(--muted); margin: 6px 0 0; overflow-wrap: anywhere; }
+.aka .k { font-weight: 800; }
 .flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
 .flags span { font-size: .824rem; font-weight: 800; padding: 1px 10px; border-radius: 99px; background: var(--chip); }
 .gaps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; }
