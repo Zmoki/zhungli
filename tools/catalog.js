@@ -36,8 +36,10 @@ const MEDIUM = Object.fromEntries(ENTRIES.map(([k, , t]) => [k, {
   feedNote: (t.match(/\bfeedNote: '([^']+)'/) || [])[1] || '',
   noChecks: /\bnoChecks: true/.test(t),
 }]));
-// The app's feeding words (FEED_WITH in state.js) and the interval when nothing sets one (feedEvery in plant.js).
-const FEED_WITH = { each: 'в каждый полив', alt: 'через раз' };
+// The app's feeding words (FEED_WITH, FEED_WORDS in state.js) and the interval when nothing sets one (feedEvery).
+const objIn = (name) => JSON.parse(stateJs.match(new RegExp(`const ${name} = (\\{[^}]+\\})`))[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
+const FEED_WITH = objIn('FEED_WITH');
+const FEED_WORDS = objIn('FEED_WORDS');
 const FEED_DEFAULT = 14;
 // The pruning reminder's months when a card names none (REMINDERS.prune.start in state.js).
 const PRUNE_MONTHS = [3, 4];
@@ -135,12 +137,15 @@ function card(d) {
   const gaps = gapsOf(d);
   const flags = [d.hidden && 'Скрыта', d.generic && 'Общий тип'].filter(Boolean);
   const m = MEDIUM[d.type] || {};
-  const months = !d.prune || d.prune.no ? '' : d.prune.months ? d.prune.months.map((x) => MONTHS[x - 1]).join(', ')
+  // The pruning reminder is off for a new plant («нет»); «Да» to «Звать на обрезку?» calls in these months.
+  const months = d.prune && d.prune.months ? d.prune.months.map((x) => MONTHS[x - 1]).join(', ')
     : `${PRUNE_MONTHS.map((x) => MONTHS[x - 1]).join(', ')} (по умолчанию)`;
-  // As feedEvery in plant.js: the card's interval, else the medium's, else 14 days; some media feed with watering or not at all.
-  const feed = d.noFeed || m.feed === 'none' ? 'не подкармливать'
-    : FEED_WITH[m.feed] ? FEED_WITH[m.feed]
-    : `раз в ${d.feedEvery || m.feedEvery || FEED_DEFAULT} дн.${d.feedEvery || m.feedEvery ? '' : ' (по умолчанию)'}`;
+  // As the «Подкормка» row (rowValues in plant.js): on «День подкормки» the card's interval, else the medium's, else
+  // 14 days; otherwise why there's no feeding day.
+  const fe = Number.isFinite(d.feedEvery) ? d.feedEvery : m.feedEvery || FEED_DEFAULT;
+  const feed = !d.noFeed && m.feed === 'day'
+    ? (fe ? `${FEED_WORDS[fe] || `раз в ${fe} дн.`}${Number.isFinite(d.feedEvery) || m.feedEvery ? '' : ' (по умолчанию)'}` : 'не кормлю')
+    : d.distilled ? 'не удобряют' : d.type === 'water' ? 'при смене воды' : FEED_WITH[m.feed] || 'нет дня подкормки';
   const own = [d.type, d.watering].filter((k) => OWN_START.has(k));
   const check = d.check
     ? esc(d.check)
@@ -150,9 +155,9 @@ function card(d) {
     row('Свет', `нужно ${lux(d.lux)}`),
     row('В чём растёт', esc(lc(NAMES[d.type] || d.type))),
     row('Полив', esc(lc(NAMES[d.watering || 'top'] || d.watering))),
-    row('Проверка', m.noChecks ? 'без проверок' : `раз в ${d.every} дн., дальше подстраивается по ответам`, m.noChecks ? '' : own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
+    row('Проверка', m.noChecks ? 'не нужно' : `раз в ${d.every} дн., дальше подстраивается по ответам`, m.noChecks ? '' : own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
     row('Подкормка', feed, esc(d.feedNote || m.feedNote)),
-    row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : months, d.prune && esc(d.prune.no || d.prune.tip || '')),
+    row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : 'нет', d.prune && d.prune.no ? esc(d.prune.no) : [`«Да» на «Звать на обрезку?»: ${months}.`, d.prune && esc(d.prune.tip || '')].filter(Boolean).join(' ')),
     row('Покой', d.rest ? `с «${esc(d.rest.start)}» до «${esc(d.rest.end)}»` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
     row('Новое', '', esc(d.settle || '')),
     row('Место', esc(d.spot || '')),
