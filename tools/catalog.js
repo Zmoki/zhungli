@@ -112,7 +112,10 @@ const FILTERS = [
 ];
 
 // A row: what the app shows, and an optional hint line under it (as in a settings row).
-const row = (k, v, hint = '', cls = '') => (v || hint ? `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}${hint ? `<span class="hint">${hint}</span>` : ''}</dd>` : '');
+// «Свет: нужно 3 000–15 000 лк» on one line, the hint under it.
+const row = (k, v, hint = '', cls = '') => (v || hint ? `<div class="r"><dt>${k}${v ? ':' : ''}</dt> <dd${cls ? ` class="${cls}"` : ''}>${v}${hint ? `<span class="hint">${hint}</span>` : ''}</dd></div>` : '');
+// A name from the app as a value after a colon: «Обычный грунт» → «обычный грунт».
+const lc = (s) => (s ? s[0].toLowerCase() + s.slice(1) : s);
 // A block of rows under a band, named as in the app; empty blocks are left out.
 const block = (title, rows, cls) => (rows.trim() ? `<section class="blk ${cls}"><h4>${title}</h4><dl>${rows}</dl></section>` : '');
 function card(d) {
@@ -126,13 +129,13 @@ function card(d) {
     : CHECK_TEXT[d.type] ? `${esc(CHECK_TEXT[d.type])} <span class="muted">(общий для «${esc(NAMES[d.type] || d.type)}»)</span>` : '';
   // «Настройки»: values the person can change, each with its hint as in the app.
   const settings = [
-    row('Свет', `Нужно ${lux(d.lux)}`),
-    row('В чём растёт', esc(NAMES[d.type] || d.type)),
-    row('Полив', esc(NAMES[d.watering || 'top'] || d.watering)),
+    row('Свет', `нужно ${lux(d.lux)}`),
+    row('В чём растёт', esc(lc(NAMES[d.type] || d.type))),
+    row('Полив', esc(lc(NAMES[d.watering || 'top'] || d.watering))),
     row('Проверка', `раз в ${d.every} дн., дальше подстраивается по ответам`, own.map((k) => `Для «${esc(NAMES[k])}» первая проверка считается иначе.`).join(' ')),
     row('Подкормка', d.noFeed ? 'не подкармливать' : d.feedEvery ? `раз в ${d.feedEvery} дн.` : '', d.feedNote ? esc(d.feedNote) : ''),
     row('Обрезка', d.prune && d.prune.no ? 'не обрезают' : months, d.prune && esc(d.prune.no || d.prune.tip || '')),
-    row('Покой', d.rest ? `Начало: ${esc(d.rest.start.toLowerCase())}. Конец: ${esc(d.rest.end.toLowerCase())}.` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
+    row('Покой', d.rest ? `с «${esc(d.rest.start)}» до «${esc(d.rest.end)}»` : '', d.rest ? esc([d.rest.tip, d.rest.water].filter(Boolean).join(' ')) : ''),
     row('Новое', '', esc(d.settle || '')),
     row('Место', esc(d.spot || '')),
   ].join('');
@@ -146,7 +149,7 @@ function card(d) {
   ].join('');
   // Tags under the name and tasks.
   const tags = [
-    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'Нет данных.', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
+    row('Животные', pets === 'safe' ? 'метка «безопасно»' : pets === 'toxic' ? '<b>метка «опасно»</b>' : d.generic ? '' : 'нет данных', pets === 'toxic' ? esc(d.petsNote || '') : '', pets === 'toxic' ? 'warn' : pets || d.generic ? '' : 'gap'),
     row('Сок', d.toxic ? '<b>метка «едкий сок»</b>' : '', d.toxic === 'skin' ? 'Раздражает кожу.' : d.toxic ? 'Раздражает кожу и слизистые.' : '', 'warn'),
     row('Задача полива', check, d.distilled ? 'Только дистиллированная вода, обратного осмоса или чистая дождевая.' : ''),
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
@@ -297,19 +300,18 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .b-set { grid-area: 1 / 1; } .b-notes { grid-area: 1 / 2; } .b-tags { grid-area: 2 / 1; } .b-quips { grid-area: 2 / 2; }
   .blk { margin-top: 0; }
   /* Narrow columns: each label above its text, so the text gets the whole width */
-  .blks dl { grid-template-columns: 1fr; gap: 0; }
-  .blks dd { margin-bottom: 10px; }
 }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
-dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px 12px; margin: 0; padding-left: 4px; }
-dt { font-weight: 800; color: var(--muted); font-size: .882rem; padding-top: 2px; }
-dd { margin: 0; min-width: 0; }
+dl { display: flex; flex-direction: column; gap: 10px; margin: 0; padding-left: 4px; }
+.r { min-width: 0; }
+dt, dd { display: inline; margin: 0; }
+dt { font-weight: 800; color: var(--muted); }
 dd .hint { display: block; color: var(--muted); font-size: .882rem; margin-top: 2px; }
 dd ul { margin: 0; padding-left: 1.1em; }
 dd.warn b { color: var(--warn); }
 dd.gap { color: var(--gap-ink); font-weight: 800; }
 .muted { color: var(--muted); }
-@media (max-width: 480px) { .tile { width: 96px; } dl { grid-template-columns: 1fr; gap: 0; } dd { margin-bottom: 8px; } }
+@media (max-width: 480px) { .tile { width: 96px; } }
 ${drawRules}
 </style>
 <svg class="sprite" aria-hidden="true">${SPRITE}</svg>
