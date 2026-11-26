@@ -664,7 +664,7 @@ function settingsHtml(id, p, ls, spots) {
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
           <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
             <button type="button" class="btn primary" data-act="spot-new" data-id="${esc(id)}" aria-label="Добавить место">${I('plus')}</button></form></div>`)
-    // As a row on the Light tab (lightRow): «?» while empty, «лк» by the field, the light word beside it, then what's needed.
+    // As a row on the Light tab (lightRow): a question mark while empty, «лк» by the field, the light word beside it, then the need.
     + row('light', `<div class="field"><label for="f-lux">Замер люксметром</label>
           <div class="lux-read"><input class="input" type="number" inputmode="numeric" id="f-lux" placeholder="?" data-field="lux" data-id="${esc(id)}" value="${p.lux ?? ''}" aria-describedby="lux-need lux-hint"><span class="unit" aria-hidden="true">лк</span><span class="lux-state" id="card-lux-state">${luxState(ls)}</span></div>
           <p class="mt-8 small" id="lux-need">Нужно ${kNum(p.luxRange[0])}–\u2060${kNum(p.luxRange[1])}\u00a0тыс люксов</p>
