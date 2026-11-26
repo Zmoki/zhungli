@@ -292,8 +292,9 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .head { flex-direction: column; gap: 12px; margin-bottom: 0; }
   .head .tile { width: 100%; }
   .name { padding-top: 0; }
-  .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; align-items: start; }
-  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; align-items: start; }
+  /* Two rows: «Метки и задачи» and «Реплики» start at the same height, under the taller of the blocks above */
+  .b-set { grid-area: 1 / 1; } .b-notes { grid-area: 1 / 2; } .b-tags { grid-area: 2 / 1; } .b-quips { grid-area: 2 / 2; }
   .blk { margin-top: 0; }
   /* Narrow columns: each label above its text, so the text gets the whole width */
   .blks dl { grid-template-columns: 1fr; gap: 0; }
