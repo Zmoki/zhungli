@@ -78,7 +78,7 @@ function pickPreview(d) {
   const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
   const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
   const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div>${pets ? '<p class="prev-note">Метка видна, если в настройках есть кошка или собака.</p>' : ''}</section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
@@ -319,10 +319,9 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
 /* A catalog row as in the app (.pick in style.css) */
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
-/* In «В каталоге»: some air under the band, the row centered in its column, a quiet note under it */
+/* In «В каталоге»: some air under the band, the row centered in its column */
 .prev .pick { margin: 16px auto 4px; }
 .pick.card-now { border-color: var(--line); }
-.prev-note { max-width: 420px; margin: 6px auto 0; font-size: .882rem; color: var(--muted); text-align: center; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
