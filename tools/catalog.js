@@ -70,6 +70,16 @@ const DRAW = {
 const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|st|rt|vein|cut|co|trap|trunk)(?![-\w])|svg\.pl\b)/.test(l)).join('\n');
 
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
+// As kLux in core.js: «15 тыс».
+const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
+// The card as a row of the app's catalog («Добавить растения», pickRow in add.js), with the pets tag as when
+// «Дома есть кошка или собака» is on.
+function pickPreview(d) {
+  const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
+  const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
+  const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
+  return `<div class="prev"><p class="prev-k">В каталоге приложения</p><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></div>`;
+}
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
 // As norm in views.js: search ignores case and «ё».
@@ -81,7 +91,7 @@ const CATS = [...new Set(PLANTS.map((d) => d.cat))].sort((a, b) => (CAT_ORDER.in
 const BADGES = Object.fromEntries(ENTRIES.map(([k, , t]) => [k, t.match(/badge: \['([a-z-]+)', '([^']+)'\]/)]).filter(([, m]) => m).map(([k, m]) => [k, [m[1], m[2]]]));
 // The app's icons (the sprite in index.html), only the ones this page uses.
 const indexHtml = read('index.html');
-const used = new Set(['funnel', 'search', 'x', 'chevron-right', 'paw-print', 'paw-toxic', 'triangle-alert', ...Object.values(BADGES).map((b) => b[0])]);
+const used = new Set(['funnel', 'search', 'x', 'chevron-right', 'plus', 'paw-print', 'paw-toxic', 'triangle-alert', ...Object.values(BADGES).map((b) => b[0])]);
 const SPRITE = [...used].map((id) => (indexHtml.match(new RegExp(`<symbol id="i-${id}"[^>]*>[\\s\\S]*?</symbol>`)) || [''])[0]).join('');
 const I = (n) => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 
@@ -188,7 +198,7 @@ function card(d) {
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
-<div class="blks"><div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
+<div class="blks">${pickPreview(d)}<div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
 <div class="col">${block('Заметки', notes, 'b-notes')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section></div></div>
 </article>`;
 }
@@ -297,8 +307,22 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
 /* The picture as on a Plants grid card (.pcard .pic): a 3:4 pastel tile, the drawing low in it */
 .tile { flex: none; width: 116px; aspect-ratio: 3 / 4; border-radius: 21px; display: grid; place-items: center; overflow: hidden; }
-.tile:has(> svg.v0) { background: var(--t0); } .tile:has(> svg.v1) { background: var(--t1); } .tile:has(> svg.v2) { background: var(--t2); }
-.tile:has(> svg.v3) { background: var(--t3); } .tile:has(> svg.v4) { background: var(--t4); } .tile:has(> svg.v5) { background: var(--t5); }
+/* A catalog row as in the app (.pick in style.css) */
+.prev { min-width: 0; }
+.prev-k { font-size: .882rem; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
+.pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
+.pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
+.pick .pe svg.pl { width: 46px; height: 46px; }
+.pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pick .pt b { font-weight: 800; }
+.pick .pt small { color: var(--muted); font-size: .824rem; line-height: 1.5; }
+.pick .pc { color: var(--muted); flex: none; display: inline-flex; }
+.pick .pc .ic { width: 22px; height: 22px; stroke-width: 2.5; }
+.pet-tag { font-weight: 800; white-space: nowrap; }
+.pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
+.pet-tag.danger { color: var(--st-danger); } .pet-tag.safe { color: var(--st-fine); }
+:is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
+:is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }
 .name { min-width: 0; padding-top: 6px; }
 h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
@@ -314,7 +338,7 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
 /* Phone: one column in reading order; wide screens: «Настройки» and «Метки и задачи» on the left, «Заметки» and «Реплики» on the right */
 .blks { display: flex; flex-direction: column; }
 .col { display: contents; }
-.b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
+.prev { order: 0; margin-top: 14px; } .b-set { order: 1; } .b-notes { order: 2; } .b-tags { order: 3; } .b-quips { order: 4; }
 .quips { margin: 0; padding-left: 1.3em; }
 .quips li + li { margin-top: 4px; }
 /* Wide screens: one plant per row, the picture and name in a column on the left that stays in view, blocks side by side */
@@ -326,7 +350,8 @@ h3 { font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.25; }
   .name { padding-top: 0; }
   .blks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; align-items: start; }
   /* Two rows: «Метки и задачи» and «Реплики» start at the same height, under the taller of the blocks above */
-  .b-set { grid-area: 1 / 1; } .b-notes { grid-area: 1 / 2; } .b-tags { grid-area: 2 / 1; } .b-quips { grid-area: 2 / 2; }
+  .prev { grid-area: 1 / 1 / 2 / 3; margin-top: 0; }
+  .b-set { grid-area: 2 / 1; } .b-notes { grid-area: 2 / 2; } .b-tags { grid-area: 3 / 1; } .b-quips { grid-area: 3 / 2; }
   .blk { margin-top: 0; }
 }
 .blk h4 { font-size: .941rem; font-weight: 900; text-align: center; color: var(--ink); background: var(--chip); border-radius: 12px; padding: 4px 10px; margin: 0 0 8px; }
