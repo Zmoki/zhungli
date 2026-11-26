@@ -11,8 +11,9 @@
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
 // alt: the second line of the catalog row, in lowercase like the hints: a folk name (zhungli-content plants/*.yml
-//   `aka`), else the English name (its `en`, with ASPCA / RHS / NC State / Clemson links); a variety card takes its
-//   genus's. A folk name goes here, not in the title. Also searched.
+//   `aka`) or the plant's other Russian name («сенполия» for «Фиалка»), else the English name (its `en`, with
+//   ASPCA / RHS / NC State / Clemson links); a variety card takes its genus's. Titles have one name and no brackets:
+//   the other name goes here. Also searched.
 // toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
 // pets: 'toxic' or 'safe' for cats and dogs (ASPCA); 'unlisted': checked, not in ASPCA, and other sources aren't enough
 //   to say (content facts HOUSE-PETS, CARN-TOX; its petsNote, if any, replaces the line in «Заметки»); none: not checked yet.
@@ -569,8 +570,8 @@ const PLANTS = [
   // Wave 1: the most common houseplants, so people find their own plant instead of a generic type.
   // Vines and trailing plants
   {
-    id: 'pothos', species: 'Потос (эпипремнум)', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
-    alt: 'golden pothos',
+    id: 'pothos', species: 'Потос', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
+    alt: 'эпипремнум',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Длинные плети укорачивать над листом, тогда растение ветвится гуще. Если бледнеет пестрота, нужен свет, а не обрезка.' },
     aka: 'потос, эпипремнум, epipremnum, pothos, golden pothos, сциндапсус золотистый, золотистый, мраморная королева, неон, n-joy',
@@ -698,8 +699,8 @@ const PLANTS = [
     quips: ['Тень? Отлично, я привыкла.', 'Меня зовут чугунной не просто так.', 'Протрите мне листья, и я сияю.'],
   },
   {
-    id: 'croton', species: 'Кротон (кодиеум)', cat: 'Декоративно-лиственные', emoji: '🍂', toxic: true, big: true,
-    alt: 'croton',
+    id: 'croton', species: 'Кротон', cat: 'Декоративно-лиственные', emoji: '🍂', toxic: true, big: true,
+    alt: 'кодиеум',
     pets: 'toxic', petsNote: 'Слюнотечение, рвота, понос. Сок раздражает кожу.',
     aka: 'кротон, кодиеум, codiaeum, croton, петра',
     lux: [15000, 35000], every: 5, type: 'soil', check: 'Верхние 2 см сухие?',
@@ -737,8 +738,8 @@ const PLANTS = [
     quips: ['Вечером я молюсь листьями.', 'Солнце в лоб не надо.', 'Чуть влажно? Идеально.'],
   },
   {
-    id: 'fern', species: 'Нефролепис (папоротник)', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
-    alt: 'boston fern',
+    id: 'fern', species: 'Нефролепис', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
+    alt: 'папоротник',
     pets: 'safe',
     aka: 'нефролепис, папоротник, nephrolepis, бостонский, fern',
     lux: [3000, 10000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
@@ -853,8 +854,8 @@ const PLANTS = [
     quips: ['Я как зонтик, только зелёный.', 'Поверните меня к свету.', 'Холодно и мокро? Роняю листья.'],
   },
   {
-    id: 'bokarnea', species: 'Бокарнея (нолина)', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
-    alt: 'pony tail',
+    id: 'bokarnea', species: 'Бокарнея', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
+    alt: 'нолина',
     pets: 'safe',
     aka: 'бокарнея, нолина, бутылочное дерево, слоновая нога, beaucarnea, nolina',
     lux: [15000, 40000], every: 18, type: 'dry',
@@ -865,8 +866,8 @@ const PLANTS = [
     quips: ['У меня в ноге запас воды.', 'Забыли полить? Я и не заметила.', 'Солнце для меня всё.'],
   },
   {
-    id: 'citrus', species: 'Лимон (цитрус)', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
-    alt: 'lemon',
+    id: 'citrus', species: 'Лимон', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
+    alt: 'цитрус',
     pets: 'toxic', petsNote: 'Рвота, понос, вялость.',
     aka: 'лимон, цитрус, мандарин, апельсин, каламондин, citrus, lemon, павловский',
     lux: [20000, 50000], every: 4, type: 'soil', check: 'Верхние 2 см сухие?',
@@ -903,8 +904,8 @@ const PLANTS = [
     quips: ['Я сам себе аптечка.', 'Солнышка бы, а воды не надо.', 'Растянулся? Это я ищу свет.'],
   },
   {
-    id: 'crassula', species: 'Толстянка (денежное дерево)', cat: 'Суккуленты и кактусы', emoji: '💰',
-    alt: 'jade plant',
+    id: 'crassula', species: 'Толстянка', cat: 'Суккуленты и кактусы', emoji: '💰',
+    alt: 'денежное дерево',
     pets: 'toxic', petsNote: 'Рвота, вялость, нарушение координации.',
     prune: { tip: 'Обычно не обрезают. Вытянувшуюся ветку можно укоротить над узлом, оттуда пойдут новые побеги.' },
     aka: 'толстянка, крассула, денежное дерево, crassula, jade, ovata, хоббит, голлум',
@@ -942,8 +943,8 @@ const PLANTS = [
     quips: ['Я каменная роза. Не поливайте меня в сердце.', 'Мало солнца, и я расту жирафом.', 'Сухо, светло, хорошо.'],
   },
   {
-    id: 'schlumbergera', species: 'Декабрист (шлюмбергера)', cat: 'Суккуленты и кактусы', emoji: '🎄',
-    alt: 'christmas cactus',
+    id: 'schlumbergera', species: 'Декабрист', cat: 'Суккуленты и кактусы', emoji: '🎄',
+    alt: 'шлюмбергера',
     pets: 'safe',
     prune: { tip: 'Формировать после цветения: выкручивать крайние членики с самых сильных побегов.' },
     aka: 'декабрист, шлюмбергера, зигокактус, рождественник, schlumbergera, рипсалидопсис',
@@ -998,8 +999,8 @@ const PLANTS = [
   },
   // Flowering
   {
-    id: 'violet', species: 'Фиалка (сенполия)', cat: 'Цветущие и орхидеи', emoji: '💜',
-    alt: 'african violet',
+    id: 'violet', species: 'Фиалка', cat: 'Цветущие и орхидеи', emoji: '💜',
+    alt: 'сенполия',
     pets: 'safe', wickTested: true,
     prune: { tip: 'Отцветшие цветки обрывать, а когда отцвёл последний, срезать весь цветонос у основания.' },
     aka: 'фиалка, сенполия, узамбарская, saintpaulia, african violet',
