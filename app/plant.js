@@ -93,6 +93,7 @@ function feedWhyNot(p) {
   if (p.distilled) return 'Хищные растения не удобряют в грунт.';
   if (p.type === 'water') return 'В воде удобрение в четверть дозы раз в месяц, при смене воды. Черенкам до корней не нужно.';
   if (MEDIA[p.type].feed === 'each') return `${upFirst(WHERE[p.type])} удобрение в слабой дозе добавляют в каждый полив: отдельного дня подкормки нет.`;
+  if (MEDIA[p.type].feed === 'alt') return `${upFirst(WHERE[p.type])} удобрение добавляют через раз: пока вода испаряется, раствор крепнет. Отдельного дня подкормки нет.`;
   if (p.noFeed) return 'Для этого растения подкормки нет.';
   return `Для растений ${WHERE[p.type] || 'с таким грунтом'} день подкормки не назначаю.`;
 }
@@ -538,7 +539,7 @@ function feedValue(p) {
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
   const prune = remindOf(r, 'prune'), n = bathEvery(), g = wayOf(p), iv = Math.round(p.interval), place = [S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean);
-  const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : MEDIA[p.type].feed === 'each' ? 'в каждый полив' : 'нет дня подкормки';
+  const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : FEED_WITH[MEDIA[p.type].feed] || 'нет дня подкормки';
   const rinseOff = p.type === 'water' ? 'соли уходят с водой' : MEDIA[p.type].care ? 'своя промывка' : p.distilled ? 'не нужна' : 'нельзя';
   return {
     name: p.name ? [typedHtml(p.name), false] : ['без имени', true],
@@ -735,7 +736,7 @@ function setWay(id, medium, watering) {
   const base = r.soilInterval || d.every;
   // Drip irrigation moved to another medium keeps the person's pick and its next check: neither is the card's.
   if (!(WATERING[from.watering]?.fixed && WATERING[watering]?.fixed)) {
-    if (isCardWay(r, d)) { r.interval = base; delete r.soilInterval; } else r.interval = (wayOf({ type: medium, watering }).start || ((b) => b))(base);
+    if (isCardWay(r, d)) { r.interval = base; delete r.soilInterval; } else r.interval = wayStart(wayOf({ type: medium, watering }), base, r.lux || d.lux[0]);
     r.nextCheck = addDays(today(), Math.round(r.interval));
   }
   r.wet = 0;
@@ -782,7 +783,7 @@ function setCard(id, key) {
   if (watering && watering !== (WATERING[d.watering] ? d.watering : 'top')) { if (watering === 'wick') r.wick = true; else r.watering = watering; }
   const onWay = isCardWay(r, d), g = wayOf({ type: medium, watering }), before = Math.round(r.interval);
   // Drip irrigation keeps the person's pick.
-  if (!r.lastWater && !g.fixed) r.interval = onWay ? d.every : (g.start || ((b) => b))(d.every);
+  if (!r.lastWater && !g.fixed) r.interval = onWay ? d.every : wayStart(g, d.every, r.lux || d.lux[0]);
   else if (onWay) r.interval = clamp(r.interval, ...cardBounds(d, g));
   // A new interval moves the next check, unless «Ещё влажно» answers or «Позже» today set it.
   const iv = Math.round(r.interval), putOff = (S.log[today()] || []).some((e) => e.id === id && e.a === 'later');
@@ -866,7 +867,7 @@ function changeWay(id, f, value) {
   const repotField = $('#repot-field'); if (repotField) repotField.outerHTML = repotBox(p);
   if (res.settle) {
     // Only plants called on «День подкормки» notice it.
-    if (feedsOnDay(p)) toast('Это как пересадка: 6 недель без подкормки, пока корни привыкают');
+    if (feedsOnDay(p)) toast('Это как пересадка: 2 недели без подкормки, пока корни привыкают');
   }
   noteEdit = null;
   refreshCheat(id);
@@ -893,9 +894,17 @@ document.addEventListener('change', (e) => {
     $('#sh-species').innerHTML = typedHtml(p.species);
   }
   if (f === 'lux') {
-    const v = parseInt(el.value, 10);
+    const v = parseInt(el.value, 10), was = r.lux;
     r.lux = Number.isFinite(v) && v > 0 ? v : null;
     if (r.lux) track('plant_setting_lux_changed', { from: tab === 'light' ? 'light_tab' : 'card' });
+    // A wick's or reservoir's first check follows the light (tankStart): a reading before any answer moves it, while
+    // the interval is still the one the last reading gave (not one picked with «Проверка»).
+    const d = def(id), p = plant(id), g = wayOf(p), base = r.soilInterval || d.every;
+    if (g.start === tankStart && !isCardWay(r, d) && !r.lastWater && !checksOf(p).length
+      && Math.round(r.interval) === wayStart(g, base, was || d.lux[0])) {
+      const iv = wayStart(g, base, r.lux || d.lux[0]), shift = iv - Math.round(r.interval);
+      if (shift) { r.interval = iv; r.nextCheck = addDays(r.nextCheck, shift); }
+    }
   }
   save();
   if (sheet.open && ['lux', 'name', 'species'].includes(f)) heroChanged(id);

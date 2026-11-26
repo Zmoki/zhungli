@@ -10,10 +10,13 @@ const GENERIC_QUIPS = ['Я новенькая, приятно познакоми
 // - labels: check buttons; act: what a check records: 'pour' (watering, default), 'top' (a top-up), 'change' (fresh water);
 // - need: the status word when a check is due (default «суховато»);
 // - task: the check as a task, over the card's question; verb: the task's verb before «если…» (default «Полейте»);
-// - start(base): the interval when picked, from the card's one; min, max: interval bounds (default 1…45);
+// - start(base, lux): the interval when picked, from the card's one and the plant's light (its reading, else the card's
+//   lowest); min, max: interval bounds (default 1…45);
 // - hint: shown under the choice in the plant card; water, soil: tips for a card written for another way.
 // Only MEDIA: pot (watered by a WATERING way); feed: 'day' (on «День подкормки»), 'each' (with every watering),
-// 'none'; feedTip: added to a reservoir's watering tip; care: a recurring bonus task, careHint: its line in the hint;
+// 'alt' (with every other watering), 'none'; feedEvery: the default feeding interval on the day (else 14 days);
+// feedNote: the dose on «День подкормки» when the card has none; feedTip: added to a reservoir's watering tip;
+// care: a recurring bonus task, careHint: its line in the hint;
 // first: comes first among checks; noChecks: never checked;
 // organic: roots in soil-like stuff (moving out of it counts as a transplant); wet: steadily wet (rots succulents);
 // badge: [icon, words]: the way's tag in the plant card, badge on grid cards and Plants filter chip (also for WATERING;
@@ -29,7 +32,10 @@ const MEDIA = {
     hint: 'Позову, когда пора проверить, не подсох ли грунт.',
     water: 'Когда подсохнет верхний слой, обильно. Лишнюю воду из поддона слить.',
     soil: 'Универсальный грунт, горшок с дренажным отверстием.' },
-  dry: { name: 'Грунт для суккулентов', pot: true, badge: ['droplet-off', 'в грунте для суккулентов'], feed: 'none', organic: true,
+  // Cacti and succulents are fed in the growing season, monthly (RHS, Clemson) to every 2 weeks (NYBG), better too little
+  // than too much (Clemson) (content facts HOUSE-MEDIA-19).
+  dry: { name: 'Грунт для суккулентов', pot: true, badge: ['droplet-off', 'в грунте для суккулентов'], feed: 'day', feedEvery: 30, organic: true,
+    feedNote: 'Суккулентам: удобрение для кактусов, лучше меньше, чем больше.',
     hint: 'Позову, когда грунт должен почти совсем просохнуть.',
     water: 'Только когда грунт просох почти до дна, затем обильно. Зимой совсем редко.',
     soil: 'Рыхлый грунт для суккулентов с песком или пемзой, горшок с дренажом.' },
@@ -46,30 +52,38 @@ const MEDIA = {
     hint: 'Позову проверить, подсох ли верхний слой.',
     water: 'Когда подсох верхний слой: пересыхать совсем кокос не любит. Своего питания в нём почти нет, подкармливать регулярно.',
     soil: 'Кокосовый грунт или чипсы, часто с перлитом. Перед посадкой промыть от солей.' },
+  // Estimates: pumice and lava hold under 10% water a plant can use (HOUSE-HYDRO-09), but no source gives an interval
+  // («0.7 of the card's») or says to feed with every watering (HYDRO-10).
   mineral: { name: 'Минеральная смесь', pot: true, feed: 'each', badge: ['mountain', 'в минеральной смеси'], start: (b) => Math.max(2, Math.round(b * 0.7)),
     care: { kind: 'leach', every: 30, task: 'Промойте смесь', done: 'Промыто', hint: 'Пролейте горшок обильно чистой водой, чтобы вымыть соли.' },
     hint: 'Пон, пемза, цеолит и другие минеральные смеси. Позову проверить, подсохла ли смесь.', careHint: 'Раз в месяц напомню промыть смесь от солей.',
     water: 'Когда подсох верхний слой: минеральная смесь сохнет быстрее грунта. В каждый полив добавлять удобрение в слабой дозе: своего питания в смеси нет.',
     soil: 'Пемза, цеолит, лава, акадама или готовые смеси вроде пона.',
     feedTip: 'Удобрение в слабой дозе добавлять в каждый долив.' },
-  leca: { name: 'Керамзит', pot: true, feed: 'each', wet: true, badge: ['grip', 'в керамзите'], watering: 'reservoir',
-    care: { kind: 'flush', every: 45, task: 'Промойте керамзит', done: 'Промыто', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
-    hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в полтора месяца напомню промыть керамзит.',
-    water: 'Поливать раствором, когда нижний слой подсох. Лишнее сливать. Удобрение для гидропоники добавлять в каждый полив.',
-    soil: 'Керамзит или другой наполнитель. Раз в 1–2 месяца промыть и сменить раствор целиком.',
-    feedTip: 'Удобрение для гидропоники добавлять в каждый долив.' },
+  // Clay pebbles feed nothing, so the plant lives on the solution, but it gets stronger as water evaporates: trials
+  // alternate plain water and solution, RHS changes it about every 2 weeks; no source adds fertilizer at every top-up
+  // (HOUSE-HYDRO-13, 16, 18). Which simple regime is best isn't studied: every other top-up and a monthly flush.
+  leca: { name: 'Керамзит', pot: true, feed: 'alt', wet: true, badge: ['grip', 'в керамзите'], watering: 'reservoir',
+    care: { kind: 'flush', every: 30, task: 'Промойте керамзит', done: 'Промыто', hint: 'Слейте раствор, промойте горшок и керамзит тёплой водой, залейте свежий раствор.' },
+    hint: 'Позову проверить, подсох ли керамзит внизу.', careHint: 'Раз в месяц напомню промыть керамзит.',
+    water: 'Поливать раствором, когда нижний слой подсох. Лишнее сливать. Удобрение для гидропоники добавлять через раз: пока вода испаряется, раствор крепнет.',
+    soil: 'Керамзит или другой наполнитель. Раз в месяц промыть и сменить раствор целиком.',
+    feedTip: 'Удобрение для гидропоники добавлять через раз: чистая вода и раствор по очереди.' },
   water: { name: 'Вода', feed: 'none', first: true, wet: true, badge: ['glass-water', 'в воде'], labels: ['Вода сменена', 'Вода ещё чистая'], act: 'change', need: 'мутновато',
     verb: 'Смените воду', task: 'Смените воду в банке', start: () => 7,
     hint: 'Напомню сменить воду.',
     water: 'Доливать до уровня, воду комнатной температуры менять раз в 1–2 недели. Раз в месяц можно удобрение в четверть дозы. Черенкам, пока нет корней, не нужно.',
     soil: 'Банка или ваза с водой, в воде только корни и низ стебля. Если появилась слизь или запах, промыть банку и корни.' },
-  mount: { name: 'На блоке', feed: 'none', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
+  // Mounted epiphytes are fed (Clemson, UF/IFAS, NYBG; HOUSE-HYDRO-29): weakly, in the warm months.
+  mount: { name: 'На блоке', feed: 'day', feedEvery: 30, feedNote: 'На блоке: удобрение в четверть дозы, в воду для замачивания.', first: true, badge: ['tree-deciduous', 'на блоке'], labels: ['Полито', 'Ещё рано'],
     task: 'Замочите или сбрызните корни, если они посеребрели', verb: 'Замочите или сбрызните', start: () => 3, max: 14,
     hint: 'Корни на воздухе: всё сохнет быстро, поэтому позову проверять часто.',
-    water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели. Летом бывает и каждый день. Раз в месяц добавлять в воду удобрение в четверть дозы.',
+    water: 'Сбрызгивать или замачивать корни на 10–20 минут, когда они посеребрели. Летом бывает и каждый день. Раз в месяц в тёплые месяцы добавлять в воду удобрение в четверть дозы.',
     soil: 'Блок из коры, коряги или пробки, корни открыты воздуху. Нужна высокая влажность воздуха рядом с растением.' },
-  terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, badge: ['flask-round', 'в террариуме'], labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 30, min: 7, max: 60,
-    hint: 'Влага ходит по кругу, так что загляну раз в месяц.',
+  // Watered by the condensation, a few times a year (RHS) to every 4–6 months with a tight lid (Penn State), from 3 weeks
+  // for a leaky one; no feeding in the first year (HOUSE-HYDRO-31–33).
+  terrarium: { name: 'Закрытый террариум', feed: 'none', organic: true, wet: true, badge: ['flask-round', 'в террариуме'], labels: ['Сбрызнуто', 'Ещё влажно'], verb: 'Сбрызните', start: () => 60, min: 7, max: 180,
+    hint: 'Влага ходит по кругу, так что загляну раз в два месяца.',
     water: 'Почти не поливать. Сбрызнуть, если стёкла сухие несколько дней подряд. Если на стёклах много капель, приоткрыть на пару часов.',
     soil: 'Дренаж, сетка, грунт и мох в закрытой ёмкости. Протирать стёкла, подрезать разросшееся, убирать опавшие листья.' },
   aquarium: { name: 'Аквариум', feed: 'none', noChecks: true, wet: true, badge: ['fish', 'в аквариуме'],
@@ -78,16 +92,20 @@ const MEDIA = {
     water: 'Поливать не нужно: корни в воде аквариума. Не удобрять, потому что удобрения вредны рыбам.',
     soil: 'В воде только корни, листья и стебель над водой: на держателе у стекла или в плавающей корзинке. Перед посадкой корни отмыть от грунта.' },
 };
+// A wick's or reservoir's water lasts longer in less light. One UF trial (HOUSE-SELFW-19, an estimate): a reservoir
+// emptied in 6–8 days at about 2150 lx and in 16–22 at about 540 lx. The first check: 7 days from 2000 lx, 14 at 600 lx
+// and less (earlier than the trial, so the tank isn't found empty), in between by a line. Answers tune it after.
+const tankStart = (b, lux) => (Number.isFinite(lux) ? Math.round(clamp(14 - ((lux - 600) / 1400) * 7, 7, 14)) : 7);
 const WATERING = {
   top: { name: 'Сверху' },
   bottom: { name: 'Снизу, через поддон', soilCheck: true, verb: 'Полейте через поддон', badge: ['arrow-up-from-line', 'полив снизу'],
     tagHint: 'Горшок в поддон с водой на полчаса, остаток слить.',
     water: 'Поставить горшок в поддон или миску с водой на полчаса, остаток воды слить. Раз в несколько месяцев полить сверху обильно, чтобы вымыть соли.' },
-  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: () => 7, min: 2,
+  wick: { name: 'Фитиль', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cable', 'на фитиле'], start: tankStart, min: 2,
     task: 'Загляните в бак фитильного полива и долейте воды, если её мало',
     hint: 'Не буду звать поливать, а напомню заглянуть в бак, есть ли вода.',
     water: 'Доливать бак, когда вода почти кончилась. Раз в месяц полить сверху, чтобы вымыть соли.' },
-  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cylinder', 'с резервуаром'], start: () => 7, min: 2,
+  reservoir: { name: 'Резервуар в горшке', labels: ['Долито', 'Вода есть'], act: 'top', need: 'пустовато', verb: 'Долейте', wet: true, badge: ['cylinder', 'с резервуаром'], start: tankStart, min: 2,
     task: 'Проверьте уровень в резервуаре и долейте, если он на минимуме',
     hint: 'Не буду звать поливать, а напомню проверить уровень в резервуаре.',
     water: 'Доливать, когда уровень на минимуме, лучше через 2–3 дня: корням нужен воздух.' },
@@ -96,6 +114,7 @@ const WATERING = {
     task: 'Загляните в поддон и долейте воды, если её мало',
     hint: 'Не буду звать поливать, а напомню заглянуть в поддон, есть ли вода.',
     water: 'Горшок всё время стоит в поддоне с 1–2 см воды. Так растут болотные растения, обычным комнатным вода в поддоне вредна.' },
+  // Check every 14 days is an estimate: services say «check often» and give no interval (HOUSE-SELFW-29).
   drip: { name: 'Капельный автополив', labels: ['Работает', 'Поправлено'], icons: ['check', 'wrench'], act: 'system', need: 'неясно',
     fixed: true, picks: [7, 14, 21, 28], badge: ['timer', 'на автополиве'], start: () => 14,
     recheck: (iv) => Math.max(3, Math.round(iv / 4)),
@@ -161,6 +180,10 @@ function wateringIn(r, d) {
 const isCardWay = (r, d) => mediumIn(r, d) === d.type && wateringIn(r, d) === cardWatering(d);
 // Interval bounds on the card's way: within the card's range, and never past the way's own limits (a terrarium: 60 days at most).
 const cardBounds = (d, way) => [Math.max(1, d.every * 0.4, way.min || 0), Math.min(d.every * 3, way.max || Infinity)];
+// A way's first interval: its `start` from the card's interval and the plant's light (the reading, else the card's lowest).
+const wayStart = (g, base, lux) => (g.start ? g.start(base, lux) : base);
+// Media fed with the water instead of on «День подкормки»: how often.
+const FEED_WITH = { each: 'в каждый полив', alt: 'через раз' };
 // Everything about a way of growing at once: the watering's fields over the medium's. Built once per pair.
 const WAYS = new Map();
 function wayOf(p) {
@@ -170,7 +193,7 @@ function wayOf(p) {
   if (!WAYS.has(key)) {
     const M = MEDIA[m], W = WATERING[w];
     WAYS.set(key, { ...M, ...(W || {}), task: (W || M).task, verb: (W || M).verb, labels: (W || M).labels || ['Полито', 'Ещё влажно'],
-      hint: [(W || M).hint, M.careHint, M.feed === 'each' ? 'Удобрение добавляйте в каждый полив, на день подкормки звать не буду.' : ''].filter(Boolean).join(' '),
+      hint: [(W || M).hint, M.careHint, FEED_WITH[M.feed] ? `Удобрение добавляйте ${FEED_WITH[M.feed]}, на день подкормки звать не буду.` : ''].filter(Boolean).join(' '),
       name: W ? `${M.name}, ${W.name.toLowerCase()}` : M.name, wet: !!(M.wet || (W && W.wet)) });
   }
   return WAYS.get(key);
@@ -192,7 +215,7 @@ function careOf(d, r) {
   const check = own ? d.check : !soilCheck(w) ? '' : sameMedium ? (soilCheck(cardWatering(d)) && d.check) || '' : alt.check || '';
   // Carnivorous plants need water without salts whichever way it gets to them.
   const water = (own && d.water) || [waterTip, d.distilled && DISTILLED].filter(Boolean).join(' ');
-  return { ...d, check, water, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed };
+  return { ...d, check, water, soil: (sameMedium && d.soil) || alt.soil || m.soil, noFeed: d.noFeed || !!alt.noFeed, feedNote: d.feedNote || m.feedNote };
 }
 // The check as a task: "Верхние 3–5 см сухие?" → "Полейте, если верхние 3–5 см сухие".
 // Only the first question becomes the condition; what follows stays ("(палочкой)", "Проверьте пальцем.").
@@ -424,8 +447,8 @@ function logToday(entry) {
   (S.log[t] ||= []).push(entry);
 }
 
-// Called on «День подкормки»: soil-like media, plus flowering succulents (dry with `feed`), unless the card says no.
-const feedsOnDay = (p) => !p.noFeed && (wayOf(p).feed === 'day' || (p.type === 'dry' && !!p.feed));
+// Called on «День подкормки»: media fed on the day (soil-like ones, succulent soil, a mount), unless the card says no.
+const feedsOnDay = (p) => !p.noFeed && wayOf(p).feed === 'day';
 
 const HIST_MAX = 60; // entries kept per plant: a few months of answers and care
 // `extra` on a check answer: `was`, the state before it, and `iv` / `nc`, the interval and next check it set,
@@ -609,7 +632,8 @@ function bathPlan() {
 // noted any day. «3 месяца» is for slow growers that need little (zamioculcas: 1–2 times a season, ZAM-SOIL-29).
 const FEED_EVERY = [[14, '2 недели'], [30, 'Месяц'], [90, '3 месяца'], [0, 'Не кормлю']];
 const FEED_WORDS = { 14: 'раз в 2 недели', 30: 'раз в месяц', 90: 'раз в 3 месяца' };
-const feedEvery = (p) => (Number.isFinite(p.feedEvery) ? p.feedEvery : 14);
+// The plant's own pick, else the card's, else its medium's (succulent soil and a mount: monthly), else 2 weeks.
+const feedEvery = (p) => (Number.isFinite(p.feedEvery) ? p.feedEvery : wayOf(p).feedEvery || 14);
 const winterNow = () => { const m = new Date().getMonth() + 1; return m < 3 || m > 9; };
 function feedDue(p) {
   if (!feedsOnDay(p) || repotted(p) || settling(p) || resting(p) || !feedEvery(p)) return false;

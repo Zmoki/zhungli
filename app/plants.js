@@ -5,7 +5,6 @@
 // every: starting check interval in days; the app adjusts it from the answers.
 // type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
-// feed: a dry-type plant that still gets «День подкормки» (flowering succulents).
 // noBadge: no badge or filter chip for the card's own type, when it doesn't say where the plant really is
 //   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
@@ -426,7 +425,7 @@ const PLANTS = [
   {
     id: 'zz', species: 'Замиокулькас', cat: 'Декоративно-лиственные', emoji: '🐫',
     // Fed rarely, at half a dose: overfeeding is worse than underfeeding (zhungli-content ZAM-SOIL-27, 29, 33).
-    feed: true, feedEvery: 90, feedNote: 'Замиокулькасу: половина дозы, перекормить опаснее, чем недокормить.',
+    feedEvery: 90, feedNote: 'Замиокулькасу: половина дозы, перекормить опаснее, чем недокормить.',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { no: 'Обрезка не нужна: каждая «ветка» это один лист, растущий из клубня. Увядшие листья срезать у земли.' },
     aka: 'долларовое дерево, zz, замиокулькас, zamioculcas',
@@ -957,7 +956,7 @@ const PLANTS = [
     quips: ['Обрежьте меня весной, и скажу спасибо цветами.', 'Солнце люблю, болото нет.', 'Я пахну, это нормально.'],
   },
   {
-    id: 'kalanchoe', species: 'Каланхоэ', cat: 'Цветущие и орхидеи', emoji: '🌼', feed: true,
+    id: 'kalanchoe', species: 'Каланхоэ', cat: 'Цветущие и орхидеи', emoji: '🌼', feedEvery: 14,
     pets: 'toxic', petsNote: 'Рвота, понос, изредка нарушение сердечного ритма.',
     prune: { tip: 'Обычно не обрезают. Вытянувшуюся ветку можно укоротить над узлом, оттуда пойдут новые побеги.' },
     aka: 'каланхоэ, kalanchoe, блоссфельда, каландива, дегремона',
@@ -1028,7 +1027,7 @@ const PLANTS = [
     id: 'g-terrarium', species: 'Растение для террариума', cat: 'Общие типы', emoji: '🫙', generic: true,
     aka: 'террариум, флорариум, бутылочный сад, банка, закрытая банка, мох, мини-папоротник, terrarium, florarium',
     hint: 'фиттония, мох, мини-папоротники',
-    lux: [2000, 8000], every: 30, type: 'terrarium',
+    lux: [2000, 8000], every: 60, type: 'terrarium',
     water: 'Почти не поливать: сбрызнуть, если стёкла сухие несколько дней. Если капли на стёклах весь день, приоткрыть на пару часов.',
     soil: 'Дренаж, сетка, грунт и мох в закрытой банке. Растения выбирать медленнорастущие и влаголюбивые.',
     cond: '18–25 °C. Без прямого солнца, иначе банка перегревается.',
