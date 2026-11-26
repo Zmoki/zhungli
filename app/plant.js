@@ -555,7 +555,7 @@ function feedValue(p) {
 // Values are HTML: typed text (name, room, spot) goes through typedHtml so long words hyphenate.
 function rowValues(p) {
   const r = S.plants[p.id] || {}, ls = lightStatus(p), pot = MEDIA[p.type].pot, fed = feedsOnDay(p);
-  const prune = remindOf(r, 'prune'), n = bathEvery(), g = wayOf(p), iv = Math.round(p.interval), place = [S.rooms.length > 1 ? roomOf(p).name : '', p.spot].filter(Boolean);
+  const prune = remindOf(r, 'prune'), n = bathEvery(), g = wayOf(p), iv = Math.round(p.interval), place = [roomOf(p).name, p.spot].filter(Boolean);
   const feedOff = p.distilled ? 'не удобряют' : p.type === 'water' ? 'при смене воды' : FEED_WITH[MEDIA[p.type].feed] || 'нет дня подкормки';
   const rinseOff = p.type === 'water' ? 'соли уходят с водой' : MEDIA[p.type].care ? 'своя промывка' : p.distilled ? 'не нужна' : 'нельзя';
   return {
@@ -654,9 +654,10 @@ function settingsHtml(id, p, ls, spots) {
       : `<p class="small muted m-0" id="card-hint">Отсюда советы, свет и полив. При смене карточки имя, фото, заметки и история останутся.</p>
           <button class="btn primary wide" data-act="card-change" data-id="${esc(id)}" aria-describedby="card-hint">${I('arrow-left-right')}Сменить карточку</button>`)))}
     ${setGroup('where', 'Где живёт',
-    row('place', `${S.rooms.length > 1 ? `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
-          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}" aria-pressed="${roomOf(p) === rm}">${typedHtml(rm.name)}</button>`).join('')}</div></div>` : ''}
-        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot"${S.rooms.length > 1 ? '' : ' class="sr-only"'}>${S.rooms.length > 1 ? 'Где стоит' : 'Место'}</label><div class="chips" id="spot-chips">
+    // The room shows even when there's only one, so people see rooms exist (they're added in «Комната»).
+    row('place', `<div class="field" role="group" aria-labelledby="lbl-room"><label id="lbl-room">Комната</label><div class="chips">
+          ${S.rooms.map((rm) => `<button class="chip ${roomOf(p) === rm ? 'on' : ''}" data-act="room-pick" data-id="${esc(id)}" data-room="${esc(rm.id)}" aria-pressed="${roomOf(p) === rm}">${typedHtml(rm.name)}</button>`).join('')}</div></div>
+        <div class="field" role="group" aria-labelledby="lbl-spot"><label id="lbl-spot">Где стоит</label><div class="chips" id="spot-chips">
           ${spots.map((sp) => spotChip(id, sp, p.spot === sp)).join('')}
           <button class="chip" data-act="spot-form" data-id="${esc(id)}" aria-expanded="false" aria-controls="new-spot-form">${I('plus')}место</button></div>
           <form class="new-spot" id="new-spot-form" data-id="${esc(id)}" hidden><input class="input" id="f-new-spot" placeholder="Новое место" aria-label="Новое место" maxlength="40" enterkeyhint="done">
