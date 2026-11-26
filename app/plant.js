@@ -67,7 +67,8 @@ function setNote(id, key, text) {
 }
 const noteKind = (key) => (key === 'new' || key[0] === 'n' ? 'own' : key);
 
-// «Полив» in «Уход»: not a folding row but always open, since «Полито сегодня» is used after about 1 in 5 card opens.
+// «Полив» in «Уход»: a folding row that opens by default (OPEN_ROWS), since «Полито сегодня» is used after about 1 in 5
+// card opens; closed, it says when the next check is.
 // Its white card holds «Как поливаю» first (wateringBox, redrawn alone so a tapped chip keeps focus), then the button
 // and under it, centered as under «Подкормка»'s, the next check as on the plant's grid card (waterBox, redrawn on a
 // watering; the last one is in «История»). For a reservoir: the top-ups.
@@ -550,7 +551,9 @@ function pickCardTab(k, focus) {
 
 // The plant's «Настройки»: four groups of folding rows. Each row shows its current value (rowValues) and opens on
 // tap; a value that doesn't apply is grey. Open rows stay open while the same plant's card is redrawn.
-let openRows = new Set(), openRowsFor = null;
+// Rows open when a plant's card opens: «Полив», whose button is used most. Closing it lasts while the same card is open.
+const OPEN_ROWS = ['water'];
+let openRows = new Set(OPEN_ROWS), openRowsFor = null;
 // How feeding goes now, as feedDue decides: the schedule (monthly in winter under a lamp), then why it waits: rest,
 // a recent repot or purchase (until the later date), winter without a lamp. A date that falls in a lampless winter
 // waits until March.
@@ -590,6 +593,8 @@ function rowValues(p) {
     lamp: !fed || !feedEvery(p) ? ['не влияет', true] : [p.lamp ? 'под лампой' : 'нет', false],
     every: g.noChecks ? ['не нужно', true] : [g.fixed ? everyText(iv) : `раз в ~${days(iv)}`, false],
     way: [MEDIA[p.type].name.toLowerCase(), false],
+    // Closed «Полив»: when the next check is (a drip system's too); an aquarium is never watered.
+    water: g.noChecks ? ['не нужен', true] : [`проверка ${esc(rel(p.nextCheck))}`, false],
     feed: !fed ? [feedOff, true] : [feedValue(p), false],
     prune: prune ? [shortened(vParts(monthsText(prune.months, MONTHS_SHORT).split(', ')), monthsText(prune.months)), false] : remindCard(p, 'prune').no ? ['не обрезают', true] : ['нет', false],
     rinse: !rinseFits(p) ? [rinseOff, true] : !n ? ['банный день выключен', true] : [p.noBath ? 'не купать' : 'в банный день', false],
@@ -599,7 +604,7 @@ function rowValues(p) {
     rest: resting(p) ? [`с ${shortDay(p.resting.since)}`, false] : p.rest ? ['нет', false] : ['не бывает', true],
   };
 }
-const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт',
+const ROW_TITLES = { name: 'Имя', card: 'Карточка ухода', place: 'Место', light: 'Свет', gh: 'Теплица', every: 'Проверка', way: 'В чём растёт', water: 'Полив',
   lamp: 'Лампа', feed: 'Подкормка', prune: 'Обрезка', rinse: 'Промывка грунта', bought: 'Новое', repot: 'Пересажено', rest: 'Покой' };
 function setRow(key, body, vals, opened) {
   const [v, off] = vals[key], open = opened.has(key);
@@ -651,7 +656,7 @@ function openPlant(id, tabKey, rows) {
   if (!p) return;
   noteEdit = null;
   if (tabKey) cardTab = tabKey; else if (!sheet.open || cardFor !== id) cardTab = 'settings';
-  if (openRowsFor !== id || rows) { openRows = new Set(rows); openRowsFor = id; }
+  if (openRowsFor !== id || rows) { openRows = new Set([...OPEN_ROWS, ...(rows || [])]); openRowsFor = id; }
   cardFor = id;
   $('#sheet-body').innerHTML = plantCardHtml(id);
   openSheet();
@@ -671,7 +676,7 @@ function cardNow(d) {
 function settingsHtml(id, p, ls, spots) {
   const v = rowValues(p);
   // Only this plant's open rows: the stories draw a sample plant's card while a real one may be open.
-  const opened = openRowsFor === id ? openRows : new Set();
+  const opened = openRowsFor === id ? openRows : new Set(OPEN_ROWS);
   const row = (key, body) => setRow(key, body, v, opened);
   return `${setGroup('plant', 'Растение',
     row('name', `<div class="field"><label for="f-name">Как зовут</label><input class="input" id="f-name" data-field="name" data-id="${esc(id)}" value="${esc(p.name)}" placeholder="Например, Коля" maxlength="40"></div>
@@ -699,8 +704,7 @@ function settingsHtml(id, p, ls, spots) {
           <div class="mt-6 small muted hint" id="gh-hint">${ghHint(p.greenhouse)}</div></div>`))}
     ${setGroup('care', 'Уход',
     row('way', `<div id="way-box">${mediumBox(p, def(id))}</div>`)
-    + `<div class="srow water-row"><div class="water-head"><span class="srow-t">Полив</span></div>
-      <div class="srow-body"><div class="watering-in" id="watering-box">${wateringBox(p, def(id))}</div><div id="water-box">${waterBox(p)}</div></div></div>`
+    + row('water', `<div class="watering-in" id="watering-box">${wateringBox(p, def(id))}</div><div id="water-box">${waterBox(p)}</div>`)
     + row('every', `<div class="field" role="group" aria-labelledby="lbl-int" aria-describedby="int-hint" id="int-field">${intBox(p)}</div>`)
     + row('rinse', `<div id="rinse-wrap">${rinseBox(p)}</div>`)
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)

@@ -418,7 +418,7 @@
       "area": "plant", "since": 166, "was": ["settings_row_opened"],
       "when": "a row of the plant card's «Настройки» opened",
       "props": {
-        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "lamp": "«Лампа», since v181 (before: inside `feed`)", "every": "«Проверка», since v175 (before: inside `way`)", "way": "«В чём растёт»; before v181 «Как растёт», with «Как поливаю» (now inside «Полив», not a row)", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
+        "row": { "type": "enum", "values": { "name": "", "card": "", "place": "", "light": "", "gh": "", "lamp": "«Лампа», since v181 (before: inside `feed`)", "every": "«Проверка», since v175 (before: inside `way`)", "water": "«Полив», since v181 (before: always open, not a row)", "way": "«В чём растёт»; before v181 «Как растёт», with «Как поливаю» (now inside «Полив», not a row)", "feed": "", "prune": "", "rinse": "", "bought": "", "repot": "", "rest": "" } }
       }
     },
     "plant_setting_name_changed": {
