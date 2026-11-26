@@ -513,6 +513,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 /* «Полив» on top of «Уход»: a plain block (title, two marks, the button), not a folding row */
 .water-row { padding: 0; }
 .water-head { display: flex; align-items: center; min-height: 60px; padding: 14px 20px; }
+.water-row .watering-in { margin-top: 22px; }
+/* «Как поливаю» ends the white card: its note only when there is one («Сверху» has none) */
+.water-row #watering-field { margin-bottom: 0; }
+.water-row #watering-note { margin: 12px 0 0; }
+.water-row #watering-note:empty, .water-row #watering-note:not(:has(*)) { display: none; }
 .wmarks { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 0.882rem; color: var(--muted); }
 .wmarks span { display: inline-flex; align-items: center; gap: 6px; }
 .wmarks .ic { width: 18px; height: 18px; flex: none; }
@@ -579,9 +584,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .srow:last-child .srow-head[aria-expanded="false"] { border-radius: 0 0 19px 19px; }
 .srow-v { max-width: 55%; color: var(--muted); text-align: right; font-size: 0.941rem; overflow-wrap: anywhere; }
 .srow-v.off { font-style: italic; }
-/* An open row's controls show its value: hidden there, so the head stays one line while answering and nothing under the finger moves.
-   `.keep-v`: a row whose body doesn't show it («Карточка») */
-.srow-head[aria-expanded="true"]:not(.keep-v) .srow-v { display: none; }
+/* An open row's controls show its value: hidden there, so the head stays one line while answering and nothing under the finger moves */
+.srow-head[aria-expanded="true"] .srow-v { display: none; }
 .srow-head .ic { flex: none; width: 1.1em; height: 1.1em; color: var(--muted); transition: transform .15s; }
 .srow-head[aria-expanded="true"] .ic { transform: rotate(90deg); }
 /* An open row's inner part: a white card (--surface) set inside the row with a margin all round, like the picture
@@ -696,6 +700,8 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
+/* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
+.pick.card-now { border-color: var(--line); background: var(--card); }
 /* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */
 .who-pick { margin: 0 0 14px; }
 .bath-pics { display: flex; justify-content: center; gap: 8px; margin: 0 0 14px; }
