@@ -16,8 +16,8 @@ function greeting() {
 // paw, always at the bottom, sap, quarantine), the rest on the left.
 const RIGHT_TAGS = ['pets', 'pets_safe', 'sap', 'new'];
 const badgeHtml = (cls, icon, word) => `<span class="badge ${cls}" title="${cap(word)}">${I(icon)}<span class="sr-only">${word}</span></span>`;
-function plantBadges(p) {
-  const tags = tagsOf(p), col = (list, cls) => (list.length ? `<span class="${cls}">${list.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')}</span>` : '');
+function plantBadges(p, tags = tagsOf(p)) {
+  const col = (list, cls) => (list.length ? `<span class="${cls}">${list.map((t) => badgeHtml(t.cls, t.icon, t.word + t.sr)).join('')}</span>` : '');
   return col(tags.filter((t) => !RIGHT_TAGS.includes(t.key)), 'badges') + col(tags.filter((t) => RIGHT_TAGS.includes(t.key)), 'badges right');
 }
 
@@ -426,20 +426,22 @@ function viewToday() {
 /* ---------- Plants ---------- */
 function viewPlants() {
   const ps = allPlants();
+  // Each plant's tags once per render: the grid badges, the cards' filter keys and the filter counts all use them.
+  const tags = new Map(ps.map((p) => [p, tagsOf(p)]));
   let html = `<header class="hello head-row"><div><h1>Мои джунгли</h1><div class="date">${plantsN(ps.length)}</div></div>
     ${headButtons()}</header>
     ${ps.length ? `<button class="btn primary wide" data-act="add-plant">${I('plus')}Добавить растения</button>` : ''}`;
   if (!ps.length) html += emptyCard('Пока пусто', 'Добавьте первое растение, и джунгли начнутся 🌱');
-  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + stateFilter(ps);
+  if (ps.length >= 6) html += `<div class="search mt-12"><input class="input" id="plants-q" type="search" aria-label="Найти растение" placeholder="${S.rooms.length > 1 ? 'Найти: имя, вид, место, комната' : 'Найти: имя, вид или место'}" autocomplete="off" value="${esc(plantQ)}">${I('search')}${searchX(plantQ)}</div>` + stateFilter(ps, tags);
   // With several rooms: groups go room by room, titled «Кухня · Белый стол».
-  if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), rm.name); });
-  else html += spotGroups(ps);
+  if (S.rooms.length > 1) S.rooms.forEach((rm) => { html += spotGroups(ps.filter((p) => roomOf(p) === rm), tags, rm.name); });
+  else html += spotGroups(ps, tags);
   if (ps.length) html += `<p id="plants-none" class="empty-note muted" hidden>Таких растений нет. Попробуйте другое слово или «Все».</p>`;
   return html;
 }
 
 // Plant cards grouped by place, in the order of the places list; `room` prefixes the titles.
-function spotGroups(ps, room) {
+function spotGroups(ps, tags, room) {
   let html = '';
   const groups = {};
   ps.sort(bySpot).forEach((p) => { (groups[p.spot || ''] ||= []).push(p); });
@@ -449,7 +451,7 @@ function spotGroups(ps, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p)}</div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, tags.get(p)).join(' ')}" data-q="${esc(norm([p.title, p.species, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p, tags.get(p))}</div>
         <b>${typedHtml(p.title)}</b>${p.name ? `<small>${typedHtml(p.species)}</small>` : ''}<small class="next">${wayOf(p).noChecks ? esc(wayOf(p).name) : `${wayOf(p).fixed ? `${I('calendar-check')}<span class="sr-only">проверка автополива</span>` : `${I('droplet')}<span class="sr-only">проверка полива</span>`} ${esc(rel(p.nextCheck))}`}</small></button>`;
     });
     html += `</div></section>`;
@@ -457,16 +459,15 @@ function spotGroups(ps, room) {
   return html;
 }
 
-// Status filter under the search: «Все» and one chip per state that has plants, with face, word and count.
-// The chips also teach which face means what.
+// Filter under the search: «Все» and one chip per tag kind that has plants, with icon, word and count.
+// The chips also teach which icon means what.
 let plantSt = '';
-// Filter keys of a plant: its states, «greenhouse» when it lives in the теплица, and its unusual way of growing.
 // Filter keys: every tag kind of the plant card, plus the growing ways its name says (those have no tag).
-const filterKeys = (p) => [...new Set([...tagsOf(p).map((t) => t.key), ...growKeys(p)])];
-function stateFilter(ps) {
+const filterKeys = (p, tags = tagsOf(p)) => [...new Set([...tags.map((t) => t.key), ...growKeys(p)])];
+function stateFilter(ps, tags) {
   const n = {};
   const due = [];
-  ps.forEach((p) => filterKeys(p).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
+  ps.forEach((p) => filterKeys(p, tags.get(p)).forEach((k) => { n[k] = (n[k] || 0) + 1; if (k === 'need') due.push(p); }));
   // A chosen state with no plants left shows «Все»; filterPlants() then clears plantSt.
   const sel = n[plantSt] ? plantSt : '';
   // The same words and colors as the plant card's tags; the chosen chip gets a ring in its own color.
