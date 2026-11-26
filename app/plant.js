@@ -112,7 +112,7 @@ function wateringBox(p, d) {
     <div class="field" id="watering-note">${wateringNote(p, d)}</div>`;
 }
 // «Пересажено»: its own row under «Сейчас»; changeWay keeps it in step with the medium.
-// «Да» / «Нет» for a row whose title is the question («Новое»): chips, like every other choice.
+// «Да» / «Нет»: chips, like every other choice, always under their question (askYesNo).
 const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
   const sel = (v === '1') === on;
   return `<button class="chip ${sel ? 'on' : ''}" data-act="yes-no" data-field="${field}" data-id="${esc(id)}"${kind ? ` data-kind="${kind}"` : ''} data-v="${v}" aria-pressed="${sel}"${dis ? ' disabled' : ''}>${v === '1' ? 'Да' : 'Нет'}</button>`;
@@ -121,7 +121,7 @@ const yesNo = (field, id, on, dis = false, kind = '') => ['1', '0'].map((v) => {
 // `hint`: the id of the line under it that says what the current answer does.
 const askYesNo = (q, field, id, on, dis = false, kind = '', hint = '') => `<div class="yn" role="group" aria-labelledby="q-${field}${kind}"${hint ? ` aria-describedby="${hint}"` : ''}><p class="yn-q" id="q-${field}${kind}">${q}</p>
   <div class="chips">${yesNo(field, id, on, dis, kind)}</div></div>`;
-const repotBox = (p) => `<div class="field" id="repot-field" role="group" aria-label="Пересажено" aria-describedby="repot-hint"><div class="chips">${yesNo('repotted', p.id, !!repotted(p), !feedsOnDay(p))}</div>
+const repotBox = (p) => `<div class="field" id="repot-field">${askYesNo('Недавно пересадили?', 'repotted', p.id, !!repotted(p), !feedsOnDay(p), '', 'repot-hint')}
       <div class="mt-6 small muted hint" id="repot-hint">${repotHint(p)}</div></div>`;
 // What the chosen way means, and warnings by the content facts: succulents and cacti rot in steady moisture; standing
 // in water suits only bog plants and cyperus (HOUSE-SELFW-24, 25: the tray reaches other plants only by import); a wick
@@ -680,7 +680,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
     + row('prune', remindBody(id, 'prune')))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field" id="bought-field" role="group" aria-label="Новое" aria-describedby="new-hint"><div class="chips">${yesNo('bought', id, isNew(p))}</div>
+    row('bought', `<div class="field" id="bought-field">${askYesNo('Недавно купили?', 'bought', id, isNew(p), false, '', 'new-hint')}
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', restRowBody(p)))}
