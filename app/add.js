@@ -70,14 +70,14 @@ function typoMatcher(readings) {
   };
 }
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
-// The picture is a 3:4 tile as on a Plants grid card; under the name one line: another name people know it by
+// The picture is a square tile, the drawing standing on its bottom; under the name one line: another name people know it by
 // (`alt`) and the hint (generic types). Pet safety isn't here: it shows on the plant, with pets on.
 function pickRow(d, changeFor, nowId) {
   const now = !!changeFor && nowId === d.id;
   const sub = [now ? 'сейчас' : '', d.alt ? esc(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
   return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.alt, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
-    <span class="pe tall" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
+    <span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
 let addFlow = null;

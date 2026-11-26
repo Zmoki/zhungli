@@ -72,11 +72,11 @@ const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
 // As kLux in core.js: «15 тыс».
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
-// The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a 3:4 tile, the name and one line:
+// The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a square tile, the name and one line:
 // `alt`, then the hint.
 function pickPreview(d) {
   const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe tall">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe fit">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
@@ -329,8 +329,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick .pt small { color: var(--muted); font-size: .824rem; line-height: 1.5; }
 .pick .pc { color: var(--muted); flex: none; display: inline-flex; }
 .pick .pc .ic { width: 22px; height: 22px; stroke-width: 2.5; }
-.pick .pe.tall { width: 54px; height: 72px; place-items: end center; }
-.pick .pe.tall svg.pl { width: 50px; height: 50px; margin-bottom: 6px; }
+.pick .pe.fit { width: 56px; height: 56px; place-items: end center; }
+.pick .pe.fit svg.pl { width: 50px; height: 50px; margin-bottom: 2px; }
 :is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
 :is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }
