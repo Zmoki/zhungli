@@ -664,14 +664,19 @@ function openPlant(id, tabKey, rows) {
 }
 // The light word next to a reading, as on the Light tab.
 const luxState = (ls) => (ls ? `<span class="light-tag ${ls}">${LIGHT_WORDS[ls]}</span>` : '');
-// «Карточка ухода» open: the card itself, as a catalog row shows it (picture, name, light), plus how often it's checked
-// and what it grows in. Not a control: a quiet border.
+// «Карточка ухода» open: the card itself, as its catalog row shows it (picture, name, second name), and under a line
+// its characteristics: light, how often it's checked, what it grows in and how it's watered. Not a control: a quiet border.
 function cardNow(d) {
-  const way = [MEDIA[d.type] ? MEDIA[d.type].name.toLowerCase() : '', cardWatering(d) && cardWatering(d) !== 'top' ? WATERING[cardWatering(d)].name.toLowerCase() : ''].filter(Boolean).join(', ');
+  const w = cardWatering(d);
   // A way that's never checked (an aquarium) has no interval to show, as its «Проверка» row says «не нужно».
-  const check = MEDIA[d.type] && MEDIA[d.type].noChecks ? '' : `проверка раз в ~${days(d.every)}`;
-  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`, check, way].filter(Boolean).join(' · ');
-  return `<div class="pick card-now"><span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div>`;
+  const facts = [
+    ['Свет', `${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`],
+    MEDIA[d.type] && MEDIA[d.type].noChecks ? null : ['Проверка', `раз в ~${days(d.every)}`],
+    MEDIA[d.type] ? ['В чём растёт', MEDIA[d.type].name.toLowerCase()] : null,
+    w && w !== 'top' ? ['Полив', WATERING[w].name.toLowerCase()] : null,
+  ].filter(Boolean).map(([k, v]) => `<li><span class="k">${k}:</span> ${v}</li>`).join('');
+  const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
+  return `<div class="pick card-now"><div class="cn-head"><span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span></div><ul class="cn-facts">${facts}</ul></div>`;
 }
 // The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their
 // ids, so each handler still redraws its own part (feedBox, rinseBox, mediumBox…). «Уход» goes in the order care is

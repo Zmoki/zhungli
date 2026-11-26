@@ -705,7 +705,11 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick .pe.fit { width: 56px; height: 56px; }
 .pick .pe.fit svg.pl { width: 46px; height: 46px; }
 /* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
-.pick.card-now { border-color: var(--line); background: var(--card); }
+.pick.card-now { border-color: var(--line); background: var(--card); flex-direction: column; align-items: stretch; gap: 0; }
+/* The catalog row on top, then a line, then the card's characteristics */
+.card-now .cn-head { display: flex; align-items: center; gap: 12px; }
+.card-now .cn-facts { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: 0.882rem; }
+.card-now .cn-facts .k { color: var(--muted); font-weight: 700; }
 /* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */
 .who-pick { margin: 0 0 14px; }
 .bath-pics { display: flex; justify-content: center; gap: 8px; margin: 0 0 14px; }

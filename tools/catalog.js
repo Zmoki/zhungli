@@ -80,13 +80,18 @@ function pickPreview(d) {
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
-// The card as the plant card's «Настройки» → «Карточка ухода» shows it (cardNow in plant.js): picture, name, light,
-// how often it's checked and what it grows in; not a control, so a quiet border and no plus.
+// The card as the plant card's «Настройки» → «Карточка ухода» shows it (cardNow in plant.js): its catalog row, then
+// under a line its characteristics; not a control, so a quiet border and no plus.
 function cardNowPreview(d) {
   const m = MEDIUM[d.type] || {};
-  const way = [lc(NAMES[d.type] || d.type), m.pot && d.watering && d.watering !== 'top' ? lc(NAMES[d.watering] || d.watering) : ''].filter(Boolean).join(', ');
-  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, m.noChecks ? '' : `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
-  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
+  const facts = [
+    ['Свет', `${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`],
+    m.noChecks ? null : ['Проверка', `раз в ~${days(d.every)}`],
+    ['В чём растёт', lc(NAMES[d.type] || d.type)],
+    m.pot && d.watering && d.watering !== 'top' ? ['Полив', lc(NAMES[d.watering] || d.watering)] : null,
+  ].filter(Boolean).map(([k, v]) => `<li><span class="k">${k}:</span> ${esc(v)}</li>`).join('');
+  const sub = [d.alt, d.hint].filter(Boolean).map(esc).join(' · ');
+  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><div class="cn-head"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span></div><ul class="cn-facts">${facts}</ul></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
@@ -321,7 +326,10 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
 /* In «В каталоге» and «В настройках растения»: some air under the band, the row centered in its column */
 .prev .pick { margin: 16px auto 4px; }
-.pick.card-now { border-color: var(--line); }
+.pick.card-now { border-color: var(--line); flex-direction: column; align-items: stretch; gap: 0; }
+.card-now .cn-head { display: flex; align-items: center; gap: 12px; }
+.card-now .cn-facts { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: .882rem; }
+.card-now .cn-facts .k { color: var(--muted); font-weight: 700; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
