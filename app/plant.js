@@ -671,7 +671,7 @@ function cardNow(d) {
   // A way that's never checked (an aquarium) has no interval to show, as its «Проверка» row says «не нужно».
   const check = MEDIA[d.type] && MEDIA[d.type].noChecks ? '' : `проверка раз в ~${days(d.every)}`;
   const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`, check, way].filter(Boolean).join(' · ');
-  return `<div class="pick card-now"><span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div>`;
+  return `<div class="pick card-now"><span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div>`;
 }
 // The «Настройки» tab: who the plant is, where it lives, its care, and what's going on now. The bodies keep their
 // ids, so each handler still redraws its own part (feedBox, rinseBox, mediumBox…). «Уход» goes in the order care is

@@ -178,6 +178,6 @@ A photo is resized to 640 px and stored in IndexedDB (`zhungli`/`photos`) on the
 - one of six pot and tile color pairs, picked by the card;
 - a face on the pot for the mood.
 
-Small square tiles (catalog rows) pass `fit`: a square viewBox around the drawing (`SHAPE_FIT`), so every plant sits in the middle whatever its shape.
+Small square tiles (catalog rows, the care card in «Настройки») pass `fit`: a square viewBox around the drawing (`SHAPE_FIT`), so every plant sits in the middle whatever its shape.
 
 Removing a plant also removes its photo, its bonus tasks and its own card.

@@ -86,7 +86,7 @@ function cardNowPreview(d) {
   const m = MEDIUM[d.type] || {};
   const way = [lc(NAMES[d.type] || d.type), m.pot && d.watering && d.watering !== 'top' ? lc(NAMES[d.watering] || d.watering) : ''].filter(Boolean).join(', ');
   const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, m.noChecks ? '' : `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
-  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
+  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
