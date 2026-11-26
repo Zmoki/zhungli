@@ -149,7 +149,7 @@ const hintLines = (...lines) => lines.filter(Boolean).map((l) => `<p>${l}</p>`).
 function repotHint(p) {
   if (!feedsOnDay(p)) return hintLines('Влияет только на подкормку, а у этого растения дня подкормки нет.');
   if (repotted(p)) return hintLines(`Не позову на подкормку до ${parse(addDays(p.repotted, REPOT_DAYS)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, пока приживаются корни. Потом станет «Нет» само.`);
-  return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно купили.' : 'Подкормка как обычно.');
+  return hintLines(settling(p) ? 'Не зову на подкормку: растение недавно приобрели.' : 'Подкормка как обычно.');
 }
 // «Подкормка» for plants fed on the feeding day: how often, winter under a lamp, the last time and «done today».
 // Redrawn alone; the tapped chip or answer gets focus back.
@@ -158,7 +158,7 @@ function feedBox(p) {
   const chip = ([d, label]) => `<button class="chip ${!off && n === d ? 'on' : ''}" data-act="feed-every" data-id="${esc(p.id)}" data-n="${d}" aria-pressed="${!off && n === d}"${dis}>${label}</button>`;
   const when = off ? '' : !n ? 'Не позову на «День подкормки».'
     : feedDue(p) ? 'Позову в «Если есть силы» сегодня.'
-      : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, купили или оно отдыхает.'
+      : repotted(p) || settling(p) || resting(p) ? 'Сейчас не зову: растение недавно пересадили, приобрели или оно отдыхает.'
         : winterNow() && !p.lamp ? 'Позову в марте.'
           : `Позову ${rel(addDays(last || today(), winterNow() ? Math.max(n, 30) : n))}.`;
   // «Weakly and regularly» is the orchid facts' advice; a card fed rarely by default (zamioculcas) doesn't get it.
@@ -680,7 +680,7 @@ function settingsHtml(id, p, ls, spots) {
     + row('feed', `<div id="feed-box">${feedBox(p)}</div>`)
     + row('prune', remindBody(id, 'prune')))}
     ${setGroup('now', 'Сейчас',
-    row('bought', `<div class="field" id="bought-field">${askYesNo('Недавно купили?', 'bought', id, isNew(p), false, '', 'new-hint')}
+    row('bought', `<div class="field" id="bought-field">${askYesNo('Недавно приобрели?', 'bought', id, isNew(p), false, '', 'new-hint')}
           <div class="mt-6 small muted hint" id="new-hint">${newHint(p)}</div></div>`)
     + row('repot', repotBox(p))
     + row('rest', restRowBody(p)))}
