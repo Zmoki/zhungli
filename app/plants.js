@@ -12,6 +12,9 @@
 // every: starting check interval in days; the app adjusts it from the answers.
 // type: what the roots are usually in, a key of MEDIA in state.js: soil | dry (dries out almost fully) | sphagnum | bark |
 //   coco | mineral | leca | water | mount | terrarium | aquarium. A plant's card can pick another, and how it's watered.
+// rotate: a «turn the pot» reminder, every 14 days, or a number of days. big: large leaves, a «wipe the dust» reminder.
+// humid: needs humid air; named on the Room tab when the air is dry. check: the card's own check question, which
+//   follows its `water` note («Верхние 3 см сухие?» when it says 3 cm); else the medium's (CHECK_TEXT).
 // noBadge: no badge or filter chip for the card's own type, when it doesn't say where the plant really is
 // wickTested: sources describe a wick as this plant's permanent watering (only African violets, content facts HOUSE-SELFW-08)
 //   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
@@ -238,7 +241,7 @@ const PLANTS = [
   },
   {
     id: 'alocasia-silver-dragon', tone: 0, plantIds: ['6hpnrt6m9q'],
-    species: 'Алоказия Сильвер Драгон', cat: 'Ароидные', humid: true, emoji: '🐉', toxic: true,
+    species: 'Алоказия Сильвер Драгон', cat: 'Ароидные', big: true, humid: true, emoji: '🐉', toxic: true,
     alt: 'Алоказия Серебряный Дракон',
     names: "Алоказия Серебряный Дракон, Alocasia 'Silver Dragon', Алоказия, Elephant's Ear, Слоновье ухо, Alocasia",
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
@@ -277,7 +280,7 @@ const PLANTS = [
     names: 'Swiss Cheese Vine, Монстера манки, Monkey Mask, Monstera adansonii, Монстера, Swiss Cheese Plant, Monstera',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'монстера адансона, monstera, monkey mask, adansonii',
-    lux: [8000, 18000], every: 5, type: 'bark_mix',
+    lux: [8000, 18000], every: 5, type: 'bark_mix', check: 'Верхние 2–3 см сухие?',
     water: 'В пластиковом горшке с отверстиями: проверять просыхание верхних 2–3 см и влажность глубже.',
     soil: 'Рыхлая смесь для ароидных: грунт + перлит + кора или кокосовые чипсы + уголь.',
     cond: '18–27 °C. Лучше без перемен в свете и тепле.',
@@ -291,7 +294,7 @@ const PLANTS = [
     names: 'Blushing Philodendron, Philodendron erubescens, Филодендрон, Филодендрон эрубесценс, Philodendron',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'philodendron, филодендрон эрубесценс, краснеющий',
-    lux: [8000, 18000], every: 6, type: 'bark_mix',
+    lux: [8000, 18000], every: 6, type: 'bark_mix', check: 'Верхние 2–3 см сухие?',
     water: 'Поливать, когда верхние 2–3 см сухие. Корни в воде не держать.',
     soil: 'Рыхлая смесь для ароидных.',
     cond: '18–27 °C, лучше без холодных сквозняков.',
@@ -414,7 +417,7 @@ const PLANTS = [
   },
   {
     id: 'dieffenbachia', tone: 3, plantIds: ['jcq97b9g89'],
-    species: 'Диффенбахия', cat: 'Ароидные', emoji: '🪴', toxic: true,
+    species: 'Диффенбахия', cat: 'Ароидные', humid: true, emoji: '🪴', toxic: true,
     alt: 'Dumb Cane, Dieffenbachia',
     names: 'Dumb Cane, Dieffenbachia',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
@@ -505,7 +508,7 @@ const PLANTS = [
   },
   {
     id: 'anthurium', tone: 1, plantIds: ['t6phf7gnk9'],
-    species: 'Антуриум', cat: 'Ароидные', emoji: '🌷',
+    species: 'Антуриум', cat: 'Ароидные', humid: true, emoji: '🌷',
     alt: 'Мужское счастье, Flamingo Flower',
     names: 'Flamingo Flower, Мужское счастье, Anthurium',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
@@ -675,7 +678,7 @@ const PLANTS = [
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Обрезка не обязательна. Разросшиеся плети можно прищипнуть над листом, чтобы растение было аккуратнее.' },
     aka: 'сциндапсус, scindapsus pictus, расписной, argyraeus, экзотика, серебристый, треби, сильвер, пиктус',
-    lux: [3000, 10000], every: 8, type: 'soil',
+    lux: [3000, 10000], every: 8, type: 'soil', check: 'Верхние 3–4 см сухие?',
     water: 'Когда верхние 3–4 см сухие. Если листья скручиваются в трубочку, растение просит воды.',
     soil: 'Рыхлый грунт с корой и перлитом.',
     cond: '18–28 °C.',
@@ -684,7 +687,7 @@ const PLANTS = [
   },
   {
     id: 'syngonium-podophyllum', tone: 1, plantIds: ['8dt8dtfddj'],
-    species: 'Сингониум', cat: 'Лианы и ампельные', emoji: '🏹', toxic: true,
+    species: 'Сингониум', cat: 'Лианы и ампельные', humid: true, emoji: '🏹', toxic: true,
     alt: 'Arrow-Head Vine, Syngonium',
     names: 'Сингониум ножколистный, Arrow-Head Vine, Syngonium podophyllum, Syngonium',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
@@ -775,7 +778,7 @@ const PLANTS = [
   },
   {
     id: 'pilea-peperomioides', tone: 1, plantIds: ['thrj8qww9k'],
-    species: 'Пилея', cat: 'Декоративно-лиственные', emoji: '🪙', rotate: true,
+    species: 'Пилея', cat: 'Декоративно-лиственные', emoji: '🪙', rotate: 7,
     alt: 'Китайское денежное дерево',
     names: 'Пилея пеперомиевидная, Pilea peperomioides, Chinese Money Plant, Китайское денежное дерево, Pilea',
     // HOUSE-PETS: P. peperomioides isn't in ASPCA; P. cadierei (in aka) is, as non-toxic.
@@ -804,7 +807,7 @@ const PLANTS = [
   },
   {
     id: 'codiaeum-variegatum', tone: 3, plantIds: ['69j9t8dnkp'],
-    species: 'Кротон', cat: 'Декоративно-лиственные', emoji: '🍂', toxic: true, big: true,
+    species: 'Кротон', cat: 'Декоративно-лиственные', humid: true, emoji: '🍂', toxic: true, big: true,
     alt: 'Croton, Codiaeum',
     names: 'Кодиеум пёстрый, Codiaeum variegatum, Croton, Codiaeum',
     pets: 'toxic', petsNote: 'Слюнотечение, рвота, понос. Сок раздражает кожу.',
@@ -930,7 +933,7 @@ const PLANTS = [
     pets: 'toxic', petsNote: 'Рвота, слюнотечение, отказ от еды, вялость. У кошек расширенные зрачки.',
     prune: { months: [3, 4], tip: 'Высокий ствол можно укоротить весной: под срезом обычно просыпаются 2 почки и больше. Срезанную верхушку 8–15 см можно укоренить.' },
     aka: 'драцена душистая, фрагранс, fragrans, массангеана, кукурузная драцена, драцена компакта, compacta, драцена',
-    lux: [3000, 12000], every: 8, type: 'soil',
+    lux: [3000, 12000], every: 8, type: 'soil', check: 'Верхние 3 см сухие?',
     water: 'Когда подсохли верхние 3 см. Вода не должна застаиваться.',
     soil: 'Универсальный грунт с перлитом.',
     cond: '18–26 °C.',
@@ -974,7 +977,7 @@ const PLANTS = [
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Вытянутую шеффлеру можно сильно укоротить ранней весной. Тонкие длинные стебли значат, что ей мало света.' },
     aka: 'шеффлера, шефлера, schefflera, зонтичное дерево, арборикола',
-    lux: [6000, 15000], every: 8, type: 'soil',
+    lux: [6000, 15000], every: 8, type: 'soil', check: 'Верхние 3 см сухие?',
     water: 'Когда подсохли верхние 3 см. Лишнюю воду слить.',
     soil: 'Универсальный грунт с перлитом.',
     cond: '16–24 °C. Пёстрым формам нужно теплее и светлее.',
@@ -1169,13 +1172,13 @@ const PLANTS = [
     alt: 'Герань, Geranium, Pelargonium',
     names: 'Geranium, Герань, Pelargonium',
     pets: 'toxic', petsNote: 'Рвота, отказ от еды, вялость, раздражение кожи.',
-    prune: { months: [2], tip: 'Вытянутые стебли укоротить в феврале над узлом. Прищипка верхушек откладывает цветение.' },
+    prune: { months: [2, 3], tip: 'Вытянутые стебли укоротить в феврале или марте над узлом. Прищипка верхушек откладывает цветение.' },
     aka: 'пеларгония, герань, pelargonium, geranium, зональная, королевская',
-    lux: [15000, 40000], every: 5, type: 'soil',
+    lux: [15000, 40000], every: 5, type: 'soil', check: 'Верхние 2 см сухие?',
     water: 'Когда подсохли верхние 2 см. Вода не должна застаиваться.',
     soil: 'Универсальный грунт с перлитом.',
     cond: '18–25 °C. Зимой прохладнее и светло.',
-    tip: 'Весной обрезать и прищипывать, чтобы было пышнее. Отцветшие соцветия удалять.',
+    tip: 'В феврале и марте обрезать и прищипывать, чтобы было пышнее. Отцветшие соцветия удалять.',
     quips: ['Обрежьте меня весной, и скажу спасибо цветами.', 'Солнце люблю, болото нет.', 'Я пахну, это нормально.'],
   },
   {
@@ -1210,7 +1213,7 @@ const PLANTS = [
   },
   {
     id: 'begonia', tone: 1, plantIds: ['6jbgt9h6w9'],
-    species: 'Бегония', cat: 'Цветущие и орхидеи', emoji: '🩷',
+    species: 'Бегония', cat: 'Цветущие и орхидеи', humid: true, emoji: '🩷',
     alt: 'Begonia',
     names: 'Begonia',
     pets: 'toxic', petsNote: 'Рвота и слюнотечение.',

@@ -154,7 +154,7 @@ Light status needs a reading in the card or on the Light tab. The tab sorts plan
 
 `S.rooms` holds `{ id, name, t, h, d }`: name, temperature, humidity and the reading's date. Spots are `S.spots` plus any spot a plant uses; their order sorts the checks on «Сегодня».
 
-With several rooms, the plant grid groups plants by room and spot («Кухня · Подоконник»). The Room tab compares each room's reading with the temperatures in its plants' cards: the first «18–26 °C» in `cond`. «Прохладно» starts below «не ниже 16 °C» when the card gives one, else below the range. The humidity target is 50–70% next to the plants, not room-wide: in a Russian winter, room-wide humidity above about 40% makes windows sweat. So the tab asks for a reading next to the plants, and the dry warning and smart-home scenarios humidify the air there.
+With several rooms, the plant grid groups plants by room and spot («Кухня · Подоконник»). The Room tab compares each room's reading with the temperatures in its plants' cards: the first «18–26 °C» in `cond`. «Прохладно» starts below «не ниже 16 °C» when the card gives one, else below the range. A cool winter the card asks for («зимой 10–15 °C»: цитрус, толстянка, гибискус) lowers both from December to February; for a card with a rest (мухоловка, «Зимой покой… 4–10 °C») only while the plant rests. The humidity target is 50–70% next to the plants, not room-wide: in a Russian winter, room-wide humidity above about 40% makes windows sweat. So the tab asks for a reading next to the plants, and the dry warning and smart-home scenarios humidify the air there.
 
 ## Cheat sheet
 
