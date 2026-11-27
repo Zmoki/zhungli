@@ -10,6 +10,8 @@ const vm = require('vm');
 const ROOT = path.join(__dirname, '..', 'app');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// As altHtml in core.js: each English name on the second line is marked lang="en".
+const altHtml = (s) => String(s).split(', ').map((n) => (/\p{Script=Latin}/u.test(n) ? `<span lang="en">${esc(n)}</span>` : esc(n))).join(', ');
 
 // The catalog and the drawings run as they are; shapes.js only needs the cards.
 const ctx = {};
@@ -72,23 +74,26 @@ const drawRules = css.split('\n').filter((l) => /^(\.(lf|pot|shine|fs|fe|ck|jar|
 const lux = ([a, b]) => `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} лк`;
 // As kLux in core.js: «15 тыс».
 const kLux = (n) => `${(n / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00a0тыс`;
-// The card as a row of the app's catalog («Добавить растения», pickRow in add.js), with the pets tag as when
-// «Дома есть кошка или собака» is on.
+// The card as a row of the app's catalog («Добавить растения», pickRow in add.js): a square tile, the name and one line:
+// `alt`, then the hint.
 function pickPreview(d) {
-  const pets = { toxic: 'опасно', safe: 'безопасно' }[petsOf(d.pets)];
-  const tag = pets ? `<span class="pet-tag ${petsOf(d.pets) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d.pets) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}</span> · ` : '';
-  const meta = `${d.hint ? `${esc(d.hint)} · ` : ''}${tag}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`;
-  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${meta}</small></span><span class="pc">${I('plus')}</span></div></section>`;
+  const sub = [d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
+  return `<section class="blk prev"><h4>В каталоге</h4><div class="pick"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc">${I('plus')}</span></div></section>`;
 }
 // As days in core.js: «8 дней».
 const days = (n) => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
-// The card as the plant card's «Настройки» → «Карточка ухода» shows it (cardNow in plant.js): picture, name, light,
-// how often it's checked and what it grows in; not a control, so a quiet border and no plus.
+// The card as the plant card's «Настройки» → «Карточка ухода» shows it (cardNow in plant.js): its catalog row, then
+// under a line its characteristics; not a control, so a quiet border and no plus.
 function cardNowPreview(d) {
   const m = MEDIUM[d.type] || {};
-  const way = [lc(NAMES[d.type] || d.type), m.pot && d.watering && d.watering !== 'top' ? lc(NAMES[d.watering] || d.watering) : ''].filter(Boolean).join(', ');
-  const facts = [d.hint ? esc(d.hint) : '', `свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`, m.noChecks ? '' : `проверка раз в ~${days(d.every)}`, esc(way)].filter(Boolean).join(' · ');
-  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><span class="pe">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${facts}</small></span></div></section>`;
+  const facts = [
+    ['Свет', `${kLux(d.lux[0])}–${kLux(d.lux[1])} лк`],
+    m.noChecks ? null : ['Проверка', `раз в ~${days(d.every)}`],
+    ['В чём растёт', lc(NAMES[d.type] || d.type)],
+    m.pot && d.watering && d.watering !== 'top' ? ['Полив', lc(NAMES[d.watering] || d.watering)] : null,
+  ].filter(Boolean).map(([k, v]) => `<li><span class="k">${k}:</span> ${esc(v)}</li>`).join('');
+  const sub = [d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
+  return `<section class="blk prev now"><h4>В настройках растения</h4><div class="pick card-now"><div class="cn-head"><span class="pe fit">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span></div><ul class="cn-facts">${facts}</ul></div></section>`;
 }
 // As petsOf in state.js: safe only when both cats and dogs are; 'unlisted' (checked, not in ASPCA) is no data.
 const petsOf = (v) => (!v || v === 'unlisted' ? '' : typeof v === 'string' ? v : v.cats === 'toxic' || v.dogs === 'toxic' ? 'toxic' : v.cats === 'safe' && v.dogs === 'safe' ? 'safe' : '');
@@ -111,6 +116,7 @@ const GAPS = {
   petsNote: 'Ядовито, но нет симптомов',
   prune: 'Нет совета по обрезке',
   aka: 'Нет других названий для поиска',
+  alt: 'Нет второго названия',
 };
 function gapsOf(d) {
   if (d.generic) return [];
@@ -119,6 +125,7 @@ function gapsOf(d) {
   else if (petsOf(d.pets) === 'toxic' && !d.petsNote) out.push('petsNote');
   if (!d.prune) out.push('prune');
   if (!d.aka) out.push('aka');
+  if (d.alt === undefined) out.push('alt'); // '' is checked: no second name
   return out;
 }
 
@@ -204,9 +211,11 @@ function card(d) {
     row('Если есть силы', [d.big && '«Протереть листья»', d.rotate && '«Повернуть»'].filter(Boolean).join(', ')),
     row('Комната', d.humid ? 'в подсказке о влажном воздухе' : ''),
   ].join('');
-  const search = norm([d.species, d.id, d.aka || '', d.cat].join(' '));
+  // What the app's catalog search reads besides the title: the second line (`alt`) and `aka`, each name once.
+  const words = [...new Set([d.alt, d.aka, d.findBy].filter(Boolean).join(',').split(',').map((w) => w.trim()).filter(Boolean))].join(', ');
+  const search = norm([d.species, d.id, words, d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
-<div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${d.aka ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(d.aka)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
+<div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${words ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(words)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
 <div class="blks">${pickPreview(d)}${cardNowPreview(d)}<div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
 <div class="col">${block('Заметки', notes, 'b-notes')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section></div></div>
@@ -225,7 +234,7 @@ function page() {
   const sheet = FILTERS.map(([title, kinds]) => [title, kinds.filter(([k]) => counts[k])]).filter(([, kinds]) => kinds.length)
     .map(([title, kinds]) => `<h3 class="filter-sec">${title}</h3><div class="st-filter" role="group" aria-label="${title}">${kinds.map(([k, label, cls]) => chip(k, label, cls)).join('')}</div>`).join('');
   const sections = CATS.map((c, i) => {
-    const list = PLANTS.filter((d) => d.cat === c).sort((a, b) => !!a.generic - !!b.generic);
+    const list = PLANTS.filter((d) => d.cat === c).sort((a, b) => !!a.generic - !!b.generic || (!a.generic && a.species.localeCompare(b.species, 'ru'))); // as catalogHtml in add.js
     return `<section class="cat"><h2><button type="button" class="cat-head" aria-expanded="true" aria-controls="cat-${i}"><span>${esc(c)} <span class="n">${list.length}</span></span>${I('chevron-right')}</button></h2><div class="grid" id="cat-${i}">${list.map(card).join('\n')}</div></section>`;
   }).join('\n');
   const all = `все ${PLANTS.length} ${plural(PLANTS.length, 'карточка', 'карточки', 'карточек')}`;
@@ -321,7 +330,10 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick { display: flex; align-items: center; gap: 12px; max-width: 420px; background: var(--field); border: 2px solid var(--edge); border-radius: 20px; padding: 10px 12px; }
 /* In «В каталоге» and «В настройках растения»: some air under the band, the row centered in its column */
 .prev .pick { margin: 16px auto 4px; }
-.pick.card-now { border-color: var(--line); }
+.pick.card-now { border-color: var(--line); flex-direction: column; align-items: stretch; gap: 0; }
+.card-now .cn-head { display: flex; align-items: center; gap: 12px; }
+.card-now .cn-facts { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: .882rem; }
+.card-now .cn-facts .k { color: var(--muted); font-weight: 700; }
 .pick .pe { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; overflow: hidden; }
 .pick .pe svg.pl { width: 46px; height: 46px; }
 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -329,9 +341,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick .pt small { color: var(--muted); font-size: .824rem; line-height: 1.5; }
 .pick .pc { color: var(--muted); flex: none; display: inline-flex; }
 .pick .pc .ic { width: 22px; height: 22px; stroke-width: 2.5; }
-.pet-tag { font-weight: 800; white-space: nowrap; }
-.pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
-.pet-tag.danger { color: var(--st-danger); } .pet-tag.safe { color: var(--st-fine); }
+.pick .pe.fit { width: 56px; height: 56px; }
+.pick .pe.fit svg.pl { width: 46px; height: 46px; }
 :is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
 :is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
 .tile svg.pl { width: 84%; height: 84%; margin-bottom: 16%; }

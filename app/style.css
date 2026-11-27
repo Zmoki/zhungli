@@ -401,8 +401,6 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 .why-not:empty { display: none; }
 /* What pets may know, in «Заметки»: a gap from the notes above */
 .card-warns { margin-top: 14px; }
-.pet-tag { font-weight: 800; white-space: nowrap; }
-.pet-tag .ic { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: .2em; }
 .info.warn { background: var(--red-soft); }
 #sheet-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 24px); }
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -452,16 +450,16 @@ dialog.ask h2 { font-size: 1.294rem; line-height: 1.2; margin: 0; }
 }
 .st-chip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
 /* Status colors, the same on badges, tags, filter chips and the «Фильтр» field's value. Danger (sap, toxic to pets, quarantine) is red */
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).need { color: var(--st-need); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).watered { color: var(--st-watered); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).dim { color: var(--st-dim); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).hot { color: var(--st-hot); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v):is(.fine, .safe) { color: var(--st-fine); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).danger { color: var(--st-danger); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).greenhouse { color: var(--st-gh); }
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).rest { color: var(--st-rest); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).need { color: var(--st-need); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).watered { color: var(--st-watered); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).dim { color: var(--st-dim); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).hot { color: var(--st-hot); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v):is(.fine, .safe) { color: var(--st-fine); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).danger { color: var(--st-danger); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).greenhouse { color: var(--st-gh); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).rest { color: var(--st-rest); }
 /* How it grows when it's not an ordinary pot («в воде», «на фитиле»): teal */
-:is(.badge, .tag, .st-chip, .pet-tag, .pfilter-t .v).way { color: var(--st-grow); }
+:is(.badge, .tag, .st-chip, .pfilter-t .v).way { color: var(--st-grow); }
 .sheet-main {
   position: relative; z-index: 1; margin: -28px -16px 0; padding: 22px 16px 0;
   background: var(--sheet-solid); border-radius: 28px 28px 0 0; box-shadow: 0 -8px 24px rgba(42, 33, 24, .12);
@@ -702,8 +700,15 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
+/* Catalog rows (pickRow), AI import rows and the care card in «Настройки» (cardNow): a square tile, the drawing in a square viewBox around
+   it (SHAPE_FIT), so it sits in the middle */
+.pick .pe.fit { width: 56px; height: 56px; }
 /* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
-.pick.card-now { border-color: var(--line); background: var(--card); }
+.pick.card-now { border-color: var(--line); background: var(--card); flex-direction: column; align-items: stretch; gap: 0; }
+/* The catalog row on top, then a line, then the card's characteristics */
+.card-now .cn-head { display: flex; align-items: center; gap: 12px; }
+.card-now .cn-facts { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: 0.882rem; }
+.card-now .cn-facts .k { color: var(--muted); font-weight: 700; }
 /* «Банный день» and «День подкормки»: who's in as catalog rows (.who-pick); while bathing, their pictures in one line that shrinks to fit */
 .who-pick { margin: 0 0 14px; }
 .bath-pics { display: flex; justify-content: center; gap: 8px; margin: 0 0 14px; }

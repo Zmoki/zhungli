@@ -10,6 +10,13 @@
 //   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
+// findBy: catalog search words that aren't the plant's names (how it's often grown: «на блоке»); not used to match
+//   an AI import, so «Платицериум на блоке» isn't taken for a phalaenopsis.
+// species: the official Russian name (zhungli-content plants/*.yml `name`, or the species' `ru` when the catalog has
+//   several of the genus), one name, no brackets.
+// alt: the second line of the catalog row, lowercase, names joined with «, »: one or two folk names people search by
+//   (content `aka`, with Wordstat counts), then the English name (`en`, with ASPCA / RHS / NC State / Clemson links;
+//   left out when it's the title in Latin letters). A variety shows only its own names. '' : checked, none. Also searched.
 // toxic: true if the sap irritates skin and mucous membranes; 'skin' if sources name only skin.
 // pets: 'toxic' or 'safe' for cats and dogs (ASPCA); 'unlisted': checked, not in ASPCA, and other sources aren't enough
 //   to say (content facts HOUSE-PETS, CARN-TOX; its petsNote, if any, replaces the line in «Заметки»); none: not checked yet.
@@ -120,7 +127,8 @@ const PLANTS = [
   },
   // Genus cards: for people who know the plant but not its variety. Care that holds for the whole genus.
   {
-    id: 'alocasia', species: 'Алоказия', cat: 'Ароидные', humid: true, emoji: '🐘', toxic: true, hint: 'если сорт неизвестен',
+    id: 'alocasia', species: 'Алоказия', cat: 'Ароидные', humid: true, emoji: '🐘', toxic: true,
+    alt: "слоновье ухо, elephant's ear",
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -137,6 +145,7 @@ const PLANTS = [
   },
   {
     id: 'alo-regal', species: 'Алоказия Regal Shields', cat: 'Ароидные', humid: true, emoji: '🛡️', toxic: true,
+    alt: '',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -153,6 +162,7 @@ const PLANTS = [
   },
   {
     id: 'alo-black', species: 'Алоказия Black Stem', cat: 'Ароидные', humid: true, emoji: '🖤', toxic: true,
+    alt: '',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -168,7 +178,8 @@ const PLANTS = [
     quips: ['Чёрные ножки у меня для стиля, а не от грязи.', 'Сквозняк? Я сразу обижаюсь.', 'Лужа в кашпо? Мой личный кошмар.'],
   },
   {
-    id: 'alo-cuc', species: 'Алоказия Cucullata', cat: 'Ароидные', humid: true, emoji: '💚', toxic: true,
+    id: 'alo-cuc', species: 'Алоказия клобучковая', cat: 'Ароидные', humid: true, emoji: '💚', toxic: true,
+    alt: 'chinese taro',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -185,6 +196,7 @@ const PLANTS = [
   },
   {
     id: 'alo-polly', species: 'Алоказия Polly', cat: 'Ароидные', humid: true, emoji: '🗿', toxic: true,
+    alt: 'african mask',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -201,6 +213,7 @@ const PLANTS = [
   },
   {
     id: 'alo-silver', species: 'Алоказия Silver Dragon', cat: 'Ароидные', humid: true, emoji: '🐉', toxic: true,
+    alt: '',
     rest: { start: 'Сбросила листья', end: 'Появился новый лист',
       tip: 'Это покой, а не гибель. Корневище живое, весной обычно появляются новые листья. Поливать совсем немного и не кормить: сейчас опаснее всего перелив. Если грунт долго мокрый и пахнет, а корневище мягкое, это гниль.',
       water: 'Сейчас покой: поливать совсем немного, перелив сейчас главный риск.' },
@@ -216,9 +229,10 @@ const PLANTS = [
     quips: ['Я дракон. Маленькими глоточками, пожалуйста.', 'Мои листья плотные, как драконья чешуя.', 'Серебро не любит болото.'],
   },
   {
-    id: 'mon-del', species: 'Монстера deliciosa', cat: 'Ароидные', emoji: '🌿',
+    id: 'mon-del', species: 'Монстера деликатесная', cat: 'Ароидные', emoji: '🌿',
+    alt: 'swiss cheese plant',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
-    aka: 'монстера деликатесная, monstera',
+    aka: 'монстера деликатесная, monstera, deliciosa',
     lux: [8000, 20000], every: 8, type: 'bark_mix', big: true, rotate: true,
     check: 'Верхние 3–5 см сухие?',
     water: 'Поливать, когда верхние 3–5 см сухие. Зимой реже.',
@@ -228,9 +242,10 @@ const PLANTS = [
     quips: ['Мне нужно больше места. И больше вас.', 'Дырки в листьях для вентиляции, я всё продумала.', 'Поверните меня, я хочу посмотреть на комнату.'],
   },
   {
-    id: 'mon-adan', species: 'Монстера adansonii ‘Monkey Mask’', cat: 'Ароидные', emoji: '🐒',
+    id: 'mon-adan', species: 'Монстера Адансона', cat: 'Ароидные', emoji: '🐒',
+    alt: 'swiss cheese vine',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
-    aka: 'монстера адансона, monstera, monkey mask',
+    aka: 'монстера адансона, monstera, monkey mask, adansonii',
     lux: [8000, 18000], every: 5, type: 'bark_mix',
     water: 'В пластиковом горшке с отверстиями: проверять просыхание верхних 2–3 см и влажность глубже.',
     soil: 'Рыхлая смесь для ароидных: грунт + перлит + кора или кокосовые чипсы + уголь.',
@@ -239,9 +254,10 @@ const PLANTS = [
     quips: ['Обезьянья маска на месте. Лезу вверх по опоре!', 'Новый грунт, новая жизнь.', 'Подкормку пока не надо, я привыкаю.'],
   },
   {
-    id: 'phi-eru', species: 'Филодендрон краснеющий', cat: 'Ароидные', emoji: '❤️',
+    id: 'phi-eru', species: 'Филодендрон красноватый', cat: 'Ароидные', emoji: '❤️',
+    alt: 'blushing philodendron',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
-    aka: 'philodendron, филодендрон эрубесценс',
+    aka: 'philodendron, филодендрон эрубесценс, краснеющий',
     lux: [8000, 18000], every: 6, type: 'bark_mix',
     water: 'Поливать, когда верхние 2–3 см сухие. Корни в воде не держать.',
     soil: 'Рыхлая смесь для ароидных.',
@@ -251,6 +267,7 @@ const PLANTS = [
   },
   {
     id: 'phi-birkin', species: 'Филодендрон Birkin', cat: 'Ароидные', emoji: '🤍',
+    alt: 'white wave',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'philodendron',
     lux: [8000, 16000], every: 6, type: 'bark_mix',
@@ -262,6 +279,7 @@ const PLANTS = [
   },
   {
     id: 'phi-congo', species: 'Филодендрон Green Congo', cat: 'Ароидные', emoji: '🌱',
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'philodendron',
     lux: [6000, 16000], every: 7, type: 'bark_mix', big: true,
@@ -273,7 +291,8 @@ const PLANTS = [
     quips: ['Я крепкий парень из Конго.', 'Протрите мне листья, и я заблестю.', 'Не заливайте, я не болото.'],
   },
   {
-    id: 'aglaonema', species: 'Аглаонема', cat: 'Ароидные', emoji: '🍃', toxic: true, hint: 'если сорт неизвестен',
+    id: 'aglaonema', species: 'Аглаонема', cat: 'Ароидные', emoji: '🍃', toxic: true,
+    alt: 'chinese evergreen',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'aglaonema, китайский вечнозелёный, chinese evergreen, silver queen, силвер квин, maria, мария, suzy, jubilee, silver bay, lady valentine, crete, black lance',
     lux: [4000, 12000], every: 7, type: 'soil',
@@ -286,6 +305,7 @@ const PLANTS = [
   },
   {
     id: 'agl-siam', species: 'Аглаонема Siam Aurora', cat: 'Ароидные', emoji: '🌺', toxic: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'aglaonema',
     lux: [5000, 12000], every: 7, type: 'soil',
@@ -297,6 +317,7 @@ const PLANTS = [
   },
   {
     id: 'agl-silver', species: 'Аглаонема серебристая', cat: 'Ароидные', emoji: '🪩', toxic: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'aglaonema',
     lux: [5000, 12000], every: 7, type: 'soil',
@@ -308,6 +329,7 @@ const PLANTS = [
   },
   {
     id: 'agl-pink', species: 'Аглаонема Pink Star', cat: 'Ароидные', emoji: '⭐', toxic: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     aka: 'aglaonema',
     lux: [6000, 14000], every: 4, type: 'sphagnum',
@@ -319,6 +341,7 @@ const PLANTS = [
   },
   {
     id: 'stro-tri', species: 'Строманта ‘Triostar’', cat: 'Влаголюбивые', emoji: '🎨', humid: true,
+    alt: '',
     pets: 'unlisted',
     aka: 'stromanthe, triostar',
     lux: [5000, 12000], every: 4, type: 'soil', check: 'Поверхность подсохла?',
@@ -330,6 +353,7 @@ const PLANTS = [
   },
   {
     id: 'cten', species: 'Ктенанта', cat: 'Влаголюбивые', emoji: '🪶', humid: true,
+    alt: 'never never plant',
     pets: 'unlisted',
     aka: 'ctenanthe, бурле-маркса',
     lux: [5000, 10000], every: 4, type: 'soil', check: 'Верхний слой слегка подсох?',
@@ -340,7 +364,8 @@ const PLANTS = [
     quips: ['Вечером я складываю листья. Это не обида, это йога.', 'Не пересушивайте меня, прошу.', 'Сквозняк мне враг. Увлажнитель мне друг.'],
   },
   {
-    id: 'dieffenbachia', species: 'Диффенбахия', cat: 'Ароидные', emoji: '🪴', toxic: true, hint: 'если сорт неизвестен',
+    id: 'dieffenbachia', species: 'Диффенбахия', cat: 'Ароидные', emoji: '🪴', toxic: true,
+    alt: 'dumb cane',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Оголившийся ствол можно срезать до 15 см, растение отрастёт ниже среза.' },
     aka: 'dieffenbachia, seguine, пятнистая, maculata, амёна, amoena, tropic snow, tiki, compacta, camouflage, star bright, snow flake',
@@ -354,6 +379,7 @@ const PLANTS = [
   },
   {
     id: 'dif-camille', species: 'Диффенбахия Camille', cat: 'Ароидные', emoji: '🍋', toxic: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Оголившийся ствол можно срезать до 15 см, растение отрастёт ниже среза.' },
     aka: 'dieffenbachia',
@@ -366,6 +392,7 @@ const PLANTS = [
   },
   {
     id: 'dif-gm', species: 'Диффенбахия Green Magic', cat: 'Ароидные', emoji: '🪄', toxic: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Оголившийся ствол можно срезать до 15 см, растение отрастёт ниже среза.' },
     aka: 'dieffenbachia',
@@ -377,7 +404,8 @@ const PLANTS = [
     quips: ['Вся магия в том, что я без фитиля.', 'Зелёная магия работает от умеренного полива.', 'Моя религия: дренаж.'],
   },
   {
-    id: 'ficus-genus', species: 'Фикус', cat: 'Пальмы, драцены и деревья', emoji: '🪴', toxic: 'skin', hint: 'если вид неизвестен',
+    id: 'ficus-genus', species: 'Фикус', cat: 'Пальмы, драцены и деревья', emoji: '🪴', toxic: 'skin',
+    alt: 'fig',
     settle: 'После покупки или перестановки фикус может сбросить часть листьев. Обычно это проходит за несколько недель, если место светлое и его больше не менять.',
     pets: 'toxic', petsNote: 'Раздражение желудка и кожи.',
     prune: { tip: 'Регулярная обрезка не нужна, только для размера и формы. Резать над листом, без пенька, в перчатках: сок раздражает кожу.' },
@@ -390,7 +418,8 @@ const PLANTS = [
     quips: ['Какой я фикус? Узнаете по листьям.', 'Нашли мне светлое место? Я остаюсь.', 'Светло и без сквозняков, больше ничего не прошу.'],
   },
   {
-    id: 'ficus', species: 'Фикус эластика', cat: 'Пальмы, драцены и деревья', emoji: '💎', toxic: 'skin', big: true,
+    id: 'ficus', species: 'Фикус каучуконосный', cat: 'Пальмы, драцены и деревья', emoji: '💎', toxic: 'skin', big: true,
+    alt: 'резиновый фикус, rubber plant',
     pets: 'toxic', petsNote: 'Раздражение желудка и кожи.',
     prune: { months: [3, 4], tip: 'Разросшийся фикус укоротить весной, срез над листом без пенька.' },
     aka: 'фикус каучуконосный, резиновый фикус, ficus elastica, ficus, эластика, робуста, тинеке, белиз, абиджан, мелани, шривериана, бургунди, руби, ruby',
@@ -403,6 +432,7 @@ const PLANTS = [
   },
   {
     id: 'raderm', species: 'Радермахера китайская', cat: 'Пальмы, драцены и деревья', emoji: '🌳',
+    alt: 'asian bell tree',
     pets: 'unlisted',
     aka: 'radermachera, комнатный ясень',
     lux: [8000, 15000], every: 5, type: 'soil', spot: 'Белый стол', check: 'Верхний слой подсох?',
@@ -414,6 +444,7 @@ const PLANTS = [
   },
   {
     id: 'anth', species: 'Антуриум', cat: 'Ароидные', emoji: '🌷',
+    alt: 'мужское счастье, flamingo flower',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Отцветшие цветоносы и увядающие листья срезать у основания. Резать в перчатках: сок раздражает кожу.' },
     aka: 'мужское счастье, anthurium',
@@ -426,6 +457,7 @@ const PLANTS = [
   },
   {
     id: 'spath', species: 'Спатифиллум', cat: 'Ароидные', emoji: '🕊️', big: true,
+    alt: 'женское счастье, peace lily',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Отцветшие цветоносы и увядающие листья срезать у основания. Резать в перчатках: сок раздражает кожу.' },
     aka: 'женское счастье, spathiphyllum, peace lily',
@@ -438,6 +470,7 @@ const PLANTS = [
   },
   {
     id: 'zz', species: 'Замиокулькас', cat: 'Декоративно-лиственные', emoji: '🐫',
+    alt: 'долларовое дерево, zz',
     // Fed rarely, at half a dose: overfeeding is worse than underfeeding (zhungli-content ZAM-SOIL-27, 29, 33).
     feedEvery: 90, feedNote: 'Замиокулькасу: половина дозы, перекормить опаснее, чем недокормить.',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
@@ -455,6 +488,7 @@ const PLANTS = [
   },
   {
     id: 'chamae', species: 'Хамедорея изящная', cat: 'Пальмы, драцены и деревья', emoji: '🌴', humid: true,
+    alt: 'бамбуковая пальма, parlor palm',
     pets: 'safe',
     prune: { no: 'Пальму не обрезают: у ствола одна точка роста, и срезанный ствол погибает. Засохшие листья срезать у ствола, не выдёргивая.' },
     aka: 'пальма, chamaedorea',
@@ -467,6 +501,7 @@ const PLANTS = [
   },
   {
     id: 'rhapis', species: 'Рапис высокий', cat: 'Пальмы, драцены и деревья', emoji: '🎋',
+    alt: 'lady palm',
     pets: 'safe',
     prune: { no: 'Пальму не обрезают: у ствола одна точка роста, и срезанный ствол погибает. Засохшие листья срезать у ствола, не выдёргивая.' },
     aka: 'пальма, rhapis',
@@ -479,6 +514,7 @@ const PLANTS = [
   },
   {
     id: 'strel', species: 'Стрелиция Николая', cat: 'Пальмы, драцены и деревья', emoji: '🦜', big: true,
+    alt: 'райская птица, giant bird of paradise',
     pets: 'toxic', petsNote: 'Тошнота, рвота, сонливость.',
     prune: { no: 'Обрезка нужна только для порядка. Побуревшие листья и отцветший цветонос срезать у основания.' },
     aka: 'стрелиция, райская птица, strelitzia',
@@ -490,9 +526,10 @@ const PLANTS = [
     quips: ['Света! Больше света!', 'Проверьте палочкой глубоко, не верьте верхушке.', 'Я вырасту большой, готовьте место.'],
   },
   {
-    id: 'banana', species: 'Банан комнатный', cat: 'Пальмы, драцены и деревья', emoji: '🍌', big: true, humid: true,
+    id: 'banana', species: 'Банан', cat: 'Пальмы, драцены и деревья', emoji: '🍌', big: true, humid: true,
+    alt: '',
     pets: 'safe',
-    aka: 'банан, musa, banana',
+    aka: 'банан, musa, banana, банан комнатный',
     lux: [20000, 40000], every: 5, type: 'soil',
     water: 'В активный рост поливать обильно после подсыхания верхних 2–3 см, лишнюю воду сливать.',
     soil: 'Питательный рыхлый грунт. Крупный горшок с отверстиями.',
@@ -502,10 +539,12 @@ const PLANTS = [
   },
   {
     id: 'phal', species: 'Фаленопсис', cat: 'Цветущие и орхидеи', emoji: '🦋',
+    alt: 'орхидея бабочка, moth orchid',
     feedNote: 'Орхидеям: удобрение для орхидей, половина дозы.',
     pets: 'safe',
     prune: { no: 'Орхидею не обрезают, срезают только цветонос и сухие бурые корни. Зелёный цветонос срезать над второй спящей почкой, засохший у основания.' },
     aka: 'орхидея, phalaenopsis, orchid',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     lux: [5000, 15000], every: 7, type: 'bark',
     // Often sold in sphagnum, which holds water much longer than bark. Fed the same way as on bark.
     ways: { sphagnum: {
@@ -521,6 +560,7 @@ const PLANTS = [
   },
   {
     id: 'coleus', species: 'Колеус', cat: 'Декоративно-лиственные', emoji: '🍇',
+    alt: 'крапивка',
     pets: 'toxic', petsNote: 'Рвота, понос, вялость, отказ от еды.',
     prune: { months: [2, 3], tip: 'Верхушки прищипывать над узлом, чтобы куст был гуще. Вытянутые стебли укоротить с конца зимы.' },
     aka: 'coleus',
@@ -534,7 +574,8 @@ const PLANTS = [
   // Wave 1: the most common houseplants, so people find their own plant instead of a generic type.
   // Vines and trailing plants
   {
-    id: 'pothos', species: 'Потос (эпипремнум)', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
+    id: 'pothos', species: 'Сциндапсус золотистый', cat: 'Лианы и ампельные', emoji: '🍃', toxic: true,
+    alt: 'эпипремнум, потос',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Длинные плети укорачивать над листом, тогда растение ветвится гуще. Если бледнеет пестрота, нужен свет, а не обрезка.' },
     aka: 'потос, эпипремнум, epipremnum, pothos, golden pothos, сциндапсус золотистый, золотистый, мраморная королева, неон, n-joy',
@@ -546,10 +587,11 @@ const PLANTS = [
     quips: ['Свисаю красиво, но иногда хочу пить.', 'Подстригите меня, и стану гуще.', 'Я из тех, кто растёт даже в углу.'],
   },
   {
-    id: 'scindapsus', species: 'Сциндапсус пиктус', cat: 'Лианы и ампельные', emoji: '🩶', toxic: true,
+    id: 'scindapsus', species: 'Сциндапсус расписной', cat: 'Лианы и ампельные', emoji: '🩶', toxic: true,
+    alt: 'satin pothos',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Обрезка не обязательна. Разросшиеся плети можно прищипнуть над листом, чтобы растение было аккуратнее.' },
-    aka: 'сциндапсус, scindapsus pictus, расписной, argyraeus, экзотика, серебристый, треби, сильвер',
+    aka: 'сциндапсус, scindapsus pictus, расписной, argyraeus, экзотика, серебристый, треби, сильвер, пиктус',
     lux: [3000, 10000], every: 8, type: 'soil',
     water: 'Когда верхние 3–4 см сухие. Если листья скручиваются в трубочку, растение просит воды.',
     soil: 'Рыхлый грунт с корой и перлитом.',
@@ -559,6 +601,7 @@ const PLANTS = [
   },
   {
     id: 'syngonium', species: 'Сингониум', cat: 'Лианы и ампельные', emoji: '🏹', toxic: true,
+    alt: 'arrowhead vine',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Чтобы куст оставался компактным, срезать побеги, как только они начинают тянуться плетью.' },
     aka: 'сингониум, syngonium, ножколистный, пикси, нефтис',
@@ -571,9 +614,11 @@ const PLANTS = [
   },
   {
     id: 'hoya', species: 'Хойя', cat: 'Лианы и ампельные', emoji: '⭐',
+    alt: 'восковой плющ, wax plant',
     pets: 'safe',
     prune: { months: [2, 3], tip: 'Обрезать слегка, сильную обрезку хойя переносит плохо. Отцветшие короткие цветоносы не срезать: на них она цветёт снова.' },
     aka: 'хойя, восковой плющ, hoya, carnosa, kerrii, керри, хойя керри, хойя карноза',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     lux: [8000, 20000], every: 10, type: 'soil', check: 'Грунт сухой на 2/3 глубины?',
     water: 'Между поливами грунт почти полностью просыхает. Зимой реже.',
     soil: 'Поровну грунта, коры для орхидей и перлита.',
@@ -583,6 +628,7 @@ const PLANTS = [
   },
   {
     id: 'ivy', species: 'Плющ', cat: 'Лианы и ампельные', emoji: '🌿', toxic: true,
+    alt: 'english ivy',
     pets: 'toxic', petsNote: 'Рвота, боль в животе, слюнотечение, понос.',
     prune: { tip: 'Длинные побеги укорачивать, тогда плющ гуще. Чисто зелёные побеги у пёстрых сортов вырезать у основания.' },
     aka: 'плющ, хедера, hedera, ivy, плющ обыкновенный, хедера хеликс, английский плющ',
@@ -595,6 +641,7 @@ const PLANTS = [
   },
   {
     id: 'tradescantia', species: 'Традесканция', cat: 'Лианы и ампельные', emoji: '💜', toxic: 'skin',
+    alt: 'inch plant',
     pets: 'toxic', petsNote: 'Сок раздражает кожу.',
     prune: { months: [2, 3], tip: 'Верхушки прищипывать для густоты. Разросшийся куст сильно обрезать ранней весной, срезанные побеги укоренить.' },
     aka: 'традесканция, tradescantia, зебрина, бабье сплетни, сеткреазия, рео, висячая, приречная',
@@ -607,6 +654,7 @@ const PLANTS = [
   },
   {
     id: 'chlorophytum', species: 'Хлорофитум', cat: 'Лианы и ампельные', emoji: '🕷️',
+    alt: 'паучник, spider plant',
     pets: 'safe',
     prune: { no: 'Обрезать, только когда нужно. Сухие листья срезать у основания, детки на усах оставить или отделить.' },
     aka: 'хлорофитум, chlorophytum, паучник, spider plant, хохлатый',
@@ -620,6 +668,7 @@ const PLANTS = [
   // Decorative foliage
   {
     id: 'peperomia', species: 'Пеперомия', cat: 'Декоративно-лиственные', emoji: '🟢',
+    alt: '',
     pets: 'safe',
     aka: 'пеперомия, peperomia, туполистная, obtusifolia, арбузная, хоуп, hope, ростральная',
     lux: [3000, 12000], every: 9, type: 'soil', check: 'Грунт сухой на половину глубины?',
@@ -631,6 +680,7 @@ const PLANTS = [
   },
   {
     id: 'pilea', species: 'Пилея', cat: 'Декоративно-лиственные', emoji: '🪙', rotate: true,
+    alt: 'chinese money plant',
     // HOUSE-PETS: P. peperomioides isn't in ASPCA; P. cadierei (in aka) is, as non-toxic.
     pets: 'unlisted', petsNote: 'Пилеи пеперомиевидной нет в базе ASPCA, других сведений мало. Пилея Кадье в базе есть: она неядовита.',
     aka: 'пилея, pilea, peperomioides, китайское денежное дерево, монетка, пилея кадье',
@@ -643,6 +693,7 @@ const PLANTS = [
   },
   {
     id: 'aspidistra', species: 'Аспидистра', cat: 'Декоративно-лиственные', emoji: '🗡️', big: true,
+    alt: 'cast iron plant',
     pets: 'safe',
     aka: 'аспидистра, aspidistra, чугунное растение, дружная семейка',
     lux: [1000, 10000], every: 9, type: 'soil',
@@ -653,7 +704,8 @@ const PLANTS = [
     quips: ['Тень? Отлично, я привыкла.', 'Меня зовут чугунной не просто так.', 'Протрите мне листья, и я сияю.'],
   },
   {
-    id: 'croton', species: 'Кротон (кодиеум)', cat: 'Декоративно-лиственные', emoji: '🍂', toxic: true, big: true,
+    id: 'croton', species: 'Кротон', cat: 'Декоративно-лиственные', emoji: '🍂', toxic: true, big: true,
+    alt: '',
     pets: 'toxic', petsNote: 'Слюнотечение, рвота, понос. Сок раздражает кожу.',
     aka: 'кротон, кодиеум, codiaeum, croton, петра',
     lux: [15000, 35000], every: 5, type: 'soil', check: 'Верхние 2 см сухие?',
@@ -666,6 +718,7 @@ const PLANTS = [
   // Moisture-loving tropicals
   {
     id: 'calathea', species: 'Калатея', cat: 'Влаголюбивые', emoji: '🎏', humid: true,
+    alt: '',
     pets: 'safe',
     prune: { tip: 'Сухие кончики подрезать по сухой части, оставив узкую полоску. Если не убрать причину, засохнут снова.' },
     aka: 'калатея, calathea, горетта, медальон, орбифолия, макояна, зебрина, гетея',
@@ -678,6 +731,7 @@ const PLANTS = [
   },
   {
     id: 'maranta', species: 'Маранта', cat: 'Влаголюбивые', emoji: '🙏', humid: true,
+    alt: 'prayer plant',
     pets: 'safe',
     prune: { tip: 'Сухие кончики подрезать по сухой части, оставив узкую полоску. Если не убрать причину, засохнут снова.' },
     aka: 'маранта, maranta, молитвенное растение, леуконевра, фашинатор',
@@ -689,7 +743,8 @@ const PLANTS = [
     quips: ['Вечером я молюсь листьями.', 'Солнце в лоб не надо.', 'Чуть влажно? Идеально.'],
   },
   {
-    id: 'fern', species: 'Нефролепис (папоротник)', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
+    id: 'fern', species: 'Нефролепис', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
+    alt: 'папоротник, boston fern',
     pets: 'safe',
     aka: 'нефролепис, папоротник, nephrolepis, бостонский, fern',
     lux: [3000, 10000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
@@ -701,6 +756,7 @@ const PLANTS = [
   },
   {
     id: 'fittonia', species: 'Фиттония', cat: 'Влаголюбивые', emoji: '🕸️', humid: true,
+    alt: 'nerve plant',
     pets: 'safe',
     aka: 'фиттония, fittonia, фитония, растение-нерв',
     lux: [3000, 12000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
@@ -713,6 +769,7 @@ const PLANTS = [
   // Palms, dracaenas and trees
   {
     id: 'ficus-benj', species: 'Фикус Бенджамина', cat: 'Пальмы, драцены и деревья', emoji: '🌳', toxic: 'skin',
+    alt: 'weeping fig',
     settle: 'Бенджамин часто сбрасывает листья примерно через 2 недели после покупки, это нормально и обычно проходит за несколько недель. Держите его на одном светлом месте.',
     pets: 'toxic', petsNote: 'Раздражение желудка и кожи.',
     prune: { tip: 'Регулярная обрезка не нужна, только для размера и формы. Новый фикус 4 недели после покупки не резать.' },
@@ -726,6 +783,7 @@ const PLANTS = [
   },
   {
     id: 'ficus-lyrata', species: 'Фикус лировидный', cat: 'Пальмы, драцены и деревья', emoji: '🎻', toxic: 'skin', big: true, rotate: true,
+    alt: 'fiddle-leaf fig',
     pets: 'toxic', petsNote: 'Раздражение желудка и кожи.',
     prune: { months: [3, 4], tip: 'Ветвится слабо: чтобы стал кустистее, весной укоротить главные ветви над листом.' },
     aka: 'фикус лировидный, лирата, ficus lyrata, fiddle leaf, бамбино',
@@ -738,6 +796,7 @@ const PLANTS = [
   },
   {
     id: 'dracaena-marginata', species: 'Драцена окаймлённая', cat: 'Пальмы, драцены и деревья', emoji: '🌴',
+    alt: 'madagascar dragon tree',
     pets: 'toxic', petsNote: 'Рвота, слюнотечение, отказ от еды, вялость. У кошек расширенные зрачки.',
     prune: { months: [3, 4], tip: 'Высокий ствол можно укоротить весной: под срезом обычно просыпаются 2 почки и больше. Срезанную верхушку 8–15 см можно укоренить.' },
     aka: 'драцена маргината, окаймлённая, marginata, драцена, dracaena, бикалор, колорама',
@@ -750,6 +809,7 @@ const PLANTS = [
   },
   {
     id: 'dracaena-fragrans', species: 'Драцена душистая', cat: 'Пальмы, драцены и деревья', emoji: '🌽', big: true,
+    alt: 'corn plant',
     pets: 'toxic', petsNote: 'Рвота, слюнотечение, отказ от еды, вялость. У кошек расширенные зрачки.',
     prune: { months: [3, 4], tip: 'Высокий ствол можно укоротить весной: под срезом обычно просыпаются 2 почки и больше. Срезанную верхушку 8–15 см можно укоренить.' },
     aka: 'драцена душистая, фрагранс, fragrans, массангеана, кукурузная драцена, драцена компакта, compacta, драцена',
@@ -761,7 +821,8 @@ const PLANTS = [
     quips: ['Меня зовут кукурузой. Обидно, но похоже.', 'Протрите мне листья, пожалуйста.', 'Тень переношу, свет люблю.'],
   },
   {
-    id: 'dracaena-sanderiana', species: 'Счастливый бамбук (драцена Сандера)', cat: 'Пальмы, драцены и деревья', emoji: '🎍',
+    id: 'dracaena-sanderiana', species: 'Драцена Сандера', cat: 'Пальмы, драцены и деревья', emoji: '🎍',
+    alt: 'счастливый бамбук, lucky bamboo',
     pets: 'toxic', petsNote: 'Рвота, слюнотечение, отказ от еды, вялость. У кошек расширенные зрачки.',
     aka: 'бамбук, счастливый бамбук, драцена сандера, сандериана, lucky bamboo, dracaena sanderiana',
     lux: [3000, 10000], every: 7, type: 'water',
@@ -773,6 +834,7 @@ const PLANTS = [
   },
   {
     id: 'yucca', species: 'Юкка', cat: 'Пальмы, драцены и деревья', emoji: '🗿',
+    alt: '',
     pets: 'toxic', petsNote: 'Рвота.',
     prune: { months: [3, 4], tip: 'Весной ствол можно укоротить вдвое, под срезом проснутся почки. Срезанную верхушку укореняют.' },
     aka: 'юкка, yucca, слоновая юкка, elephantipes',
@@ -785,6 +847,7 @@ const PLANTS = [
   },
   {
     id: 'schefflera', species: 'Шеффлера', cat: 'Пальмы, драцены и деревья', emoji: '☂️', rotate: true,
+    alt: 'dwarf umbrella tree',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Вытянутую шеффлеру можно сильно укоротить ранней весной. Тонкие длинные стебли значат, что ей мало света.' },
     aka: 'шеффлера, шефлера, schefflera, зонтичное дерево, арборикола',
@@ -796,7 +859,8 @@ const PLANTS = [
     quips: ['Я как зонтик, только зелёный.', 'Поверните меня к свету.', 'Холодно и мокро? Роняю листья.'],
   },
   {
-    id: 'bokarnea', species: 'Бокарнея (нолина)', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
+    id: 'bokarnea', species: 'Бокарнея', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
+    alt: 'нолина, бутылочное дерево, ponytail palm',
     pets: 'safe',
     aka: 'бокарнея, нолина, бутылочное дерево, слоновая нога, beaucarnea, nolina',
     lux: [15000, 40000], every: 18, type: 'dry',
@@ -807,7 +871,8 @@ const PLANTS = [
     quips: ['У меня в ноге запас воды.', 'Забыли полить? Я и не заметила.', 'Солнце для меня всё.'],
   },
   {
-    id: 'citrus', species: 'Лимон (цитрус)', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
+    id: 'citrus', species: 'Цитрус', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
+    alt: 'лимон, мандарин, апельсин',
     pets: 'toxic', petsNote: 'Рвота, понос, вялость.',
     aka: 'лимон, цитрус, мандарин, апельсин, каламондин, citrus, lemon, павловский',
     lux: [20000, 50000], every: 4, type: 'soil', check: 'Верхние 2 см сухие?',
@@ -820,6 +885,7 @@ const PLANTS = [
   // Succulents and cacti
   {
     id: 'sansevieria', species: 'Сансевиерия', cat: 'Суккуленты и кактусы', emoji: '🐍',
+    alt: 'тёщин язык, щучий хвост, snake plant',
     pets: 'toxic', petsNote: 'Тошнота, рвота, понос.',
     aka: 'сансевиерия, сансевьера, щучий хвост, тещин язык, sansevieria, dracaena trifasciata, лауренти, цилиндрическая',
     lux: [2000, 20000], every: 18, type: 'dry',
@@ -831,6 +897,7 @@ const PLANTS = [
   },
   {
     id: 'aloe', species: 'Алоэ', cat: 'Суккуленты и кактусы', emoji: '🩹',
+    alt: 'столетник, aloe vera',
     pets: 'toxic', petsNote: 'Рвота, вялость, понос. Гель внутри листа считается неопасным.',
     prune: { no: 'Большинству суккулентов и кактусов обрезка не нужна. Вытягиваются они от нехватки света, и помогает тут свет.' },
     aka: 'алоэ, aloe, алоэ вера, aloe vera, столетник',
@@ -842,7 +909,8 @@ const PLANTS = [
     quips: ['Я сам себе аптечка.', 'Солнышка бы, а воды не надо.', 'Растянулся? Это я ищу свет.'],
   },
   {
-    id: 'crassula', species: 'Толстянка (денежное дерево)', cat: 'Суккуленты и кактусы', emoji: '💰',
+    id: 'crassula', species: 'Толстянка', cat: 'Суккуленты и кактусы', emoji: '💰',
+    alt: 'денежное дерево, jade plant',
     pets: 'toxic', petsNote: 'Рвота, вялость, нарушение координации.',
     prune: { tip: 'Обычно не обрезают. Вытянувшуюся ветку можно укоротить над узлом, оттуда пойдут новые побеги.' },
     aka: 'толстянка, крассула, денежное дерево, crassula, jade, ovata, хоббит, голлум',
@@ -855,6 +923,7 @@ const PLANTS = [
   },
   {
     id: 'haworthia', species: 'Хавортия', cat: 'Суккуленты и кактусы', emoji: '🦓',
+    alt: '',
     pets: 'safe',
     prune: { no: 'Большинству суккулентов и кактусов обрезка не нужна. Вытягиваются они от нехватки света, и помогает тут свет.' },
     aka: 'хавортия, haworthia, зебра, гастерия',
@@ -867,6 +936,7 @@ const PLANTS = [
   },
   {
     id: 'echeveria', species: 'Эхеверия', cat: 'Суккуленты и кактусы', emoji: '🪷',
+    alt: '',
     pets: 'safe',
     prune: { no: 'Обрезка не нужна, нижние листья отмирают сами. Если стебель оголился, розетку срезать с коротким пеньком, подсушить от 1 дня до недели и посадить.' },
     aka: 'эхеверия, echeveria, каменная роза, молодило, грачтопеталум',
@@ -878,7 +948,8 @@ const PLANTS = [
     quips: ['Я каменная роза. Не поливайте меня в сердце.', 'Мало солнца, и я расту жирафом.', 'Сухо, светло, хорошо.'],
   },
   {
-    id: 'schlumbergera', species: 'Декабрист (шлюмбергера)', cat: 'Суккуленты и кактусы', emoji: '🎄',
+    id: 'schlumbergera', species: 'Шлюмбергера', cat: 'Суккуленты и кактусы', emoji: '🎄',
+    alt: 'декабрист, рождественник, christmas cactus',
     pets: 'safe',
     prune: { tip: 'Формировать после цветения: выкручивать крайние членики с самых сильных побегов.' },
     aka: 'декабрист, шлюмбергера, зигокактус, рождественник, schlumbergera, рипсалидопсис',
@@ -892,6 +963,7 @@ const PLANTS = [
   // Carnivorous: only distilled, reverse osmosis or clean rain water (`distilled`), no fertilizer.
   {
     id: 'dionaea', species: 'Венерина мухоловка', cat: 'Хищные растения', emoji: '🪤', distilled: true, noFeed: true,
+    alt: 'venus flytrap',
     rest: { start: 'Ушла в зимний покой', end: 'Пошли новые ловушки',
       tip: 'Зимой мухоловка отдыхает 6–10 недель в прохладе 4–10 °C на светлом месте. Грунт влажный, без воды в поддоне. Старые ловушки чернеют, это нормально.',
       water: 'Сейчас покой: грунт влажный, без воды в поддоне.' },
@@ -907,6 +979,7 @@ const PLANTS = [
   },
   {
     id: 'drosera', species: 'Росянка', cat: 'Хищные растения', emoji: '💧', distilled: true, noFeed: true,
+    alt: 'sundew',
     pets: 'unlisted',
     aka: 'росянка капская, капская, drosera, capensis, sundew, росянка алисия, алисия, aliciae',
     lux: [15000, 25000], every: 3, type: 'peat', watering: 'tray', check: 'Воды в поддоне мало? Зимой поддон пустой, грунт только влажный.',
@@ -918,6 +991,7 @@ const PLANTS = [
   },
   {
     id: 'nepenthes', species: 'Непентес', cat: 'Хищные растения', emoji: '🏺', distilled: true, noFeed: true, humid: true,
+    alt: 'tropical pitcher plant',
     pets: 'unlisted',
     prune: { no: 'Обрезка не нужна. Засохший кувшин срезать там, где он начинается на кончике листа.' },
     aka: 'nepenthes, кувшиночник, кровавая мэри, bloody mary, вентрата, ventrata, pitcher plant',
@@ -930,7 +1004,8 @@ const PLANTS = [
   },
   // Flowering
   {
-    id: 'violet', species: 'Фиалка (сенполия)', cat: 'Цветущие и орхидеи', emoji: '💜',
+    id: 'violet', species: 'Сенполия', cat: 'Цветущие и орхидеи', emoji: '💜',
+    alt: 'фиалка, узамбарская фиалка, african violet',
     pets: 'safe', wickTested: true,
     prune: { tip: 'Отцветшие цветки обрывать, а когда отцвёл последний, срезать весь цветонос у основания.' },
     aka: 'фиалка, сенполия, узамбарская, saintpaulia, african violet',
@@ -942,7 +1017,8 @@ const PLANTS = [
     quips: ['Не брызгайте на меня, я бархатная.', 'Тёплой водички, пожалуйста.', 'Света побольше, цветов побольше.'],
   },
   {
-    id: 'pelargonium', species: 'Пеларгония (герань)', cat: 'Цветущие и орхидеи', emoji: '🌺',
+    id: 'pelargonium', species: 'Пеларгония', cat: 'Цветущие и орхидеи', emoji: '🌺',
+    alt: 'герань, geranium',
     pets: 'toxic', petsNote: 'Рвота, отказ от еды, вялость, раздражение кожи.',
     prune: { months: [2], tip: 'Вытянутые стебли укоротить в феврале над узлом. Прищипка верхушек откладывает цветение.' },
     aka: 'пеларгония, герань, pelargonium, geranium, зональная, королевская',
@@ -955,6 +1031,7 @@ const PLANTS = [
   },
   {
     id: 'kalanchoe', species: 'Каланхоэ', cat: 'Цветущие и орхидеи', emoji: '🌼', feedEvery: 14,
+    alt: '',
     pets: 'toxic', petsNote: 'Рвота, понос, изредка нарушение сердечного ритма.',
     prune: { tip: 'Обычно не обрезают. Вытянувшуюся ветку можно укоротить над узлом, оттуда пойдут новые побеги.' },
     aka: 'каланхоэ, kalanchoe, блоссфельда, каландива, дегремона',
@@ -966,7 +1043,8 @@ const PLANTS = [
     quips: ['Я суккулент в нарядном платье.', 'Перелив, и цветы до свидания.', 'Хотите цветов? Подарите мне ночь.'],
   },
   {
-    id: 'hibiscus', species: 'Гибискус (китайская роза)', cat: 'Цветущие и орхидеи', emoji: '🌺',
+    id: 'hibiscus', species: 'Гибискус', cat: 'Цветущие и орхидеи', emoji: '🌺',
+    alt: 'китайская роза, chinese hibiscus',
     pets: 'safe',
     prune: { months: [3, 4], tip: 'Разросшийся гибискус можно сильно укоротить ранней весной.' },
     aka: 'гибискус, китайская роза, hibiscus, розан',
@@ -979,6 +1057,7 @@ const PLANTS = [
   },
   {
     id: 'begonia', species: 'Бегония', cat: 'Цветущие и орхидеи', emoji: '🩷',
+    alt: '',
     pets: 'toxic', petsNote: 'Рвота и слюнотечение.',
     prune: { months: [2, 3], tip: 'Вытянутую бегонию омолаживают обрезкой в конце зимы. Отцветшие цветки убирать сразу: на них начинается серая гниль.' },
     aka: 'бегония, begonia, королевская, макулата, элатиор, клубневая',
@@ -991,8 +1070,10 @@ const PLANTS = [
   },
   {
     id: 'tillandsia', species: 'Тилландсия', cat: 'Цветущие и орхидеи', emoji: '🌾', noBadge: true,
+    alt: 'air plant',
     pets: 'unlisted',
     aka: 'тилландсия, воздушное растение, атмосферная, air plant, tillandsia, ионанта, ксерографика, усния, испанский мох',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     hint: 'атмосферная, без грунта',
     lux: [8000, 20000], every: 4, type: 'mount', check: 'Листья посветлели и стали мягче?',
     water: 'Замачивать на 20–30 минут раз в неделю или сбрызгивать через 2–3 дня. Потом стряхнуть и сушить розеткой вниз, чтобы высохла за 4 часа. Раз в месяц добавлять удобрение для бромелиевых в четверть дозы.',
@@ -1012,7 +1093,7 @@ const PLANTS = [
     quips: ['Мы растим корни. Не подглядывайте. Ладно, подглядывайте.', 'Свежая вода, свежие корешки.', 'Скоро будем настоящими растениями!'],
   },
   {
-    id: 'g-mount', species: 'Эпифит на блоке', cat: 'Общие типы', emoji: '🪵', generic: true,
+    id: 'g-mount', species: 'Эпифит на блоке', cat: 'Общие типы', emoji: '🪵', generic: true, hidden: true,
     aka: 'на блоке, блок, коряга, на коряге, на коре, эпифит, эпифиты, маунт, mount, epiphyte, орхидея на блоке, хойя на коре',
     hint: 'орхидеи, хойи, папоротники на коряге',
     lux: [6000, 15000], every: 3, type: 'mount',

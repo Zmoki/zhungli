@@ -70,14 +70,14 @@ function typoMatcher(readings) {
   };
 }
 // A catalog row. Adding, it ticks the card; changing a plant's card (`changeFor`: its id, `nowId`: its card), it picks this one.
+// The picture is a square tile, the drawing fitted into its middle (plantSvg's square viewBox); under the name one line: another name people know it by
+// (`alt`) and the hint (generic types). Pet safety isn't here: it shows on the plant, with pets on.
 function pickRow(d, changeFor, nowId) {
-  // The same words as the plant card's tags; screen readers hear «для питомцев» too.
-  const pets = petsOn() && { toxic: 'опасно', safe: 'безопасно' }[petsOf(d)];
-  const meta = `${d.hint ? esc(d.hint) + ' · ' : ''}${pets ? `<span class="pet-tag ${petsOf(d) === 'toxic' ? 'danger' : 'safe'}">${I(petsOf(d) === 'toxic' ? 'paw-toxic' : 'paw-print')}${pets}<span class="sr-only"> для питомцев</span></span> · ` : ''}свет ${kLux(d.lux[0])}–${kLux(d.lux[1])} ${LK}`;
   const now = !!changeFor && nowId === d.id;
+  const sub = [now ? 'сейчас' : '', d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
-  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.hint, d.aka].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
-    <span class="pe" aria-hidden="true">${plantSvg(d, 'fine')}</span><span class="pt"><b>${esc(d.species)}</b><small>${now ? 'сейчас · ' : ''}${meta}</small></span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
+  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.alt, d.hint, d.aka, d.findBy].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
+    <span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
 let addFlow = null;
@@ -96,12 +96,14 @@ function endAddFlow(leftApp = false) {
   addFlow = null;
 }
 let searchTimer;
+const byCatalogName = (a, b) => !!a.generic - !!b.generic || (!a.generic && a.species.localeCompare(b.species, 'ru'));
 // The catalog by groups under a search box: in the add sheet and when changing a plant's card (`changeFor`).
 function catalogHtml(changeFor) {
   const groups = {};
   PLANTS.filter((d) => !d.hidden).forEach((d) => { (groups[d.cat] ||= []).push(d); });
-  // A generic type closes its group («Орхидея» after «Фаленопсис»), as «Общие типы» close the list.
-  Object.values(groups).forEach((ds) => ds.sort((a, b) => !!a.generic - !!b.generic));
+  // Plants by name, A to Я («Алоказия» comes before its varieties); a generic type closes its group («Орхидея» after
+  // «Фаленопсис»), as «Общие типы» close the list, in the order they're written.
+  Object.values(groups).forEach((ds) => ds.sort(byCatalogName));
   const cats = Object.keys(groups).sort((a, b) => catRank(a) - catRank(b));
   const nowId = changeFor && def(changeFor).id;
   return `<div class="search pick-search"><input class="input" id="pick-q" type="search" aria-label="Поиск растений" placeholder="Поиск: монстера, кактус, фиалка…" autocomplete="off">${I('search')}${searchX('')}</div>
@@ -496,7 +498,7 @@ function wordFits(w, t) {
 let catalogNames = null;
 function catalogCard(it) {
   catalogNames ||= PLANTS.filter((d) => !d.hidden)
-    .map((d) => ({ d, names: [d.species, ...String(d.aka || '').split(',')].map(matchWords).filter((ws) => ws.length) }));
+    .map((d) => ({ d, names: [d.species, ...String([d.alt, d.aka].filter(Boolean).join(',')).split(',')].map(matchWords).filter((ws) => ws.length) }));
   const words = matchWords(`${it.species} ${it.latin}`);
   let best = null, top = [0, 0, 0];
   catalogNames.forEach(({ d, names }) => {
@@ -517,7 +519,8 @@ function catalogCard(it) {
   return best;
 }
 // A plant the catalog doesn't have becomes an own plant like a generic type: the one for its medium
-// (water, a block, a terrarium, an aquarium), else the one the AI said it's like.
+// (water, a block, a terrarium, an aquarium), else the one the AI said it's like. «Эпифит на блоке» is hidden from the
+// catalog (a known plant on a block is that plant with «На блоке»), but still the base for an unknown one.
 const MEDIUM_LIKE = { water: 'cuttings', mount: 'g-mount', terrarium: 'g-terrarium', aquarium: 'g-aquarium' };
 const importBase = (it) => {
   const id = MEDIUM_LIKE[it.type] || it.like || { dry: 'g-succ', bark: 'g-orchid' }[it.type] || 'g-easy';
@@ -859,7 +862,7 @@ function renderImportList() {
       it.card ? '' : 'нет в каталоге', it.guess ? 'по фото, проверьте' : ''].filter(Boolean).join(' · ');
     const pic = it.card || { species: it.species, type: it.type || it.base.type };
     return `<button class="pick ${ticked ? 'on' : ''}" data-act="import-pick" data-i="${i}" aria-pressed="${ticked}">
-      <span class="pe" aria-hidden="true">${plantSvg(pic, 'fine')}</span><span class="pt"><b>${[it.name, it.species].filter(Boolean).map(typedHtml).join(' · ')}</b>${sub ? `<small>${sub}</small>` : ''}</span>
+      <span class="pe fit" aria-hidden="true">${plantSvg(pic, 'fine', true)}</span><span class="pt"><b>${[it.name, it.species].filter(Boolean).map(typedHtml).join(' · ')}</b>${sub ? `<small>${sub}</small>` : ''}</span>
       <span class="pc" aria-hidden="true">${I(ticked ? 'check' : 'plus')}</span></button>`;
   }).join('');
   updateImportBar();
@@ -867,7 +870,7 @@ function renderImportList() {
 // The add button stays in place: disabled with nothing ticked.
 const updateImportBar = () => setAddButton($('#imp-add'), imp.picked.size, 'Ничего не выбрано');
 // A plant with a catalog card: added like one from the catalog, keeping the AI's name for it as the species
-// («Монстера Тай Констеллейшн» on «Монстера deliciosa»). A medium or watering the chat mentioned is set as if
+// («Монстера Тай Констеллейшн» on «Монстера деликатесная»). A medium or watering the chat mentioned is set as if
 // picked in the plant card, without the «just repotted» pause: the plant already grows that way.
 function importCard(it, i, place) {
   const d = it.card, id = newId('p', i);
