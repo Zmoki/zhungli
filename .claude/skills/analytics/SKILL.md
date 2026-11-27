@@ -38,7 +38,7 @@ PostHog: project 720394 (US cloud), through the PostHog MCP tools. Every chart a
 
 ## Dashboards
 
-One dashboard per event prefix, with tile groups shown as sections (`group_display: sections`, a `group_key` per tile). The list is at the top of ANALYTICS.md; keep it current there. A new chart goes on its prefix's dashboard, in the matching section. «first run» stays simple on purpose (the user mostly looks at «Onboarding steps»): don't add tiles there without asking. Ask before creating a dashboard: the user didn't want one for Light and Room.
+One dashboard per event prefix, with tile groups shown as sections (`group_display: sections`, a `group_key` per tile). The list is at the top of ANALYTICS.md; keep it current there. A new chart goes on its prefix's dashboard, in the matching section. «Weekly progress» is the one exception: a short cross-area summary; when an event it counts is renamed, update it too. «first run» stays simple on purpose (the user mostly looks at «Onboarding steps»): don't add tiles there without asking. Ask before creating a dashboard: the user didn't want one for Light and Room.
 
 Layout: tiles 6 wide and 5 tall, two per row; each group starts on a new row; send every tile of the dashboard with a full `sm` box in one `dashboard-update`.
 

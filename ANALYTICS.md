@@ -6,6 +6,7 @@ Dashboards, one per event prefix (sections inside), all without our own devices:
 
 | Dashboard | Shows |
 | --- | --- |
+| [«Weekly progress»](https://us.posthog.com/project/720394/dashboard/2412831) | the one cross-area summary: this week vs last week at the same time, a core trend, and week by week (active devices, new people, watering, finished days, plants added, errors, slow taps) |
 | [«boring stuff»](https://us.posthog.com/project/720394/dashboard/2333552) | standard app metrics: active devices, retention, activation, errors |
 | [«first run»](https://us.posthog.com/project/720394/dashboard/2379017) | «Onboarding steps» (kept simple), the install card below |
 | [«App»](https://us.posthog.com/project/720394/dashboard/2398508) | `app_*` but health: launches, tabs and pages, settings, backups and sync, installing |
