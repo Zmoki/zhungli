@@ -95,7 +95,7 @@ const SHAPE_BY_ID = {
   alocasia: 'arrow', aglaonema: 'upright', dieffenbachia: 'upright', 'epipremnum-aureum': 'trailing', 'scindapsus-pictus': 'trailing',
   hoya: 'trailing', 'hedera-helix': 'trailing', tradescantia: 'trailing', 'chlorophytum-comosum': 'trailing', peperomia: 'leafy',
   'pilea-peperomioides': 'leafy', 'aspidistra-elatior': 'upright', 'codiaeum-variegatum': 'tree', calathea: 'prayer', 'maranta-leuconeura': 'prayer', 'nephrolepis-exaltata': 'leafy',
-  'fittonia-albivenis': 'prayer', 'ficus-benjamina': 'tree', 'ficus-lyrata': 'tree', 'dracaena-marginata': 'palm',
+  'fittonia-albivenis': 'prayer', 'ficus-benjamina': 'tree', 'ficus-lyrata': 'tree', 'ficus-microcarpa': 'tree', pachira: 'tree', 'dracaena-marginata': 'palm',
   'dracaena-fragrans': 'palm', 'yucca-gigantea': 'palm', 'heptapleurum-arboricola': 'tree', citrus: 'tree', 'aloe-vera': 'succulent',
   'crassula-ovata': 'succulent', haworthia: 'succulent', echeveria: 'succulent', pelargonium: 'flowering',
   'hibiscus-rosa-sinensis': 'flowering', begonia: 'flowering',
