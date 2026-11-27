@@ -488,7 +488,7 @@ const PLANTS = [
   },
   {
     id: 'chamae', species: 'Хамедорея изящная', cat: 'Пальмы, драцены и деревья', emoji: '🌴', humid: true,
-    alt: 'parlor palm',
+    alt: 'бамбуковая пальма, parlor palm',
     pets: 'safe',
     prune: { no: 'Пальму не обрезают: у ствола одна точка роста, и срезанный ствол погибает. Засохшие листья срезать у ствола, не выдёргивая.' },
     aka: 'пальма, chamaedorea',
@@ -514,7 +514,7 @@ const PLANTS = [
   },
   {
     id: 'strel', species: 'Стрелиция Николая', cat: 'Пальмы, драцены и деревья', emoji: '🦜', big: true,
-    alt: 'райская птица, bird of paradise flower',
+    alt: 'райская птица, giant bird of paradise',
     pets: 'toxic', petsNote: 'Тошнота, рвота, сонливость.',
     prune: { no: 'Обрезка нужна только для порядка. Побуревшие листья и отцветший цветонос срезать у основания.' },
     aka: 'стрелиция, райская птица, strelitzia',
@@ -693,7 +693,7 @@ const PLANTS = [
   },
   {
     id: 'aspidistra', species: 'Аспидистра', cat: 'Декоративно-лиственные', emoji: '🗡️', big: true,
-    alt: 'дружная семейка, cast iron plant',
+    alt: 'cast iron plant',
     pets: 'safe',
     aka: 'аспидистра, aspidistra, чугунное растение, дружная семейка',
     lux: [1000, 10000], every: 9, type: 'soil',
@@ -847,7 +847,7 @@ const PLANTS = [
   },
   {
     id: 'schefflera', species: 'Шеффлера', cat: 'Пальмы, драцены и деревья', emoji: '☂️', rotate: true,
-    alt: 'зонтичное дерево, umbrella tree',
+    alt: 'dwarf umbrella tree',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Вытянутую шеффлеру можно сильно укоротить ранней весной. Тонкие длинные стебли значат, что ей мало света.' },
     aka: 'шеффлера, шефлера, schefflera, зонтичное дерево, арборикола',
@@ -860,7 +860,7 @@ const PLANTS = [
   },
   {
     id: 'bokarnea', species: 'Бокарнея', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
-    alt: 'нолина, бутылочное дерево, pony tail',
+    alt: 'нолина, бутылочное дерево, ponytail palm',
     pets: 'safe',
     aka: 'бокарнея, нолина, бутылочное дерево, слоновая нога, beaucarnea, nolina',
     lux: [15000, 40000], every: 18, type: 'dry',
@@ -885,7 +885,7 @@ const PLANTS = [
   // Succulents and cacti
   {
     id: 'sansevieria', species: 'Сансевиерия', cat: 'Суккуленты и кактусы', emoji: '🐍',
-    alt: 'щучий хвост, тёщин язык, snake plant',
+    alt: 'тёщин язык, щучий хвост, snake plant',
     pets: 'toxic', petsNote: 'Тошнота, рвота, понос.',
     aka: 'сансевиерия, сансевьера, щучий хвост, тещин язык, sansevieria, dracaena trifasciata, лауренти, цилиндрическая',
     lux: [2000, 20000], every: 18, type: 'dry',
@@ -936,7 +936,7 @@ const PLANTS = [
   },
   {
     id: 'echeveria', species: 'Эхеверия', cat: 'Суккуленты и кактусы', emoji: '🪷',
-    alt: 'каменная роза, hens and chickens',
+    alt: '',
     pets: 'safe',
     prune: { no: 'Обрезка не нужна, нижние листья отмирают сами. Если стебель оголился, розетку срезать с коротким пеньком, подсушить от 1 дня до недели и посадить.' },
     aka: 'эхеверия, echeveria, каменная роза, молодило, грачтопеталум',
@@ -948,8 +948,8 @@ const PLANTS = [
     quips: ['Я каменная роза. Не поливайте меня в сердце.', 'Мало солнца, и я расту жирафом.', 'Сухо, светло, хорошо.'],
   },
   {
-    id: 'schlumbergera', species: 'Декабрист', cat: 'Суккуленты и кактусы', emoji: '🎄',
-    alt: 'шлюмбергера, christmas cactus',
+    id: 'schlumbergera', species: 'Шлюмбергера', cat: 'Суккуленты и кактусы', emoji: '🎄',
+    alt: 'декабрист, рождественник, christmas cactus',
     pets: 'safe',
     prune: { tip: 'Формировать после цветения: выкручивать крайние членики с самых сильных побегов.' },
     aka: 'декабрист, шлюмбергера, зигокактус, рождественник, schlumbergera, рипсалидопсис',
@@ -1004,8 +1004,8 @@ const PLANTS = [
   },
   // Flowering
   {
-    id: 'violet', species: 'Фиалка', cat: 'Цветущие и орхидеи', emoji: '💜',
-    alt: 'сенполия, african violet',
+    id: 'violet', species: 'Сенполия', cat: 'Цветущие и орхидеи', emoji: '💜',
+    alt: 'фиалка, узамбарская фиалка, african violet',
     pets: 'safe', wickTested: true,
     prune: { tip: 'Отцветшие цветки обрывать, а когда отцвёл последний, срезать весь цветонос у основания.' },
     aka: 'фиалка, сенполия, узамбарская, saintpaulia, african violet',

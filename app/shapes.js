@@ -92,7 +92,7 @@ const SHAPE_BY_ID = {
   chamae: 'palm', rhapis: 'palm', strel: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
   // Where the name or growing medium would pick the wrong drawing.
   syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
-  schlumbergera: 'trailing', kalanchoe: 'flowering',
+  schlumbergera: 'trailing', kalanchoe: 'flowering', violet: 'flowering',
   tillandsia: 'succulent', 'g-mount': 'orchid', 'g-terrarium': 'prayer', 'g-aquarium': 'trailing',
   dionaea: 'flytrap', drosera: 'sundew', nepenthes: 'pitcher',
 };
@@ -120,7 +120,7 @@ function shapeOf(d) {
   if (/росянк|жирянк/.test(s)) return 'sundew';
   if (/непентес|саррацен/.test(s)) return 'pitcher';
   if (/потос|эпипремн|сциндапс|хойя|плющ|традеск|хлорофит|сингони|филодендрон скан|аквариум/.test(s)) return 'trailing';
-  if (/фиалк|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
+  if (/фиалк|сенпол|бегони|гербер|цвет|роз|герань|пеларгон|антуриум|гибискус/.test(s)) return 'flowering';
   if (/базилик|мят|петруш|укроп|розмарин|тимьян|рассад|зелень/.test(s)) return 'herbs';
   return 'leafy';
 }
