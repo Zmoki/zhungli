@@ -700,9 +700,15 @@ button.info { display: block; width: 100%; border: 0; text-align: left; font: in
 .pick.on .pc { color: var(--green); }
 .pick .pe { overflow: hidden; }
 .pick .pe img { width: 100%; height: 100%; object-fit: cover; }
-/* Catalog rows (pickRow), AI import rows and the care card in «Настройки» (cardNow): a square tile, the drawing in a square viewBox around
+/* Catalog rows (pickRow), AI import rows and the care card in «Настройки» (cardNow): a tile (a strip in .strip rows), the drawing in a square viewBox around
    it (SHAPE_FIT), so it sits in the middle */
 .pick .pe.fit { width: 56px; height: 56px; }
+/* Catalog and AI import rows: the picture is a strip down the row's left edge, full height and square on its right,
+   with no padding around it, so the names get the width. The row's rounded border clips its left corners. */
+.pick.strip { padding: 0 12px 0 0; overflow: hidden; }
+.pick.strip .pe.fit { align-self: stretch; width: 48px; height: auto; min-height: 72px; border-radius: 0; }
+.pick.strip .pe.fit svg.pl { width: 44px; height: 44px; }
+.pick.strip .pt { padding: 10px 0; }
 /* «Карточка ухода» open: the plant's card as a catalog row, not a control (a quiet border) */
 .pick.card-now { border-color: var(--line); background: var(--card); flex-direction: column; align-items: stretch; gap: 0; }
 /* The catalog row on top, then a line, then the card's characteristics */

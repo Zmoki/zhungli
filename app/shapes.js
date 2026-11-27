@@ -176,7 +176,7 @@ const SHAPE_FIT = {
   cutting: '1.3 1.4 61.4 61.4',
 };
 // m: mood class (fine, need, watered, dim, hot) to draw a face; none for tiny icons. fit: the square viewBox (SHAPE_FIT)
-// for small square tiles (catalog rows) instead of the 64×64 one the grid's tall tiles use.
+// for small tiles (the catalog rows' strip, the care card) instead of the 64×64 one the grid's tall tiles use.
 const plantSvg = (d, m, fit = false) => {
   const shape = shapeOf(d);
   let face = m && FACES[m] ? CHEEKS + FACES[m] : '';

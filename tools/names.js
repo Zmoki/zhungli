@@ -11,7 +11,7 @@
 // лировидный» among the ficuses and «Строманта Триостар» for a variety.
 // A card with several plants of one file that isn't the only one there («Аглаонема серебристая») keeps the names
 // written in the app. Title: name.ru. Second line: the first two of name.aka, then name.en (a lone species card's own one, if it has
-// one), then title (Latin), at most three, none twice and none the same as the title. Search: every ru, en, aka and title of the card's plants
+// one), then title (Latin), at most three and at most 35 characters (whole names, in that order, while they fit), none twice and none the same as the title. Search: every ru, en, aka and title of the card's plants
 // and their genus. Text as written in the content, case included.
 'use strict';
 const fs = require('fs');
@@ -25,6 +25,8 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 const CONTENT = path.resolve(ROOT, arg('--content', '../zhungli-content'));
 const REF = arg('--ref', 'origin/main');
 const WRITE = process.argv.includes('--write');
+// The second line's length limit, in characters.
+const LINE = 35;
 
 const git = (...a) => execFileSync('git', ['-C', CONTENT, ...a], { encoding: 'utf8', maxBuffer: 1 << 26 });
 
@@ -162,7 +164,13 @@ for (const d of PLANTS) {
   // species' («Bird of Paradise» is Strelitzia reginae, the card is S. nicolai, «Giant Bird of Paradise»).
   const own = hits[0].plant !== g && hits[0].plant.name && hits[0].plant.name.en;
   const en = (source === g && own) || n.en;
-  const line = uniq([...(n.aka || []).filter((a) => only || !claimed.has(key(a))).slice(0, 2), en, source.title], [n.ru]).slice(0, 3);
+  // At most LINE characters with the hint, so it stays one line in a row: names are added in order while they fit,
+  // never cut; the first always shows. What doesn't fit is still searched (names).
+  const line = [], room = LINE - (d.hint ? d.hint.length + 3 : 0); // the hint follows after « · »
+  for (const s of uniq([...(n.aka || []).filter((a) => only || !claimed.has(key(a))).slice(0, 2), en, source.title], [n.ru]).slice(0, 3)) {
+    if (line.length && [...line, s].join(', ').length > room) break;
+    line.push(s);
+  }
   want.set(d.id, { species: n.ru, alt: line.join(', '), search });
 }
 
