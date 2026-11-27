@@ -10,6 +10,8 @@
 //   (a tillandsia's `mount` care also fits one in a hanger or on a shelf).
 // ways: tips for another medium the plant is often grown in, { sphagnum: { water, soil } }; shown instead of that medium's general ones.
 // aka: extra search words only (folk and Latin names, close relatives); never shown.
+// findBy: catalog search words that aren't the plant's names (how it's often grown: «на блоке»); not used to match
+//   an AI import, so «Платицериум на блоке» isn't taken for a phalaenopsis.
 // species: the official Russian name (zhungli-content plants/*.yml `name`, or the species' `ru` when the catalog has
 //   several of the genus), one name, no brackets.
 // alt: the second line of the catalog row, lowercase, names joined with «, »: one or two folk names people search by
@@ -455,7 +457,7 @@ const PLANTS = [
   },
   {
     id: 'spath', species: 'Спатифиллум', cat: 'Ароидные', emoji: '🕊️', big: true,
-    alt: 'peace lily',
+    alt: 'женское счастье, peace lily',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { tip: 'Отцветшие цветоносы и увядающие листья срезать у основания. Резать в перчатках: сок раздражает кожу.' },
     aka: 'женское счастье, spathiphyllum, peace lily',
@@ -512,7 +514,7 @@ const PLANTS = [
   },
   {
     id: 'strel', species: 'Стрелиция Николая', cat: 'Пальмы, драцены и деревья', emoji: '🦜', big: true,
-    alt: 'bird of paradise flower',
+    alt: 'райская птица, bird of paradise flower',
     pets: 'toxic', petsNote: 'Тошнота, рвота, сонливость.',
     prune: { no: 'Обрезка нужна только для порядка. Побуревшие листья и отцветший цветонос срезать у основания.' },
     aka: 'стрелиция, райская птица, strelitzia',
@@ -527,7 +529,7 @@ const PLANTS = [
     id: 'banana', species: 'Банан', cat: 'Пальмы, драцены и деревья', emoji: '🍌', big: true, humid: true,
     alt: '',
     pets: 'safe',
-    aka: 'банан, musa, banana',
+    aka: 'банан, musa, banana, банан комнатный',
     lux: [20000, 40000], every: 5, type: 'soil',
     water: 'В активный рост поливать обильно после подсыхания верхних 2–3 см, лишнюю воду сливать.',
     soil: 'Питательный рыхлый грунт. Крупный горшок с отверстиями.',
@@ -542,6 +544,7 @@ const PLANTS = [
     pets: 'safe',
     prune: { no: 'Орхидею не обрезают, срезают только цветонос и сухие бурые корни. Зелёный цветонос срезать над второй спящей почкой, засохший у основания.' },
     aka: 'орхидея, phalaenopsis, orchid',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     lux: [5000, 15000], every: 7, type: 'bark',
     // Often sold in sphagnum, which holds water much longer than bark. Fed the same way as on bark.
     ways: { sphagnum: {
@@ -615,6 +618,7 @@ const PLANTS = [
     pets: 'safe',
     prune: { months: [2, 3], tip: 'Обрезать слегка, сильную обрезку хойя переносит плохо. Отцветшие короткие цветоносы не срезать: на них она цветёт снова.' },
     aka: 'хойя, восковой плющ, hoya, carnosa, kerrii, керри, хойя керри, хойя карноза',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     lux: [8000, 20000], every: 10, type: 'soil', check: 'Грунт сухой на 2/3 глубины?',
     water: 'Между поливами грунт почти полностью просыхает. Зимой реже.',
     soil: 'Поровну грунта, коры для орхидей и перлита.',
@@ -689,7 +693,7 @@ const PLANTS = [
   },
   {
     id: 'aspidistra', species: 'Аспидистра', cat: 'Декоративно-лиственные', emoji: '🗡️', big: true,
-    alt: 'cast iron plant',
+    alt: 'дружная семейка, cast iron plant',
     pets: 'safe',
     aka: 'аспидистра, aspidistra, чугунное растение, дружная семейка',
     lux: [1000, 10000], every: 9, type: 'soil',
@@ -740,7 +744,7 @@ const PLANTS = [
   },
   {
     id: 'fern', species: 'Нефролепис', cat: 'Влаголюбивые', emoji: '🌾', humid: true,
-    alt: 'папоротник',
+    alt: 'папоротник, boston fern',
     pets: 'safe',
     aka: 'нефролепис, папоротник, nephrolepis, бостонский, fern',
     lux: [3000, 10000], every: 3, type: 'soil', check: 'Верх грунта подсох?',
@@ -843,7 +847,7 @@ const PLANTS = [
   },
   {
     id: 'schefflera', species: 'Шеффлера', cat: 'Пальмы, драцены и деревья', emoji: '☂️', rotate: true,
-    alt: 'umbrella tree',
+    alt: 'зонтичное дерево, umbrella tree',
     pets: 'toxic', petsNote: 'Жжение и отёк во рту, слюнотечение, рвота, трудно глотать.',
     prune: { months: [3, 4], tip: 'Вытянутую шеффлеру можно сильно укоротить ранней весной. Тонкие длинные стебли значат, что ей мало света.' },
     aka: 'шеффлера, шефлера, schefflera, зонтичное дерево, арборикола',
@@ -856,7 +860,7 @@ const PLANTS = [
   },
   {
     id: 'bokarnea', species: 'Бокарнея', cat: 'Пальмы, драцены и деревья', emoji: '🐘',
-    alt: 'нолина, бутылочное дерево',
+    alt: 'нолина, бутылочное дерево, pony tail',
     pets: 'safe',
     aka: 'бокарнея, нолина, бутылочное дерево, слоновая нога, beaucarnea, nolina',
     lux: [15000, 40000], every: 18, type: 'dry',
@@ -881,7 +885,7 @@ const PLANTS = [
   // Succulents and cacti
   {
     id: 'sansevieria', species: 'Сансевиерия', cat: 'Суккуленты и кактусы', emoji: '🐍',
-    alt: 'snake plant',
+    alt: 'щучий хвост, тёщин язык, snake plant',
     pets: 'toxic', petsNote: 'Тошнота, рвота, понос.',
     aka: 'сансевиерия, сансевьера, щучий хвост, тещин язык, sansevieria, dracaena trifasciata, лауренти, цилиндрическая',
     lux: [2000, 20000], every: 18, type: 'dry',
@@ -906,7 +910,7 @@ const PLANTS = [
   },
   {
     id: 'crassula', species: 'Толстянка', cat: 'Суккуленты и кактусы', emoji: '💰',
-    alt: 'денежное дерево',
+    alt: 'денежное дерево, jade plant',
     pets: 'toxic', petsNote: 'Рвота, вялость, нарушение координации.',
     prune: { tip: 'Обычно не обрезают. Вытянувшуюся ветку можно укоротить над узлом, оттуда пойдут новые побеги.' },
     aka: 'толстянка, крассула, денежное дерево, crassula, jade, ovata, хоббит, голлум',
@@ -932,7 +936,7 @@ const PLANTS = [
   },
   {
     id: 'echeveria', species: 'Эхеверия', cat: 'Суккуленты и кактусы', emoji: '🪷',
-    alt: 'hens and chickens',
+    alt: 'каменная роза, hens and chickens',
     pets: 'safe',
     prune: { no: 'Обрезка не нужна, нижние листья отмирают сами. Если стебель оголился, розетку срезать с коротким пеньком, подсушить от 1 дня до недели и посадить.' },
     aka: 'эхеверия, echeveria, каменная роза, молодило, грачтопеталум',
@@ -945,7 +949,7 @@ const PLANTS = [
   },
   {
     id: 'schlumbergera', species: 'Декабрист', cat: 'Суккуленты и кактусы', emoji: '🎄',
-    alt: 'шлюмбергера',
+    alt: 'шлюмбергера, christmas cactus',
     pets: 'safe',
     prune: { tip: 'Формировать после цветения: выкручивать крайние членики с самых сильных побегов.' },
     aka: 'декабрист, шлюмбергера, зигокактус, рождественник, schlumbergera, рипсалидопсис',
@@ -1001,7 +1005,7 @@ const PLANTS = [
   // Flowering
   {
     id: 'violet', species: 'Фиалка', cat: 'Цветущие и орхидеи', emoji: '💜',
-    alt: 'сенполия',
+    alt: 'сенполия, african violet',
     pets: 'safe', wickTested: true,
     prune: { tip: 'Отцветшие цветки обрывать, а когда отцвёл последний, срезать весь цветонос у основания.' },
     aka: 'фиалка, сенполия, узамбарская, saintpaulia, african violet',
@@ -1069,6 +1073,7 @@ const PLANTS = [
     alt: 'air plant',
     pets: 'unlisted',
     aka: 'тилландсия, воздушное растение, атмосферная, air plant, tillandsia, ионанта, ксерографика, усния, испанский мох',
+    findBy: 'на блоке, на коре, блок, коряга, маунт, mount',
     hint: 'атмосферная, без грунта',
     lux: [8000, 20000], every: 4, type: 'mount', check: 'Листья посветлели и стали мягче?',
     water: 'Замачивать на 20–30 минут раз в неделю или сбрызгивать через 2–3 дня. Потом стряхнуть и сушить розеткой вниз, чтобы высохла за 4 часа. Раз в месяц добавлять удобрение для бромелиевых в четверть дозы.',
