@@ -454,7 +454,7 @@ function spotGroups(ps, tags, room) {
       const ph = photoOf(p.id);
       const st = states(p);
       const pic = ph ? `<img class="fill" src="${ph}" alt=""><img src="${ph}" alt="">` : plantSvg(p, mood(p, st)[2]);
-      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, tags.get(p)).join(' ')}" data-q="${esc(norm([p.title, p.species, def(p.id)?.alt, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p, tags.get(p))}</div>
+      html += `<button class="pcard" data-open="${esc(p.id)}" data-st="${filterKeys(p, tags.get(p)).join(' ')}" data-q="${esc(norm([p.title, p.species, def(p.id)?.alt, def(p.id)?.names, p.spot, S.rooms.length > 1 ? roomOf(p).name : ''].join(' ')))}"><div class="pic">${pic}${plantBadges(p, tags.get(p))}</div>
         <b>${typedHtml(p.title)}</b>${p.name ? `<small>${typedHtml(p.species)}</small>` : ''}<small class="next">${nextCheckHtml(p)}</small></button>`;
     });
     html += `</div></section>`;
