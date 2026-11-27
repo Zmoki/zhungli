@@ -344,8 +344,8 @@ h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 12px; }
 .pick .pe.fit { width: 56px; height: 56px; }
 .pick .pe.fit svg.pl { width: 46px; height: 46px; }
 .pick.strip { padding: 0 12px 0 0; overflow: hidden; }
-.pick.strip .pe.fit { align-self: stretch; width: 46px; height: auto; min-height: 72px; border-radius: 0; }
-.pick.strip .pe.fit svg.pl { width: 42px; height: 42px; }
+.pick.strip .pe.fit { align-self: stretch; width: 48px; height: auto; min-height: 72px; border-radius: 0; }
+.pick.strip .pe.fit svg.pl { width: 44px; height: 44px; }
 .pick.strip .pt { padding: 10px 0; }
 :is(.tile, .pe):has(> svg.v0) { background: var(--t0); } :is(.tile, .pe):has(> svg.v1) { background: var(--t1); } :is(.tile, .pe):has(> svg.v2) { background: var(--t2); }
 :is(.tile, .pe):has(> svg.v3) { background: var(--t3); } :is(.tile, .pe):has(> svg.v4) { background: var(--t4); } :is(.tile, .pe):has(> svg.v5) { background: var(--t5); }
