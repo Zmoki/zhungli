@@ -13,13 +13,13 @@
 // [catalog id, spot, next check in days, own fields]. Three checks are due today; the zamioculcas (sample3) is
 // the happy one whose card the third story opens, so it has a few weeks of answers.
 const ago = (...pairs) => pairs.map(([n, a]) => ({ d: addDays(today(), -n), a }));
-const SAMPLE = [['mon-del', 'Подоконник', 0], ['pothos', 'Полка', 0], ['spath', 'Стол', 0],
-  ['zz', 'Подоконник', 3, { lastWater: addDays(today(), -6), hist: ago([6, 'water'], [13, 'wet'], [19, 'water'], [33, 'water']) }],
-  ['chlorophytum', 'Полка', 2], ['sansevieria', 'Стол', 9], ['phal', 'Подоконник', 4]];
+const SAMPLE = [['monstera-deliciosa', 'Подоконник', 0], ['epipremnum-aureum', 'Полка', 0], ['spathiphyllum', 'Стол', 0],
+  ['zamioculcas-zamiifolia', 'Подоконник', 3, { lastWater: addDays(today(), -6), hist: ago([6, 'water'], [13, 'wet'], [19, 'water'], [33, 'water']) }],
+  ['chlorophytum-comosum', 'Полка', 2], ['dracaena-trifasciata', 'Стол', 9], ['phalaenopsis', 'Подоконник', 4]];
 // For «Растения»: every kind of chip has someone in it (суховато, темновато, ярковато, напоено, хорошо, в теплице, в воде).
-const SAMPLE_RICH = [['mon-del', 'Подоконник', 0], ['ficus-lyrata', 'Подоконник', 0], ['calathea', 'Подоконник', 3, { greenhouse: true }],
-  ['fittonia', 'Подоконник', 2, { greenhouse: true }], ['pothos', 'Полка', 0], ['chlorophytum', 'Полка', 6, { lastWater: today(), hist: ago([0, 'water']) }],
-  ['cuttings', 'Полка', 4], ['zz', 'Стол', 3, { lux: 800 }], ['phal', 'Стол', 4, { lux: 30000 }], ['spath', 'Стол', 2]];
+const SAMPLE_RICH = [['monstera-deliciosa', 'Подоконник', 0], ['ficus-lyrata', 'Подоконник', 0], ['calathea', 'Подоконник', 3, { greenhouse: true }],
+  ['fittonia-albivenis', 'Подоконник', 2, { greenhouse: true }], ['epipremnum-aureum', 'Полка', 0], ['chlorophytum-comosum', 'Полка', 6, { lastWater: today(), hist: ago([0, 'water']) }],
+  ['cuttings', 'Полка', 4], ['zamioculcas-zamiifolia', 'Стол', 3, { lux: 800 }], ['phalaenopsis', 'Стол', 4, { lux: 30000 }], ['spathiphyllum', 'Стол', 2]];
 function sampleGarden(list = SAMPLE) {
   const s = prepare(null);
   // No hint cards above the tasks: the install, Telegram, stats and winter hints count as seen.
