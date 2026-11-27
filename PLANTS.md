@@ -174,7 +174,7 @@ The card's tips (`water`, `soil`, `cond`, `tip`) can be edited, hidden and resto
 ## Pictures
 
 A photo is resized to 640 px and stored in IndexedDB (`zhungli`/`photos`) on the phone. Without a photo, `plantSvg` in `shapes.js` draws:
-- a silhouette, chosen by catalog id or guessed from the name and type;
+- a silhouette: every catalog card has one by id (`SHAPE_BY_ID` in `shapes.js`; add a new card there, so a later title change keeps its drawing), own plants get one guessed from the name and type;
 - one of six pot and tile color pairs, picked by the card;
 - a face on the pot for the mood.
 

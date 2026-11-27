@@ -82,7 +82,8 @@ const SHAPES = {
     <ellipse class="lf" cx="25" cy="16" rx="7" ry="4" transform="rotate(25 25 16)"/><ellipse class="lf2" cx="39" cy="10" rx="7" ry="4" transform="rotate(-25 39 10)"/>`,
 };
 
-// Catalog plants by id; others are guessed from the name and what they grow in.
+// Every catalog card by id, so a new title can't change a saved plant's drawing; own plants are guessed from the
+// name and what they grow in (shapeOf).
 const SHAPE_BY_ID = {
   'g-easy': 'trailing', 'g-humid': 'prayer', 'g-succ': 'succulent', 'g-cactus': 'cactus', 'g-flower': 'flowering', 'g-orchid': 'orchid', 'g-herbs': 'herbs',
   'alo-regal': 'arrow', 'alo-black': 'arrow', 'alo-cuc': 'arrow', 'alo-polly': 'arrow', 'alo-silver': 'arrow',
@@ -90,6 +91,14 @@ const SHAPE_BY_ID = {
   'agl-siam': 'upright', 'agl-silver': 'upright', 'agl-pink': 'upright', 'dif-camille': 'upright', 'dif-gm': 'upright', spath: 'upright', zz: 'upright',
   'stro-tri': 'prayer', cten: 'prayer', ficus: 'tree', 'ficus-genus': 'tree', raderm: 'tree', anth: 'flowering', coleus: 'coleus',
   chamae: 'palm', rhapis: 'palm', strel: 'palm', banana: 'palm', phal: 'orchid', cuttings: 'cutting',
+  // Pinned to what the name picked, so renames keep the drawing.
+  alocasia: 'arrow', aglaonema: 'upright', dieffenbachia: 'upright', pothos: 'trailing', scindapsus: 'trailing',
+  hoya: 'trailing', ivy: 'trailing', tradescantia: 'trailing', chlorophytum: 'trailing', peperomia: 'leafy',
+  pilea: 'leafy', aspidistra: 'upright', croton: 'tree', calathea: 'prayer', maranta: 'prayer', fern: 'leafy',
+  fittonia: 'prayer', 'ficus-benj': 'tree', 'ficus-lyrata': 'tree', 'dracaena-marginata': 'palm',
+  'dracaena-fragrans': 'palm', yucca: 'palm', schefflera: 'tree', citrus: 'tree', aloe: 'succulent',
+  crassula: 'succulent', haworthia: 'succulent', echeveria: 'succulent', pelargonium: 'flowering',
+  hibiscus: 'flowering', begonia: 'flowering',
   // Where the name or growing medium would pick the wrong drawing.
   syngonium: 'arrow', sansevieria: 'upright', bokarnea: 'palm', 'dracaena-sanderiana': 'palm',
   schlumbergera: 'trailing', kalanchoe: 'flowering', violet: 'flowering',
