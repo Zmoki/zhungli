@@ -213,9 +213,11 @@ function card(d) {
   ].join('');
   // What the app's catalog search reads besides the title: the second line (`alt`) and `aka`, each name once.
   const words = [...new Set([d.alt, d.names, d.aka, d.findBy].filter(Boolean).join(',').split(',').map((w) => w.trim()).filter(Boolean))].join(', ');
-  const search = norm([d.species, d.id, words, d.cat].join(' '));
+  // The card's id, then the zhungli-content plant ids it's for (plants/*.yml `id`).
+  const ids = [d.id, ...(d.plantIds || [])];
+  const search = norm([...ids, d.species, words, d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
-<div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${words ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(words)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
+<div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}${(d.plantIds || []).length ? ` · <span title="id в zhungli-content">${d.plantIds.map(esc).join(', ')}</span>` : ''}</p>${words ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(words)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
 ${gaps.length ? `<ul class="gaps">${gaps.map((g) => `<li>${GAPS[g]}</li>`).join('')}</ul>` : ''}</div>
 <div class="blks">${pickPreview(d)}${cardNowPreview(d)}<div class="col">${block('Настройки', settings, 'b-set')}${block('Метки и задачи', tags, 'b-tags')}</div>
 <div class="col">${block('Заметки', notes, 'b-notes')}<section class="blk b-quips"><h4>Реплики</h4><ul class="quips">${d.quips.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></section></div></div>
