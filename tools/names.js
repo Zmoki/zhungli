@@ -10,8 +10,8 @@
 // is the genus or a species, else from its plant (`plantIds[0]`): «Толстянка», not «Толстянка овальная», but «Фикус
 // лировидный» among the ficuses and «Строманта Триостар» for a variety.
 // A card with several plants of one file that isn't the only one there («Аглаонема серебристая») keeps the names
-// written in the app. Title: name.ru. Second line: the first two of name.aka, then name.en, then title (Latin), at
-// most three, none twice and none the same as the title. Search: every ru, en, aka and title of the card's plants
+// written in the app. Title: name.ru. Second line: the first two of name.aka, then name.en (a lone species card's own one, if it has
+// one), then title (Latin), at most three, none twice and none the same as the title. Search: every ru, en, aka and title of the card's plants
 // and their genus. Text as written in the content, case included.
 'use strict';
 const fs = require('fs');
@@ -141,6 +141,7 @@ const want = new Map();
 for (const d of PLANTS) {
   const ids = d.plantIds || [];
   const hits = ids.map((id) => byId.get(id)).filter(Boolean);
+  ids.slice(1).forEach((id) => { if (!byId.get(id)) problems.push(`${d.id}: plant ${id} isn't in the content`); });
   if (!hits.length || hits.length < ids.length) continue;
   const file = hits[0].genus.file;
   // A variety keeps its own names even alone in its file: «Строманта Триостар», not «Строманта».
@@ -157,12 +158,19 @@ for (const d of PLANTS) {
   const n = source.name || {};
   if (!n.ru) { problems.push(`${d.id}: ${source.title} has no name.ru`); continue; }
   // A genus card among its species' cards doesn't show their names («Эластика» on «Фикус»).
-  const line = uniq([...(n.aka || []).filter((a) => only || !claimed.has(key(a))).slice(0, 2), n.en, source.title], [n.ru]).slice(0, 3);
+  // Genus names for a lone species card, but its own English name when it has one: the genus one may be another
+  // species' («Bird of Paradise» is Strelitzia reginae, the card is S. nicolai, «Giant Bird of Paradise»).
+  const own = hits[0].plant !== g && hits[0].plant.name && hits[0].plant.name.en;
+  const en = (source === g && own) || n.en;
+  const line = uniq([...(n.aka || []).filter((a) => only || !claimed.has(key(a))).slice(0, 2), en, source.title], [n.ru]).slice(0, 3);
   want.set(d.id, { species: n.ru, alt: line.join(', '), search });
 }
 
 // ---- Check or rewrite ----
 const q = (s) => (s.includes("'") ? JSON.stringify(s) : `'${s}'`);
+// A quoted JS string as q() writes it, escapes included.
+const STR = `(?:'(?:[^'\\\\\\n]|\\\\.)*'|"(?:[^"\\\\\\n]|\\\\.)*")`;
+const field = (name) => new RegExp(`\\b${name}: (${STR})`);
 let text = src, changed = 0;
 for (const d of PLANTS) {
   const w = want.get(d.id);
@@ -175,11 +183,11 @@ for (const d of PLANTS) {
   const before = blk;
   const names = w.search.filter((s) => !(w.species && key(s) === key(w.species))).join(', ');
   if (w.species !== undefined) {
-    blk = blk.replace(/species: (?:'[^'\n]*'|"[^"\n]*")/, `species: ${q(w.species)}`);
-    if (/\balt: /.test(blk)) blk = blk.replace(/\balt: (?:'[^'\n]*'|"[^"\n]*")/, `alt: ${q(w.alt)}`);
+    blk = blk.replace(field('species'), `species: ${q(w.species)}`);
+    if (/\balt: /.test(blk)) blk = blk.replace(field('alt'), `alt: ${q(w.alt)}`);
     else problems.push(`${d.id}: no alt line to rewrite`);
   }
-  if (/\bnames: /.test(blk)) blk = blk.replace(/\bnames: (?:'[^'\n]*'|"[^"\n]*")/, `names: ${q(names)}`);
+  if (/\bnames: /.test(blk)) blk = blk.replace(field('names'), `names: ${q(names)}`);
   else blk = blk.replace(/(\n(\s+)alt: [^\n]*\n)/, `$1$2names: ${q(names)},\n`);
   if (!/\bnames: /.test(blk)) problems.push(`${d.id}: no place for names`);
   if (blk !== before) {
@@ -187,7 +195,7 @@ for (const d of PLANTS) {
     if (!WRITE) {
       const was = (re) => (before.match(re) || [])[1];
       const now = (re) => (blk.match(re) || [])[1];
-      for (const [label, re] of [['title', /species: ((?:'[^'\n]*'|"[^"\n]*"))/], ['second line', /\balt: ((?:'[^'\n]*'|"[^"\n]*"))/], ['names', /\bnames: ((?:'[^'\n]*'|"[^"\n]*"))/]])
+      for (const [label, re] of [['title', field('species')], ['second line', field('alt')], ['names', field('names')]])
         if (was(re) !== now(re)) problems.push(`${d.id}: ${label} ${was(re) || '(none)'} → ${now(re)}`);
     }
   }
