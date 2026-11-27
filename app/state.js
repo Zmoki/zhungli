@@ -615,11 +615,20 @@ function mood(p, st = states(p)) {
 const stateWord = (k, p) => (k === 'need' && wayOf(p).need) || STATES[k][1];
 
 // The first «20–25 °C» in the card's conditions, plus its floor: «не ниже 16 °C» if given, else the range's low end.
+// A cool winter the card asks for («зимой 10–15 °C») lowers both from December to February, or, for a card with a
+// rest (`rest`, the flytrap's «Зимой покой… 4–10 °C»), while the plant rests: it isn't called cold then.
 function tempRange(p) {
-  const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(p.cond || '');
+  const cond = p.cond || '';
+  const m = /(\d+)\s*–\s*(\d+)\s*°C/.exec(cond);
   if (!m) return null;
-  const floor = /не ниже\s*(\d+)\s*°C/.exec(p.cond);
-  return [Number(m[1]), Number(m[2]), floor ? Number(floor[1]) : Number(m[1])];
+  const floor = /не ниже\s*(\d+)\s*°C/i.exec(cond);
+  const r = [Number(m[1]), Number(m[2]), floor ? Number(floor[1]) : Number(m[1])];
+  const w = /зимой[^.]*?(\d+)\s*–\s*(\d+)\s*°C/i.exec(cond);
+  if (w && (p.rest ? resting(p) : [11, 0, 1].includes(new Date().getMonth()))) {
+    r[0] = Math.min(r[0], Number(w[1]));
+    r[2] = Math.min(r[2], Number(w[1]));
+  }
+  return r;
 }
 
 const spotIdx = (s) => { const i = S.spots.indexOf(s); return i === -1 ? (s ? S.spots.length : 99) : i; };
@@ -669,7 +678,8 @@ function bonusTasks() {
       out.push({ key: dk, p, title: `Протрите листья: ${p.title}`, task: 'Протрите листья', done: 'Протёрто', hint: 'Мягкой влажной салфеткой, сверху и снизу. Блестящие листья лучше «едят» свет.' });
     }
     const rk = 'rotate:' + p.id;
-    if (p.rotate && S.bonus[rk] && diff(S.bonus[rk], t) >= 14 && !snoozed(rk)) {
+    // `rotate`: true is every 14 days, a number its own interval (the pilea's tip says weekly).
+    if (p.rotate && S.bonus[rk] && diff(S.bonus[rk], t) >= (p.rotate === true ? 14 : p.rotate) && !snoozed(rk)) {
       out.push({ key: rk, p, title: `Поверните на четверть оборота: ${p.title}`, task: 'Поверните на четверть оборота', done: 'Повёрнуто', hint: 'Чтобы росла ровно, а не тянулась в одну сторону. Постепенно, без резких разворотов.' });
     }
     const care = wayOf(p).care, ck = care && `${care.kind}:${p.id}`;
