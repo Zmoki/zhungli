@@ -34,8 +34,8 @@ function searchReadings(raw) {
   return [...new Set(all)].map((s) => s.split(/\s+/).filter(Boolean).map(searchStem));
 }
 // When nothing matches as typed (neither a plant nor a group name), the search forgives typos: о/а and е/и/э/я
-// count as the same sound, a doubled letter as one, and words match from their start. A searched word (ending
-// already trimmed) of 8+ letters may be a letter off, 11+ letters two. So «дифенбахия», «дефенбахия» and
+// count as the same sound, a doubled letter as one, and words match from their start. A searched word of 8+ letters
+// as typed may be a letter off, 11+ letters two. So «дифенбахия», «дефенбахия» and
 // «манстера» find their plants, but «авокадо» doesn't find «алоказия».
 const looseSound = (s) => s.replace(/о/g, 'а').replace(/[еэя]/g, 'и').replace(/(.)\1+/g, '$1');
 // Each row's words, loosened once: the texts never change while the sheet is open.
@@ -63,7 +63,9 @@ function nearStart(w, t, max) {
   return Math.min(...prev) <= max;
 }
 function typoMatcher(readings) {
-  const loose = readings.map((ws) => ws.map((w) => [looseSound(w), w.length >= 11 ? 2 : w.length >= 8 ? 1 : 0]));
+  // The words come with their ending trimmed (searchStem: 2 letters off a word of 6+), so a stem of 9+ letters was
+  // typed with 11+, and of 6+ with 8+.
+  const loose = readings.map((ws) => ws.map((w) => [looseSound(w), w.length >= 9 ? 2 : w.length >= 6 ? 1 : 0]));
   return (text) => {
     const tokens = looseTokens(text);
     return loose.some((ws) => ws.every(([w, max]) => tokens.some((t) => t.startsWith(w) || (max && nearStart(w, t, max)))));
