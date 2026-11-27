@@ -330,11 +330,12 @@ document.addEventListener('visibilitychange', catchUp);
 function prepare(raw) {
   const s = Object.assign(blank(), raw || {});
   if (raw && !raw.v) migrateV1(s);
+  // Card ids first: the migrations below look cards up by today's ids.
+  migrateCardIds(s);
   if (raw && (raw.v || 1) < 3) migrateV2(s, raw);
   if (raw && (raw.v || 1) < 4) migrateV3(s);
   if (!raw) { s.seen = APP_VERSION; s.aloSoil = true; s.newMedia = true; } // new users have nothing to catch up on
   migrateNewMedia(s);
-  migrateCardIds(s);
   // v5: records may keep `tone` (migrateCardIds). Older apps read it fine and save it back.
   s.v = 5;
   // A personal «don't feed» from the first collection's notes (own.noFeed) had no setting to undo it: it becomes
@@ -362,29 +363,54 @@ function prepare(raw) {
 // Runs from `let S = load()` while this file still loads: the map is inside, a const below wouldn't exist yet.
 function migrateNewMedia(s) {
   if (s.newMedia) return;
-  const cards = { 'mon-del': 'bark_mix', 'mon-adan': 'bark_mix', pothos: 'bark_mix', 'phi-eru': 'bark_mix', 'phi-birkin': 'bark_mix', 'phi-congo': 'bark_mix', dionaea: 'peat', drosera: 'peat' };
+  const cards = { 'monstera-deliciosa': 'bark_mix', 'monstera-adansonii': 'bark_mix', 'epipremnum-aureum': 'bark_mix', 'philodendron-erubescens': 'bark_mix', 'philodendron-birkin': 'bark_mix', 'philodendron-green-congo': 'bark_mix', dionaea: 'peat', drosera: 'peat' };
   Object.values(s.plants).forEach((r) => { if (r.medium === 'soil' && cards[r.def]) r.medium = cards[r.def]; });
   s.newMedia = true;
 }
-// v183: catalog ids that moved. Two hidden cards of the first collection («Стрелиция Николая №2», «Колеус №2») were
-// removed, and their twins lost the «1» in their ids. Plants saved from them (the oldest records use the card id as
+// Catalog ids that moved. v183: two hidden cards of the first collection («Стрелиция Николая №2», «Колеус №2») were
+// removed, and their twins lost the «1» in their ids. v188: every card took its zhungli-content slug. No new id is
+// an old one, so this can run on every load. Plants saved from them (the oldest records use the card id as
 // their own id) point at the new card and keep their pot color (`tone`, from the old id) and name; a removed card's
 // own texts become the plant's notes (own), under any the person edited. Runs on every load, so data synced from an
 // older app moves too.
 function migrateCardIds(s) {
   const moves = {
-    strel1: { def: 'strel' },
-    coleus1: { def: 'coleus' },
-    kolya: { def: 'strel', species: 'Стрелиция Николая №2', own: {
+    strel1: { def: 'strelitzia-nicolai' },
+    coleus1: { def: 'coleus-scutellarioides' },
+    kolya: { def: 'strelitzia-nicolai', species: 'Стрелиция Николая №2', own: {
       water: 'Поливать, когда верх грунта подсох. Воду в поддоне не оставлять.',
       soil: 'Грунт, через который проходит воздух. Раньше рос под колпаком во влажном воздухе.',
       cond: '18–28 °C, много света.',
       tip: 'Если теплица ещё стоит, проветривать её. Постепенно приучать к воздуху комнаты.',
       quips: ['Я Коля. Николай только для документов.', 'Теплицу приоткройте, дайте подышать.', 'Света мне, света!'],
     } },
-    coleus2: { def: 'coleus', species: 'Колеус №2', own: {
+    coleus2: { def: 'coleus-scutellarioides', species: 'Колеус №2', own: {
       quips: ['Я второй, но не последний.', 'Пить хочу чаще остальных, извините.', 'Свет делает меня ярче.'],
     } },
+    // v188: ids became zhungli-content slugs (PLANTS.md, «Catalog ids»). The colors stay: the cards pin `tone`.
+    'alo-regal': { def: 'alocasia-regal-shields' }, 'alo-black': { def: 'alocasia-black-stem' },
+    'alo-cuc': { def: 'alocasia-cucullata' }, 'alo-polly': { def: 'alocasia-polly' },
+    'alo-silver': { def: 'alocasia-silver-dragon' }, 'mon-del': { def: 'monstera-deliciosa' },
+    'mon-adan': { def: 'monstera-adansonii' }, 'phi-eru': { def: 'philodendron-erubescens' },
+    'phi-birkin': { def: 'philodendron-birkin' }, 'phi-congo': { def: 'philodendron-green-congo' },
+    'agl-siam': { def: 'aglaonema-siam-aurora' }, 'agl-silver': { def: 'aglaonema-silver' },
+    'agl-pink': { def: 'aglaonema-pink-star' }, 'stro-tri': { def: 'stromanthe-triostar' },
+    cten: { def: 'ctenanthe' }, 'dif-camille': { def: 'dieffenbachia-camille' },
+    'dif-gm': { def: 'dieffenbachia-green-magic' }, ficus: { def: 'ficus-elastica' },
+    raderm: { def: 'radermachera-sinica' }, anth: { def: 'anthurium' }, spath: { def: 'spathiphyllum' },
+    zz: { def: 'zamioculcas-zamiifolia' }, chamae: { def: 'chamaedorea-elegans' }, rhapis: { def: 'rhapis-excelsa' },
+    strel: { def: 'strelitzia-nicolai' }, banana: { def: 'musa' }, phal: { def: 'phalaenopsis' },
+    coleus: { def: 'coleus-scutellarioides' }, pothos: { def: 'epipremnum-aureum' },
+    scindapsus: { def: 'scindapsus-pictus' }, syngonium: { def: 'syngonium-podophyllum' },
+    ivy: { def: 'hedera-helix' }, chlorophytum: { def: 'chlorophytum-comosum' },
+    pilea: { def: 'pilea-peperomioides' }, aspidistra: { def: 'aspidistra-elatior' },
+    croton: { def: 'codiaeum-variegatum' }, maranta: { def: 'maranta-leuconeura' },
+    fern: { def: 'nephrolepis-exaltata' }, fittonia: { def: 'fittonia-albivenis' },
+    'ficus-benj': { def: 'ficus-benjamina' }, yucca: { def: 'yucca-gigantea' },
+    schefflera: { def: 'heptapleurum-arboricola' }, bokarnea: { def: 'beaucarnea-recurvata' },
+    sansevieria: { def: 'dracaena-trifasciata' }, aloe: { def: 'aloe-vera' }, crassula: { def: 'crassula-ovata' },
+    violet: { def: 'streptocarpus-ionanthus' }, kalanchoe: { def: 'kalanchoe-blossfeldiana' },
+    hibiscus: { def: 'hibiscus-rosa-sinensis' },
   };
   Object.entries(s.plants).forEach(([id, r]) => {
     const from = r.def || id, g = moves[from];
@@ -433,7 +459,7 @@ function migrateV2(s, raw) {
 // An older app saves this data back as v3, so this can run again: `aloSoil` (older apps keep it)
 // makes the alocasia interval reset happen once.
 function migrateV3(s) {
-  const wasSphagnum = ['alo-regal', 'alo-black', 'alo-cuc', 'alo-polly', 'alo-silver'];
+  const wasSphagnum = ['alocasia-regal-shields', 'alocasia-black-stem', 'alocasia-cucullata', 'alocasia-polly', 'alocasia-silver-dragon'];
   Object.entries(s.plants).forEach(([id, p]) => {
     const k = p.def || id, d = PLANTS.find((c) => c.id === k);
     if (!d) return;

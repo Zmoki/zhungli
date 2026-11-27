@@ -52,7 +52,7 @@
   },
   "groups": {
     "plant": {
-      "catalog_id": { "type": "catalog_id", "desc": "catalog id or `custom`", "was": ["plant_kind"] },
+      "catalog_id": { "type": "catalog_id", "desc": "catalog id or `custom`. Since v188 the zhungli-content slug (`monstera-deliciosa`); older events have the short ids (`mon-del`), mapped in `migrateCardIds` in state.js; the ingest function translates them from phones still on an older version", "was": ["plant_kind"] },
       "medium": { "type": "enum", "values": "medium", "desc": "the plant's medium now", "was": ["plant_type"] },
       "watering": { "type": "enum", "values": "watering" },
       "generic": { "type": "bool", "desc": "a generic catalog card" }

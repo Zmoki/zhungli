@@ -563,8 +563,8 @@ function lightRow(p) {
 // at a glance. «Фикус» leads the searches: its tile adds the genus card, and «Сменить карточку» picks the
 // species once it's known. «Кактус» is the general type: one tile for every cactus, and a drawing no other tile has.
 // Begonia's searches include garden ones, but even half of them would beat the next plant, so it stays.
-const QUICK = [['phal', 'Орхидея'], ['ficus-genus', 'Фикус'], ['calathea', 'Калатея'], ['g-cactus', 'Кактус'],
-  ['anth', 'Антуриум'], ['begonia', 'Бегония']];
+const QUICK = [['phalaenopsis', 'Орхидея'], ['ficus-genus', 'Фикус'], ['calathea', 'Калатея'], ['g-cactus', 'Кактус'],
+  ['anthurium', 'Антуриум'], ['begonia', 'Бегония']];
 let qsPicked = new Set();
 let qsReported = false;
 // Tiles ticked but not added: reported once when the person turns to another way of adding or leaves the app.
