@@ -58,7 +58,7 @@ Sent together by events that `use` the «plant» group.
 
 | Property | Value |
 | --- | --- |
-| `catalog_id` | catalog id or `custom`. Since v188 the zhungli-content slug (`monstera-deliciosa`); older events have the short ids (`mon-del`), mapped in `migrateCardIds` in state.js (was `plant_kind`) |
+| `catalog_id` | catalog id or `custom`. Since v188 the zhungli-content slug (`monstera-deliciosa`); older events have the short ids (`mon-del`), mapped in `migrateCardIds` in state.js; the ingest function translates them from phones still on an older version (was `plant_kind`) |
 | `medium` | a [`medium` value](#value-lists); the plant's medium now (was `plant_type`) |
 | `watering` | a [`watering` value](#value-lists) |
 | `generic` | a generic catalog card |

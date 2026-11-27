@@ -1,7 +1,10 @@
 /*! Жунгли · https://zhungli.zmoki.xyz/ · Copyright (c) 2026 Zarema Khalilova. All rights reserved. No copying, hosting or reuse without permission. See LICENSE. */
 // Catalog for the add-plants picker: a personal catalog of 28 plants, the most common houseplants, and generic types.
 // id: the zhungli-content slug of the plant when the card was added (alocasia-cucullata), frozen even if the slug
-//   changes later; generic types have their own (g-easy). Never changes without a migration (migrateCardIds).
+//   changes later; generic types have their own (g-easy). Never changes without a migration (migrateCardIds), and
+//   never to an id another card had. Not slugs: ficus-genus (content's «ficus» was the elastica card's id until v188),
+//   aglaonema-silver (two cultivars, Silver Bay and Silver Queen), citrus (the genus, as its title; linked to the genus
+//   and to lemon, the species content pairs it with).
 // tone: the pot and tile color pair (0–5), pinned so it doesn't follow the id. plantIds: the zhungli-content plant ids
 //   (plants/*.yml `id`) the card is for; none for generic types.
 // cat: the picker group (ordered by CAT_ORDER in add.js); cats may change.
@@ -937,7 +940,7 @@ const PLANTS = [
     quips: ['У меня в ноге запас воды.', 'Забыли полить? Я и не заметила.', 'Солнце для меня всё.'],
   },
   {
-    id: 'citrus', tone: 4, plantIds: ['bhcq9bpzrn'],
+    id: 'citrus', tone: 4, plantIds: ['bhcq9bpzrn', 'qnb9bn7nww'],
     species: 'Цитрус', cat: 'Пальмы, драцены и деревья', emoji: '🍋',
     alt: 'лимон, мандарин, апельсин',
     pets: 'toxic', petsNote: 'Рвота, понос, вялость.',
