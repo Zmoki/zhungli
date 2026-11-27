@@ -76,7 +76,7 @@ function pickRow(d, changeFor, nowId) {
   const now = !!changeFor && nowId === d.id;
   const sub = [now ? 'сейчас' : '', d.alt ? altHtml(d.alt) : '', d.hint ? esc(d.hint) : ''].filter(Boolean).join(' · ');
   const act = changeFor ? `data-act="card-pick" data-id="${esc(changeFor)}"` : 'data-act="pick"';
-  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.alt, d.hint, d.aka, d.findBy].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
+  return `<button class="pick${now ? ' on' : ''}" ${act}${now ? ' aria-current="true"' : ''} data-key="${esc(d.id)}" data-q="${esc(norm([d.species, d.alt, d.hint, d.aka, d.names, d.findBy].join(' ')))}" data-name="${esc(norm(d.species))}" data-cat="${esc(norm(d.cat))}" data-generic="${d.generic ? 1 : 0}">
     <span class="pe fit" aria-hidden="true">${plantSvg(d, 'fine', true)}</span><span class="pt"><b>${esc(d.species)}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="pc" aria-hidden="true">${I(now ? 'check' : changeFor ? 'chevron-right' : 'plus')}</span></button>`;
 }
 // What happens in the add flow, reported once when the sheet closes without adding.
@@ -495,6 +495,8 @@ function wordFits(w, t) {
   if (b.startsWith(a) && b.length - a.length <= 2) return true;
   return w.stem.length >= 8 && Math.abs(t.stem.length - w.stem.length) <= 2 && nearStart(w.stem, t.stem, w.stem.length >= 11 ? 2 : 1);
 }
+// AI import matches by the title, the second line and `aka`, not by the content's search `names`: those also carry
+// genus-wide names («Эластика» on «Фикус»), which would take a known species to its genus card.
 let catalogNames = null;
 function catalogCard(it) {
   catalogNames ||= PLANTS.filter((d) => !d.hidden)

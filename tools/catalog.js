@@ -212,7 +212,7 @@ function card(d) {
     row('Комната', d.humid ? 'в подсказке о влажном воздухе' : ''),
   ].join('');
   // What the app's catalog search reads besides the title: the second line (`alt`) and `aka`, each name once.
-  const words = [...new Set([d.alt, d.aka, d.findBy].filter(Boolean).join(',').split(',').map((w) => w.trim()).filter(Boolean))].join(', ');
+  const words = [...new Set([d.alt, d.names, d.aka, d.findBy].filter(Boolean).join(',').split(',').map((w) => w.trim()).filter(Boolean))].join(', ');
   const search = norm([d.species, d.id, words, d.cat].join(' '));
   return `<article class="card" id="${esc(d.id)}" data-k="${keysOf(d).join(' ')}" data-search="${esc(search)}">
 <div class="side"><header class="head"><div class="tile">${plantSvg(d, 'fine')}</div><div class="name"><h3>${esc(d.species)}</h3><p class="id">${esc(d.id)}</p>${words ? `<p class="aka"><span class="k">Ищется по словам:</span> ${esc(words)}</p>` : ''}${flags.length ? `<p class="flags">${flags.map((f) => `<span>${f}</span>`).join('')}</p>` : ''}</div></header>
